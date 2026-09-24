@@ -1,42 +1,91 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
-import { useRouter } from "next/navigation";
-import { ArrowRight, ShieldCheck, UserCheck, Lock, Mail } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { ArrowRight, ShieldCheck, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    setErrorMessage("");
+
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (res?.error) {
+        setErrorMessage("Invalid email or password. Please verify your credentials.");
+        setLoading(false);
+      } else {
+        if (email.toLowerCase().includes("admin")) {
+          router.push("/admin");
+        } else {
+          router.push(callbackUrl);
+        }
+        router.refresh();
+      }
+    } catch {
+      setErrorMessage("An unexpected authentication error occurred. Please try again.");
       setLoading(false);
-      router.push("/dashboard");
-    }, 600);
+    }
   };
 
-  const handleDemoAlumni = () => {
+  const handleDemoAlumni = async () => {
     setEmail("jashedul@example.com");
     setPassword("password123");
     setLoading(true);
-    setTimeout(() => {
+    setErrorMessage("");
+
+    const res = await signIn("credentials", {
+      redirect: false,
+      email: "jashedul@example.com",
+      password: "password123",
+    });
+
+    if (!res?.error) {
       router.push("/dashboard");
-    }, 400);
+      router.refresh();
+    } else {
+      setErrorMessage("Could not sign in with demo credentials.");
+      setLoading(false);
+    }
   };
 
-  const handleDemoAdmin = () => {
+  const handleDemoAdmin = async () => {
     setEmail("admin@sabujsghs.edu.bd");
     setPassword("admin123");
     setLoading(true);
-    setTimeout(() => {
+    setErrorMessage("");
+
+    const res = await signIn("credentials", {
+      redirect: false,
+      email: "admin@sabujsghs.edu.bd",
+      password: "admin123",
+    });
+
+    if (!res?.error) {
       router.push("/admin");
-    }, 400);
+      router.refresh();
+    } else {
+      setErrorMessage("Could not sign in with demo admin credentials.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,6 +120,13 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
         <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl shadow-2xl border border-emerald-800/40">
+          {errorMessage && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-2.5 text-xs animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
@@ -171,5 +227,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#041a13] flex items-center justify-center text-emerald-400 text-xs font-semibold">
+          Loading authentication portal...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

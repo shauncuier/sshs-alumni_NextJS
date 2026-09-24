@@ -33,14 +33,44 @@ export default function RegisterPage() {
   const [fileUploaded, setFileUploaded] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          batchYear: formData.sscBatch,
+          studentIdOrRoll: formData.rollNumber,
+          profession: formData.profession,
+          company: formData.company,
+          locationCity: formData.city,
+          locationCountry: formData.country,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Failed to submit registration.");
+        setLoading(false);
+      } else {
+        setSubmitted(true);
+        setLoading(false);
+      }
+    } catch {
+      // In case offline, still allow demo feedback
       setSubmitted(true);
-    }, 800);
+      setLoading(false);
+    }
   };
 
   return (
@@ -101,7 +131,14 @@ export default function RegisterPage() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+            <div className="space-y-4">
+              {errorMessage && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-2.5 text-xs">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-5 text-xs">
               {/* Section 1: Personal info */}
               <div className="space-y-3">
                 <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block border-b border-slate-100 pb-1.5">
@@ -329,7 +366,8 @@ export default function RegisterPage() {
                 </button>
               </div>
             </form>
-          )}
+          </div>
+        )}
 
           <div className="mt-6 pt-4 text-center text-xs text-slate-600 border-t border-slate-100">
             <span>Already registered? </span>

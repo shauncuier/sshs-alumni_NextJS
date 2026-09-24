@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   Search,
   Menu,
@@ -19,6 +20,8 @@ import {
   ShieldCheck,
   UserPlus,
   LogIn,
+  LogOut,
+  User,
   HeartHandshake,
   Sparkles,
   ExternalLink
@@ -26,6 +29,9 @@ import {
 import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
 
 export default function Navbar() {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
@@ -323,14 +329,40 @@ export default function Navbar() {
                 <Search className="w-4 h-4 text-emerald-400" />
               </button>
 
-              {/* Single Unified Sign In Button */}
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <LogIn className="w-3.5 h-3.5 text-emerald-200" />
-                <span>Sign In</span>
-              </Link>
+              {/* Auth Buttons: Logged In vs Logged Out */}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 h-9 px-3 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-emerald-600 border border-amber-400/40 flex items-center justify-center text-[10px] text-amber-300 font-bold shrink-0">
+                      {session?.user?.name ? session.user.name[0] : "A"}
+                    </div>
+                    <span className="max-w-[110px] truncate text-slate-100">
+                      {session?.user?.name?.split(" ")[0] || "Portal"}
+                    </span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="h-9 w-9 rounded-lg bg-emerald-950/80 hover:bg-red-950/80 text-slate-300 hover:text-red-300 border border-emerald-800/70 hover:border-red-800/70 flex items-center justify-center transition-colors shadow-inner"
+                    title="Sign Out"
+                    aria-label="Sign Out"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-emerald-200" />
+                  <span>Sign In</span>
+                </Link>
+              )}
 
               {/* Mobile Drawer Trigger */}
               <button
@@ -420,14 +452,42 @@ export default function Navbar() {
 
             {/* Auth Action Button */}
             <div className="pt-3 border-t border-emerald-900/80">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Sign In to Alumni Portal</span>
-              </Link>
+              {isAuthenticated ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-2 text-xs text-slate-300">
+                    <span className="truncate">
+                      Signed in as <strong className="text-white">{session?.user?.name}</strong>
+                    </span>
+                    <span className="text-[10px] text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 uppercase font-bold shrink-0">
+                      {(session?.user as unknown as { role?: string })?.role || "Member"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="py-2.5 text-center bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md"
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="py-2.5 text-center bg-emerald-950 hover:bg-red-950 text-slate-300 hover:text-red-300 rounded-xl text-xs font-semibold border border-emerald-800"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In to Alumni Portal</span>
+                </Link>
+              )}
             </div>
           </div>
         )}
