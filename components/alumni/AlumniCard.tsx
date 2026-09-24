@@ -12,6 +12,9 @@ interface AlumniCardProps {
 
 export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProps) {
   const [connected, setConnected] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.fullName)}&background=06281e&color=fcd34d&bold=true`;
 
   if (viewMode === "list") {
     return (
@@ -19,8 +22,9 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
             <img
-              src={alumni.avatarUrl}
+              src={imgError ? fallbackAvatar : alumni.avatarUrl}
               alt={alumni.fullName}
+              onError={() => setImgError(true)}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-emerald-100 group-hover:border-emerald-500 transition-colors shadow-sm"
             />
             {alumni.isVerified && (
@@ -113,8 +117,9 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
         <div className="relative -mt-10 mb-3 flex items-end justify-between">
           <div className="relative">
             <img
-              src={alumni.avatarUrl}
+              src={imgError ? fallbackAvatar : alumni.avatarUrl}
               alt={alumni.fullName}
+              onError={() => setImgError(true)}
               className="w-18 h-18 rounded-2xl object-cover border-3 border-white shadow-md group-hover:scale-105 transition-transform"
             />
             {alumni.isVerified && (
@@ -154,9 +159,11 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
 
         {/* Bio Preview */}
         {alumni.bio && (
-          <p className="text-xs text-slate-600 line-clamp-2 mb-4 leading-relaxed italic bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-            &ldquo;{alumni.bio}&rdquo;
-          </p>
+          <div className="mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100 overflow-hidden">
+            <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed italic">
+              &ldquo;{alumni.bio}&rdquo;
+            </p>
+          </div>
         )}
 
         {/* Skills Pills */}

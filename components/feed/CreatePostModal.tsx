@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { X, Image, Tag, Send, CheckCircle2 } from "lucide-react";
 
 interface CreatePostModalProps {
@@ -10,9 +11,20 @@ interface CreatePostModalProps {
 }
 
 export default function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostModalProps) {
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "Verified Alumnus";
+  const userBatch = session?.user?.batchYear || 2008;
+  const userImage = session?.user?.image;
+
   const [content, setContent] = useState("");
-  const [batchTag, setBatchTag] = useState("2008");
+  const [batchTag, setBatchTag] = useState(userBatch.toString());
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.batchYear) {
+      setBatchTag(session.user.batchYear.toString());
+    }
+  }, [session?.user?.batchYear]);
 
   if (!isOpen) return null;
 
@@ -21,7 +33,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
     if (!content.trim()) return;
     setSubmitting(true);
     setTimeout(() => {
-      onPostCreated(content.trim(), batchTag ? parseInt(batchTag) : undefined);
+      onPostCreated(content.trim(), batchTag && batchTag !== "all" ? parseInt(batchTag, 10) : undefined);
       setContent("");
       setSubmitting(false);
       onClose();
@@ -45,13 +57,19 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="flex items-center gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-              alt="You"
-              className="w-10 h-10 rounded-full object-cover border border-emerald-300"
-            />
+            {userImage ? (
+              <img
+                src={userImage}
+                alt={userName}
+                className="w-10 h-10 rounded-full object-cover border border-emerald-300"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-emerald-800 text-amber-300 flex items-center justify-center font-bold text-sm border border-emerald-600">
+                {userName.charAt(0)}
+              </div>
+            )}
             <div>
-              <div className="font-semibold text-xs text-slate-900">Md. Jashedul Islam</div>
+              <div className="font-semibold text-xs text-slate-900">{userName}</div>
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                 <span>Posting as SSC Batch</span>
                 <select
@@ -59,7 +77,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
                   onChange={(e) => setBatchTag(e.target.value)}
                   className="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]"
                 >
-                  <option value="2008">Batch 2008</option>
+                  <option value={userBatch.toString()}>Batch {userBatch}</option>
                   <option value="all">Public All Batches</option>
                 </select>
               </div>

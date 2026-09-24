@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
@@ -10,32 +11,41 @@ import { samplePosts, PostItem } from "@/lib/data";
 import { Plus, Radio, Layers, Sparkles, Filter } from "lucide-react";
 
 export default function FeedPage() {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<PostItem[]>(samplePosts);
   const [filter, setFilter] = useState<"all" | "my-batch" | "official">("all");
   const [createPostOpen, setCreatePostOpen] = useState(false);
+
+  const user = session?.user;
+  const userName = user?.name || "Md. Jashedul Islam";
+  const userFirst = userName.split(" ")[0] || "Alumnus";
+  const userBatch = user?.batchYear || 2008;
+  const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+  const userRole = user?.role || "ALUMNI";
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
   const handlePostCreated = (content: string, batchTag?: number) => {
     const newPost: PostItem = {
       id: `post-${Date.now()}`,
       author: {
-        name: "Md. Jashedul Islam",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-        batch: 2008,
-        profession: "Lead Software Architect",
+        name: userName,
+        avatar: userAvatar,
+        batch: userBatch,
+        profession: isAdmin ? "System Administrator" : "Active Alumnus",
         isVerified: true,
       },
       timestamp: "Just now",
       content,
       likesCount: 0,
       commentsCount: 0,
-      batchTag,
+      batchTag: batchTag || userBatch,
       isLiked: false,
     };
     setPosts([newPost, ...posts]);
   };
 
   const filteredPosts = posts.filter((post) => {
-    if (filter === "my-batch") return post.batchTag === 2008;
+    if (filter === "my-batch") return post.batchTag === userBatch;
     return true;
   });
 
@@ -49,11 +59,17 @@ export default function FeedPage() {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-4xl w-full mx-auto space-y-6">
           {/* Top Post Creator Bar */}
           <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-              alt="You"
-              className="w-10 h-10 rounded-full object-cover border border-emerald-400"
-            />
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={userName}
+                className="w-10 h-10 rounded-full object-cover border border-emerald-400"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-emerald-800 text-amber-300 flex items-center justify-center font-bold text-sm border border-emerald-600">
+                {userFirst.charAt(0)}
+              </div>
+            )}
             <button
               onClick={() => setCreatePostOpen(true)}
               className="flex-1 text-left px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 text-xs transition-colors border border-slate-200"
@@ -89,7 +105,7 @@ export default function FeedPage() {
                   : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              My Batch (SSC 2008)
+              My Batch (SSC {userBatch})
             </button>
           </div>
 

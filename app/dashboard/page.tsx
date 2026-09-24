@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
@@ -30,29 +31,48 @@ import {
 } from "lucide-react";
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<PostItem[]>(samplePosts);
   const [createPostOpen, setCreatePostOpen] = useState(false);
 
+  const user = session?.user;
+  const userName = user?.name || "Md. Jashedul Islam";
+  const userFirst = userName.split(" ")[0] || "Alumnus";
+  const userBatch = user?.batchYear || 2008;
+  const userRole = user?.role || "ALUMNI";
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+
   const upcomingEvent = sampleEvents[0];
-  const myBatch = sampleBatches[1]; // Batch 2008
+  const myBatch = sampleBatches.find((b) => b.year === userBatch) || {
+    year: userBatch,
+    name: `SSC Batch ${userBatch}`,
+    totalAlumni: 142,
+    classRepresentative: "Batch Committee",
+    tagline: `Pride of Class of ${userBatch}`,
+    representativePhone: "+880 1819-000000",
+    coverImage: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
+    description: `The proud alumni of SSC Batch ${userBatch}.`,
+  };
   const donationCampaign = sampleDonations[0];
-  const suggestedClassmates = sampleAlumni.filter((a) => a.id !== "alm-1").slice(0, 3);
+  const suggestedClassmates = sampleAlumni.filter((a) => a.sscBatch === userBatch && a.fullName !== userName).slice(0, 3);
+  const displayClassmates = suggestedClassmates.length > 0 ? suggestedClassmates : sampleAlumni.slice(1, 4);
 
   const handlePostCreated = (content: string, batchTag?: number) => {
     const newPost: PostItem = {
       id: `post-${Date.now()}`,
       author: {
-        name: "Md. Jashedul Islam",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-        batch: 2008,
-        profession: "Lead Software Architect",
+        name: userName,
+        avatar: userAvatar,
+        batch: userBatch,
+        profession: isAdmin ? "System Administrator" : "Active Alumnus",
         isVerified: true,
       },
       timestamp: "Just now",
       content,
       likesCount: 0,
       commentsCount: 0,
-      batchTag,
+      batchTag: batchTag || userBatch,
       isLiked: false,
     };
     setPosts([newPost, ...posts]);
@@ -74,27 +94,27 @@ export default function DashboardPage() {
               <div className="md:col-span-8 space-y-2">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-900/90 text-amber-300 text-xs font-bold border border-amber-400/30">
                   <BadgeCheck className="w-4 h-4 fill-emerald-600 text-white" />
-                  <span>Verified Member • SSC Batch 2008</span>
+                  <span>{isAdmin ? "Administrator" : "Verified Member"} • SSC Batch {userBatch}</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  Welcome back, Jashedul!
+                  Welcome back, {userFirst}!
                 </h2>
                 <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl leading-relaxed">
-                  Your batch has 168 connected alumni. 4 classmates have posted recent updates and the Grand Reunion registration is underway.
+                  Your batch has {myBatch.totalAlumni} connected alumni. Stay updated with batchmates, participate in reunion votes, and discover mutual contacts.
                 </p>
               </div>
 
-              {/* Profile Completion Widget (85%) */}
+              {/* Profile Completion Widget (90%) */}
               <div className="md:col-span-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold">
                   <span>Profile Strength</span>
-                  <span className="text-amber-300">85% Complete</span>
+                  <span className="text-amber-300">90% Complete</span>
                 </div>
                 <div className="w-full h-2.5 bg-black/40 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full w-[85%]" />
+                  <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full w-[90%]" />
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-emerald-200">
-                  <span>Add school club photos</span>
+                  <span>Verified credentials active</span>
                   <Link href="/profile" className="text-white font-bold hover:underline">
                     Edit &rarr;
                   </Link>
@@ -105,11 +125,17 @@ export default function DashboardPage() {
 
           {/* Quick Create Post Bar */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-              alt="You"
-              className="w-10 h-10 rounded-full object-cover border border-emerald-400"
-            />
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={userName}
+                className="w-10 h-10 rounded-full object-cover border border-emerald-400"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-emerald-800 text-amber-300 flex items-center justify-center font-bold text-sm border border-emerald-600">
+                {userFirst.charAt(0)}
+              </div>
+            )}
             <button
               onClick={() => setCreatePostOpen(true)}
               className="flex-1 text-left px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 text-xs transition-colors border border-slate-200"
@@ -133,19 +159,19 @@ export default function DashboardPage() {
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-emerald-900 text-amber-300 font-bold rounded-2xl flex items-center justify-center shrink-0">
-                    &apos;08
+                    &apos;{userBatch.toString().slice(-2)}
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-slate-900">
-                      SSC Batch 2008 Official Hub
+                      SSC Batch {userBatch} Official Hub
                     </h3>
                     <p className="text-xs text-slate-500">
-                      168 Members • Class Rep: Md. Jashedul Islam • Next Meetup: Nov 20
+                      {myBatch.totalAlumni} Members • Rep: {myBatch.classRepresentative}
                     </p>
                   </div>
                 </div>
                 <Link
-                  href="/batches/2008"
+                  href={`/batches/${userBatch}`}
                   className="px-4 py-2 bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-colors shrink-0 text-center"
                 >
                   Open Batch Page
@@ -221,7 +247,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {suggestedClassmates.map((alumnus) => (
+                  {displayClassmates.map((alumnus) => (
                     <div key={alumnus.id} className="flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         <img

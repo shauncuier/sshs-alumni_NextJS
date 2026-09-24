@@ -20,6 +20,7 @@ All technical and operational documentation has been organized into the [`docs/`
 
 - [**System Architecture & Technical Specs**](./docs/ARCHITECTURE.md): Client layer, component hierarchy, entity models, and role-based permissions.
 - [**MongoDB & MongoDB Compass Setup Guide**](./docs/MONGODB_SETUP.md): Step-by-step instructions for connecting with MongoDB Compass, database schemas, and seed data.
+- [**Production Deployment Guide**](./docs/PRODUCTION_DEPLOYMENT.md): Production hardening, Nginx, PM2, Vercel, Docker, and backup procedures.
 - [**API & Server Action Specifications**](./docs/API_SPECIFICATION.md): Data contracts and endpoints for authentication, directory, feed, events, donations, and admin management.
 - [**Project Roadmap**](./docs/PROJECT_ROADMAP.md): Release phases, payment gateways (bKash/Nagad), and digital alumni ID cards.
 - [**Contributing Guidelines**](./docs/CONTRIBUTING.md): Code conventions, design tokens, and standards for alumni volunteers and developers.

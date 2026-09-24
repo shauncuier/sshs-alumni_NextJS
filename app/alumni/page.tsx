@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AlumniCard from "@/components/alumni/AlumniCard";
-import { sampleAlumni, sampleBatches } from "@/lib/data";
+import { sampleAlumni, sampleBatches, AlumniMember } from "@/lib/data";
 import {
   Search,
   Filter,
@@ -14,7 +14,8 @@ import {
   X,
   BadgeCheck,
   UserCheck,
-  GraduationCap
+  GraduationCap,
+  Loader2
 } from "lucide-react";
 
 export default function AlumniDirectoryPage() {
@@ -24,6 +25,9 @@ export default function AlumniDirectoryPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const [alumniList, setAlumniList] = useState<AlumniMember[]>(sampleAlumni);
+  const [loading, setLoading] = useState(false);
 
   // Extract unique professions & cities
   const uniqueProfessions = useMemo(() => {
@@ -36,46 +40,41 @@ export default function AlumniDirectoryPage() {
     return Array.from(set);
   }, []);
 
-  // Filter logic
-  const filteredAlumni = useMemo(() => {
-    return sampleAlumni.filter((alumnus) => {
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matches =
-          alumnus.fullName.toLowerCase().includes(q) ||
-          alumnus.profession.toLowerCase().includes(q) ||
-          alumnus.company.toLowerCase().includes(q) ||
-          alumnus.locationCity.toLowerCase().includes(q) ||
-          alumnus.sscBatch.toString().includes(q);
-        if (!matches) return false;
-      }
+  // Fetch dynamically from /api/alumni
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) params.set("q", searchQuery.trim());
+        if (selectedBatch !== "all") params.set("batch", selectedBatch);
+        if (selectedProfession !== "all") params.set("profession", selectedProfession);
+        if (selectedLocation !== "all") params.set("location", selectedLocation);
+        if (verifiedOnly) params.set("verified", "true");
 
-      // Batch
-      if (selectedBatch !== "all" && alumnus.sscBatch.toString() !== selectedBatch) {
-        return false;
+        const res = await fetch(`/api/alumni?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.alumni && Array.isArray(data.alumni)) {
+            setAlumniList(data.alumni);
+          }
+        }
+      } catch (err: unknown) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("API fetch error, falling back to local dataset:", err);
+        }
+      } finally {
+        setLoading(false);
       }
+    }, 250);
 
-      // Profession
-      if (
-        selectedProfession !== "all" &&
-        !alumnus.profession.toLowerCase().includes(selectedProfession.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Location
-      if (selectedLocation !== "all" && alumnus.locationCity !== selectedLocation) {
-        return false;
-      }
-
-      // Verified only
-      if (verifiedOnly && !alumnus.isVerified) {
-        return false;
-      }
-
-      return true;
-    });
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [searchQuery, selectedBatch, selectedProfession, selectedLocation, verifiedOnly]);
 
   const resetFilters = () => {
@@ -85,6 +84,8 @@ export default function AlumniDirectoryPage() {
     setSelectedLocation("all");
     setVerifiedOnly(false);
   };
+
+  const filteredAlumni = alumniList;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -222,8 +223,9 @@ export default function AlumniDirectoryPage() {
         {/* Directory Results */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
           <div className="flex items-center justify-between mb-6 text-xs text-slate-500 font-medium">
-            <span>
+            <span className="flex items-center gap-2">
               Showing <strong className="text-slate-800 font-bold">{filteredAlumni.length}</strong> alumni profiles
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />}
             </span>
             <span>Sorted by Recent Activity &amp; Batch</span>
           </div>

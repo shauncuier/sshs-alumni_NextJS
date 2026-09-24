@@ -1,0 +1,155 @@
+# Production Deployment & Operations Guide
+### Sabuj Shikshayatan Government High School Alumni Association
+
+This document outlines the end-to-end production deployment, configuration, security hardening, and operational maintenance procedures for the **SSGHS Alumni Association Platform**.
+
+---
+
+## 1. Production Architecture Overview
+
+```text
+[ Client Browsers & Mobile Devices ]
+                 │
+                 ▼ (HTTPS / TLS 1.3)
+      [ Cloudflare / Reverse Proxy ]
+                 │
+                 ▼
+        [ Next.js 16 App Router ]
+      (Node.js Runtime / Serverless)
+       ├── NextAuth Authentication (JWT + Bcrypt)
+       ├── API Routes & Data Validation
+       └── Dynamic Server-Rendered & Static Pages
+                 │
+                 ▼ (Encrypted Connection / TLS)
+      [ MongoDB Database Cluster ]
+        (Atlas Replica Set / Compass)
+```
+
+---
+
+## 2. Environment Variables Checklist
+
+Ensure the following variables are configured in your production hosting dashboard or `.env.production` file:
+
+| Variable | Required | Description | Example Production Value |
+|---|---|---|---|
+| `DATABASE_URL` | **Yes** | MongoDB connection string | `mongodb+srv://admin:pass@cluster.mongodb.net/sshs_alumni?retryWrites=true&w=majority` |
+| `NEXTAUTH_SECRET` | **Yes** | 32+ character cryptographic secret | Generate via `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | **Yes** | Canonical public domain | `https://alumni.sabujsghs.edu.bd` |
+| `NEXT_PUBLIC_APP_URL` | **Yes** | Public frontend URL | `https://alumni.sabujsghs.edu.bd` |
+| `NEXT_PUBLIC_SCHOOL_NAME` | **Yes** | Official school name | `Sabuj Shikshayatan Government High School` |
+| `NEXT_PUBLIC_SCHOOL_EIIN` | **Yes** | Bangladesh Board EIIN | `105070` |
+
+---
+
+## 3. Deployment Option A: Vercel (Recommended)
+
+1. Push your code to a GitHub or GitLab repository.
+2. Log into [Vercel](https://vercel.com/) and click **New Project**.
+3. Import the `sshs-alumni` repository.
+4. Set Framework Preset to **Next.js**.
+5. In **Environment Variables**, paste the keys from the checklist above.
+6. Click **Deploy**. Vercel will build the optimized production output, configure edge edge routing, and provision SSL automatically.
+
+---
+
+## 4. Deployment Option B: Ubuntu VPS (Nginx + PM2 + SSL)
+
+### Step 1: Install Node.js & PM2
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs nginx certbot python3-certbot-nginx
+sudo npm install -g pm2
+```
+
+### Step 2: Clone and Build
+```bash
+git clone https://github.com/your-org/sshs-alumni.git /var/www/sshs-alumni
+cd /var/www/sshs-alumni
+npm ci
+cp .env.example .env.production
+# Edit .env.production with your real secrets
+npm run build
+```
+
+### Step 3: Launch with PM2
+```bash
+pm2 start npm --name "ssghs-alumni" -- start
+pm2 save
+pm2 startup
+```
+
+### Step 4: Configure Nginx
+Create `/etc/nginx/sites-available/ssghs-alumni`:
+```nginx
+server {
+    server_name alumni.sabujsghs.edu.bd;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable and apply SSL:
+```bash
+sudo ln -s /etc/nginx/sites-available/ssghs-alumni /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+sudo certbot --nginx -d alumni.sabujsghs.edu.bd
+```
+
+---
+
+## 5. Deployment Option C: Docker & Containerization
+
+### Dockerfile
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+---
+
+## 6. Security Hardening Checklist
+
+- [x] **Strict Transport Security (HSTS)** enabled via `next.config.ts`.
+- [x] **X-Frame-Options: SAMEORIGIN** to prevent UI redressing & clickjacking.
+- [x] **X-Content-Type-Options: nosniff** to enforce MIME type verification.
+- [x] **Bcrypt Salt Rounds**: Set to 10 for password hashing.
+- [x] **Role-Based Access Control**: Middleware protects `/admin/*` requiring `ADMIN` or `SUPER_ADMIN` credentials.
+- [x] **Input Sanitization**: API routes validate and sanitize payloads.
+- [x] **Database Isolation**: Database connection runs with least-privilege credentials.
+
+---
+
+## 7. Disaster Recovery & Backups
+
+### Automated MongoDB Backups
+Set up a daily cron task for `mongodump`:
+```bash
+0 2 * * * mongodump --uri="mongodb+srv://admin:pass@cluster.mongodb.net/sshs_alumni" --out="/var/backups/mongodb/$(date +\%F)"
+```
+
+Retention policy: Keep 7 daily backups, 4 weekly backups, and 12 monthly archives in secure off-site object storage.

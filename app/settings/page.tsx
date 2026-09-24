@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import { ShieldCheck, Lock, Bell, Eye, CheckCircle2 } from "lucide-react";
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
+  const userBatch = session?.user?.batchYear || 2008;
+
   const [phonePrivacy, setPhonePrivacy] = useState("batch");
   const [emailPrivacy, setEmailPrivacy] = useState("batch");
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -46,7 +50,7 @@ export default function SettingsPage() {
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   >
                     <option value="public">Visible to All Verified Alumni</option>
-                    <option value="batch">Visible to My Batchmates (2008) Only</option>
+                    <option value="batch">Visible to My Batchmates ({userBatch}) Only</option>
                     <option value="private">Hidden (Private to Administrators)</option>
                   </select>
                 </div>

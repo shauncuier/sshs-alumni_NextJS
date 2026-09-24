@@ -14,7 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SSGHS Alumni Association | Official Community Platform",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://ssghs-alumni.edu.bd"),
+  title: {
+    default: "SSGHS Alumni Association | Official Community Platform",
+    template: "%s | SSGHS Alumni Association",
+  },
   description:
     "Official digital ecosystem and alumni network for Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Chattogram, Bangladesh. EIIN: 105070.",
   keywords: [
@@ -27,13 +31,26 @@ export const metadata: Metadata = {
     "Bangladesh Alumni Network",
   ],
   authors: [{ name: "SSGHS Alumni Executive Council" }],
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
-    title: "SSGHS Alumni Association",
+    title: "SSGHS Alumni Association | Official Community Platform",
     description:
       "One school. Generations of memories. A lifetime of connections. The official platform for Sabuj Shikshayatan Govt. High School alumni.",
     siteName: "SSGHS Alumni Association",
     locale: "en_BD",
     type: "website",
+    images: [
+      {
+        url: "/logo.png",
+        width: 800,
+        height: 600,
+        alt: "SSGHS Alumni Association Crest",
+      },
+    ],
   },
 };
 

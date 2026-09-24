@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import {
   Bell,
   MessageSquare,
@@ -19,15 +20,23 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
+  const { data: session } = useSession();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const user = session?.user;
+  const userName = user?.name || "Alumnus";
+  const userFirst = userName.split(" ")[0] || "User";
+  const userBatch = user?.batchYear || 2008;
+  const userRole = user?.role || "ALUMNI";
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
   const notifications = [
     { id: 1, text: "Dr. Nusrat Jahan accepted your connection request.", time: "10m ago", read: false },
     { id: 2, text: "Annual Alumni Reunion 2026 registration is now open!", time: "1h ago", read: false },
     { id: 3, text: "Farhana Rahman commented on your post.", time: "3h ago", read: true },
-    { id: 4, text: "Batch 2008 informal meetup scheduled for this Friday.", time: "1d ago", read: true },
+    { id: 4, text: `Batch ${userBatch} informal meetup scheduled for this Friday.`, time: "1d ago", read: true },
   ];
 
   return (
@@ -113,21 +122,29 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition-colors"
             >
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
-                alt="You"
-                className="w-8 h-8 rounded-full object-cover border border-emerald-300"
-              />
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt={userName}
+                  className="w-8 h-8 rounded-full object-cover border border-emerald-300"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-emerald-800 text-amber-300 flex items-center justify-center font-bold text-xs border border-emerald-600">
+                  {userFirst.charAt(0)}
+                </div>
+              )}
               <span className="hidden md:inline text-xs font-bold text-slate-800">
-                Jashedul
+                {userFirst}
               </span>
             </button>
 
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-fade-in text-xs">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-fade-in text-xs">
                 <div className="px-4 py-2 border-b border-slate-100">
-                  <div className="font-bold text-slate-900">Md. Jashedul Islam</div>
-                  <div className="text-[10px] text-slate-500">SSC Batch 2008 • Verified</div>
+                  <div className="font-bold text-slate-900 truncate">{userName}</div>
+                  <div className="text-[10px] text-slate-500">
+                    SSC Batch {userBatch} • {isAdmin ? "Administrator" : "Verified Member"}
+                  </div>
                 </div>
 
                 <Link
@@ -146,22 +163,23 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
                   <Settings className="w-3.5 h-3.5 text-emerald-700" /> Account Settings
                 </Link>
 
-                <Link
-                  href="/admin"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 text-amber-700 font-semibold"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> Admin Console
-                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 text-amber-700 font-semibold"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> Admin Console
+                  </Link>
+                )}
 
                 <div className="pt-1 border-t border-slate-100">
-                  <Link
-                    href="/login"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 text-rose-600 font-medium"
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="w-full text-left flex items-center gap-2.5 px-4 py-2 hover:bg-rose-50 text-rose-600 font-medium"
                   >
                     <LogOut className="w-3.5 h-3.5" /> Sign Out
-                  </Link>
+                  </button>
                 </div>
               </div>
             )}

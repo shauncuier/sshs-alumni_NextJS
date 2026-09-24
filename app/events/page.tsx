@@ -1,19 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
-import { sampleEvents } from "@/lib/data";
-import { Calendar, Search, Filter } from "lucide-react";
+import { sampleEvents, EventItem } from "@/lib/data";
+import { getStoredEvents } from "@/lib/events-service";
+import { Calendar, Search, Filter, Loader2 } from "lucide-react";
 
 export default function EventsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [search, setSearch] = useState("");
+  const [events, setEvents] = useState<EventItem[]>(sampleEvents);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredEvents();
+    if (stored && stored.length > 0) {
+      setEvents(stored);
+    }
+  }, []);
 
   const categories = ["all", "REUNION", "SPORTS", "WEBINAR", "COMMUNITY"];
 
-  const filteredEvents = sampleEvents.filter((e) => {
+  const filteredEvents = events.filter((e) => {
     if (selectedCategory !== "all" && e.category !== selectedCategory) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -80,6 +91,85 @@ export default function EventsPage() {
                 className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
+          </div>
+
+          {/* Featured Mega Event Banner: 50 Years Golden Jubilee */}
+          {selectedCategory === "all" && !search.trim() && (
+            <div className="bg-gradient-to-r from-[#041a13] via-[#06281e] to-[#0b3d2c] text-white rounded-3xl border-2 border-amber-400/40 shadow-2xl overflow-hidden relative group">
+              <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+                {/* Left 7 cols: Image & Badges */}
+                <div className="lg:col-span-6 relative h-64 sm:h-80 lg:h-full min-h-[300px] overflow-hidden">
+                  <img
+                    src="/golden-jubilee.jpg"
+                    alt="50 Years Golden Jubilee Grand Celebration"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#06281e]" />
+                  <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow">
+                    Historic 50-Year Milestone
+                  </div>
+                </div>
+
+                {/* Right 5 cols: Details & Action */}
+                <div className="lg:col-span-6 p-6 sm:p-8 space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-900/90 text-amber-300 text-xs font-bold border border-amber-400/30">
+                      <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Approx. Dec 30, 2026 • Landmark Festival</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
+                      <span>৳1,000 / Person (৳500 extra, ৳300 below 12yr)</span>
+                    </div>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                    50 Years Golden Jubilee Grand Celebration (সুবর্ণ জয়ন্তী ৫০ বছর পূর্তি উৎসব)
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                    Sabuj Shikshayatan Government High School reaches half a century of academic pride. Join 5,000+ alumni across 50 batches for the grandest reunion in our history featuring Gurudakshina honors, traditional Mezban, souvenir kits, and drone fireworks.
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                    <div className="bg-white/10 p-2.5 rounded-xl border border-white/15">
+                      <span className="text-[10px] text-amber-300 font-bold block uppercase">Expected</span>
+                      <strong className="text-white font-black text-sm">5,000+ Alumni</strong>
+                    </div>
+                    <div className="bg-white/10 p-2.5 rounded-xl border border-white/15">
+                      <span className="text-[10px] text-amber-300 font-bold block uppercase">Souvenirs</span>
+                      <strong className="text-white font-black text-sm">Book, Polo &amp; Crest</strong>
+                    </div>
+                    <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 col-span-2 sm:col-span-1">
+                      <span className="text-[10px] text-amber-300 font-bold block uppercase">Grand Feast</span>
+                      <strong className="text-white font-black text-sm">Traditional Mezban</strong>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex flex-col sm:flex-row items-center gap-3">
+                    <Link
+                      href="/events/evt-golden-jubilee-50"
+                      className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>Explore 50-Year Mega Event &amp; Register</span>
+                      <span>&rarr;</span>
+                    </Link>
+                    <span className="text-[11px] text-emerald-200">
+                      2,340+ already registered
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Heading for other events */}
+          <div className="pt-4 flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900">
+              {selectedCategory === "all" ? "All Upcoming Gatherings & Tournaments" : `${selectedCategory} Events`}
+            </h3>
+            <span className="text-xs text-slate-400">
+              {filteredEvents.length} events scheduled
+            </span>
           </div>
 
           {/* Events Grid */}

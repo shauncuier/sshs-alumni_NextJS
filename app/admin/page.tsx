@@ -20,23 +20,37 @@ import { sampleVerificationRequests } from "@/lib/data";
 
 export default function AdminDashboardPage() {
   const [requests, setRequests] = useState(sampleVerificationRequests);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
 
   const handleApprove = (id: string) => {
+    const target = requests.find((r) => r.id === id);
     setRequests(
       requests.map((r) => (r.id === id ? { ...r, status: "VERIFIED" as const } : r))
     );
+    setActionNotice(`Approved ${target?.fullName || "alumnus"}. Official verified badge granted.`);
+    setTimeout(() => setActionNotice(null), 3500);
   };
 
   const handleReject = (id: string) => {
+    const target = requests.find((r) => r.id === id);
     setRequests(
       requests.map((r) => (r.id === id ? { ...r, status: "REJECTED" as const } : r))
     );
+    setActionNotice(`Verification request for ${target?.fullName || "alumnus"} marked as rejected.`);
+    setTimeout(() => setActionNotice(null), 3500);
   };
 
   const pendingCount = requests.filter((r) => r.status === "PENDING").length;
+  const verifiedCount = 4890 + requests.filter((r) => r.status === "VERIFIED").length;
 
   return (
     <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
+      {actionNotice && (
+        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl flex items-center gap-2 text-xs font-bold animate-fade-in shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <span>{actionNotice}</span>
+        </div>
+      )}
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -77,7 +91,7 @@ export default function AdminDashboardPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Verified Alumni</div>
-          <div className="text-2xl font-black text-emerald-700 mt-1">4,890</div>
+          <div className="text-2xl font-black text-emerald-700 mt-1">{verifiedCount.toLocaleString()}</div>
           <span className="text-[10px] text-slate-400">94% verification rate</span>
         </div>
 
