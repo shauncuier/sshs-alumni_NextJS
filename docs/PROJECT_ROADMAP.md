@@ -14,6 +14,7 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
 - [x] Admin Management Center (Verification queue with Approve/Reject, Batch manager, Event manager, Donation manager, CMS).
 - [x] MongoDB & MongoDB Compass readiness with Prisma Schema and Seed scripts.
 - [x] Comprehensive Markdown project documentation in `docs/`.
+- [x] Master Tracking & AI Incident Ledger: [`PROJECT_MILESTONES_AND_STATUS.md`](../PROJECT_MILESTONES_AND_STATUS.md).
 
 ---
 
