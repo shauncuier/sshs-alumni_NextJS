@@ -18,13 +18,13 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
 
 ---
 
-## 📍 Phase 2: Payment Gateways & Real-Time Sync
-- [ ] Integration with Bangladeshi Payment Gateways:
-  - **bKash Checkout API** (Direct merchant integration)
-  - **Nagad API**
-  - **SSLCommerz / Shurjopay** (Cards, Internet banking, Rocket)
-- [ ] Real-time WebSockets / Pusher / Socket.io for instantaneous Direct Messaging and Feed live updates.
-- [ ] Automated Email and SMS verification using Bangladesh SMS Gateways.
+## 📍 Phase 2: Payment Gateways & Real-Time Sync ✅
+- [x] Integration with Bangladeshi Payment Gateways:
+  - **bKash Tokenized Checkout API** (Token caching, create/execute/query lifecycle)
+  - **Nagad Merchant API** (RSA encryption, PG challenge protocol)
+  - **SSLCommerz / Shurjopay** (Cards, Internet banking, Rocket, Upay, IPN webhook)
+- [x] Real-time SSE (Server-Sent Events) engine for instantaneous Direct Messaging and live notification sync.
+- [x] Transactional Email service (Resend / Nodemailer / Console) with branded HTML templates.
 
 ---
 

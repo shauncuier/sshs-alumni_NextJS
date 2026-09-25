@@ -10,6 +10,9 @@ declare module "@prisma/client" {
     comment: any;
     donationCampaign: any;
     donation: any;
+    paymentTransaction: any;
+    message: any;
+    notification: any;
     verificationRequest: any;
     $connect(): Promise<void>;
     $disconnect(): Promise<void>;
@@ -26,5 +29,22 @@ declare module "@prisma/client" {
     PENDING = "PENDING",
     VERIFIED = "VERIFIED",
     REJECTED = "REJECTED",
+  }
+
+  export enum PaymentStatus {
+    INITIATED = "INITIATED",
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED",
+    CANCELLED = "CANCELLED",
+    REFUNDED = "REFUNDED",
+  }
+
+  export enum PaymentGateway {
+    BKASH = "BKASH",
+    NAGAD = "NAGAD",
+    SSLCOMMERZ = "SSLCOMMERZ",
+    BANK_TRANSFER = "BANK_TRANSFER",
+    MANUAL = "MANUAL",
   }
 }

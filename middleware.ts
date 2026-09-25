@@ -37,7 +37,9 @@ export default withAuth(
           pathname.startsWith("/contact") ||
           pathname.startsWith("/login") ||
           pathname.startsWith("/register") ||
-          pathname.startsWith("/api/auth")
+          pathname.startsWith("/api/auth") ||
+          pathname.startsWith("/api/payments") ||
+          pathname.startsWith("/api/realtime")
         ) {
           return true;
         }

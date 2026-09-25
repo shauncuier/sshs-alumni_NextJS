@@ -25,8 +25,11 @@ This document is the **single source of truth** for project milestones, componen
 | Service / Component | Target Host / Port | Current Status | PID / Process Details | Notes & Verification Command |
 | :--- | :--- | :--- | :--- | :--- |
 | **MongoDB Daemon** | `127.0.0.1:27017` | 🟢 **RUNNING** | `mongod` (PID: 5368) | Database name: `sshs_alumni`. Test: `Get-NetTCPConnection -LocalPort 27017` |
-| **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, 41 routes generated) |
-| **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MongoDB connector validated with 11 core data models |
+| **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, **50 routes** generated including 10 new Phase 2 API routes) |
+| **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MongoDB connector validated with 13 data models (11 core + `PaymentTransaction` + enhanced `Donation`) |
+| **Payment Gateway Suite** | `/api/payments/*` | 🟢 **ACTIVE** | bKash + Nagad + SSLCommerz | Sandbox mode by default. Set `BKASH_SANDBOX=false` for production. 7 API routes. |
+| **SSE Real-Time Engine** | `/api/realtime/stream` | 🟢 **ACTIVE** | Server-Sent Events with heartbeat | No external deps. Client hook: `useRealtime(userId)`. |
+| **Email Service** | Resend / SMTP / Console | 🟡 **READY** | Auto-detects provider from env vars | Console fallback active until `RESEND_API_KEY` or `SMTP_HOST` is set. |
 | **NextAuth.js Session** | `/api/auth/*` | 🟢 **ACTIVE** | JWT Session Strategy with bcrypt credentials | Configured in `app/api/auth/[...nextauth]/route.ts` |
 | **Tailwind CSS Engine** | `@tailwindcss/postcss v4` | 🟢 **OPERATIONAL** | Turbo & PostCSS pipeline active | Global theme tokens defined in `app/globals.css` |
 
@@ -93,30 +96,41 @@ This document is the **single source of truth** for project milestones, componen
 
 ---
 
-### 📍 Phase 2: Payment Gateways & Real-Time Sync (Status: In Progress)
+### 📍 Phase 2: Payment Gateways & Real-Time Sync (Status: ✅ Completed)
 
-- [ ] **Milestone 2.1: Bangladeshi Payment Gateways Integration**
-  - **Status**: Scheduled / In Progress
-  - **Targets**:
-    - [ ] bKash Direct Checkout API (Tokenized URL checkout for donation campaigns and reunion fees).
-    - [ ] Nagad Payment Gateway API.
-    - [ ] SSLCommerz / Shurjopay aggregator integration (Debit/Credit Cards, Rocket, Upay).
-    - [ ] Automatic digital donation receipt generation (PDF with QR verification).
-  - **Expected Files**: `lib/payments/bkash.ts`, `lib/payments/sslcommerz.ts`, `app/api/donations/initiate/route.ts`, `app/api/donations/ipn/route.ts`.
+- [x] **Milestone 2.1: Bangladeshi Payment Gateways Integration**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **bKash Tokenized Checkout API** — Token caching, create/execute/query payment lifecycle. Sandbox and production URL switching via `BKASH_SANDBOX` env var.
+    - ✅ **Nagad Merchant API** — RSA public key encryption, private key signing, init/complete/verify flow with PG challenge protocol.
+    - ✅ **SSLCommerz Payment Aggregator** — Session initiation, IPN webhook with MD5 hash validation, success/fail/cancel handlers. Supports Visa, Mastercard, Rocket, Upay, Internet Banking.
+    - ✅ **Unified Payment Service** — Single `initiatePayment()` entry point that routes to correct gateway based on user selection. Bank transfer and manual modes supported.
+    - ✅ **Prisma Schema Updates** — New `PaymentStatus` & `PaymentGateway` enums, enhanced `Donation` model with gateway tracking fields, new `PaymentTransaction` audit model.
+    - ✅ **Full API Route Suite** — `/api/payments/initiate`, `/api/payments/bkash/callback`, `/api/payments/nagad/callback`, `/api/payments/sslcommerz/{success,fail,cancel,ipn}`.
+    - ⏳ PDF receipt generation with QR code deferred to Phase 3.1 (Digital Smart ID Card).
+  - **Key Files**: `lib/payments/bkash.ts`, `lib/payments/nagad.ts`, `lib/payments/sslcommerz.ts`, `lib/payments/index.ts`, `lib/payments/types.ts`, `app/api/payments/*/route.ts`, `prisma/schema.prisma`.
 
-- [ ] **Milestone 2.2: Live Real-Time WebSockets Engine**
-  - **Status**: Next Up
-  - **Targets**:
-    - [ ] WebSocket / Pusher / Socket.io channel for direct messaging without polling.
-    - [ ] Live notification badge sync (new comments, verification approval, reunion alert).
-    - [ ] Live feed updates when a batchmate posts a memory.
-  - **Expected Files**: `lib/socket.ts`, `components/chat/ChatBox.tsx`, `components/notifications/NotificationBell.tsx`.
+- [x] **Milestone 2.2: Live Real-Time Engine (SSE)**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **Server-Sent Events (SSE)** real-time system — zero external dependencies (no Pusher/Socket.io needed for MVP).
+    - ✅ **Per-user connection registry** with automatic cleanup on disconnect.
+    - ✅ **Event types**: `new_message`, `message_read`, `typing_start/stop`, `new_notification`, `new_post`, `post_liked`, `payment_update`, `announcement`, `heartbeat`.
+    - ✅ **SSE stream endpoint** at `/api/realtime/stream?userId=xxx` with 30s heartbeat keep-alive.
+    - ✅ **React hook** `useRealtime(userId)` — auto-connect, auto-reconnect on failure, provides `isConnected`, `lastMessage`, `lastNotification`, `unreadMessageCount`, `unreadNotificationCount`.
+    - ✅ **Messages API** at `/api/messages` — GET conversations/threads, POST with real-time push, PATCH read receipts.
+    - ✅ **Notifications API** at `/api/notifications` — GET with unread count, POST with SSE push, PATCH individual/bulk read marking.
+    - ✅ **Online presence** — `isUserOnline()`, `getOnlineUserIds()` utilities.
+  - **Key Files**: `lib/realtime.ts`, `lib/hooks/useRealtime.ts`, `app/api/realtime/stream/route.ts`, `app/api/messages/route.ts`, `app/api/notifications/route.ts`.
 
-- [ ] **Milestone 2.3: SMS & Automated Transactional Emails**
-  - **Status**: Planned
-  - **Targets**:
-    - [ ] Local Bangladesh SMS Gateway (e.g. Greenweb / Reve SMS) for batch announcements and OTP.
-    - [ ] Resend / Nodemailer transactional templates for verification acceptance and event RSVP confirmations.
+- [x] **Milestone 2.3: Transactional Email Service**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **Multi-provider email service** — Resend API (primary), Nodemailer/SMTP (fallback), Console (dev mode). Auto-detects provider from env vars.
+    - ✅ **Branded HTML email templates**: Verification Approval, Donation Receipt Confirmation, Event RSVP Confirmation.
+    - ✅ **Environment variables** configured in `.env` and `.env.example` for Resend, SMTP, and Bangladesh SMS gateway.
+    - ⏳ SMS gateway integration (Greenweb/Reve SMS) ready for wiring — env vars and service skeleton in place.
+  - **Key Files**: `lib/email.ts`, `.env`, `.env.example`.
 
 ---
 

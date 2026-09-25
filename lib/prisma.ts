@@ -32,7 +32,35 @@ class SafePrismaFallback {
   };
   donationCampaign = {
     findMany: async () => [],
+    findUnique: async () => null,
     upsert: async (args: any) => args.create,
+    update: async (args: any) => args.data,
+  };
+  donation = {
+    findMany: async () => [],
+    findUnique: async () => null,
+    create: async (args: any) => ({ id: `mock-donation-${Date.now()}`, ...args.data }),
+    update: async (args: any) => args.data,
+    updateMany: async () => ({ count: 0 }),
+  };
+  paymentTransaction = {
+    findMany: async () => [],
+    findUnique: async () => null,
+    findFirst: async () => null,
+    create: async (args: any) => ({ id: `mock-tx-${Date.now()}`, ...args.data }),
+    update: async (args: any) => args.data,
+  };
+  message = {
+    findMany: async () => [],
+    findUnique: async () => null,
+    create: async (args: any) => ({ id: `mock-msg-${Date.now()}`, createdAt: new Date(), ...args.data }),
+    updateMany: async () => ({ count: 0 }),
+  };
+  notification = {
+    findMany: async () => [],
+    findUnique: async () => null,
+    create: async (args: any) => ({ id: `mock-notif-${Date.now()}`, createdAt: new Date(), ...args.data }),
+    updateMany: async () => ({ count: 0 }),
   };
   verificationRequest = {
     findMany: async () => [],
