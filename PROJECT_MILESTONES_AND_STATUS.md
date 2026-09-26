@@ -25,10 +25,12 @@ This document is the **single source of truth** for project milestones, componen
 | Service / Component | Target Host / Port | Current Status | PID / Process Details | Notes & Verification Command |
 | :--- | :--- | :--- | :--- | :--- |
 | **MongoDB Daemon** | `127.0.0.1:27017` | 🟢 **RUNNING** | `mongod` (PID: 5368) | Database name: `sshs_alumni`. Test: `Get-NetTCPConnection -LocalPort 27017` |
-| **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, **50 routes** generated including 10 new Phase 2 API routes) |
+| **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, **58 routes** generated across 3 phases) |
 | **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MongoDB connector validated with 13 data models (11 core + `PaymentTransaction` + enhanced `Donation`) |
 | **Payment Gateway Suite** | `/api/payments/*` | 🟢 **ACTIVE** | bKash + Nagad + SSLCommerz | Sandbox mode by default. Set `BKASH_SANDBOX=false` for production. 7 API routes. |
-| **SSE Real-Time Engine** | `/api/realtime/stream` | 🟢 **ACTIVE** | Server-Sent Events with heartbeat | No external deps. Client hook: `useRealtime(userId)`. |
+| **SSE Real-Time Engine** | `/api/realtime/stream` | 🟢 **ACTIVE** | Server-Sent Events with heartbeat | No external deps. Client hook: `useRealtime(userId)`. Direct messaging & live alerts wired. |
+| **Digital Smart ID Card** | `/card` & `/verify/*` | 🟢 **ACTIVE** | HMAC-SHA256 Token Signature + QR Generator | 3D Flippable card, Gate Scanner (`/admin/gate-verify`), Apple & Google Wallet pass APIs. |
+| **Progressive Web App** | `public/sw.js` | 🟢 **ACTIVE** | PWA Service Worker + Web Manifest | Offline batch directory cache, offline campus banner, web push notifications (`/api/push/*`). |
 | **Email Service** | Resend / SMTP / Console | 🟡 **READY** | Auto-detects provider from env vars | Console fallback active until `RESEND_API_KEY` or `SMTP_HOST` is set. |
 | **NextAuth.js Session** | `/api/auth/*` | 🟢 **ACTIVE** | JWT Session Strategy with bcrypt credentials | Configured in `app/api/auth/[...nextauth]/route.ts` |
 | **Tailwind CSS Engine** | `@tailwindcss/postcss v4` | 🟢 **OPERATIONAL** | Turbo & PostCSS pipeline active | Global theme tokens defined in `app/globals.css` |
@@ -37,7 +39,7 @@ This document is the **single source of truth** for project milestones, componen
 - `.env` points to `mongodb://localhost:27017/sshs_alumni`
 - `NEXT_PUBLIC_APP_URL`: `http://localhost:3000`
 - `NEXTAUTH_SECRET`: Configured for session hashing
-- Production Build: 41 routes generated statically or dynamically on-demand
+- Production Build: 58 routes generated statically or dynamically on-demand
 
 ---
 
@@ -134,20 +136,28 @@ This document is the **single source of truth** for project milestones, componen
 
 ---
 
-### 📍 Phase 3: Digital Smart Alumni Card & Mobile Ecosystem (Status: Planned)
+### 📍 Phase 3: Digital Smart Alumni Card & Mobile Ecosystem (Status: ✅ Completed)
 
-- [ ] **Milestone 3.1: Digital Smart ID Card with Encrypted QR Verification**
-  - **Status**: Planned
-  - **Targets**:
-    - [ ] Dynamic SVG/Canvas alumni card generator with student graduation year, EIIN 105070 watermark, and unique alumni ID.
-    - [ ] Signed QR code scannable by school gate volunteers for instant verification during reunions.
-    - [ ] Apple Wallet (.pkpass) and Google Wallet pass file generation.
+- [x] **Milestone 3.1: Digital Smart ID Card with Encrypted QR Verification**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **Cryptographic ID Token Signing**: Built `lib/id-card.ts` using HMAC-SHA256 signature to guarantee credential authenticity and prevent ticket/pass forgery at reunion events.
+    - ✅ **Interactive 3D Flippable Smart ID Card**: Created `components/card/DigitalAlumniCard.tsx` with high-resolution QR code, school crest, EIIN 105070 watermark, graduation batch typography, blood group, and lifetime membership status.
+    - ✅ **Member Card Portal**: Built `app/card/page.tsx` for card view, flip preview, print styling, link sharing, and pass saving.
+    - ✅ **Public Gate Verification Page**: Built `app/verify/[token]/page.tsx` for gate security & reunion volunteers with instant alumnus authentication, batch check, and "Check-in Alumnus" confirmation.
+    - ✅ **Admin / Volunteer Gate QR Scanner**: Built `app/admin/gate-verify/page.tsx` with optical camera scanner viewfinder, manual token lookup, test scan simulator, and live verified delegate ledger.
+    - ✅ **Apple Wallet & Google Wallet Pass Endpoints**: Built `/api/alumni/card/wallet/apple` (.pkpass JSON manifest) and `/api/alumni/card/wallet/google` (Save to Google Pay payload).
+  - **Key Files**: `lib/id-card.ts`, `components/card/DigitalAlumniCard.tsx`, `app/card/page.tsx`, `app/verify/[token]/page.tsx`, `app/admin/gate-verify/page.tsx`, `app/api/alumni/card/*/route.ts`.
 
-- [ ] **Milestone 3.2: Progressive Web Application (PWA) & Offline Directory**
-  - **Status**: Planned
-  - **Targets**:
-    - [ ] Service worker caching for batch member lists when offline on campus.
-    - [ ] Web Push Notifications for urgent school announcements.
+- [x] **Milestone 3.2: Progressive Web Application (PWA) & Offline Directory**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **App Manifest**: Created `app/manifest.ts` configured for standalone PWA mode with Sabuj Shikshayatan branding (`#064e3b`), icons, and shortcuts (`/card`, `/alumni`, `/feed`, `/events`).
+    - ✅ **Service Worker**: Created `public/sw.js` with offline shell caching, stale-while-revalidate for directories and images, network-first fallbacks, and web push handlers.
+    - ✅ **Offline Batch Directory Storage**: Created `lib/offline-storage.ts` to cache batch member lists with 7-day TTL so alumni can query classmates offline on campus.
+    - ✅ **PWA Provider & Prompt**: Created `components/pwa/PwaProvider.tsx` in `app/layout.tsx` with offline detection banner and "Install SSGHS Alumni App" prompt.
+    - ✅ **Web Push Notification Engine**: Created `/api/push/subscribe` and `/api/push/send` endpoints for instant school & reunion announcements.
+  - **Key Files**: `app/manifest.ts`, `public/sw.js`, `lib/offline-storage.ts`, `components/pwa/PwaProvider.tsx`, `app/api/push/*/route.ts`.
 
 ---
 

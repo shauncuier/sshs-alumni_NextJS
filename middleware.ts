@@ -39,7 +39,9 @@ export default withAuth(
           pathname.startsWith("/register") ||
           pathname.startsWith("/api/auth") ||
           pathname.startsWith("/api/payments") ||
-          pathname.startsWith("/api/realtime")
+          pathname.startsWith("/api/realtime") ||
+          pathname.startsWith("/verify") ||
+          pathname.startsWith("/api/alumni/card/verify")
         ) {
           return true;
         }
@@ -63,5 +65,6 @@ export const config = {
     "/messages/:path*",
     "/network/:path*",
     "/settings/:path*",
+    "/card/:path*",
   ],
 };

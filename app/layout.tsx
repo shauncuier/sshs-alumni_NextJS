@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
+import PwaProvider from "@/components/pwa/PwaProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,6 +37,12 @@ export const metadata: Metadata = {
     shortcut: "/logo.png",
     apple: "/logo.png",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SSGHS Alumni",
+  },
   openGraph: {
     title: "SSGHS Alumni Association | Official Community Platform",
     description:
@@ -65,7 +72,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <PwaProvider>{children}</PwaProvider>
+        </AuthProvider>
       </body>
     </html>
   );

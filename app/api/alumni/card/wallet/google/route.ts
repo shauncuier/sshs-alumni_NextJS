@@ -1,0 +1,37 @@
+/**
+ * SSGHS Alumni — Google Wallet Pass API
+ * GET /api/alumni/card/wallet/google?token=xxx
+ * 
+ * Generates Google Wallet save pass payload.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifyCardToken, buildGoogleWalletPassPayload } from "@/lib/id-card";
+
+export async function GET(req: NextRequest) {
+  const token = req.nextUrl.searchParams.get("token");
+
+  if (!token) {
+    return NextResponse.json({ error: "Card token is required" }, { status: 400 });
+  }
+
+  const { valid, payload, error } = verifyCardToken(token);
+
+  if (!valid || !payload) {
+    return NextResponse.json({ error: error || "Invalid card token" }, { status: 403 });
+  }
+
+  const host = req.headers.get("host") || "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  const verifyUrl = `${protocol}://${host}/verify/${token}`;
+
+  const googleWalletPayload = buildGoogleWalletPassPayload(payload, verifyUrl);
+
+  return NextResponse.json({
+    success: true,
+    platform: "Google Wallet",
+    payload: googleWalletPayload,
+    saveUrl: `https://pay.google.com/gp/v/save/${encodeURIComponent(payload.alumniId)}`,
+    help: "Add this pass to Google Wallet on Android devices for NFC/QR display at school reunions.",
+  });
+}

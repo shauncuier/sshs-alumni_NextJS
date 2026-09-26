@@ -21,19 +21,79 @@ export default function DonatePage() {
   const [customAmount, setCustomAmount] = useState("");
   const [donorName, setDonorName] = useState("Md. Jashedul Islam");
   const [donorBatch, setDonorBatch] = useState("2008");
+  const [donorEmail, setDonorEmail] = useState("jashedul@example.com");
+  const [donorPhone, setDonorPhone] = useState("01712345678");
   const [paymentMethod, setPaymentMethod] = useState("bKash");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [receiptData, setReceiptData] = useState<{
+    receiptId: string;
+    gateway: string;
+    amount: number;
+    redirectUrl?: string;
+    instructions?: string[];
+  } | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const activeCampaign =
     sampleDonations.find((c) => c.id === selectedCampaign) || sampleDonations[0];
 
-  const handlePledge = (e: React.FormEvent) => {
+  const handlePledge = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      // simulate success
-    }, 1000);
+    setErrorMsg(null);
+    setIsLoading(true);
+
+    const donationAmt = parseFloat(String(amount));
+    if (!donationAmt || donationAmt <= 0) {
+      setErrorMsg("Please enter a valid donation amount.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId: selectedCampaign,
+          amount: donationAmt,
+          donorName,
+          donorEmail,
+          donorPhone,
+          donorBatch,
+          paymentMethod,
+          isAnonymous,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Payment initiation failed");
+      }
+
+      setReceiptData({
+        receiptId: data.receiptId || `SSGHS-DON-${Date.now().toString().slice(-8)}`,
+        gateway: data.gateway || paymentMethod,
+        amount: donationAmt,
+        redirectUrl: data.redirectUrl,
+        instructions: data.instructions,
+      });
+
+      setSubmitted(true);
+
+      // If gateway provides an external redirect URL (production or live sandbox)
+      if (data.redirectUrl && data.redirectUrl !== window.location.href) {
+        // Automatically redirect or let the user click if desired
+        window.location.href = data.redirectUrl;
+      }
+    } catch (err: any) {
+      console.error("[Donation Error]", err);
+      setErrorMsg(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const presetAmounts = [500, 1000, 5000, 10000];
@@ -147,18 +207,68 @@ export default function DonatePage() {
                   </h3>
                 </div>
 
-                {submitted ? (
-                  <div className="py-8 text-center space-y-3">
+                {errorMsg && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
+                    <span className="font-bold">Error:</span> {errorMsg}
+                  </div>
+                )}
+
+                {submitted && receiptData ? (
+                  <div className="py-6 space-y-4">
                     <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
                       <CheckCircle2 className="w-8 h-8" />
                     </div>
-                    <h4 className="text-lg font-bold text-slate-800">Thank You For Giving Back!</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Your contribution pledge has been recorded. The transaction reference has been sent to your registered email address.
-                    </p>
+                    <div className="text-center">
+                      <h4 className="text-lg font-bold text-slate-800">Payment Initiated / Recorded</h4>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Thank you for supporting Sabuj Shikshayatan. Your contribution helps empower our students.
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Receipt ID:</span>
+                        <span className="font-mono font-bold text-slate-800">{receiptData.receiptId}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Amount:</span>
+                        <span className="font-bold text-emerald-700">৳{receiptData.amount.toLocaleString()} BDT</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Selected Gateway:</span>
+                        <span className="font-bold text-slate-800 uppercase">{receiptData.gateway}</span>
+                      </div>
+                    </div>
+
+                    {receiptData.instructions && receiptData.instructions.length > 0 && (
+                      <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 text-xs space-y-1.5">
+                        <span className="font-bold text-amber-900 block">Transfer Instructions:</span>
+                        {receiptData.instructions.map((ins, idx) => (
+                          <p key={idx} className="text-amber-800 text-[11px] leading-relaxed">
+                            {ins}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {receiptData.redirectUrl && (
+                      <a
+                        href={receiptData.redirectUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full py-3 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>Complete Payment at Gateway</span>
+                        <CreditCard className="w-4 h-4" />
+                      </a>
+                    )}
+
                     <button
-                      onClick={() => setSubmitted(false)}
-                      className="mt-4 px-4 py-2 bg-emerald-800 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors"
+                      onClick={() => {
+                        setSubmitted(false);
+                        setReceiptData(null);
+                      }}
+                      className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
                     >
                       Make Another Contribution
                     </button>
@@ -222,6 +332,34 @@ export default function DonatePage() {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block font-semibold text-slate-700 mb-1">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            value={donorEmail}
+                            onChange={(e) => setDonorEmail(e.target.value)}
+                            className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">
+                            Mobile (for SMS)
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            value={donorPhone}
+                            onChange={(e) => setDonorPhone(e.target.value)}
+                            className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">
                             SSC Batch
                           </label>
                           <input
@@ -242,10 +380,10 @@ export default function DonatePage() {
                             onChange={(e) => setPaymentMethod(e.target.value)}
                             className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           >
-                            <option value="bKash">bKash (Merchant)</option>
-                            <option value="Nagad">Nagad (Merchant)</option>
-                            <option value="Card">Visa / Mastercard</option>
-                            <option value="Bank">Bank Deposit</option>
+                            <option value="bKash">bKash (Merchant / PGW)</option>
+                            <option value="Nagad">Nagad (Direct API)</option>
+                            <option value="SSLCommerz">SSLCommerz (Cards/MFS)</option>
+                            <option value="Bank">Bank Deposit / Cheque</option>
                           </select>
                         </div>
                       </div>
@@ -266,10 +404,11 @@ export default function DonatePage() {
 
                     <button
                       type="submit"
-                      className="w-full py-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-2"
+                      disabled={isLoading}
+                      className="w-full py-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                     >
                       <Heart className="w-4 h-4 fill-white" />
-                      <span>Proceed to Confirm Contribution</span>
+                      <span>{isLoading ? "Processing with Gateway..." : "Proceed to Confirm Contribution"}</span>
                     </button>
 
                     <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 pt-1">

@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   GraduationCap,
   LogOut,
-  Layers
+  Layers,
+  QrCode
 } from "lucide-react";
 
 export default function AppSidebar() {
@@ -33,6 +34,7 @@ export default function AppSidebar() {
 
   const links = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Digital Smart Card", href: "/card", icon: QrCode },
     { name: "My Profile", href: "/profile", icon: User },
     { name: "Community Feed", href: "/feed", icon: Radio },
     { name: "My Network", href: "/network", icon: Users },
