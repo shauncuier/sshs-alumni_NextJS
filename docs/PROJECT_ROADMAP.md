@@ -34,3 +34,25 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
   - Scan-to-verify identity at school gate and official reunion registration counters (`/verify/[token]` and `/admin/gate-verify`).
   - Apple Wallet (.pkpass JSON manifest) & Google Wallet pass integration (`/api/alumni/card/wallet/*`).
 - [x] Progressive Web App (PWA) with offline batch directory caching, `public/sw.js` service worker, and web push notifications (`/api/push/subscribe`, `/api/push/send`).
+
+---
+
+## 📍 Phase 4: Career & Mentorship Network + Reunion Ticketing Ecosystem ✅
+- [x] **Alumni Career Hub & Job Portal**:
+  - Job & internship listings posted by alumni employers with application tracking (`/careers`, `/careers/[id]`, `/careers/new`, `/api/jobs`).
+  - Resume drop, skill tag filters, salary indicators, location (Chattogram, Dhaka, Remote, Global).
+- [x] **1-on-1 Alumni Mentorship Matching**:
+  - Senior mentors across BCS Cadre, Medicine, Engineering, Software/AI, Corporate, and European academia (`/mentorship`, `/api/mentorship`).
+  - Mentorship request & scheduling flow with automated Google Meet room link generation.
+- [x] **Reunion Ticketing & Merchandise System**:
+  - Tiered registration: Alumnus Delegate, Couple/Family, Golden Jubilee VIP Patron, Sponsor a Retired Teacher (`/events/[id]/ticket`, `/api/events/[id]/ticket`).
+  - T-shirt / souvenir size selector (S, M, L, XL, XXL) & dietary preferences (Traditional Mezban Halal, Diabetic, Veg).
+  - Automated seat/table assignment with printable ticket pass & gate verification QR code.
+
+---
+
+## 📍 Phase 5: Golden Jubilee Digital Archive & School Endowment Fund
+- [ ] Historical photo archive by batch (1975–2025) with high-res zoom & community tagging.
+- [ ] Retired teachers tribute wall & emergency healthcare fund ledger.
+- [ ] Public audited endowment fund financials & annual balance sheet viewer.
+

@@ -24,7 +24,9 @@ import {
   User,
   HeartHandshake,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Briefcase,
+  GraduationCap
 } from "lucide-react";
 import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
 
@@ -89,6 +91,18 @@ export default function Navbar() {
 
   // Secondary institutional links
   const moreLinks = [
+    {
+      name: "Career Hub",
+      href: "/careers",
+      icon: Briefcase,
+      desc: "Job openings & internships from alumni firms",
+    },
+    {
+      name: "1-on-1 Mentorship",
+      href: "/mentorship",
+      icon: GraduationCap,
+      desc: "BCS, Medicine & Tech career guidance",
+    },
     {
       name: "About Association",
       href: "/about",

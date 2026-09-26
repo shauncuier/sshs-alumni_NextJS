@@ -41,7 +41,11 @@ export default withAuth(
           pathname.startsWith("/api/payments") ||
           pathname.startsWith("/api/realtime") ||
           pathname.startsWith("/verify") ||
-          pathname.startsWith("/api/alumni/card/verify")
+          pathname.startsWith("/api/alumni/card/verify") ||
+          pathname.startsWith("/careers") ||
+          pathname.startsWith("/mentorship") ||
+          pathname.startsWith("/api/jobs") ||
+          pathname.startsWith("/api/mentorship")
         ) {
           return true;
         }

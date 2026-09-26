@@ -21,7 +21,8 @@ import {
   GraduationCap,
   LogOut,
   Layers,
-  QrCode
+  QrCode,
+  Briefcase
 } from "lucide-react";
 
 export default function AppSidebar() {
@@ -38,6 +39,8 @@ export default function AppSidebar() {
     { name: "My Profile", href: "/profile", icon: User },
     { name: "Community Feed", href: "/feed", icon: Radio },
     { name: "My Network", href: "/network", icon: Users },
+    { name: "Career Hub", href: "/careers", icon: Briefcase },
+    { name: "1-on-1 Mentorship", href: "/mentorship", icon: GraduationCap },
     { name: "Alumni Directory", href: "/alumni", icon: GraduationCap },
     { name: "My Batch", href: `/batches/${userBatch}`, icon: Layers },
     { name: "Events", href: "/events", icon: Calendar },

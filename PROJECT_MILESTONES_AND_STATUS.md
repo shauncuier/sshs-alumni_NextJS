@@ -25,12 +25,13 @@ This document is the **single source of truth** for project milestones, componen
 | Service / Component | Target Host / Port | Current Status | PID / Process Details | Notes & Verification Command |
 | :--- | :--- | :--- | :--- | :--- |
 | **MongoDB Daemon** | `127.0.0.1:27017` | 🟢 **RUNNING** | `mongod` (PID: 5368) | Database name: `sshs_alumni`. Test: `Get-NetTCPConnection -LocalPort 27017` |
-| **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, **58 routes** generated across 3 phases) |
+| **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, **63 routes** generated across 4 phases) |
 | **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MongoDB connector validated with 13 data models (11 core + `PaymentTransaction` + enhanced `Donation`) |
 | **Payment Gateway Suite** | `/api/payments/*` | 🟢 **ACTIVE** | bKash + Nagad + SSLCommerz | Sandbox mode by default. Set `BKASH_SANDBOX=false` for production. 7 API routes. |
 | **SSE Real-Time Engine** | `/api/realtime/stream` | 🟢 **ACTIVE** | Server-Sent Events with heartbeat | No external deps. Client hook: `useRealtime(userId)`. Direct messaging & live alerts wired. |
 | **Digital Smart ID Card** | `/card` & `/verify/*` | 🟢 **ACTIVE** | HMAC-SHA256 Token Signature + QR Generator | 3D Flippable card, Gate Scanner (`/admin/gate-verify`), Apple & Google Wallet pass APIs. |
 | **Progressive Web App** | `public/sw.js` | 🟢 **ACTIVE** | PWA Service Worker + Web Manifest | Offline batch directory cache, offline campus banner, web push notifications (`/api/push/*`). |
+| **Career & Mentorship Hub**| `/careers` & `/mentorship` | 🟢 **ACTIVE** | Job Board + 1-on-1 Guidance Engine | Alumni vacancies, resume dispatch, mentorship scheduling with Google Meet links. |
 | **Email Service** | Resend / SMTP / Console | 🟡 **READY** | Auto-detects provider from env vars | Console fallback active until `RESEND_API_KEY` or `SMTP_HOST` is set. |
 | **NextAuth.js Session** | `/api/auth/*` | 🟢 **ACTIVE** | JWT Session Strategy with bcrypt credentials | Configured in `app/api/auth/[...nextauth]/route.ts` |
 | **Tailwind CSS Engine** | `@tailwindcss/postcss v4` | 🟢 **OPERATIONAL** | Turbo & PostCSS pipeline active | Global theme tokens defined in `app/globals.css` |
@@ -39,7 +40,7 @@ This document is the **single source of truth** for project milestones, componen
 - `.env` points to `mongodb://localhost:27017/sshs_alumni`
 - `NEXT_PUBLIC_APP_URL`: `http://localhost:3000`
 - `NEXTAUTH_SECRET`: Configured for session hashing
-- Production Build: 58 routes generated statically or dynamically on-demand
+- Production Build: 63 routes generated statically or dynamically on-demand
 
 ---
 
@@ -158,6 +159,37 @@ This document is the **single source of truth** for project milestones, componen
     - ✅ **PWA Provider & Prompt**: Created `components/pwa/PwaProvider.tsx` in `app/layout.tsx` with offline detection banner and "Install SSGHS Alumni App" prompt.
     - ✅ **Web Push Notification Engine**: Created `/api/push/subscribe` and `/api/push/send` endpoints for instant school & reunion announcements.
   - **Key Files**: `app/manifest.ts`, `public/sw.js`, `lib/offline-storage.ts`, `components/pwa/PwaProvider.tsx`, `app/api/push/*/route.ts`.
+
+---
+
+### 📍 Phase 4: Career & Mentorship Network + Reunion Ticketing Ecosystem (Status: ✅ Completed)
+
+- [x] **Milestone 4.1: Alumni Career Hub & Job Portal**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **Job Directory & Search**: Created `app/careers/page.tsx` with live keyword search, department sector filtering (Engineering, Medicine, Logistics, QA), and workplace setting (Remote, Hybrid, On-site).
+    - ✅ **Direct Alumnus Application**: Created `app/careers/[id]/page.tsx` with full role specs, perks, recruiter alumnus profile badge, and direct resume/portfolio submission form.
+    - ✅ **Alumni Employer Vacancy Publisher**: Created `app/careers/new/page.tsx` allowing alumni to publish job and internship openings to recruit from the SSGHS alumni talent pool.
+    - ✅ **Jobs & Applications API**: Created `/api/jobs` (GET filterable jobs, POST new job) and `/api/jobs/[id]/apply` (POST candidate resume and note).
+  - **Key Files**: `lib/career-data.ts`, `app/careers/page.tsx`, `app/careers/[id]/page.tsx`, `app/careers/new/page.tsx`, `app/api/jobs/route.ts`, `app/api/jobs/[id]/apply/route.ts`.
+
+- [x] **Milestone 4.2: 1-on-1 Alumni Mentorship Matching Engine**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **Distinguished Mentor Directory**: Created `app/mentorship/page.tsx` featuring senior alumni mentors across Bangladesh Civil Service (BCS Administration Cadre), clinical medicine (Chittagong Medical College), Silicon Valley cloud/AI architecture, and European academia (DAAD / Germany).
+    - ✅ **Interactive 1-on-1 Booking Modal**: Mentee batch, topic selection, preferred timing, and question brief with automated Google Meet room link generation.
+    - ✅ **Mentorship API**: Created `/api/mentorship` (GET mentors by domain, POST book session).
+  - **Key Files**: `app/mentorship/page.tsx`, `app/api/mentorship/route.ts`, `lib/career-data.ts`.
+
+- [x] **Milestone 4.3: Reunion Ticketing & Merchandise Ecosystem**
+  - **Finished**: 2026-09-26
+  - **Details**:
+    - ✅ **Tiered Delegate Pass Selection**: Created `app/events/[id]/ticket/page.tsx` with 4 distinct tiers: Alumnus Delegate Pass (৳1,500), Couple/Family Pass (৳2,800), Golden Jubilee VIP Patron Pass (৳5,000), and Sponsor a Retired Teacher's Seat (৳1,000).
+    - ✅ **Merchandise & Hospitality Customization**: Reunion T-shirt size picker (S, M, L, XL, XXL) and Luncheon dietary preference selection (Traditional Mezban Halal, Diabetic, Pure Vegetarian).
+    - ✅ **Payment Gateway Routing**: Direct checkout with bKash, Nagad, and Cards.
+    - ✅ **Cryptographic Digital Ticket Pass**: Issues signed delegate ticket pass with automated seat/table assignment, pass number, and Gate QR Code scannable by the Gate Scanner.
+    - ✅ **Reunion Ticketing API**: Created `/api/events/[id]/ticket` route.
+  - **Key Files**: `app/events/[id]/ticket/page.tsx`, `app/api/events/[id]/ticket/route.ts`.
 
 ---
 

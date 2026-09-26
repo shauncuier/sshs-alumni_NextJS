@@ -29,7 +29,8 @@ import {
   ChevronRight,
   Gift,
   Flame,
-  Radio
+  Radio,
+  Ticket
 } from "lucide-react";
 
 interface EventDetailPageProps {
@@ -590,6 +591,14 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
                   <p className="text-[11px] text-slate-400 text-center mt-2">
                     Instant confirmation voucher • T-shirt size selection inside
                   </p>
+
+                  <Link
+                    href={`/events/${event.id}/ticket`}
+                    className="w-full mt-3 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Ticket className="w-4 h-4" />
+                    <span>Select Tiered Pass &amp; Kit Size</span>
+                  </Link>
                 </div>
 
                 {/* Metadata List */}
