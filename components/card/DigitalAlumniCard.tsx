@@ -274,32 +274,38 @@ export default function DigitalAlumniCard({
           </button>
         </div>
 
-        {/* Digital Wallet Passes */}
-        <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl flex items-center justify-between text-xs">
-          <div className="space-y-0.5">
-            <span className="font-bold text-emerald-950 block">Mobile Wallet Passes</span>
-            <span className="text-[11px] text-emerald-700">Save to your smartphone for offline gate check-in</span>
-          </div>
+        {/* Digital Wallet Passes: issued only to verified members (the wallet API enforces this too) */}
+        {card.status === "VERIFIED" ? (
+          <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl flex items-center justify-between text-xs">
+            <div className="space-y-0.5">
+              <span className="font-bold text-emerald-950 block">Mobile Wallet Passes</span>
+              <span className="text-[11px] text-emerald-700">Save to your smartphone for offline gate check-in</span>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <a
-              href={`/api/alumni/card/wallet/apple?token=${signedToken || ""}`}
-              download={`SSGHS-${card.alumniId}.json`}
-              className="px-2.5 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-slate-800 transition-colors flex items-center gap-1"
-            >
-              <span>Apple</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/api/alumni/card/wallet/apple?token=${signedToken || ""}`}
+                download={`SSGHS-${card.alumniId}.json`}
+                className="px-2.5 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-bold hover:bg-slate-800 transition-colors flex items-center gap-1"
+              >
+                <span>Apple</span>
+              </a>
 
-            <a
-              href={`/api/alumni/card/wallet/google?token=${signedToken || ""}`}
-              target="_blank"
-              rel="noreferrer"
-              className="px-2.5 py-1.5 bg-emerald-800 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1"
-            >
-              <span>Google</span>
-            </a>
+              <a
+                href={`/api/alumni/card/wallet/google?token=${signedToken || ""}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2.5 py-1.5 bg-emerald-800 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1"
+              >
+                <span>Google</span>
+              </a>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600">
+            Mobile wallet passes become available once your membership is verified.
+          </div>
+        )}
       </div>
     </div>
   );

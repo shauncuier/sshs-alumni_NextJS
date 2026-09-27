@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCardToken } from "@/lib/id-card";
-import prisma from "@/lib/prisma";
+import { checkCardMembership } from "@/lib/card-membership";
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,40 +49,18 @@ export async function POST(req: NextRequest) {
       expiresAt: payload.expiresAt ? new Date(payload.expiresAt).toISOString() : "LIFETIME",
     };
 
-    // A valid signature only proves the pass was issued once. Admit the holder only
-    // if the member account still exists and is verified now, so rejected, pending
-    // or deleted accounts are refused even with a pass issued before the change.
-    const deny = (securityStatus: string, error: string, status: number) =>
-      NextResponse.json(
-        { valid: false, securityStatus, error, alumnus, scannedAt: new Date().toISOString() },
-        { status }
+    const membership = await checkCardMembership(payload);
+    if (!membership.ok) {
+      return NextResponse.json(
+        {
+          valid: false,
+          securityStatus: membership.securityStatus,
+          error: membership.error,
+          alumnus,
+          scannedAt: new Date().toISOString(),
+        },
+        { status: membership.httpStatus }
       );
-
-    if (!payload.userId) {
-      return deny("NO_MEMBER_ACCOUNT", "This pass is not linked to a member account.", 403);
-    }
-
-    let user: { status: string } | null;
-    try {
-      user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { status: true } });
-    } catch (dbErr) {
-      console.error("[Gate Verify] Member status lookup failed:", dbErr);
-      // Fail closed, but do not call a genuine pass forged: the check could not run.
-      return deny(
-        "STATUS_CHECK_UNAVAILABLE",
-        "Could not check membership status right now. Please try again or use the Help Desk.",
-        503
-      );
-    }
-
-    if (!user) {
-      return deny("ACCOUNT_NOT_FOUND", `No member account exists for ${payload.fullName} any more.`, 403);
-    }
-    if (user.status === "PENDING") {
-      return deny("UNDER_REVIEW", `Membership for ${payload.fullName} is still pending verification.`, 403);
-    }
-    if (user.status !== "VERIFIED") {
-      return deny("MEMBERSHIP_REJECTED", `Membership for ${payload.fullName} has been rejected.`, 403);
     }
 
     return NextResponse.json({

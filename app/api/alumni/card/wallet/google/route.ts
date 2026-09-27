@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCardToken, buildGoogleWalletPassPayload } from "@/lib/id-card";
+import { checkCardMembership } from "@/lib/card-membership";
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
@@ -19,6 +20,15 @@ export async function GET(req: NextRequest) {
 
   if (!valid || !payload) {
     return NextResponse.json({ error: error || "Invalid card token" }, { status: 403 });
+  }
+
+  // Only issue a wallet pass to a member who is verified now; the gate refuses the rest.
+  const membership = await checkCardMembership(payload);
+  if (!membership.ok) {
+    return NextResponse.json(
+      { error: membership.error, securityStatus: membership.securityStatus },
+      { status: membership.httpStatus }
+    );
   }
 
   const host = req.headers.get("host") || "localhost:3000";
