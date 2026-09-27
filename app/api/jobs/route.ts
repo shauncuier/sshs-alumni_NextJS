@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { sampleJobs, JobListing } from "@/lib/career-data";
 
 // In-memory collection of dynamic jobs augmenting seed jobs
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     const body = await req.json();
 
     const {
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
       experienceLevel: experienceLevel || "Mid Level",
       postedByAlumnus: {
         name: session?.user?.name || "SSGHS Alumnus",
-        sscBatch: (session?.user as any)?.batchYear || 2008,
+        sscBatch: session?.user?.batchYear || 2008,
         designation: "Hiring Manager",
         avatarUrl: session?.user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
       },
@@ -104,10 +105,10 @@ export async function POST(req: NextRequest) {
       message: "Job posting published to SSGHS Alumni Career Network.",
       job: newJob,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Jobs API Error]", error);
     return NextResponse.json(
-      { error: "Failed to publish job", details: error.message },
+      { error: "Failed to publish job", details: (error as Error).message },
       { status: 500 }
     );
   }

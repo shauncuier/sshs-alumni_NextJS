@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
@@ -12,7 +13,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     const body = await req.json();
 
     const {
@@ -24,7 +25,11 @@ export async function POST(
       coverNote,
     } = body;
 
-    if (!applicantName || !applicantEmail) {
+    // Signed-in members can omit their name and email; fall back to the session.
+    const name = applicantName || session?.user?.name;
+    const email = applicantEmail || session?.user?.email;
+
+    if (!name || !email) {
       return NextResponse.json(
         { error: "Applicant name and email are required" },
         { status: 400 }
@@ -34,8 +39,8 @@ export async function POST(
     const applicationRecord = {
       applicationId: `APP-${Date.now().toString().slice(-6)}`,
       jobId: id,
-      applicantName: applicantName || session?.user?.name,
-      applicantEmail: applicantEmail || session?.user?.email,
+      applicantName: name,
+      applicantEmail: email,
       applicantPhone,
       applicantBatch: applicantBatch || 2008,
       resumeUrl: resumeUrl || "https://drive.google.com/sample-resume",
@@ -51,10 +56,10 @@ export async function POST(
       message: "Your application has been delivered directly to the alumnus hiring manager.",
       application: applicationRecord,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Job Apply Error]", error);
     return NextResponse.json(
-      { error: "Failed to submit job application", details: error.message },
+      { error: "Failed to submit job application", details: (error as Error).message },
       { status: 500 }
     );
   }

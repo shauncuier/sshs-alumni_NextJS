@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // In-memory or Redis/DB store of push subscriptions
 interface PushSubscriptionRecord {
@@ -23,7 +24,7 @@ const pushSubscriptions: PushSubscriptionRecord[] = [];
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     const body = await req.json();
     const { subscription, userId } = body;
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const record: PushSubscriptionRecord = {
       endpoint: subscription.endpoint,
       keys: subscription.keys || {},
-      userId: userId || (session?.user as any)?.id || "anonymous",
+      userId: userId || session?.user?.id || "anonymous",
       subscribedAt: new Date().toISOString(),
     };
 
@@ -56,10 +57,10 @@ export async function POST(req: NextRequest) {
       message: "Push notification subscription registered successfully.",
       totalSubscriptions: pushSubscriptions.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Push Subscribe API Error]", error);
     return NextResponse.json(
-      { error: "Failed to save push subscription", details: error.message },
+      { error: "Failed to save push subscription", details: (error as Error).message },
       { status: 500 }
     );
   }

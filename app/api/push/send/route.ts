@@ -7,13 +7,18 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
-    const userRole = (session?.user as any)?.role;
+    const session = await getServerSession(authOptions);
+    const userRole = session?.user?.role;
 
-    // In production, require ADMIN / SUPER_ADMIN role
+    // Broadcasting reaches every subscribed device, so only admins may send.
+    if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
+    }
+
     const body = await req.json();
     const { title, body: messageBody, url, category } = body;
 
@@ -36,10 +41,10 @@ export async function POST(req: NextRequest) {
       targetUrl: url || "/events",
       deliveredAt: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Push Send API Error]", error);
     return NextResponse.json(
-      { error: "Failed to dispatch push notification", details: error.message },
+      { error: "Failed to dispatch push notification", details: (error as Error).message },
       { status: 500 }
     );
   }

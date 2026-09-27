@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { sampleMentors, MentorProfile } from "@/lib/career-data";
 
 export async function GET(req: NextRequest) {
@@ -24,7 +23,6 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
     const body = await req.json();
 
     const {
@@ -69,10 +67,10 @@ export async function POST(req: NextRequest) {
       message: "Mentorship session confirmed. Google Meet calendar link generated.",
       booking: mentorshipBooking,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Mentorship Booking Error]", error);
     return NextResponse.json(
-      { error: "Failed to book mentorship session", details: error.message },
+      { error: "Failed to book mentorship session", details: (error as Error).message },
       { status: 500 }
     );
   }

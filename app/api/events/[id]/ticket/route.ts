@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { signCardPayload, generateQrDataUrl } from "@/lib/id-card";
 
 export async function POST(
@@ -13,7 +12,6 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const session = await getServerSession();
     const body = await req.json();
 
     const {
@@ -85,10 +83,10 @@ export async function POST(
       message: "Ticket registered and confirmed with payment gateway.",
       ticket: ticketRecord,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Ticket API Error]", error);
     return NextResponse.json(
-      { error: "Failed to generate reunion ticket", details: error.message },
+      { error: "Failed to generate reunion ticket", details: (error as Error).message },
       { status: 500 }
     );
   }
