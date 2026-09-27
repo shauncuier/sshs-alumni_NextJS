@@ -53,9 +53,15 @@ npm run db:push
 npm run db:seed
 ```
 
-The seed is idempotent: every record is written with `upsert`, so re-running it does not create duplicates.
+The seed is idempotent: users, batches, events and campaigns are upserted by their unique keys, and announcements, news and posts are only created when no row with the same title (or author and content) exists — including rows written by the old `scripts/seed.js`.
 
 > ⚠️ `db:push` alters existing tables to match the schema. Back up a live database before running it against production.
+
+**Upgrading a database created by the old `scripts/migrate.js`:** those tables carry legacy duplicate columns (`Event.bannerUrl`/`totalSeats`/`confirmedSeats`, `DonationCampaign.imageUrl`/`targetAmount`). `npm run db:push` first runs `db:backfill-legacy`, which copies their values into `bannerImage`/`maxAttendees`/`attendeesCount`/`goalAmount`. Prisma will then refuse to drop the non-empty legacy columns; once the backfill output looks right, finish with:
+
+```bash
+npx prisma db push --accept-data-loss
+```
 
 ---
 

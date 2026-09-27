@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:backfill-legacy": "tsx prisma/backfill-legacy-columns.ts",
+    "db:push": "npm run db:backfill-legacy && prisma db push",
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {

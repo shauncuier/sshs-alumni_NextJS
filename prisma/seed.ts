@@ -204,7 +204,9 @@ async function main() {
     });
   }
 
-  // 7. Seed Announcements (fixed ids keep re-runs idempotent)
+  // 7. Seed Announcements. These models have no natural unique key, and the old
+  // raw SQL seed wrote the same rows under random ids, so match on content
+  // instead of upserting by id to avoid duplicating them.
   console.log("Seeding Announcements...");
   const announcements = [
     {
@@ -231,7 +233,8 @@ async function main() {
   ];
 
   for (const a of announcements) {
-    await prisma.announcement.upsert({ where: { id: a.id }, update: {}, create: a });
+    const exists = await prisma.announcement.findFirst({ where: { title: a.title } });
+    if (!exists) await prisma.announcement.create({ data: a });
   }
 
   // 8. Seed News Articles
@@ -273,7 +276,8 @@ async function main() {
   ];
 
   for (const n of news) {
-    await prisma.newsArticle.upsert({ where: { id: n.id }, update: {}, create: n });
+    const exists = await prisma.newsArticle.findFirst({ where: { title: n.title } });
+    if (!exists) await prisma.newsArticle.create({ data: n });
   }
 
   // 9. Seed Community Posts
@@ -312,7 +316,8 @@ async function main() {
   ];
 
   for (const p of posts) {
-    await prisma.post.upsert({ where: { id: p.id }, update: {}, create: p });
+    const exists = await prisma.post.findFirst({ where: { authorId: p.authorId, content: p.content } });
+    if (!exists) await prisma.post.create({ data: p });
   }
 
   console.log("✅ SSGHS Alumni database seeded successfully!");

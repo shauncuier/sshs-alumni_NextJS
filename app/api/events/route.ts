@@ -22,12 +22,31 @@ export async function GET() {
   }
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 180);
+}
+
+// Event.slug is required and unique; derive it from the title and add a
+// suffix when another event already uses it.
+async function uniqueEventSlug(source: string): Promise<string> {
+  const base = slugify(source) || "event";
+  const taken = await prisma.event.findUnique({ where: { slug: base }, select: { id: true } });
+  return taken ? `${base}-${Date.now().toString(36)}` : base;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     try {
       const event = await prisma.event.create({
         data: {
+          slug: await uniqueEventSlug(body.slug || body.title || ""),
           title: body.title,
           category: body.category || "REUNION",
           description: body.description || "",
