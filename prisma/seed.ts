@@ -3,12 +3,20 @@ import { Role, VerificationStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 
-const ADMIN_EMAIL = "admin@sabujsghs.edu.bd";
-const ALUMNI_EMAIL = "jashedul@example.com";
 // Earlier seeds created these accounts with published passwords; replace them on sight.
-const LEGACY_ADMIN_PASSWORD = "admin123";
-const LEGACY_ALUMNI_PASSWORD = "password123";
+const LEGACY_ADMIN = { email: "admin@sabujsghs.edu.bd", password: "admin123" };
+const LEGACY_ALUMNI = { email: "jashedul@example.com", password: "password123" };
 const MIN_SEED_PASSWORD_LENGTH = 12;
+
+// Seed emails may be configured; they are not secret, so the old addresses are the default.
+// Sign-in lowercases the entered email, so store it lowercased or it could never match.
+function emailFromEnv(envVar: string, fallback: string): string {
+  const email = (process.env[envVar] || fallback).trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error(`${envVar} is not a valid email address.`);
+  }
+  return email;
+}
 
 // Seed passwords come only from the environment: a default in the source would
 // give every seeded database logins anyone can look up.
@@ -28,14 +36,15 @@ function passwordFromEnv(envVar: string, legacyPassword: string): string {
 // An account created by an earlier seed may still have its published password.
 // Replace only that; a password someone has since changed is left alone.
 async function replaceLegacyPassword(
-  user: { id: string; email: string; passwordHash: string },
+  email: string,
   legacyPassword: string,
   newPasswordHash: string,
   envVar: string
 ): Promise<void> {
-  if (await bcrypt.compare(legacyPassword, user.passwordHash)) {
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true, passwordHash: true } });
+  if (user && (await bcrypt.compare(legacyPassword, user.passwordHash))) {
     await prisma.user.update({ where: { id: user.id }, data: { passwordHash: newPasswordHash } });
-    console.log(`Replaced the old default password for ${user.email} with ${envVar}.`);
+    console.log(`Replaced the old default password for ${email} with ${envVar}.`);
   }
 }
 
@@ -43,19 +52,24 @@ async function main() {
   console.log("🌱 Starting SSGHS Alumni database seed for MySQL...");
 
   // 1. Hash passwords
-  // Read both before touching the database, so a missing variable writes nothing.
-  const adminPassword = passwordFromEnv("SEED_ADMIN_PASSWORD", LEGACY_ADMIN_PASSWORD);
-  const alumniPassword = passwordFromEnv("SEED_ALUMNI_PASSWORD", LEGACY_ALUMNI_PASSWORD);
+  // Read all settings before touching the database, so a bad value writes nothing.
+  const adminEmail = emailFromEnv("SEED_ADMIN_EMAIL", LEGACY_ADMIN.email);
+  const alumniEmail = emailFromEnv("SEED_ALUMNI_EMAIL", LEGACY_ALUMNI.email);
+  if (adminEmail === alumniEmail) {
+    throw new Error("SEED_ADMIN_EMAIL and SEED_ALUMNI_EMAIL must be different addresses.");
+  }
+  const adminPassword = passwordFromEnv("SEED_ADMIN_PASSWORD", LEGACY_ADMIN.password);
+  const alumniPassword = passwordFromEnv("SEED_ALUMNI_PASSWORD", LEGACY_ALUMNI.password);
   const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   const userPasswordHash = await bcrypt.hash(alumniPassword, 10);
 
   // 2. Seed Admin User
-  console.log(`Creating Executive Admin user: ${ADMIN_EMAIL} ...`);
+  console.log(`Creating Executive Admin user: ${adminEmail} ...`);
   const adminUser = await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
+    where: { email: adminEmail },
     update: {},
     create: {
-      email: ADMIN_EMAIL,
+      email: adminEmail,
       passwordHash: adminPasswordHash,
       role: Role.ADMIN,
       status: VerificationStatus.VERIFIED,
@@ -76,15 +90,18 @@ async function main() {
     },
   });
 
-  await replaceLegacyPassword(adminUser, LEGACY_ADMIN_PASSWORD, adminPasswordHash, "SEED_ADMIN_PASSWORD");
+  // Also check the old address: if the email was changed, an admin created by an
+  // earlier seed would otherwise keep the published password.
+  await replaceLegacyPassword(adminEmail, LEGACY_ADMIN.password, adminPasswordHash, "SEED_ADMIN_PASSWORD");
+  await replaceLegacyPassword(LEGACY_ADMIN.email, LEGACY_ADMIN.password, adminPasswordHash, "SEED_ADMIN_PASSWORD");
 
   // 3. Seed Verified Alumni User
-  console.log(`Creating Verified Alumni user: ${ALUMNI_EMAIL} ...`);
+  console.log(`Creating Verified Alumni user: ${alumniEmail} ...`);
   const alumniUser = await prisma.user.upsert({
-    where: { email: ALUMNI_EMAIL },
+    where: { email: alumniEmail },
     update: {},
     create: {
-      email: ALUMNI_EMAIL,
+      email: alumniEmail,
       passwordHash: userPasswordHash,
       role: Role.ALUMNI,
       status: VerificationStatus.VERIFIED,
@@ -109,7 +126,8 @@ async function main() {
     },
   });
 
-  await replaceLegacyPassword(alumniUser, LEGACY_ALUMNI_PASSWORD, userPasswordHash, "SEED_ALUMNI_PASSWORD");
+  await replaceLegacyPassword(alumniEmail, LEGACY_ALUMNI.password, userPasswordHash, "SEED_ALUMNI_PASSWORD");
+  await replaceLegacyPassword(LEGACY_ALUMNI.email, LEGACY_ALUMNI.password, userPasswordHash, "SEED_ALUMNI_PASSWORD");
 
   // 4. Seed Batches (1985 to 2025)
   console.log("Seeding Batches from 1985 to 2025...");
@@ -359,14 +377,17 @@ async function main() {
   ];
 
   for (const p of posts) {
-    const exists = await prisma.post.findFirst({ where: { authorId: p.authorId, content: p.content } });
+    // Match the fixed id too: if a seed email changed, the post already exists under the old author.
+    const exists = await prisma.post.findFirst({
+      where: { OR: [{ id: p.id }, { authorId: p.authorId, content: p.content }] },
+    });
     if (!exists) await prisma.post.create({ data: p });
   }
 
   console.log("✅ SSGHS Alumni database seeded successfully!");
   console.log("--------------------------------------------------");
-  console.log(`Pre-seeded Admin User: ${ADMIN_EMAIL} (password from SEED_ADMIN_PASSWORD)`);
-  console.log(`Pre-seeded Alumni User: ${ALUMNI_EMAIL} (password from SEED_ALUMNI_PASSWORD)`);
+  console.log(`Pre-seeded Admin User: ${adminEmail} (password from SEED_ADMIN_PASSWORD)`);
+  console.log(`Pre-seeded Alumni User: ${alumniEmail} (password from SEED_ALUMNI_PASSWORD)`);
   console.log("--------------------------------------------------");
 }
 

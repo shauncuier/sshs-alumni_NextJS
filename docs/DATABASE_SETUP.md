@@ -57,14 +57,16 @@ npm run db:push
 npm run db:seed
 ```
 
-The seed needs both account passwords in `.env` (each at least 12 characters; there are no defaults):
+The seed reads its two accounts from `.env`. Passwords are required (each at least 12 characters; there are no defaults). Emails are optional and default to the addresses shown; they are stored lowercased.
 
 ```env
+SEED_ADMIN_EMAIL="admin@sabujsghs.edu.bd"
 SEED_ADMIN_PASSWORD="<a long random password>"
+SEED_ALUMNI_EMAIL="jashedul@example.com"
 SEED_ALUMNI_PASSWORD="<another long random password>"
 ```
 
-It creates the admin `admin@sabujsghs.edu.bd` and the verified demo alumnus `jashedul@example.com` with those passwords. If either account already exists and still has its old default password from earlier seeds (`admin123` / `password123`), the seed replaces it; a password that was changed since is left alone.
+It creates the admin and the verified demo alumnus with those details. If an account already exists and still has its old default password from earlier seeds (`admin123` / `password123`), the seed replaces it; a password that was changed since is left alone. This also covers the old addresses above when you configure different emails, so an earlier seed's account cannot keep a published password.
 
 The seed is idempotent: users, batches, events and campaigns are upserted by their unique keys, and announcements, news and posts are only created when no row with the same title (or author and content) exists — including rows written by the old `scripts/seed.js`.
 
