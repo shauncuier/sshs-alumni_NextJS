@@ -8,7 +8,9 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET || "sabuj-shikshayatan-alumni-production-secret-key-2026",
+  // No fallback: NextAuth refuses to run in production without a secret, and a
+  // secret published in the source would let anyone forge session tokens.
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
     error: "/login",

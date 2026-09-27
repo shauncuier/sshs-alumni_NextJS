@@ -23,7 +23,26 @@ export interface CardPayload {
   eiin: string; // 105070
 }
 
-const SECRET_KEY = process.env.NEXTAUTH_SECRET || "ssghs-alumni-secret-key-2026";
+let devSigningKey: string | undefined;
+
+/**
+ * HMAC key for card tokens. Production requires NEXTAUTH_SECRET: a key published
+ * in the source would let anyone forge valid passes. Development falls back to a
+ * random per-process key, so issued cards stop verifying after a restart.
+ */
+function cardSigningKey(): string {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXTAUTH_SECRET must be set to sign or verify alumni ID cards.");
+  }
+  devSigningKey ??= crypto.randomBytes(32).toString("hex");
+  return devSigningKey;
+}
+
+function hmac(encodedPayload: string, key: string): string {
+  return crypto.createHmac("sha256", key).update(encodedPayload).digest("base64url");
+}
 const SCHOOL_EIIN = "105070";
 
 /**
@@ -48,18 +67,16 @@ export function signCardPayload(payload: Omit<CardPayload, "eiin">): string {
   const payloadString = JSON.stringify(fullPayload);
   const encodedPayload = Buffer.from(payloadString, "utf8").toString("base64url");
 
-  const signature = crypto
-    .createHmac("sha256", SECRET_KEY)
-    .update(encodedPayload)
-    .digest("base64url");
-
-  return `${encodedPayload}.${signature}`;
+  return `${encodedPayload}.${hmac(encodedPayload, cardSigningKey())}`;
 }
 
 /**
  * Verify and decode an encrypted gate-verification token
  */
 export function verifyCardToken(token: string): { valid: boolean; payload?: CardPayload; error?: string } {
+  // Read the key outside the try: a missing secret is a server misconfiguration,
+  // not a forged card, and must not be reported to gate staff as one.
+  const key = cardSigningKey();
   try {
     const parts = token.split(".");
     if (parts.length !== 2) {
@@ -67,12 +84,10 @@ export function verifyCardToken(token: string): { valid: boolean; payload?: Card
     }
 
     const [encodedPayload, signature] = parts;
-    const expectedSignature = crypto
-      .createHmac("sha256", SECRET_KEY)
-      .update(encodedPayload)
-      .digest("base64url");
-
-    if (signature !== expectedSignature) {
+    // Constant-time comparison, so response timing reveals nothing about the signature.
+    const expected = Buffer.from(hmac(encodedPayload, key));
+    const received = Buffer.from(signature);
+    if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
       return { valid: false, error: "Cryptographic signature mismatch — pass may be forged" };
     }
 
@@ -85,8 +100,8 @@ export function verifyCardToken(token: string): { valid: boolean; payload?: Card
     }
 
     return { valid: true, payload };
-  } catch (err: any) {
-    return { valid: false, error: err.message || "Failed to verify token" };
+  } catch (err: unknown) {
+    return { valid: false, error: (err as Error).message || "Failed to verify token" };
   }
 }
 
