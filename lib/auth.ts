@@ -27,59 +27,33 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.trim().toLowerCase();
 
-        // 1. Try to fetch user from database
+        // Accounts live only in the database; there are no built-in fallback logins.
+        let user;
         try {
-          const user = await prisma.user.findUnique({
+          user = await prisma.user.findUnique({
             where: { email },
             include: {
               profile: true,
             },
           });
-
-          if (user && user.passwordHash) {
-            const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-            if (isValid) {
-              return {
-                id: user.id,
-                email: user.email,
-                name: user.profile?.fullName || user.email.split("@")[0],
-                role: user.role,
-                status: user.status,
-                image: user.profile?.avatarUrl || "/logo.png",
-                batchYear: user.profile?.sscBatch || 2015,
-              };
-            }
-          }
         } catch (dbError) {
-          console.warn("Database lookup failed or not connected yet, trying fallback accounts:", dbError);
+          console.error("Sign-in database lookup failed:", dbError);
+          throw new Error("Sign-in is temporarily unavailable. Please try again shortly.");
         }
 
-        // 2. Demo Fallback Accounts (ensures seamless UI testing even before local MongoDB is seeded)
-        if (email === "jashedul@example.com" && credentials.password === "password123") {
-          return {
-            id: "demo-alumni-id-2008",
-            email: "jashedul@example.com",
-            name: "Md. Jashedul Hoque",
-            role: "ALUMNI",
-            status: "VERIFIED",
-            image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
-            batchYear: 2008,
-          };
+        if (!user || !(await bcrypt.compare(credentials.password, user.passwordHash))) {
+          throw new Error("Invalid email or password. Please verify your credentials.");
         }
 
-        if (email === "admin@sabujsghs.edu.bd" && credentials.password === "admin123") {
-          return {
-            id: "demo-admin-id-master",
-            email: "admin@sabujsghs.edu.bd",
-            name: "SSGHS Executive Secretariat",
-            role: "ADMIN",
-            status: "VERIFIED",
-            image: "/logo.png",
-            batchYear: 1995,
-          };
-        }
-
-        throw new Error("Invalid email or password. Please verify your credentials.");
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.profile?.fullName || user.email.split("@")[0],
+          role: user.role,
+          status: user.status,
+          image: user.profile?.avatarUrl || "/logo.png",
+          batchYear: user.profile?.sscBatch || 2015,
+        };
       },
     }),
   ],

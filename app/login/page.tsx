@@ -30,7 +30,13 @@ function LoginForm() {
       });
 
       if (res?.error) {
-        setErrorMessage("Invalid email or password. Please verify your credentials.");
+        // authorize() throws user-facing messages (bad credentials, database down);
+        // "CredentialsSignin" is NextAuth's generic code when there is no message.
+        setErrorMessage(
+          res.error === "CredentialsSignin"
+            ? "Invalid email or password. Please verify your credentials."
+            : res.error
+        );
         setLoading(false);
       } else {
         if (email.toLowerCase().includes("admin")) {
@@ -42,48 +48,6 @@ function LoginForm() {
       }
     } catch {
       setErrorMessage("An unexpected authentication error occurred. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  const handleDemoAlumni = async () => {
-    setEmail("jashedul@example.com");
-    setPassword("password123");
-    setLoading(true);
-    setErrorMessage("");
-
-    const res = await signIn("credentials", {
-      redirect: false,
-      email: "jashedul@example.com",
-      password: "password123",
-    });
-
-    if (!res?.error) {
-      router.push("/dashboard");
-      router.refresh();
-    } else {
-      setErrorMessage("Could not sign in with demo credentials.");
-      setLoading(false);
-    }
-  };
-
-  const handleDemoAdmin = async () => {
-    setEmail("admin@sabujsghs.edu.bd");
-    setPassword("admin123");
-    setLoading(true);
-    setErrorMessage("");
-
-    const res = await signIn("credentials", {
-      redirect: false,
-      email: "admin@sabujsghs.edu.bd",
-      password: "admin123",
-    });
-
-    if (!res?.error) {
-      router.push("/admin");
-      router.refresh();
-    } else {
-      setErrorMessage("Could not sign in with demo admin credentials.");
       setLoading(false);
     }
   };
@@ -190,29 +154,6 @@ function LoginForm() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-
-          {/* Quick Demo Logins */}
-          <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block text-center">
-              Quick One-Click Demo Access
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleDemoAlumni}
-                className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-bold text-center transition-colors"
-              >
-                Demo Alumni
-              </button>
-              <button
-                type="button"
-                onClick={handleDemoAdmin}
-                className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-bold text-center transition-colors"
-              >
-                Demo Admin
-              </button>
-            </div>
-          </div>
 
           <div className="mt-6 pt-5 text-center text-xs text-slate-600 border-t border-slate-100">
             <p className="text-slate-500 mb-2">New graduate or haven&apos;t registered yet?</p>
