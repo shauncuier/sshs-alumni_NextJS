@@ -3,20 +3,40 @@ import { Role, VerificationStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 
+const ADMIN_EMAIL = "admin@sabujsghs.edu.bd";
+// Earlier seeds created the admin with this published password; replace it on sight.
+const LEGACY_ADMIN_PASSWORD = "admin123";
+const MIN_ADMIN_PASSWORD_LENGTH = 12;
+
+// The admin password comes only from the environment: a default in the source
+// would give every seeded database an admin login anyone can look up.
+function adminPasswordFromEnv(): string {
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!password) {
+    throw new Error("SEED_ADMIN_PASSWORD is not set. Set it in .env before running the seed.");
+  }
+  if (password.length < MIN_ADMIN_PASSWORD_LENGTH || password === LEGACY_ADMIN_PASSWORD) {
+    throw new Error(
+      `SEED_ADMIN_PASSWORD must be at least ${MIN_ADMIN_PASSWORD_LENGTH} characters and not the old default.`
+    );
+  }
+  return password;
+}
+
 async function main() {
   console.log("🌱 Starting SSGHS Alumni database seed for MySQL...");
 
   // 1. Hash passwords
-  const adminPasswordHash = await bcrypt.hash("admin123", 10);
+  const adminPasswordHash = await bcrypt.hash(adminPasswordFromEnv(), 10);
   const userPasswordHash = await bcrypt.hash("password123", 10);
 
   // 2. Seed Admin User
-  console.log("Creating Executive Admin user: admin@sabujsghs.edu.bd ...");
+  console.log(`Creating Executive Admin user: ${ADMIN_EMAIL} ...`);
   const adminUser = await prisma.user.upsert({
-    where: { email: "admin@sabujsghs.edu.bd" },
+    where: { email: ADMIN_EMAIL },
     update: {},
     create: {
-      email: "admin@sabujsghs.edu.bd",
+      email: ADMIN_EMAIL,
       passwordHash: adminPasswordHash,
       role: Role.ADMIN,
       status: VerificationStatus.VERIFIED,
@@ -36,6 +56,13 @@ async function main() {
       },
     },
   });
+
+  // An admin created by an earlier seed may still have the published password.
+  // Replace only that; a password someone has since changed is left alone.
+  if (await bcrypt.compare(LEGACY_ADMIN_PASSWORD, adminUser.passwordHash)) {
+    await prisma.user.update({ where: { id: adminUser.id }, data: { passwordHash: adminPasswordHash } });
+    console.log("Replaced the admin's old default password with SEED_ADMIN_PASSWORD.");
+  }
 
   // 3. Seed Verified Alumni User
   console.log("Creating Verified Alumni user: jashedul@example.com ...");
@@ -322,7 +349,7 @@ async function main() {
 
   console.log("✅ SSGHS Alumni database seeded successfully!");
   console.log("--------------------------------------------------");
-  console.log("Pre-seeded Admin User: admin@sabujsghs.edu.bd / admin123");
+  console.log(`Pre-seeded Admin User: ${ADMIN_EMAIL} (password from SEED_ADMIN_PASSWORD)`);
   console.log("Pre-seeded Alumni User: jashedul@example.com / password123");
   console.log("--------------------------------------------------");
 }

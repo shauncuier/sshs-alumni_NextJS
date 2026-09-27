@@ -57,6 +57,14 @@ npm run db:push
 npm run db:seed
 ```
 
+The seed needs the admin password in `.env` (at least 12 characters; there is no default):
+
+```env
+SEED_ADMIN_PASSWORD="<a long random password>"
+```
+
+It creates `admin@sabujsghs.edu.bd` with that password. If that admin already exists and still has the old default password `admin123` from earlier seeds, the seed replaces it; a password that was changed since is left alone.
+
 The seed is idempotent: users, batches, events and campaigns are upserted by their unique keys, and announcements, news and posts are only created when no row with the same title (or author and content) exists — including rows written by the old `scripts/seed.js`.
 
 > ⚠️ `db:push` alters existing tables to match the schema. Back up a live database before running it against production.
