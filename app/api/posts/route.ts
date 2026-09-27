@@ -21,10 +21,9 @@ export async function GET(req: Request) {
           author: {
             include: { profile: true },
           },
-          likes: true,
           comments: {
             include: {
-              user: {
+              author: {
                 include: { profile: true },
               },
             },

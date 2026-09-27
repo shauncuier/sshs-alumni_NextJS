@@ -1,94 +1,83 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 let PrismaClientClass: any = null;
+let PrismaMariaDbClass: any = null;
 
 try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const prismaPkg = require("@prisma/client");
-  PrismaClientClass = prismaPkg.PrismaClient;
-} catch {
-  // Safe runtime fallback
-  PrismaClientClass = null;
+  const clientPkg = require("@prisma/client");
+  if (clientPkg?.PrismaClient) PrismaClientClass = clientPkg.PrismaClient;
+} catch (e) {
+  console.warn("Could not load @prisma/client:", e);
 }
 
-class SafePrismaFallback {
-  user = {
-    findUnique: async () => null,
-    create: async (args: any) => ({ id: "mock-user-id", ...args.data }),
-    findMany: async () => [],
-    upsert: async (args: any) => ({ id: "mock-user-id", ...args.create }),
-  };
-  alumniProfile = {
-    findMany: async () => [],
-    findUnique: async () => null,
-    create: async (args: any) => args.data,
-  };
-  batch = {
-    findMany: async () => [],
-    upsert: async (args: any) => args.create,
-  };
-  event = {
-    findMany: async () => [],
-    upsert: async (args: any) => args.create,
-  };
-  donationCampaign = {
-    findMany: async () => [],
-    findUnique: async () => null,
-    upsert: async (args: any) => args.create,
-    update: async (args: any) => args.data,
-  };
-  donation = {
-    findMany: async () => [],
-    findUnique: async () => null,
-    create: async (args: any) => ({ id: `mock-donation-${Date.now()}`, ...args.data }),
-    update: async (args: any) => args.data,
-    updateMany: async () => ({ count: 0 }),
-  };
-  paymentTransaction = {
-    findMany: async () => [],
-    findUnique: async () => null,
-    findFirst: async () => null,
-    create: async (args: any) => ({ id: `mock-tx-${Date.now()}`, ...args.data }),
-    update: async (args: any) => args.data,
-  };
-  message = {
-    findMany: async () => [],
-    findUnique: async () => null,
-    create: async (args: any) => ({ id: `mock-msg-${Date.now()}`, createdAt: new Date(), ...args.data }),
-    updateMany: async () => ({ count: 0 }),
-  };
-  notification = {
-    findMany: async () => [],
-    findUnique: async () => null,
-    create: async (args: any) => ({ id: `mock-notif-${Date.now()}`, createdAt: new Date(), ...args.data }),
-    updateMany: async () => ({ count: 0 }),
-  };
-  verificationRequest = {
-    findMany: async () => [],
-    create: async (args: any) => args.data,
-  };
-  $connect = async () => {};
-  $disconnect = async () => {};
-}
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: any;
-};
-
-let clientInstance: any = null;
 try {
-  if (PrismaClientClass) {
-    clientInstance = new PrismaClientClass();
-  } else {
-    clientInstance = new SafePrismaFallback();
+  const adapterPkg = require("@prisma/adapter-mariadb");
+  if (adapterPkg?.PrismaMariaDb) PrismaMariaDbClass = adapterPkg.PrismaMariaDb;
+} catch (e) {
+  console.warn("Could not load @prisma/adapter-mariadb:", e);
+}
+
+const globalForPrisma = globalThis as unknown as { prisma: any };
+
+function createNotReadyProxy(): any {
+  return new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (prop === "then") return undefined;
+        return new Proxy(
+          {},
+          {
+            get() {
+              return async () => {
+                throw new Error(
+                  `Database not ready: check database credentials or adapter setup. (accessing prisma.${String(prop)})`
+                );
+              };
+            },
+          }
+        );
+      },
+    }
+  );
+}
+
+function createClient(): any {
+  if (!PrismaClientClass) return createNotReadyProxy();
+
+  try {
+    let adapter: any = undefined;
+    if (PrismaMariaDbClass) {
+      adapter = new PrismaMariaDbClass({
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT) || 3306,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+      });
+    }
+
+    const options: any = {
+      log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    };
+
+    if (adapter) {
+      options.adapter = adapter;
+    }
+
+    return new PrismaClientClass(options);
+  } catch (err) {
+    console.error("Failed to initialize PrismaClient:", err);
+    return createNotReadyProxy();
   }
-} catch {
-  clientInstance = new SafePrismaFallback();
 }
 
-export const prisma = globalForPrisma.prisma ?? clientInstance;
+const clientInstance = globalForPrisma.prisma ?? createClient();
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  globalForPrisma.prisma = clientInstance;
 }
 
+export const prisma = clientInstance;
 export default prisma;

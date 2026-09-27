@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting SSGHS Alumni database seed for MongoDB Compass...");
+  console.log("🌱 Starting SSGHS Alumni database seed for PostgreSQL...");
 
   // 1. Hash passwords
   const adminPasswordHash = await bcrypt.hash("admin123", 10);
@@ -184,10 +184,9 @@ async function main() {
 
   console.log("✅ SSGHS Alumni database seeded successfully!");
   console.log("--------------------------------------------------");
-  console.log("MongoDB Compass Connection String: mongodb://localhost:27017");
-  console.log("Database Name:                     sshs_alumni");
-  console.log("Pre-seeded Admin User:             admin@sabujsghs.edu.bd / admin123");
-  console.log("Pre-seeded Alumni User:            jashedul@example.com / password123");
+  console.log("PostgreSQL Database:   sshs_alumni");
+  console.log("Pre-seeded Admin User: admin@sabujsghs.edu.bd / admin123");
+  console.log("Pre-seeded Alumni User: jashedul@example.com / password123");
   console.log("--------------------------------------------------");
 }
 
