@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
-const globalForPrisma = globalThis as unknown as { prisma: any };
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-function createNotReadyProxy(reason: string): any {
+// Stands in for PrismaClient when it cannot be created, so imports still work
+// and every query rejects with the reason instead of crashing at module load.
+function createNotReadyProxy(reason: string): PrismaClient {
   return new Proxy(
     {},
     {
@@ -22,10 +23,10 @@ function createNotReadyProxy(reason: string): any {
         );
       },
     }
-  );
+  ) as unknown as PrismaClient;
 }
 
-function notReady(reason: string): { client: any; ready: false } {
+function notReady(reason: string): { client: PrismaClient; ready: false } {
   console.error(`${reason} Database calls will fail.`);
   return { client: createNotReadyProxy(reason), ready: false };
 }
@@ -34,7 +35,7 @@ function notReady(reason: string): { client: any; ready: false } {
 // The adapter takes the URL as-is: it rewrites mysql:// to mariadb://, unwraps
 // bracketed IPv6 hosts, and passes query parameters (e.g. ?ssl=true,
 // ?connectionLimit=5, ?connectTimeout=10000) through as MariaDB pool options.
-function createClient(): { client: any; ready: boolean } {
+function createClient(): { client: PrismaClient; ready: boolean } {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) return notReady("DATABASE_URL is not set.");
 
@@ -59,7 +60,7 @@ function createClient(): { client: any; ready: boolean } {
   }
 }
 
-function getClient(): any {
+function getClient(): PrismaClient {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
   const { client, ready } = createClient();
   // Only reuse a working client across dev hot reloads. Caching the not-ready

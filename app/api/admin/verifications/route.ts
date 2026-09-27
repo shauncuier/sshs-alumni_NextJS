@@ -57,9 +57,10 @@ export async function PATCH(req: Request) {
     try {
       const updated = await prisma.verificationRequest.update({
         where: { id: requestId },
+        // updatedAt records when the review happened.
         data: {
           status,
-          reviewedAt: new Date(),
+          reviewedBy: session?.user?.email ?? null,
         },
       });
 

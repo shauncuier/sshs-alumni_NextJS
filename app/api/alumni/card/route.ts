@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import {
   generateAlumniId,
@@ -16,33 +17,49 @@ import {
 } from "@/lib/id-card";
 import { sampleAlumni } from "@/lib/data";
 
+interface AlumnusCardData {
+  id: string;
+  alumniId: string;
+  fullName: string;
+  sscBatch: number;
+  profession: string;
+  bloodGroup?: string;
+  membershipTier: CardPayload["membershipTier"];
+  avatarUrl: string;
+  status: string;
+}
+
+const DEFAULT_AVATAR_URL =
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     const searchParams = req.nextUrl.searchParams;
     const requestedAlumniId = searchParams.get("alumniId");
 
     // Fetch user or fallback to demo alumnus
-    let alumnusData: any = null;
+    let alumnusData: AlumnusCardData | null = null;
 
     if (session?.user?.email) {
       try {
         const user = await prisma.user.findUnique({
           where: { email: session.user.email },
-          include: { alumniProfile: true },
+          include: { profile: true },
         });
 
         if (user) {
+          const sscBatch = user.profile?.sscBatch || 2008;
           alumnusData = {
             id: user.id,
-            alumniId: generateAlumniId(user.alumniProfile?.sscBatch || 2008),
-            fullName: user.name || "SSGHS Alumnus",
-            sscBatch: user.alumniProfile?.sscBatch || 2008,
-            profession: user.alumniProfile?.profession || "Professional",
-            bloodGroup: user.alumniProfile?.bloodGroup || "O+",
+            alumniId: generateAlumniId(sscBatch),
+            fullName: user.profile?.fullName || "SSGHS Alumnus",
+            sscBatch,
+            profession: user.profile?.profession || "Professional",
+            // Blood group is not collected yet; leave it off the card rather than guess.
             membershipTier: "LIFETIME",
-            avatarUrl: user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-            status: user.status || "VERIFIED",
+            avatarUrl: user.profile?.avatarUrl || DEFAULT_AVATAR_URL,
+            status: user.status,
           };
         }
       } catch (dbErr) {
@@ -66,7 +83,7 @@ export async function GET(req: NextRequest) {
         bloodGroup: "B+",
         membershipTier: "LIFETIME",
         avatarUrl: found.avatarUrl,
-        status: (found as any).status || "VERIFIED",
+        status: "VERIFIED",
       };
     }
 
@@ -109,10 +126,10 @@ export async function GET(req: NextRequest) {
       appleWalletUrl: `/api/alumni/card/wallet/apple?token=${signedToken}`,
       googleWalletUrl: `/api/alumni/card/wallet/google?token=${signedToken}`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Card API Error]", error);
     return NextResponse.json(
-      { error: "Failed to generate alumni digital card", details: error.message },
+      { error: "Failed to generate alumni digital card", details: (error as Error).message },
       { status: 500 }
     );
   }

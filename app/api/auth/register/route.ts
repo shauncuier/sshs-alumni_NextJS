@@ -16,7 +16,6 @@ export async function POST(req: Request) {
       locationCountry,
       phone,
       studentIdOrRoll,
-      nidNumber,
       bio,
     } = body;
 
@@ -70,9 +69,8 @@ export async function POST(req: Request) {
         },
         verificationRequests: {
           create: {
-            submittedBatch: batchInt,
-            studentRoll: studentIdOrRoll?.trim() || null,
-            nidOrBirthReg: nidNumber?.trim() || null,
+            sscBatch: batchInt,
+            rollNumber: studentIdOrRoll?.trim() || null,
             status: "PENDING",
           },
         },
