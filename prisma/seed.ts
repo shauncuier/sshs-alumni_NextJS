@@ -4,31 +4,50 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 
 const ADMIN_EMAIL = "admin@sabujsghs.edu.bd";
-// Earlier seeds created the admin with this published password; replace it on sight.
+const ALUMNI_EMAIL = "jashedul@example.com";
+// Earlier seeds created these accounts with published passwords; replace them on sight.
 const LEGACY_ADMIN_PASSWORD = "admin123";
-const MIN_ADMIN_PASSWORD_LENGTH = 12;
+const LEGACY_ALUMNI_PASSWORD = "password123";
+const MIN_SEED_PASSWORD_LENGTH = 12;
 
-// The admin password comes only from the environment: a default in the source
-// would give every seeded database an admin login anyone can look up.
-function adminPasswordFromEnv(): string {
-  const password = process.env.SEED_ADMIN_PASSWORD;
+// Seed passwords come only from the environment: a default in the source would
+// give every seeded database logins anyone can look up.
+function passwordFromEnv(envVar: string, legacyPassword: string): string {
+  const password = process.env[envVar];
   if (!password) {
-    throw new Error("SEED_ADMIN_PASSWORD is not set. Set it in .env before running the seed.");
+    throw new Error(`${envVar} is not set. Set it in .env before running the seed.`);
   }
-  if (password.length < MIN_ADMIN_PASSWORD_LENGTH || password === LEGACY_ADMIN_PASSWORD) {
+  if (password.length < MIN_SEED_PASSWORD_LENGTH || password === legacyPassword) {
     throw new Error(
-      `SEED_ADMIN_PASSWORD must be at least ${MIN_ADMIN_PASSWORD_LENGTH} characters and not the old default.`
+      `${envVar} must be at least ${MIN_SEED_PASSWORD_LENGTH} characters and not the old default.`
     );
   }
   return password;
+}
+
+// An account created by an earlier seed may still have its published password.
+// Replace only that; a password someone has since changed is left alone.
+async function replaceLegacyPassword(
+  user: { id: string; email: string; passwordHash: string },
+  legacyPassword: string,
+  newPasswordHash: string,
+  envVar: string
+): Promise<void> {
+  if (await bcrypt.compare(legacyPassword, user.passwordHash)) {
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash: newPasswordHash } });
+    console.log(`Replaced the old default password for ${user.email} with ${envVar}.`);
+  }
 }
 
 async function main() {
   console.log("🌱 Starting SSGHS Alumni database seed for MySQL...");
 
   // 1. Hash passwords
-  const adminPasswordHash = await bcrypt.hash(adminPasswordFromEnv(), 10);
-  const userPasswordHash = await bcrypt.hash("password123", 10);
+  // Read both before touching the database, so a missing variable writes nothing.
+  const adminPassword = passwordFromEnv("SEED_ADMIN_PASSWORD", LEGACY_ADMIN_PASSWORD);
+  const alumniPassword = passwordFromEnv("SEED_ALUMNI_PASSWORD", LEGACY_ALUMNI_PASSWORD);
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
+  const userPasswordHash = await bcrypt.hash(alumniPassword, 10);
 
   // 2. Seed Admin User
   console.log(`Creating Executive Admin user: ${ADMIN_EMAIL} ...`);
@@ -57,20 +76,15 @@ async function main() {
     },
   });
 
-  // An admin created by an earlier seed may still have the published password.
-  // Replace only that; a password someone has since changed is left alone.
-  if (await bcrypt.compare(LEGACY_ADMIN_PASSWORD, adminUser.passwordHash)) {
-    await prisma.user.update({ where: { id: adminUser.id }, data: { passwordHash: adminPasswordHash } });
-    console.log("Replaced the admin's old default password with SEED_ADMIN_PASSWORD.");
-  }
+  await replaceLegacyPassword(adminUser, LEGACY_ADMIN_PASSWORD, adminPasswordHash, "SEED_ADMIN_PASSWORD");
 
   // 3. Seed Verified Alumni User
-  console.log("Creating Verified Alumni user: jashedul@example.com ...");
+  console.log(`Creating Verified Alumni user: ${ALUMNI_EMAIL} ...`);
   const alumniUser = await prisma.user.upsert({
-    where: { email: "jashedul@example.com" },
+    where: { email: ALUMNI_EMAIL },
     update: {},
     create: {
-      email: "jashedul@example.com",
+      email: ALUMNI_EMAIL,
       passwordHash: userPasswordHash,
       role: Role.ALUMNI,
       status: VerificationStatus.VERIFIED,
@@ -94,6 +108,8 @@ async function main() {
       },
     },
   });
+
+  await replaceLegacyPassword(alumniUser, LEGACY_ALUMNI_PASSWORD, userPasswordHash, "SEED_ALUMNI_PASSWORD");
 
   // 4. Seed Batches (1985 to 2025)
   console.log("Seeding Batches from 1985 to 2025...");
@@ -350,7 +366,7 @@ async function main() {
   console.log("✅ SSGHS Alumni database seeded successfully!");
   console.log("--------------------------------------------------");
   console.log(`Pre-seeded Admin User: ${ADMIN_EMAIL} (password from SEED_ADMIN_PASSWORD)`);
-  console.log("Pre-seeded Alumni User: jashedul@example.com / password123");
+  console.log(`Pre-seeded Alumni User: ${ALUMNI_EMAIL} (password from SEED_ALUMNI_PASSWORD)`);
   console.log("--------------------------------------------------");
 }
 
