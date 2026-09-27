@@ -25,43 +25,52 @@ function createNotReadyProxy(reason: string): any {
   );
 }
 
-// DATABASE_URL is the single source of truth, shared with prisma.config.ts.
-// The MariaDB driver only accepts the mariadb:// scheme, so parse the
-// mysql:// URL into a pool config instead of passing it through.
-function adapterFromUrl(databaseUrl: string): PrismaMariaDb {
-  const url = new URL(databaseUrl);
-  return new PrismaMariaDb({
-    host: url.hostname,
-    port: Number(url.port) || 3306,
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
-    database: decodeURIComponent(url.pathname.replace(/^\//, "")),
-  });
+function notReady(reason: string): { client: any; ready: false } {
+  console.error(`${reason} Database calls will fail.`);
+  return { client: createNotReadyProxy(reason), ready: false };
 }
 
-function createClient(): any {
+// DATABASE_URL is the single source of truth, shared with prisma.config.ts.
+// The adapter takes the URL as-is: it rewrites mysql:// to mariadb://, unwraps
+// bracketed IPv6 hosts, and passes query parameters (e.g. ?ssl=true,
+// ?connectionLimit=5, ?connectTimeout=10000) through as MariaDB pool options.
+function createClient(): { client: any; ready: boolean } {
   const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    console.error("DATABASE_URL is not set; database calls will fail.");
-    return createNotReadyProxy("DATABASE_URL is not set.");
+  if (!databaseUrl) return notReady("DATABASE_URL is not set.");
+
+  let protocol: string;
+  try {
+    protocol = new URL(databaseUrl).protocol;
+  } catch {
+    return notReady("DATABASE_URL is not a valid URL.");
+  }
+  if (protocol !== "mysql:" && protocol !== "mariadb:") {
+    return notReady(`DATABASE_URL must use mysql:// or mariadb://, got ${protocol}//.`);
   }
 
   try {
-    return new PrismaClient({
-      adapter: adapterFromUrl(databaseUrl),
+    const client = new PrismaClient({
+      adapter: new PrismaMariaDb(databaseUrl),
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     });
+    return { client, ready: true };
   } catch (err) {
-    console.error("Failed to initialize PrismaClient:", err);
-    return createNotReadyProxy(`PrismaClient failed to initialize: ${(err as Error).message}`);
+    return notReady(`PrismaClient failed to initialize: ${(err as Error).message}`);
   }
 }
 
-const clientInstance = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = clientInstance;
+function getClient(): any {
+  if (globalForPrisma.prisma) return globalForPrisma.prisma;
+  const { client, ready } = createClient();
+  // Only reuse a working client across dev hot reloads. Caching the not-ready
+  // proxy would keep failing after DATABASE_URL is fixed, until a restart.
+  if (ready && process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+  }
+  return client;
 }
+
+const clientInstance = getClient();
 
 export const prisma = clientInstance;
 export default prisma;

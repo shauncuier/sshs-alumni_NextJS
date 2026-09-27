@@ -36,6 +36,10 @@ DATABASE_URL="mysql://<user>:<password>@<host>:3306/<database>"
 
 URL-encode special characters in the password — for example `#` becomes `%23` and `@` becomes `%40`.
 
+At runtime, query parameters are passed to the MariaDB driver as pool options, using the driver's option names — for example `?ssl=true&connectionLimit=5&connectTimeout=10000`. The Prisma CLI (`db push`) reads the same URL, so check that any option you add is also accepted there.
+
+The URL must use `mysql://` or `mariadb://`; any other scheme is rejected at startup with a `Database not ready` error.
+
 If `DATABASE_URL` is missing, the app still builds, but every database call throws `Database not ready: DATABASE_URL is not set.`
 
 ---
@@ -77,7 +81,7 @@ npx prisma db push --accept-data-loss
 | **`DonationCampaign`** | Fundraising projects. | `slug`, `title`, `goalAmount`, `raisedAmount`, `donorCount` |
 | **`Donation`** / **`PaymentTransaction`** | Donation ledger and gateway transactions. | `campaignId`, `amount`, `paymentGateway`, `paymentStatus` |
 | **`NewsArticle`**, **`AlumniStory`**, **`Achievement`** | Editorial content. | `title`, `category`, `publishedAt` |
-| **`GalleryAlbum`** / **`GalleryPhoto`** | Photo albums. | `title`, `category`, `imageUrl`, `caption` |
+| **`GalleryAlbum`** / **`GalleryPhoto`** | Photo albums. | `title`, `category`, `coverUrl` (album); `imageUrl`, `caption` (photo) |
 | **`Message`** / **`Notification`** / **`Announcement`** | Messaging and alerts. | `senderId`, `receiverId`, `isRead`, `priority` |
 | **`VerificationRequest`** | Admin queue for verifying graduation records. | `userId`, `sscBatch`, `proofDocumentUrl`, `status` |
 
