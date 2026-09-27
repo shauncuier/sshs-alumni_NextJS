@@ -53,143 +53,140 @@ enum PaymentGateway {
 }
 
 model User {
-  id                   String               @id @default(uuid())
-  email                String               @unique
-  passwordHash         String
-  role                 Role                 @default(ALUMNI)
-  status               VerificationStatus   @default(PENDING)
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id           String             @id @default(uuid())
+  email        String             @unique
+  passwordHash String
+  role         Role               @default(ALUMNI)
+  status       VerificationStatus @default(PENDING)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   profile              AlumniProfile?
   posts                Post[]
   comments             Comment[]
   eventRegistrations   EventRegistration[]
   donations            Donation[]
-  sentMessages         Message[]            @relation("SentMessages")
-  receivedMessages     Message[]            @relation("ReceivedMessages")
+  sentMessages         Message[]             @relation("SentMessages")
+  receivedMessages     Message[]             @relation("ReceivedMessages")
   notifications        Notification[]
   verificationRequests VerificationRequest[]
 }
 
 model AlumniProfile {
-  id                 String             @id @default(uuid())
-  userId             String             @unique
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   fullName           String
-  sscBatch           Int                // e.g. 2008
-  graduationYear     Int                // e.g. 2008
+  sscBatch           Int // e.g. 2008
+  graduationYear     Int // e.g. 2008
   rollNumber         String?
   section            String?
   gender             String?
   profession         String
   company            String?
   industry           String?
-  locationCity       String             // e.g. Dhaka
-  locationCountry    String             // e.g. Bangladesh
-  bio                String?
-  avatarUrl          String?
-  coverUrl           String?
+  locationCity       String // e.g. Dhaka
+  locationCountry    String // e.g. Bangladesh
+  bio                String?            @db.Text
+  avatarUrl          String?            @db.VarChar(500)
+  coverUrl           String?            @db.VarChar(500)
   phone              String?
   isPhonePublic      Boolean            @default(false)
   isEmailPublic      Boolean            @default(false)
   skills             Json               @default("[]")
-  linkedin           String?
-  facebook           String?
-  github             String?
-  website            String?
-  schoolMemories     String?
-  contributions      String?
+  linkedin           String?            @db.VarChar(500)
+  facebook           String?            @db.VarChar(500)
+  github             String?            @db.VarChar(500)
+  website            String?            @db.VarChar(500)
+  schoolMemories     String?            @db.Text
+  contributions      String?            @db.Text
   verificationStatus VerificationStatus @default(PENDING)
 
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Batch {
   id                  String    @id @default(uuid())
   year                Int       @unique // e.g. 2008
-  name                String    // e.g. "SSC Batch 2008"
-  tagline             String?
+  name                String // e.g. "SSC Batch 2008"
+  tagline             String?   @db.VarChar(500)
   totalMembers        Int       @default(0)
   classRepresentative String?
   representativePhone String?
   reunionDate         DateTime?
   reunionCount        Int       @default(0)
-  coverImage          String?
-  description         String?
+  coverImage          String?   @db.VarChar(500)
+  description         String?   @db.Text
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Post {
-  id            String    @id @default(uuid())
+  id            String  @id @default(uuid())
   authorId      String
-  author        User      @relation(fields: [authorId], references: [id])
+  author        User    @relation(fields: [authorId], references: [id])
   batchTag      Int?
-  content       String
-  images        Json      @default("[]")
-  likesCount    Int       @default(0)
-  commentsCount Int       @default(0)
-  isPinned      Boolean   @default(false)
+  content       String  @db.Text
+  images        Json    @default("[]")
+  likesCount    Int     @default(0)
+  commentsCount Int     @default(0)
+  isPinned      Boolean @default(false)
 
-  comments      Comment[]
+  comments Comment[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  content   String
+  id       String @id @default(uuid())
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  content  String @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Event {
-  id                  String          @id @default(uuid())
-  slug                String          @unique
-  title               String
-  category            EventCategory   @default(REUNION)
-  description         String
-  date                DateTime
-  time                String?
-  venue               String
-  locationCity        String          @default("Dhaka")
-  organizer           String?
-  bannerImage         String?
-  bannerUrl           String?
-  maxAttendees        Int             @default(500)
-  totalSeats          Int             @default(500)
-  confirmedSeats      Int             @default(0)
-  attendeesCount      Int             @default(0)
-  registrationFee     Float           @default(0)
-  isRegistrationOpen  Boolean         @default(true)
+  id                 String        @id @default(uuid())
+  slug               String        @unique
+  title              String
+  category           EventCategory @default(REUNION)
+  description        String        @db.Text
+  date               DateTime
+  time               String?
+  venue              String        @db.VarChar(500)
+  locationCity       String        @default("Dhaka")
+  organizer          String?
+  bannerImage        String?       @db.VarChar(500)
+  maxAttendees       Int           @default(500)
+  attendeesCount     Int           @default(0)
+  registrationFee    Float         @default(0)
+  isRegistrationOpen Boolean       @default(true)
 
-  registrations       EventRegistration[]
+  registrations EventRegistration[]
 
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model EventRegistration {
-  id             String   @id @default(uuid())
+  id             String  @id @default(uuid())
   eventId        String
-  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event          Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId         String
-  user           User     @relation(fields: [userId], references: [id])
-  guestCount     Int      @default(1)
+  user           User    @relation(fields: [userId], references: [id])
+  guestCount     Int     @default(1)
   mealPreference String?
-  notes          String?
+  notes          String? @db.Text
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model DonationCampaign {
@@ -197,21 +194,19 @@ model DonationCampaign {
   slug         String           @unique
   title        String
   category     CampaignCategory @default(SCHOLARSHIP)
-  description  String
+  description  String           @db.Text
   goalAmount   Float            @default(0)
-  targetAmount Float            @default(0)
   raisedAmount Float            @default(0)
   donorCount   Int              @default(0)
-  bannerImage  String?
-  imageUrl     String?
+  bannerImage  String?          @db.VarChar(500)
   isActive     Boolean          @default(true)
   startDate    DateTime         @default(now())
   endDate      DateTime?
 
-  donations    Donation[]
+  donations Donation[]
 
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Donation {
@@ -225,22 +220,22 @@ model Donation {
   donorPhone     String?
   donorBatch     Int?
   amount         Float
-  paymentMethod  String           // "bKash", "Nagad", "Card", "Bank"
+  paymentMethod  String // "bKash", "Nagad", "Card", "Bank"
   paymentGateway PaymentGateway   @default(BKASH)
   paymentStatus  PaymentStatus    @default(INITIATED)
   isAnonymous    Boolean          @default(false)
   transactionRef String?
   gatewayTrxId   String?
   receiptId      String?
-  receiptUrl     String?
+  receiptUrl     String?          @db.VarChar(500)
   paidAt         DateTime?
-  failureReason  String?
-  ipnPayload     String?
+  failureReason  String?          @db.Text
+  ipnPayload     String?          @db.Text
 
-  transaction    PaymentTransaction?
+  transaction PaymentTransaction?
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model PaymentTransaction {
@@ -248,31 +243,31 @@ model PaymentTransaction {
   donationId        String         @unique
   donation          Donation       @relation(fields: [donationId], references: [id], onDelete: Cascade)
   gateway           PaymentGateway
-  gatewaySessionKey String?
+  gatewaySessionKey String?        @db.VarChar(500)
   gatewayTrxId      String?
   amount            Float
   currency          String         @default("BDT")
   status            PaymentStatus  @default(INITIATED)
   initiatedAt       DateTime       @default(now())
   completedAt       DateTime?
-  gatewayResponse   String?
-  callbackPayload   String?
+  gatewayResponse   String?        @db.Text
+  callbackPayload   String?        @db.Text
   errorCode         String?
-  errorMessage      String?
+  errorMessage      String?        @db.Text
   customerMsisdn    String?
   merchantInvoice   String?
 
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model NewsArticle {
   id            String   @id @default(uuid())
   title         String
-  category      String   // "School News", "Alumni News", "Events"
-  excerpt       String
-  content       String
-  featuredImage String?
+  category      String // "School News", "Alumni News", "Events"
+  excerpt       String   @db.Text
+  content       String   @db.LongText
+  featuredImage String?  @db.VarChar(500)
   author        String
   publishedAt   DateTime @default(now())
   isFeatured    Boolean  @default(false)
@@ -284,82 +279,82 @@ model AlumniStory {
   authorName  String
   batchYear   Int
   profession  String
-  coverImage  String?
-  summary     String
-  fullStory   String
-  quote       String?
+  coverImage  String?  @db.VarChar(500)
+  summary     String   @db.Text
+  fullStory   String   @db.LongText
+  quote       String?  @db.Text
   publishedAt DateTime @default(now())
 }
 
 model Achievement {
-  id            String @id @default(uuid())
+  id            String  @id @default(uuid())
   recipientName String
   batchYear     Int
   category      String // "Doctor", "Engineer", "Entrepreneur", etc.
   title         String
   organization  String
-  description   String
-  photoUrl      String?
+  description   String  @db.Text
+  photoUrl      String? @db.VarChar(500)
   yearAwarded   Int
 }
 
 model GalleryAlbum {
-  id          String         @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
-  category    String         // "Campus", "Old Days", "Reunions", "Sports"
-  description String?
-  coverUrl    String
-  photosCount Int            @default(0)
+  category    String // "Campus", "Old Days", "Reunions", "Sports"
+  description String? @db.Text
+  coverUrl    String  @db.VarChar(500)
+  photosCount Int     @default(0)
 
-  photos      GalleryPhoto[]
+  photos GalleryPhoto[]
 
-  createdAt   DateTime       @default(now())
+  createdAt DateTime @default(now())
 }
 
 model GalleryPhoto {
   id         String       @id @default(uuid())
   albumId    String
   album      GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  imageUrl   String
-  caption    String?
+  imageUrl   String       @db.VarChar(500)
+  caption    String?      @db.VarChar(500)
   uploadedBy String?
   batchYear  Int?
 
-  createdAt  DateTime     @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Message {
-  id         String   @id @default(uuid())
+  id         String  @id @default(uuid())
   senderId   String
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  sender     User    @relation("SentMessages", fields: [senderId], references: [id])
   receiverId String
-  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  content    String
-  isRead     Boolean  @default(false)
+  receiver   User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String  @db.Text
+  isRead     Boolean @default(false)
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  message   String
-  link      String?
-  isRead    Boolean  @default(false)
-  type      String   // "CONNECTION", "EVENT", "BATCH", "ADMIN"
+  id      String  @id @default(uuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title   String
+  message String  @db.Text
+  link    String? @db.VarChar(500)
+  isRead  Boolean @default(false)
+  type    String // "CONNECTION", "EVENT", "BATCH", "ADMIN"
 
   createdAt DateTime @default(now())
 }
 
 model Announcement {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  priority  String   @default("NORMAL") // "NORMAL", "HIGH", "URGENT"
-  author    String   @default("Alumni Executive Committee")
-  isActive  Boolean  @default(true)
+  id       String  @id @default(uuid())
+  title    String
+  content  String  @db.Text
+  priority String  @default("NORMAL") // "NORMAL", "HIGH", "URGENT"
+  author   String  @default("Alumni Executive Committee")
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
 }
@@ -370,11 +365,11 @@ model VerificationRequest {
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   sscBatch         Int
   rollNumber       String?
-  proofDocumentUrl String?
+  proofDocumentUrl String?            @db.VarChar(500)
   status           VerificationStatus @default(PENDING)
   reviewedBy       String?
-  reviewNotes      String?
+  reviewNotes      String?            @db.Text
 
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

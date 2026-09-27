@@ -12,7 +12,7 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
 - [x] Complete Public Portal (Homepage, About, School History, Directory, Batches, Events, Stories, Achievements, Gallery with Lightbox, Donations, Contact).
 - [x] Authenticated Alumni Suite (Member Dashboard, LinkedIn-style profile, Community Feed with posts/likes/comments, Direct Messaging, Network connections, Settings).
 - [x] Admin Management Center (Verification queue with Approve/Reject, Batch manager, Event manager, Donation manager, CMS).
-- [x] MongoDB & MongoDB Compass readiness with Prisma Schema and Seed scripts.
+- [x] MySQL / MariaDB readiness with Prisma Schema and Seed scripts (migrated from MongoDB on 2026-09-28).
 - [x] Comprehensive Markdown project documentation in `docs/`.
 - [x] Master Tracking & AI Incident Ledger: [`PROJECT_MILESTONES_AND_STATUS.md`](../PROJECT_MILESTONES_AND_STATUS.md).
 

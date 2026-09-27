@@ -5,7 +5,7 @@
 [![React](https://img.shields.io/badge/React-19-blue?style=flat&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Compass_Ready-47a248?style=flat&logo=mongodb)](https://www.mongodb.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-MariaDB-4479a1?style=flat&logo=mysql)](https://www.mysql.com/)
 
 A premium, modern, production-grade **School Alumni Management and Community Web Application** built specifically for the **SSGHS Alumni Association** (Sabuj Shikshayatan Government High School / সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Chattogram, Bangladesh.
 
@@ -20,7 +20,7 @@ All technical and operational documentation has been organized into the [`docs/`
 
 - [**Milestones, Live Status & AI Error Log**](./PROJECT_MILESTONES_AND_STATUS.md): Master progress tracker, live running services, completed modules, and structured AI error incident log.
 - [**System Architecture & Technical Specs**](./docs/ARCHITECTURE.md): Client layer, component hierarchy, entity models, and role-based permissions.
-- [**MongoDB & MongoDB Compass Setup Guide**](./docs/MONGODB_SETUP.md): Step-by-step instructions for connecting with MongoDB Compass, database schemas, and seed data.
+- [**MySQL / MariaDB Database Guide**](./docs/DATABASE_SETUP.md): Connection string, creating tables, seed data, and table reference.
 - [**Production Deployment Guide**](./docs/PRODUCTION_DEPLOYMENT.md): Production hardening, Nginx, PM2, Vercel, Docker, and backup procedures.
 - [**API & Server Action Specifications**](./docs/API_SPECIFICATION.md): Data contracts and endpoints for authentication, directory, feed, events, donations, and admin management.
 - [**Project Roadmap**](./docs/PROJECT_ROADMAP.md): Release phases, payment gateways (bKash/Nagad), and digital alumni ID cards.

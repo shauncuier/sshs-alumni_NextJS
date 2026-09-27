@@ -1,10 +1,10 @@
-import { PrismaClient, Role, VerificationStatus } from "@prisma/client";
+import "dotenv/config";
+import { Role, VerificationStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 async function main() {
-  console.log("🌱 Starting SSGHS Alumni database seed for PostgreSQL...");
+  console.log("🌱 Starting SSGHS Alumni database seed for MySQL...");
 
   // 1. Hash passwords
   const adminPasswordHash = await bcrypt.hash("admin123", 10);
@@ -95,12 +95,15 @@ async function main() {
       category: "REUNION" as const,
       date: new Date("2026-11-20T09:00:00.000Z"),
       venue: "Main Campus Auditorium & Grounds, SSGHS, Chattogram",
+      time: "09:00 AM - 09:00 PM",
+      locationCity: "Chattogram",
+      organizer: "SSGHS Alumni Association",
       description:
         "The flagship quadrennial gathering of all batches from 1985 to 2025. Featuring alumni awards, memorial tribute, cultural night, batch stalls, and feast.",
-      bannerUrl:
+      bannerImage:
         "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200",
-      totalSeats: 2500,
-      confirmedSeats: 1420,
+      maxAttendees: 2500,
+      attendeesCount: 1420,
       registrationFee: 1500,
     },
     {
@@ -109,12 +112,15 @@ async function main() {
       category: "SPORTS" as const,
       date: new Date("2026-12-12T08:00:00.000Z"),
       venue: "School Football Field & Sports Pavilion",
+      time: "08:00 AM - 06:00 PM",
+      locationCity: "Chattogram",
+      organizer: "SSGHS Sports Committee",
       description:
         "32 alumni batches competing for the coveted SSGHS Champion Shield. Day-long sports carnival with live commentary and food pavilion.",
-      bannerUrl:
+      bannerImage:
         "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200",
-      totalSeats: 500,
-      confirmedSeats: 340,
+      maxAttendees: 500,
+      attendeesCount: 340,
       registrationFee: 500,
     },
     {
@@ -123,12 +129,15 @@ async function main() {
       category: "WEBINAR" as const,
       date: new Date("2026-10-05T14:00:00.000Z"),
       venue: "Virtual via Zoom & SSGHS Media Center",
+      time: "02:00 PM - 06:00 PM",
+      locationCity: "Chattogram",
+      organizer: "SSGHS Tech Alumni Network",
       description:
         "Distinguished SSGHS alumni leaders in Tech, Medicine, and Civil Service share mentorship and global career roadmaps with young graduates.",
-      bannerUrl:
+      bannerImage:
         "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=1200",
-      totalSeats: 1000,
-      confirmedSeats: 620,
+      maxAttendees: 1000,
+      attendeesCount: 620,
       registrationFee: 0,
     },
   ];
@@ -148,12 +157,12 @@ async function main() {
       title: "Needy Student Merit Scholarship Endowment",
       slug: "student-merit-scholarship",
       category: "SCHOLARSHIP" as const,
-      targetAmount: 500000,
+      goalAmount: 500000,
       raisedAmount: 385000,
       donorCount: 142,
       description:
         "Providing full annual tuition, books, and uniforms for 50 meritorious students facing economic hardships at Sabuj Shikshayatan Govt. High School.",
-      imageUrl:
+      bannerImage:
         "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=1000",
       startDate: new Date("2026-01-01"),
       endDate: new Date("2026-12-31"),
@@ -162,15 +171,28 @@ async function main() {
       title: "Modern STEM & Computer Science Lab Modernization",
       slug: "modern-stem-lab",
       category: "STEM_LAB" as const,
-      targetAmount: 800000,
+      goalAmount: 800000,
       raisedAmount: 640000,
       donorCount: 98,
       description:
         "Equipping the campus science lab with 25 modern computers, robotics kits, and high-speed internet to prepare students for the 4th Industrial Revolution.",
-      imageUrl:
+      bannerImage:
         "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&q=80&w=1000",
       startDate: new Date("2026-02-01"),
       endDate: new Date("2026-11-30"),
+    },
+    {
+      title: "School Library Renovation & Digital Resources",
+      slug: "library-renovation-fund",
+      category: "LIBRARY" as const,
+      goalAmount: 300000,
+      raisedAmount: 120000,
+      donorCount: 45,
+      description: "Modernising the school library with digital cataloguing and 2000 new books.",
+      bannerImage:
+        "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=1000",
+      startDate: new Date("2026-03-01"),
+      endDate: new Date("2026-12-31"),
     },
   ];
 
@@ -182,9 +204,119 @@ async function main() {
     });
   }
 
+  // 7. Seed Announcements (fixed ids keep re-runs idempotent)
+  console.log("Seeding Announcements...");
+  const announcements = [
+    {
+      id: "seed-announcement-reunion-2026",
+      title: "Grand Alumni Reunion 2026 — Registration Open!",
+      content:
+        "Registration for the Grand Alumni Reunion 2026 is now officially open. Join thousands of alumni from all batches (1985–2025) for a historic gathering at our beloved school campus in Chattogram. Early bird seats are filling up fast!",
+      priority: "HIGH",
+    },
+    {
+      id: "seed-announcement-digital-card",
+      title: "SSGHS Alumni Digital Card Launch",
+      content:
+        "We are proud to announce the launch of the SSGHS Alumni Digital ID Card system. All verified alumni can now generate their official digital membership card from the Alumni Portal dashboard.",
+      priority: "NORMAL",
+    },
+    {
+      id: "seed-announcement-scholarship-2024",
+      title: "Scholarship Applications Open — Batch 2024–25",
+      content:
+        "The SSGHS Merit Scholarship Fund is now accepting applications for the 2024–25 academic year. Current students with financial need and strong academic performance are encouraged to apply.",
+      priority: "NORMAL",
+    },
+  ];
+
+  for (const a of announcements) {
+    await prisma.announcement.upsert({ where: { id: a.id }, update: {}, create: a });
+  }
+
+  // 8. Seed News Articles
+  console.log("Seeding News Articles...");
+  const news = [
+    {
+      id: "seed-news-30-years",
+      title: "SSGHS Alumni Association Celebrates 30 Years of Community Excellence",
+      category: "School News",
+      excerpt: "The SSGHS Alumni Association marks three decades of connecting graduates and giving back to the school.",
+      content:
+        "The Sabuj Shikshayatan Government High School Alumni Association celebrated its 30th founding anniversary with a grand ceremony attended by over 500 alumni from across Bangladesh and abroad.",
+      featuredImage: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=1000",
+      author: "Alumni Editorial Board",
+      isFeatured: true,
+    },
+    {
+      id: "seed-news-2008-computer-lab",
+      title: "Class of 2008 Alumni Donates State-of-the-Art Computer Lab",
+      category: "Alumni News",
+      excerpt: "Batch 2008 alumni collectively fund a fully-equipped computer laboratory for current students.",
+      content:
+        "In a remarkable display of community spirit, the SSGHS Class of 2008 alumni collectively raised BDT 12 lakh to establish a 30-station computer laboratory equipped with the latest hardware and high-speed internet connectivity.",
+      featuredImage: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&q=80&w=1000",
+      author: "News Desk",
+      isFeatured: false,
+    },
+    {
+      id: "seed-news-dr-rahman",
+      title: "Batch 1995 Alumnus Dr. Rahman Appointed Deputy Health Secretary",
+      category: "Alumni News",
+      excerpt: "SSGHS batch 1995 alumnus rises to a senior position in the national health ministry.",
+      content:
+        "The SSGHS alumni community takes great pride in congratulating Dr. Tariqul Rahman (Batch 1995) on his appointment as Deputy Secretary at the Ministry of Health and Family Welfare, Government of Bangladesh.",
+      featuredImage: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=1000",
+      author: "Alumni Editorial Board",
+      isFeatured: false,
+    },
+  ];
+
+  for (const n of news) {
+    await prisma.newsArticle.upsert({ where: { id: n.id }, update: {}, create: n });
+  }
+
+  // 9. Seed Community Posts
+  console.log("Seeding Community Posts...");
+  const posts = [
+    {
+      id: "seed-post-campus-visit",
+      authorId: alumniUser.id,
+      batchTag: 2008,
+      content:
+        "Had the privilege of visiting our beloved Sabuj Shikshayatan campus yesterday! Walked through the old classrooms on the 2nd floor.",
+      likesCount: 25,
+      commentsCount: 4,
+      isPinned: true,
+    },
+    {
+      id: "seed-post-health-camp",
+      authorId: adminUser.id,
+      batchTag: 2006,
+      content:
+        "Free Cardiac and General Health Screening Camp on October 10th at the school auditorium, dedicated to our current and retired teachers.",
+      likesCount: 42,
+      commentsCount: 8,
+      isPinned: false,
+    },
+    {
+      id: "seed-post-startup-award",
+      authorId: alumniUser.id,
+      batchTag: 2011,
+      content:
+        "Proud to share that our startup has been nominated for the National Sustainable Enterprise Award! None of this would have been possible without SSGHS!",
+      likesCount: 18,
+      commentsCount: 3,
+      isPinned: false,
+    },
+  ];
+
+  for (const p of posts) {
+    await prisma.post.upsert({ where: { id: p.id }, update: {}, create: p });
+  }
+
   console.log("✅ SSGHS Alumni database seeded successfully!");
   console.log("--------------------------------------------------");
-  console.log("PostgreSQL Database:   sshs_alumni");
   console.log("Pre-seeded Admin User: admin@sabujsghs.edu.bd / admin123");
   console.log("Pre-seeded Alumni User: jashedul@example.com / password123");
   console.log("--------------------------------------------------");

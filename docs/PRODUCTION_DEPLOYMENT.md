@@ -21,8 +21,8 @@ This document outlines the end-to-end production deployment, configuration, secu
        └── Dynamic Server-Rendered & Static Pages
                  │
                  ▼ (Encrypted Connection / TLS)
-      [ MongoDB Database Cluster ]
-        (Atlas Replica Set / Compass)
+      [ MySQL / MariaDB Database ]
+        (Managed MySQL / cPanel Hosting)
 ```
 
 ---
@@ -33,7 +33,7 @@ Ensure the following variables are configured in your production hosting dashboa
 
 | Variable | Required | Description | Example Production Value |
 |---|---|---|---|
-| `DATABASE_URL` | **Yes** | MongoDB connection string | `mongodb+srv://admin:pass@cluster.mongodb.net/sshs_alumni?retryWrites=true&w=majority` |
+| `DATABASE_URL` | **Yes** | MySQL connection string (URL-encode special characters) | `mysql://app_user:pass@db.example.com:3306/sshs_alumni` |
 | `NEXTAUTH_SECRET` | **Yes** | 32+ character cryptographic secret | Generate via `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | **Yes** | Canonical public domain | `https://alumni.sabujsghs.edu.bd` |
 | `NEXT_PUBLIC_APP_URL` | **Yes** | Public frontend URL | `https://alumni.sabujsghs.edu.bd` |
@@ -146,10 +146,10 @@ CMD ["npm", "start"]
 
 ## 7. Disaster Recovery & Backups
 
-### Automated MongoDB Backups
-Set up a daily cron task for `mongodump`:
+### Automated MySQL Backups
+Set up a daily cron task for `mysqldump` (store credentials in `~/.my.cnf`, not on the command line):
 ```bash
-0 2 * * * mongodump --uri="mongodb+srv://admin:pass@cluster.mongodb.net/sshs_alumni" --out="/var/backups/mongodb/$(date +\%F)"
+0 2 * * * mysqldump --single-transaction sshs_alumni | gzip > "/var/backups/mysql/sshs_alumni-$(date +\%F).sql.gz"
 ```
 
 Retention policy: Keep 7 daily backups, 4 weekly backups, and 12 monthly archives in secure off-site object storage.

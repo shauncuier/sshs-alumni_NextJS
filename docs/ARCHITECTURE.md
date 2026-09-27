@@ -32,17 +32,17 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
 +------------------------------------+------------------------------------+
 |                            API & Data Layer                             |
 |  - Next.js Server Actions & Route Handlers                              |
-|  - Prisma Client ORM (MongoDB Native Connector)                         |
+|  - Prisma Client ORM (MariaDB Driver Adapter)                           |
 |  - In-Memory Fallback Repository (Zero-downtime offline capability)     |
 +------------------------------------+------------------------------------+
                                      |
                                      v
 +------------------------------------+------------------------------------+
-|                         MongoDB Database Layer                          |
+|                      MySQL / MariaDB Database Layer                     |
 |  - Database: sshs_alumni                                                |
-|  - Collections: Users, AlumniProfiles, Batches, Events, Posts,          |
+|  - Tables: Users, AlumniProfiles, Batches, Events, Posts,               |
 |    Donations, Gallery, Stories, VerificationRequests                    |
-|  - Inspected & Managed via MongoDB Compass                              |
+|  - Inspected via MySQL Workbench / phpMyAdmin                           |
 +-------------------------------------------------------------------------+
 ```
 

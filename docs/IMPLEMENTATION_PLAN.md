@@ -6,7 +6,7 @@ Approved baseline plan for the official school alumni digital ecosystem.
 
 Refer to the companion markdown documentation in `docs/`:
 - [README.md](./README.md): Master project overview and quick start.
-- [MONGODB_SETUP.md](./MONGODB_SETUP.md): Instructions for MongoDB Compass.
+- [DATABASE_SETUP.md](./DATABASE_SETUP.md): MySQL / MariaDB setup and seeding.
 - [ARCHITECTURE.md](./ARCHITECTURE.md): System architecture and data models.
 - [API_SPECIFICATION.md](./API_SPECIFICATION.md): Endpoint and Server Action contracts.
 - [PROJECT_ROADMAP.md](./PROJECT_ROADMAP.md): Features and planned phases.

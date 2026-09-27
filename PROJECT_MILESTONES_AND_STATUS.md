@@ -24,9 +24,9 @@ This document is the **single source of truth** for project milestones, componen
 
 | Service / Component | Target Host / Port | Current Status | PID / Process Details | Notes & Verification Command |
 | :--- | :--- | :--- | :--- | :--- |
-| **MongoDB Daemon** | `127.0.0.1:27017` | 🟢 **RUNNING** | `mongod` (PID: 5368) | Database name: `sshs_alumni`. Test: `Get-NetTCPConnection -LocalPort 27017` |
+| **MySQL / MariaDB** | Remote host from `DATABASE_URL` | 🟡 **CONFIGURED** | cPanel-hosted MySQL | Migrated from MongoDB on 2026-09-28. Create tables: `npm run db:push`. See `docs/DATABASE_SETUP.md`. |
 | **Next.js App Server** | `http://localhost:3000` | 🟡 **READY** | Dev server command: `npm run dev` | Production build verified (`next build` exited code 0, **63 routes** generated across 4 phases) |
-| **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MongoDB connector validated with 13 data models (11 core + `PaymentTransaction` + enhanced `Donation`) |
+| **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MySQL connector (MariaDB driver adapter) validated with 13 data models (11 core + `PaymentTransaction` + enhanced `Donation`) |
 | **Payment Gateway Suite** | `/api/payments/*` | 🟢 **ACTIVE** | bKash + Nagad + SSLCommerz | Sandbox mode by default. Set `BKASH_SANDBOX=false` for production. 7 API routes. |
 | **SSE Real-Time Engine** | `/api/realtime/stream` | 🟢 **ACTIVE** | Server-Sent Events with heartbeat | No external deps. Client hook: `useRealtime(userId)`. Direct messaging & live alerts wired. |
 | **Digital Smart ID Card** | `/card` & `/verify/*` | 🟢 **ACTIVE** | HMAC-SHA256 Token Signature + QR Generator | 3D Flippable card, Gate Scanner (`/admin/gate-verify`), Apple & Google Wallet pass APIs. |
@@ -37,7 +37,7 @@ This document is the **single source of truth** for project milestones, componen
 | **Tailwind CSS Engine** | `@tailwindcss/postcss v4` | 🟢 **OPERATIONAL** | Turbo & PostCSS pipeline active | Global theme tokens defined in `app/globals.css` |
 
 ### Environment Configuration Summary
-- `.env` points to `mongodb://localhost:27017/sshs_alumni`
+- `.env` `DATABASE_URL` points to the MySQL database (`mysql://…`); `lib/prisma.ts` and `prisma.config.ts` both read it
 - `NEXT_PUBLIC_APP_URL`: `http://localhost:3000`
 - `NEXTAUTH_SECRET`: Configured for session hashing
 - Production Build: 63 routes generated statically or dynamically on-demand
@@ -227,7 +227,7 @@ Use this format to log any issues, build warnings, runtime catches, or API break
 
 ---
 
-### [LOG-002] MongoDB Connection Pre-requisite for Database Commands
+### [LOG-002] MongoDB Connection Pre-requisite for Database Commands (superseded: MySQL since 2026-09-28)
 - **Timestamp**: 2026-09-26 03:41 (Local)
 - **Component / File**: `prisma/schema.prisma`, `.env`, `lib/prisma.ts`
 - **Severity**: INFORMATIONAL / RESOLVED
@@ -240,7 +240,7 @@ Use this format to log any issues, build warnings, runtime catches, or API break
   1. Verified `mongod` is running on port 27017 (PID: 5368).
   2. If down, start MongoDB via Windows Service: `Start-Service MongoDB` or launch `mongod --dbpath <data-directory>`.
   3. Inspect connectivity using: `Get-NetTCPConnection -LocalPort 27017`.
-- **AI Prevention Rule**: Always verify MongoDB port 27017 is listening before executing Prisma seed or database queries.
+- **AI Prevention Rule**: Superseded — the database is now MySQL (see `docs/DATABASE_SETUP.md`). Check `DATABASE_URL` is set and reachable before running Prisma seed or database queries.
 
 ---
 
@@ -258,7 +258,7 @@ Use this format to log any issues, build warnings, runtime catches, or API break
 
 ---
 
-### [LOG-004] Seed Data Duplication Protection in MongoDB
+### [LOG-004] Seed Data Duplication Protection (originally MongoDB; still applies on MySQL)
 - **Timestamp**: 2026-09-25 20:15 (Local)
 - **Component / File**: `prisma/seed.ts`
 - **Severity**: RESOLVED
@@ -268,7 +268,7 @@ Use this format to log any issues, build warnings, runtime catches, or API break
   ```
 - **Root Cause**: Re-running `npm run db:seed` when demo alumni records already existed in MongoDB.
 - **Resolution / Workaround**: In `prisma/seed.ts`, use `upsert` queries or clean up test records prior to re-seeding: `await prisma.user.deleteMany({ where: { email: { in: seedEmails } } })`.
-- **AI Prevention Rule**: Always use idempotent seeding patterns (`upsert` or check-before-create) for MongoDB Prisma scripts.
+- **AI Prevention Rule**: Always use idempotent seeding patterns (`upsert` or check-before-create) for Prisma seed scripts.
 
 ---
 
@@ -277,8 +277,8 @@ Use this format to log any issues, build warnings, runtime catches, or API break
 Run these PowerShell commands in `d:\SaaS Project\sshs-alumni`:
 
 ```powershell
-# 1. Check if MongoDB is listening
-Get-NetTCPConnection -State Listen -LocalPort 27017
+# 1. Check the database schema is valid and in sync
+npx prisma validate
 
 # 2. Check if Next.js Dev Server is running
 Get-NetTCPConnection -State Listen -LocalPort 3000
