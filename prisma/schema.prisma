@@ -53,7 +53,7 @@ enum PaymentGateway {
 }
 
 model User {
-  id           String             @id @default(uuid())
+  id           String             @id @default(uuid()) @db.VarChar(36)
   email        String             @unique
   passwordHash String
   role         Role               @default(ALUMNI)
@@ -73,8 +73,8 @@ model User {
 }
 
 model AlumniProfile {
-  id     String @id @default(uuid())
-  userId String @unique
+  id     String @id @default(uuid()) @db.VarChar(36)
+  userId String @unique @db.VarChar(36)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   fullName           String
@@ -108,7 +108,7 @@ model AlumniProfile {
 }
 
 model Batch {
-  id                  String    @id @default(uuid())
+  id                  String    @id @default(uuid()) @db.VarChar(36)
   year                Int       @unique // e.g. 2008
   name                String // e.g. "SSC Batch 2008"
   tagline             String?   @db.VarChar(500)
@@ -125,8 +125,8 @@ model Batch {
 }
 
 model Post {
-  id            String  @id @default(uuid())
-  authorId      String
+  id            String  @id @default(uuid()) @db.VarChar(36)
+  authorId      String  @db.VarChar(36)
   author        User    @relation(fields: [authorId], references: [id])
   batchTag      Int?
   content       String  @db.Text
@@ -142,10 +142,10 @@ model Post {
 }
 
 model Comment {
-  id       String @id @default(uuid())
-  postId   String
+  id       String @id @default(uuid()) @db.VarChar(36)
+  postId   String @db.VarChar(36)
   post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId String
+  authorId String @db.VarChar(36)
   author   User   @relation(fields: [authorId], references: [id])
   content  String @db.Text
 
@@ -154,7 +154,7 @@ model Comment {
 }
 
 model Event {
-  id                 String        @id @default(uuid())
+  id                 String        @id @default(uuid()) @db.VarChar(36)
   slug               String        @unique
   title              String
   category           EventCategory @default(REUNION)
@@ -177,10 +177,10 @@ model Event {
 }
 
 model EventRegistration {
-  id             String  @id @default(uuid())
-  eventId        String
+  id             String  @id @default(uuid()) @db.VarChar(36)
+  eventId        String  @db.VarChar(36)
   event          Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId         String
+  userId         String  @db.VarChar(36)
   user           User    @relation(fields: [userId], references: [id])
   guestCount     Int     @default(1)
   mealPreference String?
@@ -190,7 +190,7 @@ model EventRegistration {
 }
 
 model DonationCampaign {
-  id           String           @id @default(uuid())
+  id           String           @id @default(uuid()) @db.VarChar(36)
   slug         String           @unique
   title        String
   category     CampaignCategory @default(SCHOLARSHIP)
@@ -210,10 +210,10 @@ model DonationCampaign {
 }
 
 model Donation {
-  id             String           @id @default(uuid())
-  campaignId     String
+  id             String           @id @default(uuid()) @db.VarChar(36)
+  campaignId     String           @db.VarChar(36)
   campaign       DonationCampaign @relation(fields: [campaignId], references: [id])
-  userId         String?
+  userId         String?          @db.VarChar(36)
   user           User?            @relation(fields: [userId], references: [id])
   donorName      String
   donorEmail     String?
@@ -239,8 +239,8 @@ model Donation {
 }
 
 model PaymentTransaction {
-  id                String         @id @default(uuid())
-  donationId        String         @unique
+  id                String         @id @default(uuid()) @db.VarChar(36)
+  donationId        String         @unique @db.VarChar(36)
   donation          Donation       @relation(fields: [donationId], references: [id], onDelete: Cascade)
   gateway           PaymentGateway
   gatewaySessionKey String?        @db.VarChar(500)
@@ -262,7 +262,7 @@ model PaymentTransaction {
 }
 
 model NewsArticle {
-  id            String   @id @default(uuid())
+  id            String   @id @default(uuid()) @db.VarChar(36)
   title         String
   category      String // "School News", "Alumni News", "Events"
   excerpt       String   @db.Text
@@ -274,7 +274,7 @@ model NewsArticle {
 }
 
 model AlumniStory {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @db.VarChar(36)
   title       String
   authorName  String
   batchYear   Int
@@ -287,7 +287,7 @@ model AlumniStory {
 }
 
 model Achievement {
-  id            String  @id @default(uuid())
+  id            String  @id @default(uuid()) @db.VarChar(36)
   recipientName String
   batchYear     Int
   category      String // "Doctor", "Engineer", "Entrepreneur", etc.
@@ -299,7 +299,7 @@ model Achievement {
 }
 
 model GalleryAlbum {
-  id          String  @id @default(uuid())
+  id          String  @id @default(uuid()) @db.VarChar(36)
   title       String
   category    String // "Campus", "Old Days", "Reunions", "Sports"
   description String? @db.Text
@@ -312,8 +312,8 @@ model GalleryAlbum {
 }
 
 model GalleryPhoto {
-  id         String       @id @default(uuid())
-  albumId    String
+  id         String       @id @default(uuid()) @db.VarChar(36)
+  albumId    String       @db.VarChar(36)
   album      GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
   imageUrl   String       @db.VarChar(500)
   caption    String?      @db.VarChar(500)
@@ -324,10 +324,10 @@ model GalleryPhoto {
 }
 
 model Message {
-  id         String  @id @default(uuid())
-  senderId   String
+  id         String  @id @default(uuid()) @db.VarChar(36)
+  senderId   String  @db.VarChar(36)
   sender     User    @relation("SentMessages", fields: [senderId], references: [id])
-  receiverId String
+  receiverId String  @db.VarChar(36)
   receiver   User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
   content    String  @db.Text
   isRead     Boolean @default(false)
@@ -336,8 +336,8 @@ model Message {
 }
 
 model Notification {
-  id      String  @id @default(uuid())
-  userId  String
+  id      String  @id @default(uuid()) @db.VarChar(36)
+  userId  String  @db.VarChar(36)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   title   String
   message String  @db.Text
@@ -349,7 +349,7 @@ model Notification {
 }
 
 model Announcement {
-  id       String  @id @default(uuid())
+  id       String  @id @default(uuid()) @db.VarChar(36)
   title    String
   content  String  @db.Text
   priority String  @default("NORMAL") // "NORMAL", "HIGH", "URGENT"
@@ -360,8 +360,8 @@ model Announcement {
 }
 
 model VerificationRequest {
-  id               String             @id @default(uuid())
-  userId           String
+  id               String             @id @default(uuid()) @db.VarChar(36)
+  userId           String             @db.VarChar(36)
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   sscBatch         Int
   rollNumber       String?
