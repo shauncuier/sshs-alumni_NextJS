@@ -1,13 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
-import { sampleVerificationRequests, sampleAlumni } from "@/lib/data";
+import React, { useEffect, useState } from "react";
+import type { VerificationRequestItem } from "@/lib/data";
+import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 import { Search, Filter, Check, X, ShieldCheck, Download } from "lucide-react";
 
 export default function AdminAlumniPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [requests, setRequests] = useState(sampleVerificationRequests);
+  const [requests, setRequests] = useState<VerificationRequestItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchVerificationRequests("all")
+      .then(setRequests)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredRequests = requests.filter((r) => {
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
@@ -22,17 +33,21 @@ export default function AdminAlumniPage() {
     return true;
   });
 
-  const handleApprove = (id: string) => {
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: "VERIFIED" as const } : r))
-    );
+  const decide = async (id: string, status: "VERIFIED" | "REJECTED") => {
+    setBusyId(id);
+    setError(null);
+    try {
+      await decideVerification(id, status);
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: "REJECTED" as const } : r))
-    );
-  };
+  const handleApprove = (id: string) => decide(id, "VERIFIED");
+  const handleReject = (id: string) => decide(id, "REJECTED");
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -81,6 +96,12 @@ export default function AdminAlumniPage() {
         </div>
       </div>
 
+      {error && (
+        <div role="alert" className="p-4 bg-rose-50 border border-rose-300 text-rose-900 rounded-2xl text-xs font-bold">
+          {error}
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -97,6 +118,13 @@ export default function AdminAlumniPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {(loading || filteredRequests.length === 0) && (
+                <tr>
+                  <td colSpan={7} className="py-8 px-6 text-center text-slate-400">
+                    {loading ? "Loading verification requests…" : "No verification requests match."}
+                  </td>
+                </tr>
+              )}
               {filteredRequests.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50">
                   <td className="py-4 px-6">
@@ -125,13 +153,15 @@ export default function AdminAlumniPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleApprove(r.id)}
-                          className="px-3 py-1 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg font-bold"
+                          disabled={busyId !== null}
+                          className="px-3 py-1 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => handleReject(r.id)}
-                          className="px-3 py-1 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-lg font-bold"
+                          disabled={busyId !== null}
+                          className="px-3 py-1 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Reject
                         </button>

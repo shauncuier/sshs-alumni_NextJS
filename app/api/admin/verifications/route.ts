@@ -3,7 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-export async function GET() {
+const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
+type RequestStatus = (typeof REQUEST_STATUSES)[number];
+
+// GET /api/admin/verifications?status=PENDING|VERIFIED|REJECTED|all (default PENDING)
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const role = (session?.user as unknown as { role?: string })?.role;
@@ -12,22 +16,31 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
+    const statusParam = new URL(req.url).searchParams.get("status") ?? "PENDING";
+    if (statusParam !== "all" && !REQUEST_STATUSES.includes(statusParam as RequestStatus)) {
+      return NextResponse.json(
+        { error: "Invalid status. Use PENDING, VERIFIED, REJECTED or all." },
+        { status: 400 }
+      );
+    }
+
     try {
       const requests = await prisma.verificationRequest.findMany({
-        where: { status: "PENDING" },
+        where: statusParam === "all" ? {} : { status: statusParam as RequestStatus },
         include: {
-          user: {
-            include: {
-              profile: true,
-            },
-          },
+          // Select account fields explicitly so the password hash never leaves the server.
+          user: { select: { email: true, status: true, profile: true } },
         },
         orderBy: { createdAt: "desc" },
       });
 
       return NextResponse.json({ requests, total: requests.length });
-    } catch {
-      return NextResponse.json({ requests: [], total: 0 });
+    } catch (dbErr) {
+      console.error("Admin verification fetch failed:", dbErr);
+      return NextResponse.json(
+        { error: "Could not load verification requests from the database." },
+        { status: 503 }
+      );
     }
   } catch (error) {
     console.error("Admin verification fetch error:", error);
@@ -54,30 +67,50 @@ export async function PATCH(req: Request) {
       );
     }
 
+    const decision = status as "VERIFIED" | "REJECTED";
+
     try {
-      const updated = await prisma.verificationRequest.update({
-        where: { id: requestId },
-        // updatedAt records when the review happened.
-        data: {
-          status,
-          reviewedBy: session?.user?.email ?? null,
-        },
+      // Record the decision on the request and apply it to the account and
+      // profile together: the directory lists only VERIFIED profiles, and the
+      // session, profile page and ID card read User.status.
+      const result = await prisma.$transaction(async (tx) => {
+        const request = await tx.verificationRequest.findUnique({ where: { id: requestId } });
+        if (!request) return { error: "Verification request not found.", code: 404 } as const;
+        // Only pending requests can be decided, so a late or duplicate request
+        // can never downgrade an account that is already verified.
+        if (request.status !== "PENDING") {
+          return { error: `Verification request is already ${request.status.toLowerCase()}.`, code: 409 } as const;
+        }
+
+        const updated = await tx.verificationRequest.update({
+          where: { id: requestId },
+          // updatedAt records when the review happened.
+          data: { status: decision, reviewedBy: session?.user?.email ?? null },
+        });
+        await tx.user.update({ where: { id: request.userId }, data: { status: decision } });
+        await tx.alumniProfile.updateMany({
+          where: { userId: request.userId },
+          data: { verificationStatus: decision },
+        });
+        return { updated } as const;
       });
+
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: result.code });
+      }
+      const updated = result.updated;
 
       return NextResponse.json({
         message: `Verification request ${status.toLowerCase()} successfully`,
         request: updated,
       });
     } catch (dbErr) {
-      console.warn("Database verification update fallback:", dbErr);
+      console.error("Verification decision failed:", dbErr);
+      return NextResponse.json(
+        { error: "Could not save the verification decision. Please try again." },
+        { status: 503 }
+      );
     }
-
-    return NextResponse.json({
-      message: `Verification request ${status.toLowerCase()} successfully`,
-      requestId,
-      status,
-      simulated: true,
-    });
   } catch (error) {
     console.error("Admin verification PATCH error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

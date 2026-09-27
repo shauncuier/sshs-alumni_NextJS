@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -16,29 +16,48 @@ import {
   Eye,
   Plus
 } from "lucide-react";
-import { sampleVerificationRequests } from "@/lib/data";
+import type { VerificationRequestItem } from "@/lib/data";
+import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 
 export default function AdminDashboardPage() {
-  const [requests, setRequests] = useState(sampleVerificationRequests);
-  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [requests, setRequests] = useState<VerificationRequestItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<{ text: string; isError: boolean } | null>(null);
 
-  const handleApprove = (id: string) => {
-    const target = requests.find((r) => r.id === id);
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: "VERIFIED" as const } : r))
-    );
-    setActionNotice(`Approved ${target?.fullName || "alumnus"}. Official verified badge granted.`);
+  useEffect(() => {
+    fetchVerificationRequests("PENDING")
+      .then(setRequests)
+      .catch((err: Error) => setLoadError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const showNotice = (text: string, isError = false) => {
+    setActionNotice({ text, isError });
     setTimeout(() => setActionNotice(null), 3500);
   };
 
-  const handleReject = (id: string) => {
+  const decide = async (id: string, status: "VERIFIED" | "REJECTED") => {
     const target = requests.find((r) => r.id === id);
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: "REJECTED" as const } : r))
-    );
-    setActionNotice(`Verification request for ${target?.fullName || "alumnus"} marked as rejected.`);
-    setTimeout(() => setActionNotice(null), 3500);
+    setBusyId(id);
+    try {
+      await decideVerification(id, status);
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      showNotice(
+        status === "VERIFIED"
+          ? `Approved ${target?.fullName || "alumnus"}. Official verified badge granted.`
+          : `Verification request for ${target?.fullName || "alumnus"} marked as rejected.`
+      );
+    } catch (err) {
+      showNotice((err as Error).message, true);
+    } finally {
+      setBusyId(null);
+    }
   };
+
+  const handleApprove = (id: string) => decide(id, "VERIFIED");
+  const handleReject = (id: string) => decide(id, "REJECTED");
 
   const pendingCount = requests.filter((r) => r.status === "PENDING").length;
   const verifiedCount = 4890 + requests.filter((r) => r.status === "VERIFIED").length;
@@ -46,9 +65,20 @@ export default function AdminDashboardPage() {
   return (
     <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
       {actionNotice && (
-        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl flex items-center gap-2 text-xs font-bold animate-fade-in shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <span>{actionNotice}</span>
+        <div
+          role={actionNotice.isError ? "alert" : "status"}
+          className={`p-4 border rounded-2xl flex items-center gap-2 text-xs font-bold animate-fade-in shadow-xs ${
+            actionNotice.isError
+              ? "bg-rose-50 border-rose-300 text-rose-900"
+              : "bg-emerald-50 border-emerald-300 text-emerald-900"
+          }`}
+        >
+          {actionNotice.isError ? (
+            <XCircle className="w-4 h-4 text-rose-600" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          )}
+          <span>{actionNotice.text}</span>
         </div>
       )}
       {/* Top Header */}
@@ -149,6 +179,13 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {(loading || loadError || requests.length === 0) && (
+                <tr>
+                  <td colSpan={6} className={`py-8 px-6 text-center ${loadError ? "text-rose-700" : "text-slate-400"}`}>
+                    {loading ? "Loading verification requests…" : loadError ?? "No pending verification requests."}
+                  </td>
+                </tr>
+              )}
               {requests.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-4 px-6">
@@ -190,13 +227,15 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleApprove(r.id)}
-                          className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
+                          disabled={busyId !== null}
+                          className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => handleReject(r.id)}
-                          className="px-3 py-1.5 bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-700 rounded-xl text-xs font-semibold transition-colors"
+                          disabled={busyId !== null}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-700 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Reject
                         </button>
