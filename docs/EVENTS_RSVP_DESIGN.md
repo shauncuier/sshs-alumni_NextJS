@@ -45,7 +45,7 @@ After this change:
 | `isMembershipEvent` | Boolean (default false) | Registering for this event is how new members join. At most one event has it; setting it on one event clears it on the others. |
 | `agenda` | Json (default `[]`) | `[{ day?: number, time: string, activity: string }]` |
 | `highlights` | Json (default `[]`) | `string[]` |
-| `packages` | Json (default `[]`) | `[{ name, price: number (BDT), description, includes: string[], isPopular?: boolean }]` |
+| `packages` | Json (default `[]`) | `[{ name, price: number (BDT), description, includes: string[], isPopular?: boolean, adults: number, children: number, guestsFree?: boolean }]`: `adults`/`children` are the people the price covers (the member counts as an adult); `guestsFree` makes extra guests free (Patron) |
 | `extraAdultFee` | Float (default 0) | Per extra adult (Jubilee: 500) |
 | `childFee` | Float (default 0) | Per child under 12 (Jubilee: 300) |
 | `paymentInstructions` | Text? | Where and how to pay, e.g. "Send to bKash 01XXXXXXXXX (Merchant), then enter your TrxID" |
@@ -58,9 +58,11 @@ Existing `registrationFee` remains the price for events **without** packages. `a
 | :--- | :--- | :--- |
 | `packageName` | String? | Chosen package (null for events without packages) |
 | `extraAdults` | Int (default 0) | |
-| `children` | Int (default 0) | Children under 12 |
+| `extraChildren` | Int (default 0) | Extra children under 12, beyond the package |
+| `headCount` | Int (default 1) | People this registration brings, stored so capacity sums are one query |
 | `tshirtSize` | String? | |
-| `totalFee` | Float (default 0) | **Computed on the server** at registration time; never taken from the form |
+| `totalFee` | Float (default 0) | Registration fee, **computed on the server** at registration time; never taken from the form |
+| `donationAmount` | Float (default 0) | Optional extra donation typed by the registrant (whole taka, ≥ 0); paid together with the fee |
 | `paymentMethod` | String? | `bKash`, `Nagad`, `Bank`, `Cash`; null for free events |
 | `transactionId` | String? **@unique** | One payment cannot be claimed by two registrations |
 | `status` | enum `RegistrationStatus` | `PENDING_PAYMENT`, `CONFIRMED`, `CHECKED_IN`, `CANCELLED` |
@@ -73,14 +75,15 @@ Existing `guestCount`, `mealPreference` and `notes` stay. Constraint: **`@@uniqu
 
 ### Rules
 
-- **Head count** of a registration = `1 + extraAdults + children`.
+- **Head count** of a registration = `package.adults + package.children + extraAdults + extraChildren` (`1 + extras` for events without packages).
 - **Capacity:** the sum of head counts for `PENDING_PAYMENT`, `CONFIRMED` and `CHECKED_IN` registrations may not exceed `maxAttendees`.
 - **Live attendee count** shown on pages = head count of `CONFIRMED` + `CHECKED_IN` registrations.
-- **Fee:** `packagePrice (or registrationFee) + extraAdults × extraAdultFee + children × childFee`.
+- **Fee ("Jubilee price model"):** `packagePrice (or registrationFee) + extraAdults × extraAdultFee + extraChildren × childFee`, except that a package with `guestsFree` (Golden Patron & Sponsor, ৳5,000) brings extra guests free. Jubilee examples: General ৳1,000; General + 1 adult ৳1,500 (= Spouse package); Family ৳1,800 (2 adults + 1 child); Patron ৳5,000 however many guests.
+- **Donation:** `donationAmount` is added to the amount to pay (`total = fee + donation`) but is not part of the fee: it never makes a free membership registration count as paid, and it shows separately to admins.
 - **Membership event must be paid:** it must have at least one package with a price above 0 (or a `registrationFee` above 0). The admin form refuses to mark a free event as the membership event.
-- **Initial status:** `PENDING_PAYMENT` for any fee above 0. Only a free event, which only verified members can register for, starts as `CONFIRMED`.
+- **Initial status:** `PENDING_PAYMENT` for any amount to pay above 0 (fee plus donation). Only a free event, which only verified members can register for, starts as `CONFIRMED`.
 - **Approving a membership registration** (one transaction): registration → `CONFIRMED`; user → `VERIFIED`; profile `verificationStatus` → `VERIFIED`; the member's pending `VerificationRequest` → `VERIFIED` with `reviewedBy`.
-- **Rejecting a membership registration** (one transaction): registration → `CANCELLED`; user, profile and request → `REJECTED`.
+- **Rejecting a membership registration** (one transaction): registration → `CANCELLED`; user, profile and request → `REJECTED`, **only if the member is still `PENDING`**. A member verified before this change keeps their membership when their Jubilee registration is cancelled.
 - A price changed after registration does not change an existing registration's `totalFee`.
 
 ## 4. APIs
@@ -91,9 +94,9 @@ Existing `guestCount`, `mealPreference` and `notes` stay. Constraint: **`@@uniqu
 - `GET /api/events/membership` — the current membership event, used by `/register`; 404 when none is open.
 
 ### Admin (ADMIN / SUPER_ADMIN)
-- `POST /api/events`, `PUT /api/events/[id]`, `DELETE /api/events/[id]` — full create/edit including packages, agenda, fees and the membership flag, validated on the server. Deleting an event that has registrations is refused (409); admins close registration instead.
-- `GET /api/admin/events/[id]/registrations` — attendees with payment status, membership status and, for the membership event, school details (batch, roll, section); totals (confirmed revenue, pending revenue, head count).
-- `PATCH /api/admin/events/[id]/registrations/[regId]` — `CONFIRMED` (Approve), `CANCELLED` (Reject/Cancel) or `CHECKED_IN`, recording who and when. On the membership event, Approve and Reject also verify or reject the membership (§3 Rules).
+- `GET /api/admin/events`, `POST /api/admin/events`, `PUT /api/admin/events/[id]`, `DELETE /api/admin/events/[id]` — full create/edit including packages, agenda, fees and the membership flag, validated on the server. Deleting an event that has registrations is refused (409); admins close registration instead.
+- `GET /api/admin/events/[id]` — the event plus its attendees with payment status, membership status, school details (batch, roll, section) and donation; totals (confirmed revenue, pending revenue, confirmed donations, head count). Admin routes live under `/api/admin/events` because Next.js cannot have `app/api/events/[id]` beside `app/api/events/[slug]`; the old `/api/events/[id]` routes are removed.
+- `PATCH /api/admin/events/[id]/registrations/[regId]` — `{ action: "APPROVE" | "CANCEL" | "CHECK_IN" | "UNDO_CHECK_IN" }`, recording who and when; invalid transitions (e.g. checking in an unpaid registration) return 409. On the membership event, Approve and Reject also verify or reject the membership (§3 Rules).
 - Existing `PATCH /api/admin/verifications` — refuses (409) to verify a member whose membership registration is still `PENDING_PAYMENT`: "Confirm their Jubilee payment from the attendee list", so no one is verified without paying.
 
 ### RSVP
@@ -127,9 +130,9 @@ Existing `guestCount`, `mealPreference` and `notes` stay. Constraint: **`@@uniqu
 - Home page and dashboard "upcoming event" cards read the next real event.
 
 ### Registration / RSVP form (rewired `components/events/RSVPModal.tsx`, also used by `/register`)
-- **Membership event, signed out:** step 1 "Your details" (name, email, phone, password, SSC batch, roll, section); step 2 "Registration & payment" (package, extra adults, children, T-shirt, meal, payment method, transaction ID, with the event's payment instructions beside it).
+- **Membership event, signed out:** step 1 "Your details" (name, email, phone, password, SSC batch, roll, section); step 2 "Registration & payment" (package, extra adults, children, T-shirt, meal, **optional donation amount**, payment method, transaction ID, with the event's payment instructions beside it).
 - **Signed in:** step 2 only, name pre-filled.
-- A live total using the same fee rules as the server.
+- A live total using the same fee rules as the server: registration fee, donation (if any), total to pay.
 - After submit: "Registered — payment and membership under review" (or "Registered" for free events); a new member is signed in automatically.
 - If the member is already registered, the event page shows their status and, once confirmed, their ticket QR.
 
@@ -180,3 +183,13 @@ Against a throwaway local MariaDB (Docker), as in earlier rounds.
 - Separating membership registration from the Jubilee (planned later; see §2).
 - Email/SMS confirmations.
 - Refund handling beyond marking a registration cancelled.
+
+## 10. Amendments (while writing the implementation plan)
+
+- **Pricing:** kept the current Jubilee price model (§3 Rules), expressed as package `adults`/`children`/`guestsFree` so it is data, not package-name checks.
+- **Donation:** registrants can add an optional custom donation amount (`donationAmount`), paid with the fee and shown separately.
+- **Columns:** `children` renamed `extraChildren`; `headCount` and `donationAmount` added.
+- **Admin routes** moved to `/api/admin/events…` (route conflict with `[slug]`).
+- **Reject** only rejects a membership that is still pending.
+
+Implementation plan: `docs/EVENTS_RSVP_PLAN.md`.
