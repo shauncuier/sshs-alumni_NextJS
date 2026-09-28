@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import prisma from "@/lib/prisma";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
@@ -34,7 +35,10 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
       });
 
-      return NextResponse.json({ requests, total: requests.length });
+      const withPayment = await Promise.all(
+        requests.map(async (r) => ({ ...r, awaitingPayment: await hasPendingMembershipPayment(prisma, r.userId) }))
+      );
+      return NextResponse.json({ requests: withPayment, total: withPayment.length });
     } catch (dbErr) {
       console.error("Admin verification fetch failed:", dbErr);
       return NextResponse.json(
@@ -80,6 +84,11 @@ export async function PATCH(req: Request) {
         // can never downgrade an account that is already verified.
         if (request.status !== "PENDING") {
           return { error: `Verification request is already ${request.status.toLowerCase()}.`, code: 409 } as const;
+        }
+        // Joining is the paid Jubilee registration: approve it from the event's
+        // attendee list, where the payment and the membership are decided together.
+        if (await hasPendingMembershipPayment(tx, request.userId)) {
+          return { error: "Confirm their Jubilee payment from the event's attendee list.", code: 409 } as const;
         }
 
         const updated = await tx.verificationRequest.update({

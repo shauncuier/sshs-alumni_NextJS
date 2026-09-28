@@ -160,6 +160,7 @@ export interface VerificationRequestItem {
   documentUrl: string;
   submittedAt: string;
   status: "PENDING" | "VERIFIED" | "REJECTED";
+  awaitingPayment?: boolean;
 }
 
 // -----------------------------------------------------------------

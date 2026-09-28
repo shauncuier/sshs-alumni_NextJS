@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { getAdminEvent } from "@/lib/events/admin";
 import { deleteEvent, updateEvent } from "@/lib/events/service";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 type Params = { params: Promise<{ id: string }> };
 const forbidden = () => NextResponse.json({ error: "Only administrators can manage events." }, { status: 403 });
+
+export async function GET(_req: Request, { params }: Params) {
+  const me = await getSessionUser();
+  if (!me || !isAdminRole(me.role)) return forbidden();
+  try {
+    return NextResponse.json(await getAdminEvent((await params).id));
+  } catch (err) {
+    return errorResponse(err, "GET /api/admin/events/[id]");
+  }
+}
 
 export async function PUT(req: Request, { params }: Params) {
   const me = await getSessionUser();

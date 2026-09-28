@@ -12,6 +12,7 @@ interface VerificationRequestRow {
   proofDocumentUrl: string | null;
   status: RequestStatus;
   createdAt: string;
+  awaitingPayment?: boolean;
   user: {
     email: string;
     profile: {
@@ -42,6 +43,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
       timeStyle: "short",
     }),
     status: row.status,
+    awaitingPayment: row.awaitingPayment ?? false,
   };
 }
 
