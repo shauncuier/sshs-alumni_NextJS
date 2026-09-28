@@ -27,6 +27,13 @@ enum EventCategory {
   COMMUNITY
 }
 
+enum RegistrationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CHECKED_IN
+  CANCELLED
+}
+
 enum CampaignCategory {
   SCHOLARSHIP
   STEM_LAB
@@ -154,21 +161,33 @@ model Comment {
 }
 
 model Event {
-  id                 String        @id @default(uuid()) @db.VarChar(36)
-  slug               String        @unique
-  title              String
-  category           EventCategory @default(REUNION)
-  description        String        @db.Text
-  date               DateTime
-  time               String?
-  venue              String        @db.VarChar(500)
-  locationCity       String        @default("Dhaka")
-  organizer          String?
-  bannerImage        String?       @db.VarChar(500)
-  maxAttendees       Int           @default(500)
-  attendeesCount     Int           @default(0)
-  registrationFee    Float         @default(0)
-  isRegistrationOpen Boolean       @default(true)
+  id                   String        @id @default(uuid()) @db.VarChar(36)
+  slug                 String        @unique
+  title                String
+  category             EventCategory @default(REUNION)
+  description          String        @db.Text
+  date                 DateTime
+  time                 String?
+  venue                String        @db.VarChar(500)
+  locationCity         String        @default("Dhaka")
+  organizer            String?
+  bannerImage          String?       @db.VarChar(500)
+  maxAttendees         Int           @default(500)
+  attendeesCount       Int           @default(0)
+  registrationFee      Float         @default(0)
+  isRegistrationOpen   Boolean       @default(true)
+  subtitle             String?
+  guestOfHonor         String?
+  souvenirDetails      String?       @db.Text
+  registrationDeadline DateTime?
+  isMegaEvent          Boolean       @default(false)
+  isMembershipEvent    Boolean       @default(false)
+  agenda               Json          @default("[]")
+  highlights           Json          @default("[]")
+  packages             Json          @default("[]")
+  extraAdultFee        Float         @default(0)
+  childFee             Float         @default(0)
+  paymentInstructions  String?       @db.Text
 
   registrations EventRegistration[]
 
@@ -177,16 +196,32 @@ model Event {
 }
 
 model EventRegistration {
-  id             String  @id @default(uuid()) @db.VarChar(36)
-  eventId        String  @db.VarChar(36)
-  event          Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId         String  @db.VarChar(36)
-  user           User    @relation(fields: [userId], references: [id])
-  guestCount     Int     @default(1)
+  id             String             @id @default(uuid()) @db.VarChar(36)
+  eventId        String             @db.VarChar(36)
+  event          Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId         String             @db.VarChar(36)
+  user           User               @relation(fields: [userId], references: [id])
+  guestCount     Int                @default(1)
   mealPreference String?
-  notes          String? @db.Text
+  notes          String?            @db.Text
+  packageName    String?
+  extraAdults    Int                @default(0)
+  extraChildren  Int                @default(0)
+  headCount      Int                @default(1)
+  tshirtSize     String?
+  totalFee       Float              @default(0)
+  donationAmount Float              @default(0)
+  paymentMethod  String?
+  transactionId  String?            @unique
+  status         RegistrationStatus @default(PENDING_PAYMENT)
+  confirmedBy    String?
+  confirmedAt    DateTime?
+  checkedInAt    DateTime?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, userId])
 }
 
 model DonationCampaign {
