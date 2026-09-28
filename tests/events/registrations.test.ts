@@ -97,6 +97,27 @@ describe("other events", () => {
     expect(await prisma.eventRegistration.count()).toBe(1);
   });
 
+  it("reports a transaction ID collision caught by the database, not just the pre-check", async () => {
+    // Two different events: their row locks don't serialize the two
+    // registrations, so both can pass the in-transaction duplicate-transactionId
+    // check before either commits, and only the database's unique constraint on
+    // EventRegistration.transactionId catches the collision — this must surface
+    // as DUPLICATE_TRANSACTION, not the generic ALREADY_REGISTERED.
+    await makeEvent({ slug: "concert", registrationFee: 1000, paymentInstructions: "bKash 01XXXXXXXXX" });
+    await makeEvent({ slug: "gala", registrationFee: 1000, paymentInstructions: "bKash 01XXXXXXXXX" });
+    const [a, b] = [await makeMember(), await makeMember()];
+    const rsvp = { paymentMethod: "bKash", transactionId: "COLLIDE12345" };
+    const results = await Promise.allSettled([
+      registerForEvent({ slug: "concert", sessionUserId: a.id, rsvp }),
+      registerForEvent({ slug: "gala", sessionUserId: b.id, rsvp }),
+    ]);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find((r) => r.status === "rejected");
+    expect(rejected?.status).toBe("rejected");
+    expect((rejected as PromiseRejectedResult).reason).toMatchObject({ status: 409, code: "DUPLICATE_TRANSACTION" });
+    expect(await prisma.eventRegistration.count()).toBe(1);
+  });
+
   it("returns the member's own registration", async () => {
     await makeEvent({ slug: "picnic" });
     const member = await makeMember();

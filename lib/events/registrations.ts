@@ -138,8 +138,17 @@ export async function registerForEvent(args: {
     .catch((err: unknown) => {
       // A concurrent insert can still hit the unique constraints; report it clearly.
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-        const target = String(err.meta?.target ?? "");
-        throw target.includes("transactionId")
+        // Prisma 7's driver adapters (e.g. @prisma/adapter-mariadb) don't fill
+        // meta.target; the offending unique index instead lives on
+        // meta.driverAdapterError.cause.constraint.index (verified against the
+        // adapter's actual output). Check that first, and fall back to target
+        // and the raw meta text so this still works if that shape changes.
+        const meta = err.meta as { target?: unknown; driverAdapterError?: { cause?: { constraint?: { index?: unknown } } } } | undefined;
+        const indexName = String(meta?.driverAdapterError?.cause?.constraint?.index ?? "");
+        const target = String(meta?.target ?? "");
+        const isTransactionId =
+          indexName.includes("transactionId") || target.includes("transactionId") || JSON.stringify(meta ?? {}).includes("transactionId");
+        throw isTransactionId
           ? new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been used for a registration.")
           : new AppError("ALREADY_REGISTERED", 409, "You are already registered for this event.");
       }
