@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { sampleDonations } from "@/lib/data";
+import type { DonationCampaignItem } from "@/lib/data";
+import { useSession } from "next-auth/react";
 import {
   Heart,
   ShieldCheck,
@@ -16,13 +17,35 @@ import {
 } from "lucide-react";
 
 export default function DonatePage() {
-  const [selectedCampaign, setSelectedCampaign] = useState(sampleDonations[0].id);
+  // Real campaigns: a donation must reference a campaign that exists in the database.
+  const [campaigns, setCampaigns] = useState<DonationCampaignItem[]>([]);
+  const [campaignsError, setCampaignsError] = useState<string | null>(null);
+  const [selectedCampaignChoice, setSelectedCampaign] = useState<string | null>(null);
+  const selectedCampaign = selectedCampaignChoice ?? campaigns[0]?.id ?? "";
+
+  useEffect(() => {
+    fetch("/api/donations", { cache: "no-store" })
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok || !Array.isArray(body.campaigns)) {
+          throw new Error(body.error || "Fundraising campaigns are unavailable right now.");
+        }
+        setCampaigns(body.campaigns);
+      })
+      .catch((err: Error) => setCampaignsError(err.message));
+  }, []);
   const [amount, setAmount] = useState<number | string>(5000);
   const [customAmount, setCustomAmount] = useState("");
-  const [donorName, setDonorName] = useState("Md. Jashedul Islam");
-  const [donorBatch, setDonorBatch] = useState("2008");
-  const [donorEmail, setDonorEmail] = useState("jashedul@example.com");
-  const [donorPhone, setDonorPhone] = useState("01712345678");
+  // Prefill from the signed-in member; visitors start with empty fields.
+  const { data: session } = useSession();
+  const [donorNameEdit, setDonorName] = useState<string | null>(null);
+  const donorName = donorNameEdit ?? (session?.user?.name ?? "");
+  const [donorBatchEdit, setDonorBatch] = useState<string | null>(null);
+  const donorBatch = donorBatchEdit ?? (session?.user?.batchYear ? String(session.user.batchYear) : "");
+  const [donorEmailEdit, setDonorEmail] = useState<string | null>(null);
+  const donorEmail = donorEmailEdit ?? (session?.user?.email ?? "");
+  const [donorPhoneEdit, setDonorPhone] = useState<string | null>(null);
+  const donorPhone = donorPhoneEdit ?? ("");
   const [paymentMethod, setPaymentMethod] = useState("bKash");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,8 +59,7 @@ export default function DonatePage() {
   } | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const activeCampaign =
-    sampleDonations.find((c) => c.id === selectedCampaign) || sampleDonations[0];
+  const activeCampaign = campaigns.find((c) => c.id === selectedCampaign);
 
   const handlePledge = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,19 +96,18 @@ export default function DonatePage() {
       }
 
       setReceiptData({
-        receiptId: data.receiptId || `SSGHS-DON-${Date.now().toString().slice(-8)}`,
+        receiptId: data.receiptId,
         gateway: data.gateway || paymentMethod,
         amount: donationAmt,
-        redirectUrl: data.redirectUrl,
-        instructions: data.instructions,
+        redirectUrl: data.gatewayUrl,
+        instructions: data.message ? [data.message] : undefined,
       });
 
       setSubmitted(true);
 
-      // If gateway provides an external redirect URL (production or live sandbox)
-      if (data.redirectUrl && data.redirectUrl !== window.location.href) {
-        // Automatically redirect or let the user click if desired
-        window.location.href = data.redirectUrl;
+      // Send the donor to the gateway: the donation is not paid until they complete it there.
+      if (data.gatewayUrl) {
+        window.location.href = data.gatewayUrl;
       }
     } catch (err: any) {
       console.error("[Donation Error]", err);
@@ -131,7 +152,13 @@ export default function DonatePage() {
               </h2>
 
               <div className="space-y-4">
-                {sampleDonations.map((campaign) => {
+                {campaignsError && (
+                  <p role="alert" className="text-xs text-rose-700">{campaignsError}</p>
+                )}
+                {!campaignsError && campaigns.length === 0 && (
+                  <p role="status" className="text-xs text-slate-500">Loading fundraising campaigns…</p>
+                )}
+                {campaigns.map((campaign) => {
                   const percent = Math.min(
                     Math.round((campaign.raisedAmount / campaign.goalAmount) * 100),
                     100
@@ -203,7 +230,7 @@ export default function DonatePage() {
                     Contribution Checkout
                   </span>
                   <h3 className="text-lg font-bold text-slate-900 mt-0.5">
-                    {activeCampaign.title}
+                    {activeCampaign?.title ?? "Choose a campaign"}
                   </h3>
                 </div>
 
@@ -219,9 +246,12 @@ export default function DonatePage() {
                       <CheckCircle2 className="w-8 h-8" />
                     </div>
                     <div className="text-center">
-                      <h4 className="text-lg font-bold text-slate-800">Payment Initiated / Recorded</h4>
+                      <h4 className="text-lg font-bold text-slate-800">
+                        {receiptData.redirectUrl ? "Continue to Payment" : "Donation Recorded — Payment Pending"}
+                      </h4>
                       <p className="text-xs text-slate-600 mt-1">
-                        Thank you for supporting Sabuj Shikshayatan. Your contribution helps empower our students.
+                        Your donation is not complete until the payment is confirmed
+                        {receiptData.redirectUrl ? ` on ${receiptData.gateway}` : ""}. Keep this reference.
                       </p>
                     </div>
 
@@ -254,8 +284,6 @@ export default function DonatePage() {
                     {receiptData.redirectUrl && (
                       <a
                         href={receiptData.redirectUrl}
-                        target="_blank"
-                        rel="noreferrer"
                         className="w-full py-3 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
                       >
                         <span>Complete Payment at Gateway</span>

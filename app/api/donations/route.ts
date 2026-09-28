@@ -1,44 +1,39 @@
 import { NextResponse } from "next/server";
-import { sampleDonations } from "@/lib/data";
+import prisma from "@/lib/prisma";
+import type { DonationCampaignItem } from "@/lib/data";
 
+const CATEGORY_LABELS: Record<string, DonationCampaignItem["category"]> = {
+  SCHOLARSHIP: "Scholarship",
+  STEM_LAB: "STEM Lab",
+  LIBRARY: "Library",
+  EMERGENCY_AID: "Emergency Aid",
+  CAMPUS_DEV: "Campus Development",
+};
+
+// GET /api/donations — active fundraising campaigns from the database. Donations
+// are made through /api/payments/initiate, which needs these real campaign ids.
 export async function GET() {
   try {
-    return NextResponse.json({ campaigns: sampleDonations });
+    const rows = await prisma.donationCampaign.findMany({
+      where: { isActive: true },
+      orderBy: { startDate: "asc" },
+    });
+    const now = Date.now();
+    const campaigns: DonationCampaignItem[] = rows.map((c) => ({
+      id: c.id,
+      title: c.title,
+      category: CATEGORY_LABELS[c.category] ?? "Scholarship",
+      description: c.description,
+      goalAmount: c.goalAmount,
+      raisedAmount: c.raisedAmount,
+      donorCount: c.donorCount,
+      bannerImage: c.bannerImage ?? "",
+      daysLeft: c.endDate ? Math.max(0, Math.ceil((c.endDate.getTime() - now) / 86_400_000)) : 0,
+      featured: false,
+    }));
+    return NextResponse.json({ campaigns });
   } catch (error) {
     console.error("Donations GET error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { campaignId, amount, donorName, email, paymentMethod } = body;
-
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ error: "Invalid donation amount" }, { status: 400 });
-    }
-
-    const receiptId = `SSGHS-DON-${Date.now().toString().slice(-6)}`;
-
-    return NextResponse.json(
-      {
-        message: "Thank you for your generous contribution to SSGHS!",
-        receipt: {
-          receiptId,
-          campaignId,
-          amount,
-          donorName: donorName || "Anonymous Alumnus",
-          email,
-          paymentMethod: paymentMethod || "bKash",
-          date: new Date().toISOString(),
-          status: "RECEIVED",
-        },
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Donations POST error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Fundraising campaigns are unavailable right now." }, { status: 503 });
   }
 }

@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { initiatePayment, resolveGateway } from "@/lib/payments";
+import { getSessionUser } from "@/lib/session-user";
 
 export async function POST(req: Request) {
   try {
@@ -23,8 +24,9 @@ export async function POST(req: Request) {
       donorBatch,
       paymentMethod,
       isAnonymous,
-      userId,
     } = body;
+    // Link the donation to the signed-in member, if any; never trust a userId from the request.
+    const userId = (await getSessionUser())?.id;
 
     // ── Validation ─────────────────────────────────────────────────
     if (!campaignId) {
@@ -53,8 +55,17 @@ export async function POST(req: Request) {
     const receiptId = `SSGHS-DON-${Date.now().toString().slice(-8)}`;
 
     // ── Create Donation Record (INITIATED status) ──────────────────
+    // Never start a payment without a stored donation: the gateway callback matches
+    // on this record, so money taken without it could not be traced or receipted.
     let donation;
     try {
+      const campaign = await prisma.donationCampaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true, isActive: true },
+      });
+      if (!campaign || !campaign.isActive) {
+        return NextResponse.json({ error: "That fundraising campaign is not available." }, { status: 404 });
+      }
       donation = await prisma.donation.create({
         data: {
           campaignId,
@@ -73,11 +84,10 @@ export async function POST(req: Request) {
       });
     } catch (dbError) {
       console.error("[Payment] Database create error:", dbError);
-      // Fallback: proceed without DB record for demo/testing
-      donation = {
-        id: `temp-${Date.now()}`,
-        receiptId,
-      };
+      return NextResponse.json(
+        { error: "Could not record your donation, so no payment was started. Please try again." },
+        { status: 503 }
+      );
     }
 
     // ── Initiate Payment with Gateway ──────────────────────────────

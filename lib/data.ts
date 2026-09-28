@@ -104,7 +104,7 @@ export interface GalleryPhotoItem {
 export interface DonationCampaignItem {
   id: string;
   title: string;
-  category: "Scholarship" | "STEM Lab" | "Library" | "Emergency Aid" | "Sports";
+  category: "Scholarship" | "STEM Lab" | "Library" | "Emergency Aid" | "Sports" | "Campus Development";
   description: string;
   goalAmount: number;
   raisedAmount: number;
@@ -637,7 +637,7 @@ export const sampleEvents: EventItem[] = [
     venue: "Chattogram District Stadium Ground",
     locationCity: "Chattogram",
     organizer: "Alumni Sports Subcommittee",
-    bannerImage: "https://images.unsplash.com/photo-1531415074868-036b107e775a?auto=format&fit=crop&w=1200&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=1200&q=80",
     maxAttendees: 500,
     attendeesCount: 320,
     description: "16 batches battle it out for the prestigious Green Crest Trophy! T10 tennis ball cricket, commentary, cheerleaders, and BBQ.",
