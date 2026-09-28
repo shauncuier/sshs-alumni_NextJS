@@ -15,6 +15,9 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
   const [imgError, setImgError] = useState(false);
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.fullName)}&background=06281e&color=fcd34d&bold=true`;
+  // Members without a photo have an empty avatarUrl; an empty src makes the browser
+  // re-request the page and never fires onError, so use the fallback directly.
+  const avatarSrc = imgError || !alumni.avatarUrl ? fallbackAvatar : alumni.avatarUrl;
 
   if (viewMode === "list") {
     return (
@@ -22,7 +25,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
             <img
-              src={imgError ? fallbackAvatar : alumni.avatarUrl}
+              src={avatarSrc}
               alt={alumni.fullName}
               onError={() => setImgError(true)}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-emerald-100 group-hover:border-emerald-500 transition-colors shadow-sm"
@@ -115,7 +118,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
         <div className="relative -mt-10 mb-3 flex items-end justify-between">
           <div className="relative">
             <img
-              src={imgError ? fallbackAvatar : alumni.avatarUrl}
+              src={avatarSrc}
               alt={alumni.fullName}
               onError={() => setImgError(true)}
               className="w-18 h-18 rounded-2xl object-cover border-3 border-white shadow-md group-hover:scale-105 transition-transform"
