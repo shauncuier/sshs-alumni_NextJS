@@ -8,10 +8,13 @@
  * 3. Web Push notifications for urgent school & reunion notices
  */
 
-const CACHE_NAME = "ssghs-alumni-v1";
-const OFFLINE_FALLBACK_URL = "/offline.html";
+// Bump on caching changes: activate deletes every cache with another name.
+const CACHE_NAME = "ssghs-alumni-v3";
+// Shown for pages that are not cached when there is no connection (app/offline/page.tsx).
+const OFFLINE_FALLBACK_URL = "/offline";
 
 const PRECACHE_ASSETS = [
+  OFFLINE_FALLBACK_URL,
   "/",
   "/logo.png",
   "/manifest.webmanifest",
@@ -64,12 +67,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Bypass NextAuth and real-time SSE stream from service worker interception
-  if (
-    url.pathname.startsWith("/api/auth") ||
-    url.pathname.startsWith("/api/realtime") ||
-    url.pathname.startsWith("/api/payments")
-  ) {
+  // Never intercept API calls: they must always reach the server, and a cached
+  // HTML page must never be returned where the app expects JSON.
+  if (url.pathname.startsWith("/api/")) {
     return;
   }
 
@@ -97,38 +97,27 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Stale-While-Revalidate for Alumni Directory and Card
-  if (
+  // Pages: network-first, so online visitors always get the current version.
+  // The directory, card and batch pages are also cached for offline use.
+  const offlinePage =
+    url.pathname === "/" ||
     url.pathname.startsWith("/card") ||
     url.pathname.startsWith("/alumni") ||
-    url.pathname.startsWith("/batches")
-  ) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.match(event.request).then((cachedResponse) => {
-          const fetchPromise = fetch(event.request)
-            .then((networkResponse) => {
-              if (networkResponse && networkResponse.status === 200) {
-                cache.put(event.request, networkResponse.clone());
-              }
-              return networkResponse;
-            })
-            .catch(() => cachedResponse);
-
-          return cachedResponse || fetchPromise;
-        });
-      })
-    );
-    return;
-  }
-
-  // Network-first with cache fallback for standard navigation
+    url.pathname.startsWith("/batches");
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request).then((cached) => {
-        return cached || caches.match("/");
-      });
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (offlinePage && networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(() =>
+        caches.match(event.request).then(
+          (cached) => cached || (event.request.mode === "navigate" ? caches.match(OFFLINE_FALLBACK_URL) : Response.error())
+        )
+      )
   );
 });
 

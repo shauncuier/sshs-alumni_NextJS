@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { sampleJobs } from "@/lib/career-data";
@@ -20,23 +20,33 @@ import {
   Share2
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const job = sampleJobs.find((j) => j.id === id) || sampleJobs[0];
+  const job = sampleJobs.find((j) => j.id === id);
 
-  const [applicantName, setApplicantName] = useState("Md. Jashedul Islam");
-  const [applicantEmail, setApplicantEmail] = useState("jashedul@example.com");
-  const [applicantPhone, setApplicantPhone] = useState("+880 1712-345678");
-  const [applicantBatch, setApplicantBatch] = useState("2008");
-  const [resumeUrl, setResumeUrl] = useState("https://drive.google.com/sample-resume-jashedul.pdf");
-  const [coverNote, setCoverNote] = useState("Proud alumnus of SSGHS Batch 2008. Excited to contribute to NexGen Cloud Labs.");
+  // Prefill from the signed-in member; visitors start with empty fields.
+  const { data: session } = useSession();
+  const [applicantNameEdit, setApplicantName] = useState<string | null>(null);
+  const applicantName = applicantNameEdit ?? (session?.user?.name ?? "");
+  const [applicantEmailEdit, setApplicantEmail] = useState<string | null>(null);
+  const applicantEmail = applicantEmailEdit ?? (session?.user?.email ?? "");
+  const [applicantPhoneEdit, setApplicantPhone] = useState<string | null>(null);
+  const applicantPhone = applicantPhoneEdit ?? ("");
+  const [applicantBatchEdit, setApplicantBatch] = useState<string | null>(null);
+  const applicantBatch = applicantBatchEdit ?? (session?.user?.batchYear ? String(session.user.batchYear) : "");
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [coverNote, setCoverNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // An unknown job id shows the 404 page, never a different job (checked after all hooks).
+  if (!job) notFound();
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();

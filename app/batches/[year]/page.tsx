@@ -1,6 +1,7 @@
 "use client";
 
 import React, { use } from "react";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -23,7 +24,11 @@ interface BatchPageProps {
 
 export default function BatchDetailPage({ params }: BatchPageProps) {
   const resolvedParams = use(params);
-  const yearNum = parseInt(resolvedParams.year, 10);
+  const yearNum = Number(resolvedParams.year);
+  // Only real SSC batches (1985 to this year) have a page; anything else is a 404.
+  if (!Number.isInteger(yearNum) || yearNum < 1985 || yearNum > new Date().getFullYear()) {
+    notFound();
+  }
 
   const batch =
     sampleBatches.find((b) => b.year === yearNum) || {

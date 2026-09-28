@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, use } from "react";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -37,8 +38,34 @@ interface EventDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Resolves the event, then renders it. Events created in the admin console live in
+// this browser's storage, so an id that is not a sample event is only "missing"
+// (a 404) once storage has been checked.
 export default function EventDetailPage({ params }: EventDetailPageProps) {
-  const resolvedParams = use(params);
+  const { id } = use(params);
+  const [event, setEvent] = useState<EventItem | undefined>(() => sampleEvents.find((e) => e.id === id));
+  const [storageChecked, setStorageChecked] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredEventById(id);
+    if (stored) {
+      setEvent(stored);
+    }
+    setStorageChecked(true);
+  }, [id]);
+
+  if (!event) {
+    if (storageChecked) notFound();
+    return (
+      <div role="status" className="min-h-screen flex items-center justify-center text-xs text-slate-500">
+        Loading event…
+      </div>
+    );
+  }
+  return <EventDetailView event={event} />;
+}
+
+function EventDetailView({ event }: { event: EventItem }) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string | undefined>(undefined);
@@ -52,16 +79,6 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
     seconds: 0,
   });
 
-  const [event, setEvent] = useState<EventItem>(() => {
-    return sampleEvents.find((e) => e.id === resolvedParams.id) || sampleEvents[0];
-  });
-
-  useEffect(() => {
-    const stored = getStoredEventById(resolvedParams.id);
-    if (stored) {
-      setEvent(stored);
-    }
-  }, [resolvedParams.id]);
 
   useEffect(() => {
     const dateStr = event.date ? `${event.date}T08:30:00+06:00` : "2026-12-30T08:30:00+06:00";

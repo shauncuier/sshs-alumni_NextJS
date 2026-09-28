@@ -1,19 +1,12 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+// Next.js 16 "proxy" (formerly middleware): runs before routes to require sign-in
+// on member pages. Role checks happen on the server in the pages themselves.
 export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const pathname = req.nextUrl.pathname;
-
-    // Admin routes protection
-    if (pathname.startsWith("/admin")) {
-      const role = token?.role;
-      if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      }
-    }
-
+  function proxy() {
+    // Admin role checks live in app/admin/layout.tsx, which shows a 403 page
+    // (app/forbidden.tsx) instead of silently redirecting members elsewhere.
     return NextResponse.next();
   },
   {
@@ -67,6 +60,7 @@ export const config = {
     "/feed/:path*",
     "/profile/:path*",
     "/messages/:path*",
+    "/notifications/:path*",
     "/network/:path*",
     "/settings/:path*",
     "/card/:path*",

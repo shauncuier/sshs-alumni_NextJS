@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Enables forbidden()/unauthorized() with app/forbidden.tsx and app/unauthorized.tsx.
+    authInterrupts: true,
+  },
   images: {
     remotePatterns: [
       {

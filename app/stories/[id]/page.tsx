@@ -1,6 +1,7 @@
 "use client";
 
 import React, { use } from "react";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -13,8 +14,9 @@ interface StoryDetailPageProps {
 
 export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const resolvedParams = use(params);
-  const story =
-    sampleStories.find((s) => s.id === resolvedParams.id) || sampleStories[0];
+  const story = sampleStories.find((s) => s.id === resolvedParams.id);
+  // An unknown id shows the 404 page, never a different story.
+  if (!story) notFound();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
