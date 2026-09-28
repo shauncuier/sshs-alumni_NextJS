@@ -68,3 +68,47 @@ it("knows who is waiting for membership payment confirmation", async () => {
   const user = await prisma.user.findUniqueOrThrow({ where: { email: "new@example.test" } });
   expect(await hasPendingMembershipPayment(prisma, user.id)).toBe(true);
 });
+
+it("resolves a concurrent APPROVE + CANCEL race safely: exactly one wins, and the member's status always matches the winner", async () => {
+  // Real-DB concurrency race, repeated to catch flakiness rather than relying on a single lucky interleaving.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    await resetDatabase();
+    const { event, registration } = await join();
+
+    const [approve, cancel] = await Promise.allSettled([
+      decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin-a@example.test" }),
+      decideRegistration({ eventId: event.id, registrationId: registration.id, action: "CANCEL", adminEmail: "admin-b@example.test" }),
+    ]);
+
+    const outcomes = [approve, cancel];
+    const fulfilled = outcomes.filter((r) => r.status === "fulfilled");
+    const rejected = outcomes.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0].reason).toMatchObject({ status: 409 });
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: "new@example.test" },
+      include: { profile: true, verificationRequests: true },
+    });
+    const expected = approve.status === "fulfilled" ? "VERIFIED" : "REJECTED";
+    expect([user.status, user.profile?.verificationStatus, user.verificationRequests[0]?.status]).toEqual([
+      expected,
+      expected,
+      expected,
+    ]);
+  }
+});
+
+it("returns 409 (not a second success) when the same APPROVE is issued twice concurrently", async () => {
+  const { event, registration } = await join();
+  const [a, b] = await Promise.allSettled([
+    decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin-a@example.test" }),
+    decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin-b@example.test" }),
+  ]);
+  const outcomes = [a, b];
+  expect(outcomes.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+  const rejected = outcomes.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+  expect(rejected).toHaveLength(1);
+  expect(rejected[0].reason).toMatchObject({ status: 409 });
+});

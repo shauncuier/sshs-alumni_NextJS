@@ -77,6 +77,18 @@ const TRANSITIONS: Record<Action, { from: RegistrationStatusValue[]; to: Registr
  * Admin decisions on a registration. On the membership event, APPROVE also
  * verifies the member and CANCEL rejects a member who is still PENDING, all in
  * one transaction; an already-verified member is never rejected.
+ *
+ * Two admins can decide the same registration at the same time, so the actual
+ * writes are guarded by the exact status/user-status this call just read
+ * (`status: reg.status`, `status: "PENDING"`), not merely "one of the valid
+ * starting states". `updateMany` + `count` turns that guard into part of the
+ * write itself: MySQL re-checks the WHERE clause against the latest committed
+ * row once a call that was blocked on the row lock wakes up, so a call that
+ * raced against another admin's already-applied decision sees 0 rows affected
+ * instead of silently overwriting it. That guarantees exactly one of two
+ * concurrent decisions on the same registration succeeds — the loser gets a
+ * 409 before it ever touches the member's account, profile or verification
+ * request.
  */
 export async function decideRegistration(args: {
   eventId: string;
@@ -95,8 +107,8 @@ export async function decideRegistration(args: {
     }
 
     const now = new Date();
-    await tx.eventRegistration.update({
-      where: { id: reg.id },
+    const write = await tx.eventRegistration.updateMany({
+      where: { id: reg.id, status: reg.status },
       data: {
         status: transition.to,
         ...(args.action === "APPROVE" ? { confirmedBy: args.adminEmail, confirmedAt: now } : {}),
@@ -104,17 +116,30 @@ export async function decideRegistration(args: {
         ...(args.action === "UNDO_CHECK_IN" ? { checkedInAt: null } : {}),
       },
     });
+    if (write.count === 0) {
+      throw new AppError("INVALID_TRANSITION", 409, "Another admin just changed this registration. Refresh and try again.");
+    }
 
     if (reg.event.isMembershipEvent) {
-      const membership =
-        args.action === "APPROVE" ? "VERIFIED" : args.action === "CANCEL" && reg.user.status === "PENDING" ? "REJECTED" : null;
-      if (membership) {
-        await tx.user.update({ where: { id: reg.userId }, data: { status: membership } });
-        await tx.alumniProfile.updateMany({ where: { userId: reg.userId }, data: { verificationStatus: membership } });
+      if (args.action === "APPROVE") {
+        await tx.user.update({ where: { id: reg.userId }, data: { status: "VERIFIED" } });
+        await tx.alumniProfile.updateMany({ where: { userId: reg.userId }, data: { verificationStatus: "VERIFIED" } });
         await tx.verificationRequest.updateMany({
           where: { userId: reg.userId, status: "PENDING" },
-          data: { status: membership, reviewedBy: args.adminEmail },
+          data: { status: "VERIFIED", reviewedBy: args.adminEmail },
         });
+      } else if (args.action === "CANCEL" && reg.user.status === "PENDING") {
+        // Guarded the same way: only reject if the member is still PENDING at
+        // write time, so a member another admin verified in the meantime (e.g.
+        // via the same race above) is never downgraded.
+        const rejected = await tx.user.updateMany({ where: { id: reg.userId, status: "PENDING" }, data: { status: "REJECTED" } });
+        if (rejected.count === 1) {
+          await tx.alumniProfile.updateMany({ where: { userId: reg.userId }, data: { verificationStatus: "REJECTED" } });
+          await tx.verificationRequest.updateMany({
+            where: { userId: reg.userId, status: "PENDING" },
+            data: { status: "REJECTED", reviewedBy: args.adminEmail },
+          });
+        }
       }
     }
 
