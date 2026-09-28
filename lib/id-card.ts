@@ -9,6 +9,7 @@
 
 import crypto from "crypto";
 import QRCode from "qrcode";
+import { openJson, sealJson } from "@/lib/sealed-token";
 
 export interface CardPayload {
   alumniId: string;
@@ -23,30 +24,8 @@ export interface CardPayload {
   eiin: string; // 105070
 }
 
-let devSecret: string | undefined;
-
-/**
- * Secret for card tokens. Production requires NEXTAUTH_SECRET: a key published
- * in the source would let anyone forge or read passes. Development falls back to
- * a random per-process secret, so issued cards stop verifying after a restart.
- */
-function cardSecret(): string {
-  const secret = process.env.NEXTAUTH_SECRET;
-  if (secret) return secret;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("NEXTAUTH_SECRET must be set to issue or verify alumni ID cards.");
-  }
-  devSecret ??= crypto.randomBytes(32).toString("hex");
-  return devSecret;
-}
-
-// A dedicated AES-256 key, so card tokens never reuse the NextAuth secret directly.
-function cardEncryptionKey(): Buffer {
-  return Buffer.from(crypto.hkdfSync("sha256", cardSecret(), "", "ssghs-alumni-card-token-v2", 32));
-}
-
-const IV_BYTES = 12;
-const AUTH_TAG_BYTES = 16;
+// Unchanged purpose string: cards issued before this refactor stay valid.
+const CARD_TOKEN_PURPOSE = "ssghs-alumni-card-token-v2";
 const SCHOOL_EIIN = "105070";
 
 /**
@@ -60,29 +39,13 @@ export function generateAlumniId(batch: number | string, memberId: string): stri
   return `SSGHS-ALM-${cleanBatch}-${suffix}`;
 }
 
-/**
- * Create a gate-verification token for a card payload.
- *
- * The payload is encrypted with AES-256-GCM, so the QR code and /verify URL reveal
- * nothing about the member; GCM's auth tag also makes the token tamper-proof.
- * Token = base64url(iv | authTag | ciphertext).
- */
+/** Encrypted, tamper-proof gate-verification token for a card payload. */
 export function createCardToken(payload: Omit<CardPayload, "eiin">): string {
-  const fullPayload: CardPayload = { ...payload, eiin: SCHOOL_EIIN };
-  const iv = crypto.randomBytes(IV_BYTES);
-  const cipher = crypto.createCipheriv("aes-256-gcm", cardEncryptionKey(), iv);
-  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(fullPayload), "utf8"), cipher.final()]);
-  return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString("base64url");
+  return sealJson(CARD_TOKEN_PURPOSE, { ...payload, eiin: SCHOOL_EIIN } satisfies CardPayload);
 }
 
-/**
- * Decrypt and verify a gate-verification token.
- */
+/** Decrypt and verify a gate-verification token. */
 export function verifyCardToken(token: string): { valid: boolean; payload?: CardPayload; error?: string } {
-  // Derive the key outside the try: a missing secret is a server misconfiguration,
-  // not a forged card, and must not be reported to gate staff as one.
-  const key = cardEncryptionKey();
-
   // Earlier passes were readable "payload.signature" tokens. The card page issues a
   // fresh QR on every visit, so point the holder there rather than calling it forged.
   if (token.includes(".")) {
@@ -91,30 +54,17 @@ export function verifyCardToken(token: string): { valid: boolean; payload?: Card
       error: "This pass uses an outdated QR format. Ask the member to reopen their digital card for a new QR code.",
     };
   }
-
-  const raw = Buffer.from(token, "base64url");
-  if (raw.length <= IV_BYTES + AUTH_TAG_BYTES) {
-    return { valid: false, error: "Invalid token structure" };
+  const opened = openJson<CardPayload>(CARD_TOKEN_PURPOSE, token);
+  if (!opened.ok) {
+    return {
+      valid: false,
+      error: opened.reason === "malformed" ? "Invalid token structure" : "Cryptographic signature mismatch — pass may be forged",
+    };
   }
-
-  let payload: CardPayload;
-  try {
-    const iv = raw.subarray(0, IV_BYTES);
-    const authTag = raw.subarray(IV_BYTES, IV_BYTES + AUTH_TAG_BYTES);
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-    decipher.setAuthTag(authTag);
-    const plaintext = Buffer.concat([decipher.update(raw.subarray(IV_BYTES + AUTH_TAG_BYTES)), decipher.final()]);
-    payload = JSON.parse(plaintext.toString("utf8"));
-  } catch {
-    // GCM authentication failed: the token was altered or not issued by this server.
-    return { valid: false, error: "Cryptographic signature mismatch — pass may be forged" };
+  if (opened.value.expiresAt && Date.now() > opened.value.expiresAt) {
+    return { valid: false, payload: opened.value, error: "Alumni pass has expired" };
   }
-
-  if (payload.expiresAt && Date.now() > payload.expiresAt) {
-    return { valid: false, payload, error: "Alumni pass has expired" };
-  }
-
-  return { valid: true, payload };
+  return { valid: true, payload: opened.value };
 }
 
 /**
