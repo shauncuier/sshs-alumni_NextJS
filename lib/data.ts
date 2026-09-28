@@ -62,6 +62,10 @@ export interface EventItem {
   packages?: { name: string; price: string; description: string; includes: string[]; isPopular?: boolean }[];
   highlights?: string[];
   souvenirDetails?: string;
+  slug?: string;
+  isMembershipEvent?: boolean;
+  placesLeft?: number;
+  closedMessage?: string | null;
 }
 
 export interface AlumniStoryItem {
