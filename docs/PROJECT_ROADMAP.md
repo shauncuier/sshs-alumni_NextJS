@@ -14,7 +14,7 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
 - [x] Admin Management Center (Verification queue with Approve/Reject, Batch manager, Event manager, Donation manager, CMS).
 - [x] MySQL / MariaDB readiness with Prisma Schema and Seed scripts (migrated from MongoDB on 2026-09-28).
 - [x] Comprehensive Markdown project documentation in `docs/`.
-- [x] Master Tracking & AI Incident Ledger: [`PROJECT_MILESTONES_AND_STATUS.md`](../PROJECT_MILESTONES_AND_STATUS.md).
+- [x] Master Tracking & AI Incident Ledger: [`PROJECT_MILESTONES_AND_STATUS.md`](./PROJECT_MILESTONES_AND_STATUS.md).
 
 ---
 

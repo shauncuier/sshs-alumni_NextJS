@@ -18,7 +18,7 @@ EIIN: **105070**
 
 All technical and operational documentation has been organized into the [`docs/`](./docs/) directory:
 
-- [**Milestones, Live Status & AI Error Log**](./PROJECT_MILESTONES_AND_STATUS.md): Master progress tracker, live running services, completed modules, and structured AI error incident log.
+- [**Milestones, Live Status & AI Error Log**](./docs/PROJECT_MILESTONES_AND_STATUS.md): Master progress tracker, live running services, completed modules, and structured AI error incident log.
 - [**System Architecture & Technical Specs**](./docs/ARCHITECTURE.md): Client layer, component hierarchy, entity models, and role-based permissions.
 - [**MySQL / MariaDB Database Guide**](./docs/DATABASE_SETUP.md): Connection string, creating tables, seed data, and table reference.
 - [**Production Deployment Guide**](./docs/PRODUCTION_DEPLOYMENT.md): Production hardening, Nginx, PM2, Vercel, Docker, and backup procedures.
