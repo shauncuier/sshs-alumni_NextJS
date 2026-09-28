@@ -10,7 +10,10 @@
     "db:generate": "prisma generate",
     "db:backfill-legacy": "tsx prisma/backfill-legacy-columns.ts",
     "db:push": "npm run db:backfill-legacy && prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:db": "docker run -d --rm --name sshs-test-db -e MARIADB_ROOT_PASSWORD=test -p 127.0.0.1:3307:3306 mariadb:11"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
@@ -36,9 +39,11 @@
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "mariadb": "^3.5.4",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }
