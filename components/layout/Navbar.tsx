@@ -224,7 +224,8 @@ export default function Navbar() {
                     Alumni
                   </span>
                 </div>
-                <span className="text-[11px] sm:text-xs font-semibold text-emerald-200/90 tracking-normal mt-1 leading-tight line-clamp-1">
+                {/* Hidden on phones: with the header controls it would overflow the screen. */}
+                <span className="hidden sm:block text-xs font-semibold text-emerald-200/90 tracking-normal mt-1 leading-tight line-clamp-1">
                   Sabuj Shikshayatan Govt. High School
                 </span>
                 <span className="text-[10px] text-emerald-400/70 font-normal leading-none mt-0.5 hidden xl:block">
@@ -348,12 +349,14 @@ export default function Navbar() {
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <Link
                     href="/dashboard"
-                    className="flex items-center gap-2 h-9 px-3 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
+                    aria-label="My dashboard"
+                    className="flex items-center gap-2 h-9 px-2 sm:px-3 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
                   >
                     <div className="w-5 h-5 rounded-full bg-emerald-600 border border-amber-400/40 flex items-center justify-center text-[10px] text-amber-300 font-bold shrink-0">
                       {session?.user?.name ? session.user.name[0] : "A"}
                     </div>
-                    <span className="max-w-[110px] truncate text-slate-100">
+                    {/* Phones show just the avatar; the name would push the header off-screen. */}
+                    <span className="hidden sm:inline max-w-[110px] truncate text-slate-100">
                       {session?.user?.name?.split(" ")[0] || "Portal"}
                     </span>
                   </Link>
@@ -361,7 +364,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="h-9 w-9 rounded-lg bg-emerald-950/80 hover:bg-red-950/80 text-slate-300 hover:text-red-300 border border-emerald-800/70 hover:border-red-800/70 flex items-center justify-center transition-colors shadow-inner"
+                    className="hidden sm:flex h-9 w-9 rounded-lg bg-emerald-950/80 hover:bg-red-950/80 text-slate-300 hover:text-red-300 border border-emerald-800/70 hover:border-red-800/70 items-center justify-center transition-colors shadow-inner"
                     title="Sign Out"
                     aria-label="Sign Out"
                   >
