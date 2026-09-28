@@ -9,9 +9,10 @@
  */
 
 // Bump on caching changes: activate deletes every cache with another name.
-const CACHE_NAME = "ssghs-alumni-v3";
-// Shown for pages that are not cached when there is no connection (app/offline/page.tsx).
-const OFFLINE_FALLBACK_URL = "/offline";
+const CACHE_NAME = "ssghs-alumni-v4";
+// Shown for pages that are not cached when there is no connection. A static file,
+// not a Next.js page: a Next.js page served under another URL fails to hydrate.
+const OFFLINE_FALLBACK_URL = "/offline.html";
 
 const PRECACHE_ASSETS = [
   OFFLINE_FALLBACK_URL,
