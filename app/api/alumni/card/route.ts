@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "@/lib/request-origin";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -15,7 +16,6 @@ import {
   generateQrDataUrl,
   CardPayload,
 } from "@/lib/id-card";
-import { sampleAlumni } from "@/lib/data";
 
 interface AlumnusCardData {
   id: string;
@@ -35,57 +35,37 @@ const DEFAULT_AVATAR_URL =
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const searchParams = req.nextUrl.searchParams;
-    const requestedAlumniId = searchParams.get("alumniId");
-
-    // Fetch user or fallback to demo alumnus
-    let alumnusData: AlumnusCardData | null = null;
-
-    if (session?.user?.email) {
-      try {
-        const user = await prisma.user.findUnique({
-          where: { email: session.user.email },
-          include: { profile: true },
-        });
-
-        if (user) {
-          const sscBatch = user.profile?.sscBatch || 2008;
-          alumnusData = {
-            id: user.id,
-            alumniId: generateAlumniId(sscBatch),
-            fullName: user.profile?.fullName || "SSGHS Alumnus",
-            sscBatch,
-            profession: user.profile?.profession || "Professional",
-            // Blood group is not collected yet; leave it off the card rather than guess.
-            membershipTier: "LIFETIME",
-            avatarUrl: user.profile?.avatarUrl || DEFAULT_AVATAR_URL,
-            status: user.status,
-          };
-        }
-      } catch (dbErr) {
-        console.warn("[Card API] DB fetch failed, using fallback", dbErr);
-      }
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Sign in to view your digital card." }, { status: 401 });
     }
 
-    if (!alumnusData) {
-      // Find from sample data or default
-      const matched = requestedAlumniId
-        ? sampleAlumni.find((a) => a.id === requestedAlumniId)
-        : sampleAlumni[0];
-
-      const found = matched || sampleAlumni[0];
-      alumnusData = {
-        id: found.id,
-        alumniId: generateAlumniId(found.sscBatch),
-        fullName: found.fullName,
-        sscBatch: found.sscBatch,
-        profession: found.profession,
-        bloodGroup: "B+",
-        membershipTier: "LIFETIME",
-        avatarUrl: found.avatarUrl,
-        status: "VERIFIED",
-      };
+    // Only ever issue a card for the signed-in member; never fall back to sample data.
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: { profile: true },
+      });
+    } catch (dbErr) {
+      console.error("[Card API] Member lookup failed:", dbErr);
+      return NextResponse.json({ error: "Could not load your digital card right now." }, { status: 503 });
     }
+    if (!user) {
+      return NextResponse.json({ error: "Member account not found." }, { status: 404 });
+    }
+
+    const sscBatch = user.profile?.sscBatch || 2008;
+    const alumnusData: AlumnusCardData = {
+      id: user.id,
+      alumniId: generateAlumniId(sscBatch, user.id),
+      fullName: user.profile?.fullName || "SSGHS Alumnus",
+      sscBatch,
+      profession: user.profile?.profession || "Professional",
+      // Blood group is not collected yet; leave it off the card rather than guess.
+      membershipTier: "LIFETIME",
+      avatarUrl: user.profile?.avatarUrl || DEFAULT_AVATAR_URL,
+      status: user.status,
+    };
 
     // Sign payload
     const tokenPayload: Omit<CardPayload, "eiin"> = {
@@ -104,9 +84,7 @@ export async function GET(req: NextRequest) {
     const signedToken = createCardToken(tokenPayload);
 
     // Build gate verification URL
-    const host = req.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const verifyUrl = `${protocol}://${host}/verify/${signedToken}`;
+    const verifyUrl = `${publicOrigin(req)}/verify/${signedToken}`;
 
     // Generate high-res QR code
     const qrDataUrl = await generateQrDataUrl(verifyUrl);

@@ -4,16 +4,14 @@ import React, { useState } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  GraduationCap,
-  ShieldCheck,
-  Upload,
-  CheckCircle2,
-  ArrowRight,
-  BadgeCheck,
-  FileText
-} from "lucide-react";
-import { sampleBatches } from "@/lib/data";
+import { ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
+
+// Every SSC batch the association covers, newest first.
+const FIRST_SSC_BATCH = 1985;
+const SSC_BATCH_YEARS = Array.from(
+  { length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 },
+  (_, i) => new Date().getFullYear() - i
+);
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,7 +28,6 @@ export default function RegisterPage() {
     city: "Chattogram",
     country: "Bangladesh",
   });
-  const [fileUploaded, setFileUploaded] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,6 +48,7 @@ export default function RegisterPage() {
           password: formData.password,
           batchYear: formData.sscBatch,
           studentIdOrRoll: formData.rollNumber,
+          section: formData.section,
           profession: formData.profession,
           company: formData.company,
           locationCity: formData.city,
@@ -67,8 +65,8 @@ export default function RegisterPage() {
         setLoading(false);
       }
     } catch {
-      // In case offline, still allow demo feedback
-      setSubmitted(true);
+      // Never report success unless the server saved the registration.
+      setErrorMessage("Could not reach the server. Check your connection and try again.");
       setLoading(false);
     }
   };
@@ -220,9 +218,9 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, sscBatch: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 font-semibold"
                     >
-                      {sampleBatches.map((b) => (
-                        <option key={b.year} value={b.year.toString()}>
-                          SSC Batch {b.year}
+                      {SSC_BATCH_YEARS.map((year) => (
+                        <option key={year} value={year.toString()}>
+                          SSC Batch {year}
                         </option>
                       ))}
                     </select>
@@ -325,34 +323,16 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Section 4: Verification Document Upload */}
+              {/* Section 4: Verification Documents */}
               <div className="space-y-2 pt-3">
                 <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block border-b border-slate-100 pb-1.5">
-                  4. Verification Document (Optional but Recommended)
+                  4. Verification Documents
                 </span>
                 <p className="text-[11px] text-slate-500">
-                  Upload a photo or scan of your SSC certificate, school testimonial, marksheet, or school ID for priority verification.
+                  Online document upload is not available yet. The committee checks your batch and roll
+                  number against school records and will contact you by email or phone if they need your
+                  SSC certificate, testimonial or school ID.
                 </p>
-
-                <div
-                  onClick={() => setFileUploaded(!fileUploaded)}
-                  className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-colors ${
-                    fileUploaded
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-                      : "border-slate-300 hover:border-emerald-600 bg-slate-50"
-                  }`}
-                >
-                  <Upload className="w-5 h-5 mx-auto mb-1 text-slate-400" />
-                  {fileUploaded ? (
-                    <span className="font-bold text-xs text-emerald-800 flex items-center justify-center gap-1">
-                      <FileText className="w-4 h-4" /> ssc_certificate_sample.pdf (Attached)
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-600">
-                      Click to attach SSC Certificate, Testimonial or School ID
-                    </span>
-                  )}
-                </div>
               </div>
 
               <div className="pt-4 border-t border-slate-100">

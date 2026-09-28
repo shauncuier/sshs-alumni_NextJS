@@ -4,7 +4,57 @@ import React, { useState, useMemo, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AlumniCard from "@/components/alumni/AlumniCard";
-import { sampleAlumni, sampleBatches, AlumniMember } from "@/lib/data";
+import type { AlumniMember } from "@/lib/data";
+
+// Every SSC batch the association covers, newest first.
+const FIRST_SSC_BATCH = 1985;
+const SSC_BATCH_YEARS = Array.from(
+  { length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 },
+  (_, i) => new Date().getFullYear() - i
+);
+
+// A directory row from /api/alumni (database), mapped to the card's shape.
+interface DirectoryRow {
+  id: string;
+  fullName: string;
+  sscBatch: number;
+  graduationYear: number;
+  section: string | null;
+  profession: string;
+  company: string | null;
+  industry: string | null;
+  locationCity: string;
+  locationCountry: string;
+  bio: string | null;
+  avatarUrl: string | null;
+  coverUrl: string | null;
+  phone: string | null;
+  skills: unknown;
+  verificationStatus: string;
+  user: { email: string | null };
+}
+
+function toMember(row: DirectoryRow): AlumniMember {
+  return {
+    id: row.id,
+    fullName: row.fullName,
+    email: row.user.email ?? "",
+    sscBatch: row.sscBatch,
+    graduationYear: row.graduationYear,
+    profession: row.profession,
+    company: row.company ?? "",
+    industry: row.industry ?? "",
+    locationCity: row.locationCity,
+    locationCountry: row.locationCountry,
+    bio: row.bio ?? "",
+    avatarUrl: row.avatarUrl ?? "",
+    coverUrl: row.coverUrl ?? "",
+    phone: row.phone ?? "",
+    skills: Array.isArray(row.skills) ? row.skills.filter((s): s is string => typeof s === "string") : [],
+    isVerified: row.verificationStatus === "VERIFIED",
+    connectionCount: 0,
+  };
+}
 import {
   Search,
   Filter,
@@ -26,19 +76,22 @@ export default function AlumniDirectoryPage() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const [alumniList, setAlumniList] = useState<AlumniMember[]>(sampleAlumni);
-  const [loading, setLoading] = useState(false);
+  // Real members only: start empty and show a loading state, never sample people.
+  const [alumniList, setAlumniList] = useState<AlumniMember[]>([]);
+  const [allAlumni, setAllAlumni] = useState<AlumniMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Extract unique professions & cities
+  // Filter options come from the unfiltered directory, so they match real members.
   const uniqueProfessions = useMemo(() => {
-    const set = new Set(sampleAlumni.map((a) => a.profession.split(" ")[0]));
-    return Array.from(set);
-  }, []);
+    const set = new Set(allAlumni.map((a) => a.profession.split(" ")[0]).filter(Boolean));
+    return Array.from(set).sort();
+  }, [allAlumni]);
 
   const uniqueCities = useMemo(() => {
-    const set = new Set(sampleAlumni.map((a) => a.locationCity));
-    return Array.from(set);
-  }, []);
+    const set = new Set(allAlumni.map((a) => a.locationCity).filter(Boolean));
+    return Array.from(set).sort();
+  }, [allAlumni]);
 
   // Fetch dynamically from /api/alumni
   useEffect(() => {
@@ -56,15 +109,18 @@ export default function AlumniDirectoryPage() {
         const res = await fetch(`/api/alumni?${params.toString()}`, {
           signal: controller.signal,
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.alumni && Array.isArray(data.alumni)) {
-            setAlumniList(data.alumni);
-          }
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data.alumni)) {
+          throw new Error(data.error || "Could not load the alumni directory.");
         }
+        const members = (data.alumni as DirectoryRow[]).map(toMember);
+        setAlumniList(members);
+        setLoadError(null);
+        if (params.toString() === "") setAllAlumni(members);
       } catch (err: unknown) {
         if ((err as Error)?.name !== "AbortError") {
-          console.warn("API fetch error, falling back to local dataset:", err);
+          setLoadError((err as Error).message || "Could not load the alumni directory.");
+          setAlumniList([]);
         }
       } finally {
         setLoading(false);
@@ -174,9 +230,9 @@ export default function AlumniDirectoryPage() {
                 className="bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600"
               >
                 <option value="all">All Batches (1985-2025)</option>
-                {sampleBatches.map((b) => (
-                  <option key={b.year} value={b.year.toString()}>
-                    SSC Batch {b.year}
+                {SSC_BATCH_YEARS.map((year) => (
+                  <option key={year} value={year.toString()}>
+                    SSC Batch {year}
                   </option>
                 ))}
               </select>
@@ -230,7 +286,15 @@ export default function AlumniDirectoryPage() {
             <span>Sorted by Recent Activity &amp; Batch</span>
           </div>
 
-          {filteredAlumni.length === 0 ? (
+          {loadError ? (
+            <div role="alert" className="bg-white rounded-3xl border border-rose-200 p-12 text-center max-w-lg mx-auto text-xs text-rose-700">
+              {loadError}
+            </div>
+          ) : loading && filteredAlumni.length === 0 ? (
+            <div role="status" className="p-12 text-center text-xs text-slate-500">
+              Loading the alumni directory…
+            </div>
+          ) : filteredAlumni.length === 0 ? (
             <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto space-y-3">
               <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
                 <Search className="w-6 h-6" />

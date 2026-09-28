@@ -16,6 +16,7 @@ export async function POST(req: Request) {
       locationCountry,
       phone,
       studentIdOrRoll,
+      section,
       bio,
     } = body;
 
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
             locationCountry: locationCountry?.trim() || "Bangladesh",
             phone: phone?.trim() || null,
             rollNumber: studentIdOrRoll?.trim() || null,
+            section: section?.trim() || null,
             bio: bio?.trim() || `Alumnus of SSGHS Batch ${batchInt}`,
             verificationStatus: "PENDING",
             avatarUrl: "/logo.png",

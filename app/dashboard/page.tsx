@@ -41,13 +41,29 @@ export default function DashboardPage() {
   const userBatch = user?.batchYear || 2008;
   const userRole = user?.role || "ALUMNI";
   const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  // Membership status comes from the session; never label a pending or rejected
+  // member as verified.
+  const userStatus = user?.status || "PENDING";
+  const isVerified = userStatus === "VERIFIED";
+  const memberLabel = isAdmin
+    ? "Administrator"
+    : isVerified
+      ? "Verified Member"
+      : userStatus === "REJECTED"
+        ? "Verification Not Approved"
+        : "Verification Pending";
+  const credentialsNote = isVerified
+    ? "Verified credentials active"
+    : userStatus === "REJECTED"
+      ? "Contact the committee about your verification"
+      : "Awaiting committee verification";
   const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
   const upcomingEvent = sampleEvents[0];
   const myBatch = sampleBatches.find((b) => b.year === userBatch) || {
     year: userBatch,
     name: `SSC Batch ${userBatch}`,
-    totalAlumni: 142,
+    totalAlumni: 0,
     classRepresentative: "Batch Committee",
     tagline: `Pride of Class of ${userBatch}`,
     representativePhone: "+880 1819-000000",
@@ -93,14 +109,21 @@ export default function DashboardPage() {
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
               <div className="md:col-span-8 space-y-2">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-900/90 text-amber-300 text-xs font-bold border border-amber-400/30">
-                  <BadgeCheck className="w-4 h-4 fill-emerald-600 text-white" />
-                  <span>{isAdmin ? "Administrator" : "Verified Member"} • SSC Batch {userBatch}</span>
+                  {isAdmin || isVerified ? (
+                    <BadgeCheck className="w-4 h-4 fill-emerald-600 text-white" />
+                  ) : (
+                    <ShieldCheck className="w-4 h-4 text-amber-300" />
+                  )}
+                  <span>{memberLabel} • SSC Batch {userBatch}</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   Welcome back, {userFirst}!
                 </h2>
                 <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl leading-relaxed">
-                  Your batch has {myBatch.totalAlumni} connected alumni. Stay updated with batchmates, participate in reunion votes, and discover mutual contacts.
+                  {myBatch.totalAlumni > 0
+                    ? `Your batch has ${myBatch.totalAlumni} connected alumni. `
+                    : ""}
+                  Stay updated with batchmates, participate in reunion votes, and discover mutual contacts.
                 </p>
               </div>
 
@@ -114,7 +137,7 @@ export default function DashboardPage() {
                   <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full w-[90%]" />
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-emerald-200">
-                  <span>Verified credentials active</span>
+                  <span>{credentialsNote}</span>
                   <Link href="/profile" className="text-white font-bold hover:underline">
                     Edit &rarr;
                   </Link>
@@ -166,7 +189,7 @@ export default function DashboardPage() {
                       SSC Batch {userBatch} Official Hub
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {myBatch.totalAlumni} Members • Rep: {myBatch.classRepresentative}
+                      {myBatch.totalAlumni > 0 ? `${myBatch.totalAlumni} Members • ` : ""}Rep: {myBatch.classRepresentative}
                     </p>
                   </div>
                 </div>

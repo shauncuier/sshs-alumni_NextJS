@@ -119,9 +119,14 @@ export default function DigitalAlumniCard({
                   alt={card.fullName}
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-md ring-4 ring-emerald-900/50"
                 />
-                <span className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-emerald-500 text-white border-2 border-[#064e3b]">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                </span>
+                {card.status === "VERIFIED" && (
+                  <span
+                    className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-emerald-500 text-white border-2 border-[#064e3b]"
+                    title="Verified member"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </span>
+                )}
               </div>
 
               <div className="min-w-0 flex-1 space-y-1">
@@ -192,7 +197,7 @@ export default function DigitalAlumniCard({
               </div>
 
               <div className="px-2 py-0.5 rounded-full bg-emerald-900/80 border border-emerald-500/50 text-[10px] font-mono text-emerald-200">
-                ACTIVE PASS
+                {card.status === "VERIFIED" ? "ACTIVE PASS" : card.status === "REJECTED" ? "NOT VALID" : "PENDING"}
               </div>
             </div>
 
@@ -217,10 +222,10 @@ export default function DigitalAlumniCard({
                   Gate Security
                 </div>
                 <p className="text-[11px] text-emerald-100 leading-snug">
-                  Encrypted token verified with alumni database key.
+                  Encrypted pass, checked against the member database at the gate.
                 </p>
                 <div className="text-[10px] text-emerald-300/80 font-mono">
-                  HMAC-SHA256 Signed
+                  AES-256-GCM Encrypted
                 </div>
               </div>
             </div>

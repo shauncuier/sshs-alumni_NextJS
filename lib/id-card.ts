@@ -50,13 +50,14 @@ const AUTH_TAG_BYTES = 16;
 const SCHOOL_EIIN = "105070";
 
 /**
- * Generate a unique SSGHS Alumni Identification Number
- * Format: SSGHS-ALM-{BATCH}-{RANDOM_HEX}
+ * The member's SSGHS Alumni Identification Number.
+ * Format: SSGHS-ALM-{BATCH}-{6 HEX}. The suffix is derived from the account id,
+ * so a member keeps the same number every time their card is issued.
  */
-export function generateAlumniId(batch: number | string): string {
+export function generateAlumniId(batch: number | string, memberId: string): string {
   const cleanBatch = String(batch).slice(-4);
-  const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
-  return `SSGHS-ALM-${cleanBatch}-${randomSuffix}`;
+  const suffix = crypto.createHash("sha256").update(memberId).digest("hex").slice(0, 6).toUpperCase();
+  return `SSGHS-ALM-${cleanBatch}-${suffix}`;
 }
 
 /**

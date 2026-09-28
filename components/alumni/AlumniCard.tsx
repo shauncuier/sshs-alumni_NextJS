@@ -63,8 +63,12 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-slate-400" /> {alumni.locationCity}, {alumni.locationCountry}
               </span>
-              <span>•</span>
-              <span>{alumni.connectionCount} connections</span>
+              {alumni.connectionCount > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{alumni.connectionCount} connections</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -89,12 +93,6 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
               </>
             )}
           </button>
-          <Link
-            href={`/profile?id=${alumni.id}`}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-          >
-            View Profile
-          </Link>
         </div>
       </div>
     );
@@ -128,16 +126,18 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
               </span>
             )}
           </div>
-          <div className="text-right">
-            <span className="text-[11px] text-slate-400 font-medium">
-              {alumni.connectionCount} connections
-            </span>
-          </div>
+          {alumni.connectionCount > 0 && (
+            <div className="text-right">
+              <span className="text-[11px] text-slate-400 font-medium">
+                {alumni.connectionCount} connections
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1 mb-3">
           <Link
-            href={`/profile?id=${alumni.id}`}
+            href={`/alumni?q=${encodeURIComponent(alumni.fullName)}`}
             className="font-bold text-slate-900 group-hover:text-emerald-800 text-base leading-snug line-clamp-1 transition-colors"
           >
             {alumni.fullName}
@@ -203,12 +203,6 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
               </>
             )}
           </button>
-          <Link
-            href={`/profile?id=${alumni.id}`}
-            className="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 text-center transition-colors"
-          >
-            Profile
-          </Link>
         </div>
       </div>
     </div>

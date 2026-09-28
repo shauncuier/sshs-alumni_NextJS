@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "@/lib/request-origin";
 import { createCardToken, generateQrDataUrl } from "@/lib/id-card";
 
 export async function POST(
@@ -49,9 +50,7 @@ export async function POST(
     };
 
     const signedToken = createCardToken(tokenPayload);
-    const host = req.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const verifyUrl = `${protocol}://${host}/verify/${signedToken}`;
+    const verifyUrl = `${publicOrigin(req)}/verify/${signedToken}`;
     const qrDataUrl = await generateQrDataUrl(verifyUrl);
 
     const ticketRecord = {

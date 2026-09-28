@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "@/lib/request-origin";
 import { verifyCardToken, buildAppleWalletPassManifest } from "@/lib/id-card";
 import { checkCardMembership } from "@/lib/card-membership";
 
@@ -31,9 +32,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const host = req.headers.get("host") || "localhost:3000";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  const verifyUrl = `${protocol}://${host}/verify/${token}`;
+  const verifyUrl = `${publicOrigin(req)}/verify/${token}`;
 
   const passManifest = buildAppleWalletPassManifest(payload, verifyUrl);
 

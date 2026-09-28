@@ -75,37 +75,25 @@ export default function MessagesPage() {
     setMessages((prev) => [...prev, newMsg]);
     setMessageInput("");
 
-    // Dispatch via real-time Messages API
+    // Dispatch via the Messages API. Show a failure instead of pretending it was
+    // delivered, and never simulate a reply from the other member.
     try {
-      await fetch("/api/messages", {
+      const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          senderId: currentUserId,
-          receiverId: selectedAlumnusId,
-          content: textToSend,
-        }),
+        body: JSON.stringify({ receiverId: selectedAlumnusId, content: textToSend }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Message not sent.");
+      }
     } catch (err) {
-      console.warn("[Messages] Could not dispatch to server API, using local fallback", err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === newMsg.id ? { ...m, time: `Not sent: ${(err as Error).message}` } : m
+        )
+      );
     }
-
-    // Interactive demo response if in sandbox mode
-    setTimeout(() => {
-      setMessages((prev) => {
-        // Prevent duplicate simulation if SSE arrived
-        if (prev.some((m) => m.text.includes("Agreed! Looking forward"))) return prev;
-        return [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            sender: "them",
-            text: "Agreed! Looking forward to coordinating with you.",
-            time: "Just now",
-          },
-        ];
-      });
-    }, 1200);
   };
 
   return (

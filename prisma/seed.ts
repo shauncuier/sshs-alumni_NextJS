@@ -179,7 +179,7 @@ async function main() {
       description:
         "32 alumni batches competing for the coveted SSGHS Champion Shield. Day-long sports carnival with live commentary and food pavilion.",
       bannerImage:
-        "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200",
+        "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200",
       maxAttendees: 500,
       attendeesCount: 340,
       registrationFee: 500,
@@ -308,7 +308,7 @@ async function main() {
       excerpt: "The SSGHS Alumni Association marks three decades of connecting graduates and giving back to the school.",
       content:
         "The Sabuj Shikshayatan Government High School Alumni Association celebrated its 30th founding anniversary with a grand ceremony attended by over 500 alumni from across Bangladesh and abroad.",
-      featuredImage: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=1000",
+      featuredImage: "https://images.unsplash.com/photo-1627556704290-2b1f5853ff78?auto=format&fit=crop&q=80&w=1000",
       author: "Alumni Editorial Board",
       isFeatured: true,
     },

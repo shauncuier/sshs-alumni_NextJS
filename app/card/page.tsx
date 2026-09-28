@@ -26,16 +26,17 @@ export default function CardPage() {
     verifyUrl: string;
   } | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   useEffect(() => {
     async function fetchCard() {
       try {
-        const res = await fetch("/api/alumni/card");
-        if (res.ok) {
-          const data = await res.json();
-          setCardData(data);
-        }
+        const res = await fetch("/api/alumni/card", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || !data.card) throw new Error(data.error || "Could not load your digital card.");
+        setCardData(data);
       } catch (err) {
-        console.error("Failed to load digital card", err);
+        setLoadError((err as Error).message || "Could not load your digital card.");
       } finally {
         setLoading(false);
       }
@@ -43,22 +44,40 @@ export default function CardPage() {
     fetchCard();
   }, []);
 
-  const defaultCard: CardData = {
-    alumniId: "SSGHS-ALM-2008-8C42A",
-    fullName: "Md. Jashedul Islam",
-    sscBatch: 2008,
-    profession: "Lead Cloud Architect & AI Engineer",
-    bloodGroup: "O+",
-    membershipTier: "LIFETIME",
-    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-    status: "VERIFIED",
-    eiin: "105070",
-  };
+  // Never fall back to a sample card: an ID card must belong to the signed-in member.
+  if (!cardData) {
+    return (
+      <div className="min-h-screen flex bg-[#f8fafc]">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+          <AppHeader title="Digital Alumni Smart Card" />
+          <main className="flex-1 p-8 max-w-6xl w-full mx-auto">
+            <p
+              className={`text-sm ${loadError ? "text-rose-700" : "text-slate-500"}`}
+              role={loadError ? "alert" : "status"}
+            >
+              {loading ? "Loading your digital card…" : loadError}
+            </p>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
-  const activeCard = cardData?.card || defaultCard;
-  const qrDataUrl = cardData?.qrDataUrl;
-  const signedToken = cardData?.signedToken;
-  const verifyUrl = cardData?.verifyUrl || "https://sabujsghs.edu.bd/verify/sample";
+  const activeCard: CardData = cardData.card;
+  const qrDataUrl = cardData.qrDataUrl;
+  const signedToken = cardData.signedToken;
+  const verifyUrl = cardData.verifyUrl;
+  // The gate only admits verified members, so say so plainly on the card page.
+  const isVerified = activeCard.status === "VERIFIED";
+  const statusBadge = isVerified
+    ? "🟢 Valid at the gate"
+    : activeCard.status === "REJECTED"
+      ? "🔴 Not valid"
+      : "🟡 Pending verification";
+  const validUntil = activeCard.expiresAt
+    ? new Date(activeCard.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : null;
 
   return (
     <div className="min-h-screen flex bg-[#f8fafc]">
@@ -74,7 +93,7 @@ export default function CardPage() {
             <div className="max-w-2xl space-y-2 relative z-10">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold border border-amber-400/30">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>EIIN 105070 Verified Credential</span>
+                <span>{isVerified ? "EIIN 105070 Verified Credential" : "EIIN 105070 Member Credential"}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                 Official Digital Alumni ID Card
@@ -95,10 +114,24 @@ export default function CardPage() {
                     <Award className="w-4 h-4 text-emerald-700" />
                     <span>Smart Pass Preview</span>
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    🟢 Validated
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full border ${
+                      isVerified
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-amber-50 text-amber-800 border-amber-200"
+                    }`}
+                  >
+                    {statusBadge}
                   </span>
                 </div>
+
+                {!isVerified && (
+                  <p role="status" className="w-full mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+                    {activeCard.status === "REJECTED"
+                      ? "Your membership verification was not approved, so this pass is not accepted at the gate. Please contact the alumni committee."
+                      : "This pass is not accepted at the gate until the committee verifies your membership."}
+                  </p>
+                )}
 
                 <DigitalAlumniCard
                   card={activeCard}
@@ -182,8 +215,8 @@ export default function CardPage() {
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-xl">
-                    <span className="text-slate-400 block text-[10px]">Digital Signature</span>
-                    <span className="font-mono font-bold text-emerald-800">HMAC-SHA256</span>
+                    <span className="text-slate-400 block text-[10px]">Pass Protection</span>
+                    <span className="font-mono font-bold text-emerald-800">AES-256-GCM</span>
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-xl">
@@ -193,7 +226,7 @@ export default function CardPage() {
 
                   <div className="p-3 bg-slate-50 rounded-xl">
                     <span className="text-slate-400 block text-[10px]">Validity</span>
-                    <span className="font-bold text-slate-800">Permanent / Lifetime</span>
+                    <span className="font-bold text-slate-800">{validUntil ? `Until ${validUntil}` : "No expiry"}</span>
                   </div>
                 </div>
               </div>

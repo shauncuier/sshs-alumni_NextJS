@@ -21,16 +21,23 @@ import {
   School
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function ReunionTicketPage() {
   const params = useParams();
   const eventId = params?.id as string;
 
   const [selectedTier, setSelectedTier] = useState<ReunionTicketTier>(sampleTicketTiers[0]);
-  const [attendeeName, setAttendeeName] = useState("Md. Jashedul Islam");
-  const [attendeeEmail, setAttendeeEmail] = useState("jashedul@example.com");
-  const [attendeePhone, setAttendeePhone] = useState("+880 1712-345678");
-  const [sscBatch, setSscBatch] = useState("2008");
+  // Prefill from the signed-in member; visitors start with empty fields.
+  const { data: session } = useSession();
+  const [attendeeNameEdit, setAttendeeName] = useState<string | null>(null);
+  const attendeeName = attendeeNameEdit ?? (session?.user?.name ?? "");
+  const [attendeeEmailEdit, setAttendeeEmail] = useState<string | null>(null);
+  const attendeeEmail = attendeeEmailEdit ?? (session?.user?.email ?? "");
+  const [attendeePhoneEdit, setAttendeePhone] = useState<string | null>(null);
+  const attendeePhone = attendeePhoneEdit ?? ("");
+  const [sscBatchEdit, setSscBatch] = useState<string | null>(null);
+  const sscBatch = sscBatchEdit ?? (session?.user?.batchYear ? String(session.user.batchYear) : "");
   const [tshirtSize, setTshirtSize] = useState("L");
   const [dietaryPreference, setDietaryPreference] = useState("Traditional Mezban Halal");
   const [paymentMethod, setPaymentMethod] = useState("bKash");

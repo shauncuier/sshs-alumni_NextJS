@@ -21,6 +21,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function MentorshipPage() {
   const [mentors] = useState<MentorProfile[]>(sampleMentors);
@@ -28,8 +29,12 @@ export default function MentorshipPage() {
   const [activeMentor, setActiveMentor] = useState<MentorProfile | null>(null);
 
   // Booking Form State
-  const [menteeName, setMenteeName] = useState("Md. Jashedul Islam");
-  const [menteeEmail, setMenteeEmail] = useState("jashedul@example.com");
+  // Prefill from the signed-in member; visitors start with empty fields.
+  const { data: session } = useSession();
+  const [menteeNameEdit, setMenteeName] = useState<string | null>(null);
+  const menteeName = menteeNameEdit ?? (session?.user?.name ?? "");
+  const [menteeEmailEdit, setMenteeEmail] = useState<string | null>(null);
+  const menteeEmail = menteeEmailEdit ?? (session?.user?.email ?? "");
   const [menteeBatch, setMenteeBatch] = useState("2018");
   const [selectedTopic, setSelectedTopic] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
