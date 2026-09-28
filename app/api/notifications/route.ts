@@ -1,27 +1,27 @@
 /**
  * SSGHS Alumni — Notifications API with Real-Time SSE Push
  * 
- * GET   /api/notifications?userId=xxx         — Get user's notifications
- * POST  /api/notifications                    — Create and push a notification
- * PATCH /api/notifications                    — Mark notifications as read
+ * GET   /api/notifications   — The signed-in member's notifications
+ * POST  /api/notifications   — Create and push a notification for a member (admins only)
+ * PATCH /api/notifications   — Mark the signed-in member's notifications as read
+ *
+ * The member is always the session user; a userId in GET/PATCH requests is ignored.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS } from "@/lib/realtime";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 /**
  * GET: Fetch notifications for a user
  */
-export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: "userId is required" },
-      { status: 400 }
-    );
+export async function GET() {
+  const me = await getSessionUser();
+  if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = me.id;
 
   try {
     const notifications = await prisma.notification.findMany({
@@ -49,6 +49,15 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    // Creating notifications for other members would let anyone send fake notices.
+    const me = await getSessionUser();
+    if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isAdminRole(me.role)) {
+      return NextResponse.json({ error: "Only administrators can send notifications." }, { status: 403 });
+    }
+
     const body = await req.json();
     const { userId, title, message, link, type } = body;
 
@@ -73,16 +82,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (dbError) {
       console.error("[Notifications API] DB create error:", dbError);
-      notification = {
-        id: `notif-${Date.now()}`,
-        userId,
-        title,
-        message,
-        link,
-        type: type || "CONNECTION",
-        isRead: false,
-        createdAt: new Date(),
-      };
+      return NextResponse.json({ error: "Could not create the notification." }, { status: 503 });
     }
 
     // Push real-time notification via SSE
@@ -110,15 +110,14 @@ export async function POST(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, notificationIds } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
+    const me = await getSessionUser();
+    if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = me.id;
+
+    const body = await req.json();
+    const { notificationIds } = body;
 
     if (notificationIds && Array.isArray(notificationIds)) {
       // Mark specific notifications as read

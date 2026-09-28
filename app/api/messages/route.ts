@@ -1,30 +1,29 @@
 /**
  * SSGHS Alumni — Messages API with Real-Time Push
  * 
- * GET  /api/messages?userId=xxx              — Get conversations list
- * GET  /api/messages?userId=xxx&with=yyy     — Get message thread between two users
- * POST /api/messages                         — Send a message (pushes via SSE)
- * PATCH /api/messages                        — Mark messages as read
+ * GET  /api/messages                — Conversations of the signed-in member
+ * GET  /api/messages?with=yyy        — Thread between the signed-in member and yyy
+ * POST /api/messages                 — Send a message as the signed-in member (pushes via SSE)
+ * PATCH /api/messages                — Mark messages from a sender as read
+ *
+ * The member is always the session user; any userId/senderId in the request is ignored.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS, isUserOnline } from "@/lib/realtime";
+import { getSessionUser } from "@/lib/session-user";
 
 /**
  * GET: Fetch conversations or specific thread
  */
 export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
-  const userId = searchParams.get("userId");
-  const withUserId = searchParams.get("with");
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: "userId is required" },
-      { status: 400 }
-    );
+  const me = await getSessionUser();
+  if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = me.id;
+  const withUserId = req.nextUrl.searchParams.get("with");
 
   try {
     if (withUserId) {
@@ -103,19 +102,29 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { senderId, receiverId, content } = body;
+    const me = await getSessionUser();
+    if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const senderId = me.id;
 
-    if (!senderId || !receiverId || !content?.trim()) {
+    const body = await req.json();
+    const { receiverId, content } = body;
+
+    if (!receiverId || typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
-        { error: "senderId, receiverId, and content are required" },
+        { error: "receiverId and content are required" },
         { status: 400 }
       );
     }
 
-    // Save to database
+    // Save to database; never report a message as sent unless it was stored.
     let message;
     try {
+      const receiver = await prisma.user.findUnique({ where: { id: receiverId }, select: { id: true } });
+      if (!receiver) {
+        return NextResponse.json({ error: "That member could not be found." }, { status: 404 });
+      }
       message = await prisma.message.create({
         data: {
           senderId,
@@ -126,15 +135,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (dbError) {
       console.error("[Messages API] DB create error:", dbError);
-      // Fallback for demo
-      message = {
-        id: `msg-${Date.now()}`,
-        senderId,
-        receiverId,
-        content: content.trim(),
-        isRead: false,
-        createdAt: new Date(),
-      };
+      return NextResponse.json({ error: "Could not send your message. Please try again." }, { status: 503 });
     }
 
     // ── Push real-time notification to receiver ──────────────────────
@@ -186,12 +187,18 @@ export async function POST(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, senderId } = body;
+    const me = await getSessionUser();
+    if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = me.id;
 
-    if (!userId || !senderId) {
+    const body = await req.json();
+    const { senderId } = body;
+
+    if (!senderId) {
       return NextResponse.json(
-        { error: "userId and senderId are required" },
+        { error: "senderId is required" },
         { status: 400 }
       );
     }

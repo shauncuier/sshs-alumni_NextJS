@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Only administrators may change events.
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
+      return NextResponse.json({ error: "Only administrators can manage events." }, { status: 403 });
+    }
     const { id } = await params;
     const body = await req.json();
 
@@ -29,8 +35,8 @@ export async function PUT(
       });
       return NextResponse.json({ event: updated, success: true });
     } catch (dbErr) {
-      console.warn("Database event update fallback:", dbErr);
-      return NextResponse.json({ event: { id, ...body }, success: true, note: "Memory updated" });
+      console.error("Event update failed:", dbErr);
+      return NextResponse.json({ error: "Could not update the event." }, { status: 503 });
     }
   } catch (error) {
     console.error("Event update error:", error);
@@ -43,6 +49,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Only administrators may change events.
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
+      return NextResponse.json({ error: "Only administrators can manage events." }, { status: 403 });
+    }
     const { id } = await params;
 
     try {
@@ -51,8 +62,8 @@ export async function DELETE(
       });
       return NextResponse.json({ success: true, id });
     } catch (dbErr) {
-      console.warn("Database event delete fallback:", dbErr);
-      return NextResponse.json({ success: true, id, note: "Memory deleted" });
+      console.error("Event delete failed:", dbErr);
+      return NextResponse.json({ error: "Could not delete the event." }, { status: 503 });
     }
   } catch (error) {
     console.error("Event delete error:", error);

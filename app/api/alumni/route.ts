@@ -1,102 +1,92 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { sampleAlumni, AlumniMember } from "@/lib/data";
+
+// Public directory: only fields a member would expect strangers to see.
+// Phone and email appear only when the member has made them public; the school
+// roll number is used for verification and is never listed.
+const DIRECTORY_FIELDS = {
+  id: true,
+  userId: true,
+  fullName: true,
+  sscBatch: true,
+  graduationYear: true,
+  section: true,
+  profession: true,
+  company: true,
+  industry: true,
+  locationCity: true,
+  locationCountry: true,
+  bio: true,
+  avatarUrl: true,
+  coverUrl: true,
+  skills: true,
+  linkedin: true,
+  facebook: true,
+  github: true,
+  website: true,
+  verificationStatus: true,
+  createdAt: true,
+  phone: true,
+  isPhonePublic: true,
+  isEmailPublic: true,
+  user: { select: { email: true, role: true } },
+} satisfies Prisma.AlumniProfileSelect;
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = searchParams.get("q")?.toLowerCase() || "";
+    const q = searchParams.get("q")?.trim() || "";
     const batch = searchParams.get("batch");
     const profession = searchParams.get("profession");
     const location = searchParams.get("location");
     const verifiedOnly = searchParams.get("verified") === "true";
 
-    // 1. Try querying Prisma / MongoDB
+    const filters: Prisma.AlumniProfileWhereInput[] = [
+      // Members the committee rejected are never listed.
+      verifiedOnly ? { verificationStatus: "VERIFIED" } : { verificationStatus: { not: "REJECTED" } },
+    ];
+    if (batch && batch !== "all" && !Number.isNaN(parseInt(batch, 10))) {
+      filters.push({ sscBatch: parseInt(batch, 10) });
+    }
+    if (profession && profession !== "all") {
+      filters.push({ profession: { contains: profession } });
+    }
+    if (location && location !== "all") {
+      filters.push({ OR: [{ locationCity: { contains: location } }, { locationCountry: { contains: location } }] });
+    }
+    if (q) {
+      filters.push({
+        OR: [
+          { fullName: { contains: q } },
+          { profession: { contains: q } },
+          { company: { contains: q } },
+          { locationCity: { contains: q } },
+        ],
+      });
+    }
+
+    let profiles;
     try {
-      const whereClause: Record<string, unknown> = {};
-
-      if (batch && batch !== "all") {
-        whereClause.sscBatch = parseInt(batch, 10);
-      }
-
-      if (verifiedOnly) {
-        whereClause.verificationStatus = "VERIFIED";
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const profiles: any[] = await (prisma as any).alumniProfile.findMany({
-        where: whereClause,
-        include: {
-          user: {
-            select: {
-              email: true,
-              role: true,
-              status: true,
-            },
-          },
-        },
+      profiles = await prisma.alumniProfile.findMany({
+        where: { AND: filters },
+        select: DIRECTORY_FIELDS,
         orderBy: { sscBatch: "desc" },
       });
-
-      if (profiles && profiles.length > 0) {
-        let filtered = profiles;
-        if (q) {
-          filtered = filtered.filter(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (p: any) =>
-              p.fullName?.toLowerCase().includes(q) ||
-              p.profession?.toLowerCase().includes(q) ||
-              (p.company && p.company.toLowerCase().includes(q)) ||
-              p.locationCity?.toLowerCase().includes(q)
-          );
-        }
-        return NextResponse.json({ alumni: filtered, total: filtered.length, source: "database" });
-      }
     } catch (dbErr) {
-      console.warn("Database alumni query fallback to static data:", dbErr);
+      console.error("Alumni directory query failed:", dbErr);
+      return NextResponse.json({ error: "The alumni directory is unavailable right now." }, { status: 503 });
     }
 
-    // 2. High-performance dataset
-    let results: AlumniMember[] = [...sampleAlumni];
+    const alumni = profiles.map(({ phone, isPhonePublic, isEmailPublic, user, ...rest }) => ({
+      ...rest,
+      phone: isPhonePublic ? phone : null,
+      isPhonePublic,
+      isEmailPublic,
+      user: { email: isEmailPublic ? user.email : null, role: user.role },
+    }));
 
-    if (q) {
-      results = results.filter(
-        (a) =>
-          a.fullName.toLowerCase().includes(q) ||
-          a.profession.toLowerCase().includes(q) ||
-          a.company.toLowerCase().includes(q) ||
-          a.locationCity.toLowerCase().includes(q) ||
-          a.skills.some((s) => s.toLowerCase().includes(q))
-      );
-    }
-
-    if (batch && batch !== "all") {
-      const bYear = parseInt(batch, 10);
-      results = results.filter((a) => a.sscBatch === bYear);
-    }
-
-    if (profession && profession !== "all") {
-      results = results.filter((a) =>
-        a.profession.toLowerCase().includes(profession.toLowerCase())
-      );
-    }
-
-    if (location && location !== "all") {
-      results = results.filter((a) =>
-        a.locationCountry.toLowerCase().includes(location.toLowerCase()) ||
-        a.locationCity.toLowerCase().includes(location.toLowerCase())
-      );
-    }
-
-    if (verifiedOnly) {
-      results = results.filter((a) => a.isVerified);
-    }
-
-    return NextResponse.json({
-      alumni: results,
-      total: results.length,
-      source: "fallback-dataset",
-    });
+    return NextResponse.json({ alumni, total: alumni.length, source: "database" });
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Failed to fetch alumni directory" }, { status: 500 });

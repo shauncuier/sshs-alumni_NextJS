@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { sampleEvents } from "@/lib/data";
 
 export async function GET() {
@@ -42,6 +43,11 @@ async function uniqueEventSlug(source: string): Promise<string> {
 
 export async function POST(req: Request) {
   try {
+    // Only administrators may change events.
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
+      return NextResponse.json({ error: "Only administrators can manage events." }, { status: 403 });
+    }
     const body = await req.json();
     try {
       const event = await prisma.event.create({
@@ -63,8 +69,8 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ event, success: true });
     } catch (dbErr) {
-      console.warn("Database create event fallback:", dbErr);
-      return NextResponse.json({ event: body, success: true, note: "Memory saved" });
+      console.error("Event create failed:", dbErr);
+      return NextResponse.json({ error: "Could not save the event." }, { status: 503 });
     }
   } catch (error) {
     console.error("Create event error:", error);

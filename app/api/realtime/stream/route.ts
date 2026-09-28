@@ -3,20 +3,21 @@
  * GET /api/realtime/stream
  * 
  * Client connects via EventSource to receive live updates.
- * Requires authentication (userId in query param or session).
+ * Requires a signed-in session: the stream is always for the session user, so no
+ * one can subscribe to another member's live messages by passing their userId.
  */
 
 import { addConnection, removeConnection, SSE_EVENTS } from "@/lib/realtime";
+import { getSessionUser } from "@/lib/session-user";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const userId = url.searchParams.get("userId");
-
-  if (!userId) {
-    return new Response("Missing userId parameter", { status: 401 });
+  const me = await getSessionUser();
+  if (!me) {
+    return new Response("Unauthorized", { status: 401 });
   }
+  const userId = me.id;
 
   const encoder = new TextEncoder();
 

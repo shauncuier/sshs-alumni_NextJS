@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { sampleAlumni } from "@/lib/data";
 
 export async function GET() {
   try {
@@ -11,29 +10,23 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    let user;
     try {
-      const user = await prisma.user.findUnique({
+      user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        include: { profile: true },
+        // Only account fields the profile page needs; never the password hash.
+        select: { id: true, email: true, role: true, status: true, createdAt: true, profile: true },
       });
-
-      if (user?.profile) {
-        return NextResponse.json({ profile: user.profile, user, source: "database" });
-      }
     } catch (dbErr) {
-      console.warn("Database profile fetch fallback:", dbErr);
+      console.error("Profile fetch failed:", dbErr);
+      return NextResponse.json({ error: "Could not load your profile. Please try again." }, { status: 503 });
     }
 
-    // Fallback to sample data matching session user
-    const matched = sampleAlumni.find((a) => a.email === session.user.email) || sampleAlumni[0];
-    return NextResponse.json({
-      profile: {
-        ...matched,
-        fullName: session.user.name || matched.fullName,
-        sscBatch: (session.user as unknown as { batchYear?: number })?.batchYear || matched.sscBatch,
-      },
-      source: "fallback",
-    });
+    if (!user) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
+    const { profile, ...account } = user;
+    return NextResponse.json({ profile, user: account });
   } catch (error) {
     console.error("Profile GET error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -48,65 +41,57 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { fullName, profession, company, locationCity, bio, phone, skills } = body;
+    const { fullName, profession, company, locationCity, bio, phone, skills, isPhonePublic, isEmailPublic } = body;
+
+    // Optional text fields: undefined leaves the value as is, an empty string clears it.
+    const optional = (value: unknown) =>
+      value === undefined ? undefined : typeof value === "string" && value.trim() ? value.trim() : null;
+    const required = (value: unknown) =>
+      typeof value === "string" && value.trim() ? value.trim() : undefined;
 
     try {
       const user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        include: { profile: true },
+        select: { id: true },
+      });
+      if (!user) {
+        return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      }
+
+      const batchYear = (session.user as unknown as { batchYear?: number })?.batchYear || 2008;
+      const updated = await prisma.alumniProfile.upsert({
+        where: { userId: user.id },
+        update: {
+          fullName: required(fullName),
+          profession: required(profession),
+          locationCity: required(locationCity),
+          company: optional(company),
+          bio: optional(bio),
+          phone: optional(phone),
+          skills: Array.isArray(skills) ? skills : undefined,
+          isPhonePublic: typeof isPhonePublic === "boolean" ? isPhonePublic : undefined,
+          isEmailPublic: typeof isEmailPublic === "boolean" ? isEmailPublic : undefined,
+        },
+        create: {
+          userId: user.id,
+          fullName: required(fullName) || session.user.name || "Alumnus",
+          sscBatch: batchYear,
+          graduationYear: batchYear,
+          profession: required(profession) || "Alumnus",
+          locationCity: required(locationCity) || "Chattogram",
+          locationCountry: "Bangladesh",
+          company: optional(company) ?? null,
+          bio: optional(bio) ?? null,
+          phone: optional(phone) ?? null,
+          skills: Array.isArray(skills) ? skills : [],
+        },
       });
 
-      if (user) {
-        // Upsert profile
-        const updated = await prisma.alumniProfile.upsert({
-          where: { userId: user.id },
-          update: {
-            fullName: fullName || undefined,
-            profession: profession || undefined,
-            company: company || undefined,
-            locationCity: locationCity || undefined,
-            bio: bio || undefined,
-            phone: phone || undefined,
-            skills: Array.isArray(skills) ? skills : undefined,
-          },
-          create: {
-            userId: user.id,
-            fullName: fullName || session.user.name || "Alumnus",
-            sscBatch: (session.user as unknown as { batchYear?: number })?.batchYear || 2008,
-            graduationYear: (session.user as unknown as { batchYear?: number })?.batchYear || 2008,
-            profession: profession || "Alumnus",
-            locationCity: locationCity || "Chattogram",
-            locationCountry: "Bangladesh",
-            company: company || null,
-            bio: bio || null,
-            phone: phone || null,
-            skills: Array.isArray(skills) ? skills : [],
-          },
-        });
-
-        return NextResponse.json({
-          message: "Profile updated successfully",
-          profile: updated,
-          source: "database",
-        });
-      }
+      return NextResponse.json({ message: "Profile updated successfully", profile: updated });
     } catch (dbErr) {
-      console.warn("Database profile update fallback:", dbErr);
+      console.error("Profile update failed:", dbErr);
+      return NextResponse.json({ error: "Could not save your profile. Please try again." }, { status: 503 });
     }
-
-    return NextResponse.json({
-      message: "Profile updated successfully",
-      profile: {
-        fullName,
-        profession,
-        company,
-        locationCity,
-        bio,
-        phone,
-        skills,
-      },
-      source: "simulated-persistence",
-    });
   } catch (error) {
     console.error("Profile PUT error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
