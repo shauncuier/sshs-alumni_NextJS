@@ -97,3 +97,35 @@ npx prisma db push --accept-data-loss
 | **`VerificationRequest`** | Admin queue for verifying graduation records. | `userId`, `sscBatch`, `proofDocumentUrl`, `status` |
 
 JSON columns (`skills`, `images`) get their `[]` default from the Prisma client, not from the database. Raw SQL inserts must supply a value.
+
+---
+
+## Events & membership registration (Oct 2026)
+
+`npm run db:push` adds event content (packages, agenda, fees, payment instructions, membership flag) and registration details; nothing is dropped. `npm run db:seed` then adds the site's 5 events, with the Golden Jubilee as the **membership event**.
+
+Joining the association is the Jubilee registration. It stays closed ("Payment details coming soon") until an admin enters the Jubilee's **payment instructions** (bKash/Nagad number) in Admin → Events → Golden Jubilee → Pricing.
+
+---
+
+## Local development
+
+`.env.local` (git-ignored) points the app at a local MySQL database — for example `sshs_dev` — and also holds `TEST_DATABASE_URL`, the connection string for a `*_test` database on `localhost` that `npm test` drops and recreates from `prisma/schema.prisma` on every run. Next.js reads `.env.local` over `.env` automatically, so the running app just needs `DATABASE_URL` in `.env.local`.
+
+The Prisma CLI and `prisma/seed.ts` only load `.env` (`dotenv/config`), which holds the **remote** production `DATABASE_URL`. To push the schema or seed a local database, override `DATABASE_URL` on the command line — dotenv never overrides a variable that is already set:
+
+```bash
+DATABASE_URL="$(node -e 'require("dotenv").config({path:".env.local",quiet:true});process.stdout.write(process.env.DATABASE_URL)')" npx prisma db push
+DATABASE_URL="$(node -e 'require("dotenv").config({path:".env.local",quiet:true});process.stdout.write(process.env.DATABASE_URL)')" npm run db:seed
+```
+
+This reads the URL out of `.env.local` without ever printing it. Append `?allowPublicKeyRetrieval=true` to the URL if MySQL 8's `caching_sha2_password` auth needs it over a non-TLS local connection.
+
+**Never run `db:push` / `db:seed` without an explicit `DATABASE_URL` override** — without one, both fall back to the remote URL in `.env`.
+
+> ⚠️ `db:push` adds unique constraints on `EventRegistration` (`[eventId, userId]`, `transactionId`). If a database already has duplicate `(eventId, userId)` registrations or duplicate transaction IDs, `db:push` will fail. Check for duplicates before pushing to the remote database, and back it up first:
+>
+> ```sql
+> SELECT eventId, userId, COUNT(*) FROM EventRegistration GROUP BY eventId, userId HAVING COUNT(*) > 1;
+> SELECT transactionId, COUNT(*) FROM EventRegistration WHERE transactionId IS NOT NULL GROUP BY transactionId HAVING COUNT(*) > 1;
+> ```

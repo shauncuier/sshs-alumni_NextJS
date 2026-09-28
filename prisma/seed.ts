@@ -1,7 +1,10 @@
 import "dotenv/config";
 import { Role, VerificationStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
+import { sampleEvents } from "../lib/data";
+import { normalizePackages, parseTaka } from "../lib/events/pricing";
 
 // Earlier seeds created these accounts with published passwords; replace them on sight.
 const LEGACY_ADMIN = { email: "admin@sabujsghs.edu.bd", password: "admin123" };
@@ -147,68 +150,75 @@ async function main() {
     });
   }
 
-  // 5. Seed Events
-  console.log("Seeding Upcoming Events & Reunions...");
-  const eventsData = [
-    {
-      title: "Grand Alumni Reunion 2026: 40 Years of Excellence",
-      slug: "grand-alumni-reunion-2026",
-      category: "REUNION" as const,
-      date: new Date("2026-11-20T09:00:00.000Z"),
-      venue: "Main Campus Auditorium & Grounds, SSGHS, Chattogram",
-      time: "09:00 AM - 09:00 PM",
-      locationCity: "Chattogram",
-      organizer: "SSGHS Alumni Association",
-      description:
-        "The flagship quadrennial gathering of all batches from 1985 to 2025. Featuring alumni awards, memorial tribute, cultural night, batch stalls, and feast.",
-      bannerImage:
-        "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200",
-      maxAttendees: 2500,
-      attendeesCount: 1420,
-      registrationFee: 1500,
-    },
-    {
-      title: "SSGHS Inter-Batch Football Carnival 2026",
-      slug: "inter-batch-football-carnival-2026",
-      category: "SPORTS" as const,
-      date: new Date("2026-12-12T08:00:00.000Z"),
-      venue: "School Football Field & Sports Pavilion",
-      time: "08:00 AM - 06:00 PM",
-      locationCity: "Chattogram",
-      organizer: "SSGHS Sports Committee",
-      description:
-        "32 alumni batches competing for the coveted SSGHS Champion Shield. Day-long sports carnival with live commentary and food pavilion.",
-      bannerImage:
-        "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200",
-      maxAttendees: 500,
-      attendeesCount: 340,
-      registrationFee: 500,
-    },
-    {
-      title: "Tech & Career Leadership Summit 2026",
-      slug: "tech-career-leadership-summit-2026",
-      category: "WEBINAR" as const,
-      date: new Date("2026-10-05T14:00:00.000Z"),
-      venue: "Virtual via Zoom & SSGHS Media Center",
-      time: "02:00 PM - 06:00 PM",
-      locationCity: "Chattogram",
-      organizer: "SSGHS Tech Alumni Network",
-      description:
-        "Distinguished SSGHS alumni leaders in Tech, Medicine, and Civil Service share mentorship and global career roadmaps with young graduates.",
-      bannerImage:
-        "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=1200",
-      maxAttendees: 1000,
-      attendeesCount: 620,
-      registrationFee: 0,
-    },
-  ];
+  // 5. Seed events from the site's event content. The Golden Jubilee is the membership
+  // event: joining the association is its paid registration. Payment instructions are
+  // left for an admin to fill in, so joining stays closed until they exist.
+  console.log("Seeding Events...");
+  const JUBILEE_ID = "evt-golden-jubilee-50";
+  const packageHeads: Record<string, { adults: number; children: number; guestsFree?: boolean }> = {
+    "General Alumnus Delegate": { adults: 1, children: 0 },
+    "Alumnus + Spouse / Extra Guest": { adults: 2, children: 0 },
+    "Family (Alumnus + Spouse + 1 Child < 12yr)": { adults: 2, children: 1 },
+    "Golden Patron & Sponsor": { adults: 1, children: 0, guestsFree: true },
+  };
+  const slugFor = (e: (typeof sampleEvents)[number]) =>
+    e.title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 
-  for (const ev of eventsData) {
+  for (const e of sampleEvents) {
+    const isJubilee = e.id === JUBILEE_ID;
     await prisma.event.upsert({
-      where: { slug: ev.slug },
+      where: { slug: slugFor(e) },
       update: {},
-      create: ev,
+      create: {
+        slug: slugFor(e),
+        title: e.title,
+        category: e.category,
+        description: e.description,
+        date: new Date(`${e.date}T09:00:00+06:00`),
+        time: e.time,
+        venue: e.venue,
+        locationCity: e.locationCity,
+        organizer: e.organizer,
+        bannerImage: e.bannerImage,
+        maxAttendees: e.maxAttendees,
+        registrationFee: isJubilee ? 0 : parseTaka(e.registrationFee ?? 0) || 0,
+        isRegistrationOpen: e.isRegistrationOpen,
+        subtitle: e.subtitle ?? null,
+        guestOfHonor: e.guestOfHonor ?? null,
+        souvenirDetails: e.souvenirDetails ?? null,
+        registrationDeadline: isJubilee ? new Date("2026-12-15T23:59:59+06:00") : null,
+        isMegaEvent: e.isMegaEvent ?? false,
+        isMembershipEvent: isJubilee,
+        extraAdultFee: isJubilee ? 500 : 0,
+        childFee: isJubilee ? 300 : 0,
+        agenda: (e.agenda ?? []) as unknown as Prisma.InputJsonValue,
+        highlights: e.highlights ?? [],
+        packages: normalizePackages((e.packages ?? []).map((p) => ({ ...p, ...packageHeads[p.name] }))) as unknown as Prisma.InputJsonValue,
+        paymentInstructions: null,
+      },
     });
+  }
+
+  // Events written by earlier versions of this seed, removed if nobody registered.
+  await prisma.event.deleteMany({
+    where: {
+      slug: { in: ["grand-alumni-reunion-2026", "inter-batch-football-carnival-2026", "tech-career-leadership-summit-2026"] },
+      registrations: { none: {} },
+    },
+  });
+
+  // Ruling: the schema migration that added RegistrationStatus defaulted every
+  // pre-existing registration to PENDING_PAYMENT. New code never leaves a
+  // registration in that state with no money attached — a free registration is
+  // created CONFIRMED, and a paid one always carries a transactionId — so any
+  // row matching all three conditions below can only be a legacy row the
+  // migration mis-defaulted, and is safe to fix up here.
+  const backfilled = await prisma.eventRegistration.updateMany({
+    where: { status: "PENDING_PAYMENT", totalFee: 0, donationAmount: 0, transactionId: null },
+    data: { status: "CONFIRMED" },
+  });
+  if (backfilled.count > 0) {
+    console.log(`Backfilled ${backfilled.count} legacy free registration(s) from PENDING_PAYMENT to CONFIRMED.`);
   }
 
   // 6. Seed Donation Campaigns
