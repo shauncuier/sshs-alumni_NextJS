@@ -11,7 +11,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import {
   generateAlumniId,
-  signCardPayload,
+  createCardToken,
   generateQrDataUrl,
   CardPayload,
 } from "@/lib/id-card";
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
       expiresAt: Date.now() + 5 * 365 * 24 * 60 * 60 * 1000,
     };
 
-    const signedToken = signCardPayload(tokenPayload);
+    const signedToken = createCardToken(tokenPayload);
 
     // Build gate verification URL
     const host = req.headers.get("host") || "localhost:3000";

@@ -2,7 +2,7 @@
  * SSGHS Alumni — Digital Smart ID Card & Gate Verification Utility
  * 
  * Provides:
- * 1. Cryptographic token signing & verification for Gate Check-in QR Codes
+ * 1. Encrypted, tamper-proof tokens for Gate Check-in QR Codes
  * 2. High-resolution QR code generator (Data URL & SVG)
  * 3. Apple Wallet (.pkpass) and Google Wallet pass structures
  */
@@ -23,26 +23,30 @@ export interface CardPayload {
   eiin: string; // 105070
 }
 
-let devSigningKey: string | undefined;
+let devSecret: string | undefined;
 
 /**
- * HMAC key for card tokens. Production requires NEXTAUTH_SECRET: a key published
- * in the source would let anyone forge valid passes. Development falls back to a
- * random per-process key, so issued cards stop verifying after a restart.
+ * Secret for card tokens. Production requires NEXTAUTH_SECRET: a key published
+ * in the source would let anyone forge or read passes. Development falls back to
+ * a random per-process secret, so issued cards stop verifying after a restart.
  */
-function cardSigningKey(): string {
+function cardSecret(): string {
   const secret = process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
   if (process.env.NODE_ENV === "production") {
-    throw new Error("NEXTAUTH_SECRET must be set to sign or verify alumni ID cards.");
+    throw new Error("NEXTAUTH_SECRET must be set to issue or verify alumni ID cards.");
   }
-  devSigningKey ??= crypto.randomBytes(32).toString("hex");
-  return devSigningKey;
+  devSecret ??= crypto.randomBytes(32).toString("hex");
+  return devSecret;
 }
 
-function hmac(encodedPayload: string, key: string): string {
-  return crypto.createHmac("sha256", key).update(encodedPayload).digest("base64url");
+// A dedicated AES-256 key, so card tokens never reuse the NextAuth secret directly.
+function cardEncryptionKey(): Buffer {
+  return Buffer.from(crypto.hkdfSync("sha256", cardSecret(), "", "ssghs-alumni-card-token-v2", 32));
 }
+
+const IV_BYTES = 12;
+const AUTH_TAG_BYTES = 16;
 const SCHOOL_EIIN = "105070";
 
 /**
@@ -56,53 +60,60 @@ export function generateAlumniId(batch: number | string): string {
 }
 
 /**
- * Sign an alumni card payload to create a secure gate-verification token
+ * Create a gate-verification token for a card payload.
+ *
+ * The payload is encrypted with AES-256-GCM, so the QR code and /verify URL reveal
+ * nothing about the member; GCM's auth tag also makes the token tamper-proof.
+ * Token = base64url(iv | authTag | ciphertext).
  */
-export function signCardPayload(payload: Omit<CardPayload, "eiin">): string {
-  const fullPayload: CardPayload = {
-    ...payload,
-    eiin: SCHOOL_EIIN,
-  };
-
-  const payloadString = JSON.stringify(fullPayload);
-  const encodedPayload = Buffer.from(payloadString, "utf8").toString("base64url");
-
-  return `${encodedPayload}.${hmac(encodedPayload, cardSigningKey())}`;
+export function createCardToken(payload: Omit<CardPayload, "eiin">): string {
+  const fullPayload: CardPayload = { ...payload, eiin: SCHOOL_EIIN };
+  const iv = crypto.randomBytes(IV_BYTES);
+  const cipher = crypto.createCipheriv("aes-256-gcm", cardEncryptionKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(fullPayload), "utf8"), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString("base64url");
 }
 
 /**
- * Verify and decode an encrypted gate-verification token
+ * Decrypt and verify a gate-verification token.
  */
 export function verifyCardToken(token: string): { valid: boolean; payload?: CardPayload; error?: string } {
-  // Read the key outside the try: a missing secret is a server misconfiguration,
+  // Derive the key outside the try: a missing secret is a server misconfiguration,
   // not a forged card, and must not be reported to gate staff as one.
-  const key = cardSigningKey();
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 2) {
-      return { valid: false, error: "Invalid token structure" };
-    }
+  const key = cardEncryptionKey();
 
-    const [encodedPayload, signature] = parts;
-    // Constant-time comparison, so response timing reveals nothing about the signature.
-    const expected = Buffer.from(hmac(encodedPayload, key));
-    const received = Buffer.from(signature);
-    if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-      return { valid: false, error: "Cryptographic signature mismatch — pass may be forged" };
-    }
-
-    const payloadJson = Buffer.from(encodedPayload, "base64url").toString("utf8");
-    const payload: CardPayload = JSON.parse(payloadJson);
-
-    // Check expiration if set
-    if (payload.expiresAt && Date.now() > payload.expiresAt) {
-      return { valid: false, payload, error: "Alumni pass has expired" };
-    }
-
-    return { valid: true, payload };
-  } catch (err: unknown) {
-    return { valid: false, error: (err as Error).message || "Failed to verify token" };
+  // Earlier passes were readable "payload.signature" tokens. The card page issues a
+  // fresh QR on every visit, so point the holder there rather than calling it forged.
+  if (token.includes(".")) {
+    return {
+      valid: false,
+      error: "This pass uses an outdated QR format. Ask the member to reopen their digital card for a new QR code.",
+    };
   }
+
+  const raw = Buffer.from(token, "base64url");
+  if (raw.length <= IV_BYTES + AUTH_TAG_BYTES) {
+    return { valid: false, error: "Invalid token structure" };
+  }
+
+  let payload: CardPayload;
+  try {
+    const iv = raw.subarray(0, IV_BYTES);
+    const authTag = raw.subarray(IV_BYTES, IV_BYTES + AUTH_TAG_BYTES);
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+    decipher.setAuthTag(authTag);
+    const plaintext = Buffer.concat([decipher.update(raw.subarray(IV_BYTES + AUTH_TAG_BYTES)), decipher.final()]);
+    payload = JSON.parse(plaintext.toString("utf8"));
+  } catch {
+    // GCM authentication failed: the token was altered or not issued by this server.
+    return { valid: false, error: "Cryptographic signature mismatch — pass may be forged" };
+  }
+
+  if (payload.expiresAt && Date.now() > payload.expiresAt) {
+    return { valid: false, payload, error: "Alumni pass has expired" };
+  }
+
+  return { valid: true, payload };
 }
 
 /**

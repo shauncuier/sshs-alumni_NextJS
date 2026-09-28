@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { signCardPayload, generateQrDataUrl } from "@/lib/id-card";
+import { createCardToken, generateQrDataUrl } from "@/lib/id-card";
 
 export async function POST(
   req: NextRequest,
@@ -48,7 +48,7 @@ export async function POST(
       profession: `Reunion Delegate (${tierName})`,
     };
 
-    const signedToken = signCardPayload(tokenPayload);
+    const signedToken = createCardToken(tokenPayload);
     const host = req.headers.get("host") || "localhost:3000";
     const protocol = host.includes("localhost") ? "http" : "https";
     const verifyUrl = `${protocol}://${host}/verify/${signedToken}`;
