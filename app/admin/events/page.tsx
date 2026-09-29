@@ -2,12 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { sampleEvents, EventItem } from "@/lib/data";
-import {
-  getStoredEvents,
-  saveStoredEvent,
-  deleteStoredEvent,
-} from "@/lib/events-service";
+import type { EventItem } from "@/lib/data";
+import type { AdminRegistration, PublicEvent } from "@/lib/events/types";
 import {
   Calendar,
   Plus,
@@ -29,16 +25,33 @@ import {
 } from "lucide-react";
 
 export default function AdminEventsPage() {
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const [events, setEvents] = useState<PublicEvent[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
+  const [editingEvent, setEditingEvent] = useState<PublicEvent | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
+
+  const load = () =>
+    fetch("/api/admin/events", { cache: "no-store" })
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error);
+        setEvents(body.events);
+      })
+      .catch((err: Error) => showToast(err.message));
+
   useEffect(() => {
-    setEvents(getStoredEvents());
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Form State
@@ -52,10 +65,9 @@ export default function AdminEventsPage() {
     venue: string;
     locationCity: string;
     organizer: string;
-    registrationFee: string;
+    registrationFee: number;
     registrationDeadline: string;
     maxAttendees: number;
-    attendeesCount: number;
     isRegistrationOpen: boolean;
     description: string;
     bannerImage: string;
@@ -69,10 +81,9 @@ export default function AdminEventsPage() {
     venue: "Main Campus Grounds, Sitakunda",
     locationCity: "Chattogram",
     organizer: "SSGHS Alumni Association",
-    registrationFee: "Free",
-    registrationDeadline: "December 15, 2026",
+    registrationFee: 0,
+    registrationDeadline: "",
     maxAttendees: 1000,
-    attendeesCount: 0,
     isRegistrationOpen: true,
     description: "",
     bannerImage: "/golden-jubilee.jpg",
@@ -80,15 +91,8 @@ export default function AdminEventsPage() {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
-  };
-
   // Open Edit Modal
-  const handleEditClick = (event: EventItem) => {
+  const handleEditClick = (event: PublicEvent) => {
     setEditingEvent(event);
     setFormData({
       id: event.id,
@@ -100,10 +104,9 @@ export default function AdminEventsPage() {
       venue: event.venue,
       locationCity: event.locationCity,
       organizer: event.organizer,
-      registrationFee: event.registrationFee || "Free",
-      registrationDeadline: event.registrationDeadline || "",
+      registrationFee: event.registrationFeeAmount,
+      registrationDeadline: event.registrationDeadline ? event.registrationDeadline.slice(0, 10) : "",
       maxAttendees: event.maxAttendees,
-      attendeesCount: event.attendeesCount,
       isRegistrationOpen: event.isRegistrationOpen,
       description: event.description,
       bannerImage: event.bannerImage,
@@ -116,71 +119,69 @@ export default function AdminEventsPage() {
     setEditingEvent(null);
     setFormData({
       ...initialFormState,
-      id: `evt-${Date.now()}`,
     });
     setIsModalOpen(true);
   };
 
   // Save Event
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (editingEvent) {
-      // Update existing
-      const updatedEvent: EventItem = {
-        ...editingEvent,
-        ...formData,
-        maxAttendees: Number(formData.maxAttendees),
-        attendeesCount: Number(formData.attendeesCount),
-      };
-      const updatedList = saveStoredEvent(updatedEvent);
-      setEvents(updatedList);
-      showToast(`Event "${formData.title}" updated successfully!`);
-    } else {
-      // Create new
-      const newEvent: EventItem = {
-        ...formData,
-        id: `evt-${Date.now()}`,
-        maxAttendees: Number(formData.maxAttendees),
-        attendeesCount: Number(formData.attendeesCount),
-      };
-      const updatedList = saveStoredEvent(newEvent);
-      setEvents(updatedList);
-      showToast(`New event "${formData.title}" created successfully!`);
-    }
-
+    const body = {
+      title: formData.title,
+      subtitle: formData.subtitle,
+      category: formData.category,
+      date: formData.date,
+      time: formData.time,
+      locationCity: formData.locationCity,
+      venue: formData.venue,
+      organizer: formData.organizer,
+      registrationFee: formData.registrationFee,
+      maxAttendees: Number(formData.maxAttendees),
+      registrationDeadline: formData.registrationDeadline || null,
+      bannerImage: formData.bannerImage,
+      description: formData.description,
+      isRegistrationOpen: formData.isRegistrationOpen,
+    };
+    const res = await fetch(editingEvent ? `/api/admin/events/${editingEvent.id}` : "/api/admin/events", {
+      method: editingEvent ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const result = await res.json();
+    if (!res.ok) return showToast(result.error || "Could not save the event.");
+    showToast(editingEvent ? `Event "${formData.title}" updated.` : `Event "${formData.title}" created.`);
     setIsModalOpen(false);
+    load();
   };
 
   // Delete Event
-  const handleDelete = (id: string) => {
-    const updatedList = deleteStoredEvent(id);
-    setEvents(updatedList);
+  const handleDelete = async (id: string) => {
+    const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+    const result = await res.json();
     setDeleteConfirmId(null);
-    showToast("Event has been removed successfully.");
+    if (!res.ok) return showToast(result.error || "Could not delete the event.");
+    showToast("Event deleted.");
+    load();
   };
 
-  // Export CSV
-  const handleExportCSV = (event: EventItem) => {
-    const csvHeader = "ID,Name,Batch,Email,Phone,Meal Preference,Ticket Count,Status\n";
-    const sampleRows = [
-      `1,Md. Jashedul Islam,2008,jashe@example.com,+880 1819-987654,Traditional Mezban Beef,2,Confirmed`,
-      `2,Tariqul Alam,1995,tariqul@example.com,+880 1711-223344,Special Chicken Roast,1,Confirmed`,
-      `3,Dr. Nusrat Jahan,2004,nusrat@example.com,+880 1912-334455,Vegetarian,3,Confirmed`,
-      `4,Kamrul Hasan,2012,kamrul@example.com,+880 1610-887766,Traditional Mezban Beef,1,Confirmed`,
-      `5,Rezaul Karim,1988,rezaul@example.com,+880 1715-998877,Traditional Mezban Beef,4,Confirmed`,
-    ].join("\n");
-
-    const blob = new Blob([csvHeader + sampleRows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+  // Export the real registration roster as CSV
+  const handleExportCSV = async (event: PublicEvent) => {
+    const res = await fetch(`/api/admin/events/${event.id}`, { cache: "no-store" });
+    const body = await res.json();
+    if (!res.ok) return showToast(body.error || "Could not export registrations.");
+    const rows = (body.registrations as AdminRegistration[]).map((a) =>
+      [a.name, a.batch ?? "", a.email, a.phone, a.packageName ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const csv = "Name,Batch,Email,Phone,Package,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status\n" + rows.join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${event.title.replace(/[^a-z0-9]/gi, "_")}_RSVPs.csv`);
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = `${event.title.replace(/[^a-z0-9]/gi, "_")}_RSVPs.csv`;
     link.click();
-    document.body.removeChild(link);
-
-    showToast(`Exported RSVP roster for "${event.title}"`);
+    URL.revokeObjectURL(url);
+    showToast(`Exported registrations for "${event.title}"`);
   };
 
   // Filter events
@@ -202,6 +203,7 @@ export default function AdminEventsPage() {
 
   // Calculate High Level Metrics
   const totalRSVPs = events.reduce((sum, e) => sum + (e.attendeesCount || 0), 0);
+  const milestone = events.find((e) => e.isMegaEvent);
   const totalCapacity = events.reduce((sum, e) => sum + (e.maxAttendees || 0), 0);
 
   return (
@@ -257,8 +259,10 @@ export default function AdminEventsPage() {
           <span className="text-[10px] uppercase font-bold text-amber-900 block flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-amber-700" /> Milestone
           </span>
-          <strong className="text-base font-black text-slate-950 block my-0.5 line-clamp-1">50-Yr Golden Jubilee</strong>
-          <span className="text-[11px] text-amber-800 font-semibold">Dec 30, 2026 • 2,340 RSVPs</span>
+          <strong className="text-base font-black text-slate-950 block my-0.5 line-clamp-1">{milestone?.title ?? "No milestone event"}</strong>
+          <span className="text-[11px] text-amber-800 font-semibold">
+            {milestone ? `${milestone.date} • ${milestone.attendeesCount} RSVPs` : "Mark an event as a landmark"}
+          </span>
         </div>
       </div>
 
@@ -381,7 +385,7 @@ export default function AdminEventsPage() {
                 </Link>
 
                 <Link
-                  href={`/events/${e.id}`}
+                  href={`/events/${e.slug}`}
                   target="_blank"
                   className="p-2 text-slate-500 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors border border-slate-200 hover:border-emerald-300"
                   title="View Public Page"
@@ -550,18 +554,18 @@ export default function AdminEventsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Registration Fee Policy</label>
+                  <label className="font-bold text-slate-700">Registration Fee (৳, 0 = free)</label>
                   <input
-                    type="text"
+                    type="number"
+                    min={0}
                     value={formData.registrationFee}
-                    onChange={(e) => setFormData({ ...formData, registrationFee: e.target.value })}
-                    placeholder="e.g. ৳1,000 / Person (৳500 each extra, ৳300 below 12yr)"
+                    onChange={(e) => setFormData({ ...formData, registrationFee: Number(e.target.value) || 0 })}
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium text-emerald-900"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700">Max Capacity</label>
                   <input
@@ -574,23 +578,11 @@ export default function AdminEventsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Current RSVPs</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.attendeesCount}
-                    onChange={(e) => setFormData({ ...formData, attendeesCount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                  />
-                </div>
-
-                <div className="space-y-1">
                   <label className="font-bold text-slate-700">Registration Deadline</label>
                   <input
-                    type="text"
+                    type="date"
                     value={formData.registrationDeadline}
                     onChange={(e) => setFormData({ ...formData, registrationDeadline: e.target.value })}
-                    placeholder="e.g. December 15, 2026"
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   />
                 </div>

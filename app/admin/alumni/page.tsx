@@ -149,7 +149,9 @@ export default function AdminAlumniPage() {
                     </span>
                   </td>
                   <td className="py-4 px-6 text-right">
-                    {r.status === "PENDING" ? (
+                    {r.status === "PENDING" && r.awaitingPayment ? (
+                      <span className="text-[11px] font-semibold text-amber-700">Awaiting payment confirmation — approve from the Jubilee attendee list</span>
+                    ) : r.status === "PENDING" ? (
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleApprove(r.id)}

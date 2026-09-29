@@ -3,23 +3,8 @@
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  EventItem,
-  sampleEvents,
-} from "@/lib/data";
-import {
-  getStoredEvents,
-  getStoredEventById,
-  saveStoredEvent,
-  deleteStoredEvent,
-  getStoredAttendees,
-  saveStoredAttendee,
-  updateAttendeeStatus,
-  deleteStoredAttendee,
-  EventAttendee,
-  EventPackage,
-  AgendaItem,
-} from "@/lib/events-service";
+import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
+import { formatTaka } from "@/lib/events/pricing";
 import {
   Calendar,
   Clock,
@@ -63,63 +48,39 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
     "overview" | "schedule" | "pricing" | "agenda" | "souvenirs" | "attendees"
   >("overview");
 
-  const [event, setEvent] = useState<EventItem | null>(null);
-  const [attendees, setAttendees] = useState<EventAttendee[]>([]);
+  const [event, setEvent] = useState<PublicEvent | null>(null);
+  const [attendees, setAttendees] = useState<AdminRegistration[]>([]);
+  const [totals, setTotals] = useState({ confirmedRevenue: 0, pendingRevenue: 0, confirmedDonations: 0, headCount: 0 });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Attendees Search & Filters
   const [attendeeSearch, setAttendeeSearch] = useState("");
   const [attendeeStatusFilter, setAttendeeStatusFilter] = useState("ALL");
-  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  // New package modal state
-  const [newPkg, setNewPkg] = useState<EventPackage>({
-    name: "",
-    price: "৳1,000",
-    description: "",
-    includes: ["Festival Access Pass", "Souvenir Delegate Kit", "Banquet Feast Pass"],
-    isPopular: false,
+  const [newPkg, setNewPkg] = useState<PublicPackage>({
+    name: "", price: "৳1,000", priceAmount: 1000, description: "", includes: [], isPopular: false, adults: 1, children: 0, guestsFree: false,
   });
   const [isAddingPackage, setIsAddingPackage] = useState(false);
-
-  // New agenda slot state
-  const [newAgenda, setNewAgenda] = useState<AgendaItem>({
-    time: "Day 1 - 09:00 AM",
-    activity: "",
-  });
+  const [newAgenda, setNewAgenda] = useState<AgendaEntry>({ time: "Day 1 - 09:00 AM", activity: "" });
   const [isAddingAgenda, setIsAddingAgenda] = useState(false);
-
-  // Manual attendee registration form state
-  const [manualAttendee, setManualAttendee] = useState({
-    name: "",
-    batch: "2010",
-    email: "",
-    phone: "",
-    packageName: "General Alumnus Delegate",
-    extraAdults: 0,
-    childrenBelow12: 0,
-    tshirtSize: "L" as const,
-    mealChoice: "Traditional Mezban Beef" as const,
-    paymentMethod: "Secretariat Cash" as const,
-    trxId: `CASH-${Date.now().toString().slice(-5)}`,
-  });
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const load = async () => {
+    const res = await fetch(`/api/admin/events/${resolvedParams.id}`, { cache: "no-store" });
+    const body = await res.json();
+    if (res.status === 404) return router.push("/admin/events");
+    if (!res.ok) return showToast(body.error || "Could not load the event.");
+    setEvent(body.event);
+    setAttendees(body.registrations);
+    setTotals(body.totals);
   };
 
   useEffect(() => {
-    const loadedEvent = getStoredEventById(resolvedParams.id) || sampleEvents.find(e => e.id === resolvedParams.id);
-    if (loadedEvent) {
-      setEvent(loadedEvent);
-      setAttendees(getStoredAttendees(loadedEvent.id));
-    } else {
-      setEvent(sampleEvents[0]);
-      setAttendees(getStoredAttendees(sampleEvents[0].id));
-    }
+    load(); // eslint-disable-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedParams.id]);
 
   if (!event) {
@@ -131,151 +92,87 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
     );
   }
 
-  // Save full event changes
-  const handleSaveAll = () => {
-    if (!event) return;
-    saveStoredEvent(event);
-    showToast(`All updates for "${event.title}" saved successfully!`);
+  /** Saves the given fields (or the whole editable event) through the API. */
+  const save = async (changes: Partial<PublicEvent> & Record<string, unknown>, message: string) => {
+    const merged = { ...event, ...changes };
+    const res = await fetch(`/api/admin/events/${event.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: merged.title, subtitle: merged.subtitle, category: merged.category, date: merged.date, time: merged.time,
+        venue: merged.venue, locationCity: merged.locationCity, organizer: merged.organizer, bannerImage: merged.bannerImage,
+        description: merged.description, maxAttendees: merged.maxAttendees, isRegistrationOpen: merged.isRegistrationOpen,
+        registrationDeadline: merged.registrationDeadline || null, guestOfHonor: merged.guestOfHonor, souvenirDetails: merged.souvenirDetails,
+        isMegaEvent: merged.isMegaEvent, isMembershipEvent: merged.isMembershipEvent, registrationFee: merged.registrationFeeAmount,
+        extraAdultFee: merged.extraAdultFee, childFee: merged.childFee, paymentInstructions: merged.paymentInstructions,
+        highlights: merged.highlights, agenda: merged.agenda,
+        packages: merged.packages.map((p) => ({ ...p, price: p.priceAmount })),
+      }),
+    });
+    const body = await res.json();
+    if (!res.ok) return showToast(body.error || "Could not save.");
+    setEvent(body.event);
+    showToast(message);
   };
 
-  // Add Package
+  const handleSaveAll = () => save({}, `All updates for "${event.title}" saved.`);
+
   const handleAddPackage = () => {
     if (!newPkg.name.trim()) return;
-    const updatedPackages = [...(event.packages || []), newPkg];
-    const updatedEvent = { ...event, packages: updatedPackages };
-    setEvent(updatedEvent);
-    saveStoredEvent(updatedEvent);
+    const priceAmount = Number(String(newPkg.price).replace(/[^\d.]/g, "")) || 0;
+    save({ packages: [...event.packages, { ...newPkg, priceAmount, price: formatTaka(priceAmount) }] }, `Package "${newPkg.name}" added.`);
     setIsAddingPackage(false);
-    setNewPkg({
-      name: "",
-      price: "৳1,000",
-      description: "",
-      includes: ["Festival Access Pass", "Souvenir Delegate Kit", "Banquet Feast Pass"],
-      isPopular: false,
-    });
-    showToast(`Package "${newPkg.name}" added!`);
+    setNewPkg({ name: "", price: "৳1,000", priceAmount: 1000, description: "", includes: [], isPopular: false, adults: 1, children: 0, guestsFree: false });
   };
 
-  // Delete Package
-  const handleDeletePackage = (pkgName: string) => {
-    const updatedPackages = (event.packages || []).filter((p) => p.name !== pkgName);
-    const updatedEvent = { ...event, packages: updatedPackages };
-    setEvent(updatedEvent);
-    saveStoredEvent(updatedEvent);
-    showToast(`Package "${pkgName}" removed.`);
-  };
+  const handleDeletePackage = (pkgName: string) =>
+    save({ packages: event.packages.filter((p) => p.name !== pkgName) }, `Package "${pkgName}" removed.`);
 
-  // Add Agenda Item
   const handleAddAgenda = () => {
     if (!newAgenda.activity.trim()) return;
-    const updatedAgenda = [...(event.agenda || []), newAgenda];
-    const updatedEvent = { ...event, agenda: updatedAgenda };
-    setEvent(updatedEvent);
-    saveStoredEvent(updatedEvent);
+    save({ agenda: [...(event.agenda ?? []), newAgenda] }, "Agenda session added.");
     setIsAddingAgenda(false);
     setNewAgenda({ time: "Day 1 - 09:00 AM", activity: "" });
-    showToast("New agenda session added!");
   };
 
-  // Delete Agenda Item
-  const handleDeleteAgenda = (idx: number) => {
-    const updatedAgenda = (event.agenda || []).filter((_, i) => i !== idx);
-    const updatedEvent = { ...event, agenda: updatedAgenda };
-    setEvent(updatedEvent);
-    saveStoredEvent(updatedEvent);
-    showToast("Agenda session removed.");
+  const handleDeleteAgenda = (idx: number) =>
+    save({ agenda: (event.agenda ?? []).filter((_, i) => i !== idx) }, "Agenda session removed.");
+
+  const decide = async (a: AdminRegistration, action: "APPROVE" | "CANCEL" | "CHECK_IN" | "UNDO_CHECK_IN") => {
+    setBusyId(a.id);
+    const res = await fetch(`/api/admin/events/${event.id}/registrations/${a.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    const body = await res.json();
+    setBusyId(null);
+    if (!res.ok) return showToast(body.error || "Could not update the registration.");
+    showToast(`${a.name}: ${body.registration.status.replace("_", " ").toLowerCase()}`);
+    load();
   };
 
-  // Check in attendee
-  const handleToggleCheckIn = (attendee: EventAttendee) => {
-    const newStatus = attendee.status === "CHECKED_IN" ? "CONFIRMED" : "CHECKED_IN";
-    const updated = updateAttendeeStatus(attendee.id, newStatus);
-    setAttendees(updated.filter((a) => a.eventId === event.id));
-    showToast(`${attendee.name} marked as ${newStatus === "CHECKED_IN" ? "Checked In ✓" : "Confirmed"}`);
-  };
-
-  // Manual attendee registration submit
-  const handleManualAttendeeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const fee =
-      1000 +
-      Number(manualAttendee.extraAdults) * 500 +
-      Number(manualAttendee.childrenBelow12) * 300;
-
-    const newRecord: EventAttendee = {
-      id: `att-${Date.now().toString().slice(-6)}`,
-      eventId: event.id,
-      name: manualAttendee.name,
-      batch: manualAttendee.batch,
-      email: manualAttendee.email || "secretariat.desk@example.com",
-      phone: manualAttendee.phone,
-      packageName: manualAttendee.packageName,
-      extraAdults: Number(manualAttendee.extraAdults),
-      childrenBelow12: Number(manualAttendee.childrenBelow12),
-      totalFee: fee,
-      tshirtSize: manualAttendee.tshirtSize,
-      mealChoice: manualAttendee.mealChoice,
-      paymentMethod: manualAttendee.paymentMethod,
-      trxId: manualAttendee.trxId,
-      status: "CONFIRMED",
-      registeredAt: new Date().toISOString().replace("T", " ").slice(0, 16),
-    };
-
-    const updated = saveStoredAttendee(newRecord);
-    setAttendees(updated.filter((a) => a.eventId === event.id));
-
-    // Update event attendee count
-    const updatedEvent = { ...event, attendeesCount: (event.attendeesCount || 0) + 1 };
-    setEvent(updatedEvent);
-    saveStoredEvent(updatedEvent);
-
-    setIsManualModalOpen(false);
-    showToast(`Attendee ${manualAttendee.name} registered successfully!`);
-  };
-
-  // Export Attendees CSV
   const handleExportCSV = () => {
-    const header = "Ticket_ID,Name,Batch,Email,Phone,Package,Extra_Adults,Children,Total_Fee_BDT,TShirt,Meal_Choice,Payment_Method,Trx_ID,Status,Registered_At\n";
+    const header = "Name,Batch,Roll,Section,Email,Phone,Package,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
     const rows = attendees
-      .map(
-        (a) =>
-          `"${a.id}","${a.name}","${a.batch}","${a.email}","${a.phone}","${a.packageName}",${a.extraAdults},${a.childrenBelow12},${a.totalFee},"${a.tshirtSize}","${a.mealChoice}","${a.paymentMethod}","${a.trxId || "N/A"}","${a.status}","${a.registeredAt}"`
-      )
+      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.email, a.phone, a.packageName ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","))
       .join("\n");
-
-    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(new Blob([header + rows], { type: "text/csv;charset=utf-8;" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${event.title.replace(/[^a-z0-9]/gi, "_")}_Complete_Roster.csv`;
-    document.body.appendChild(link);
+    link.download = `${event.title.replace(/[^a-z0-9]/gi, "_")}_Registrations.csv`;
     link.click();
-    document.body.removeChild(link);
-    showToast("Exported complete attendee roster to CSV!");
+    URL.revokeObjectURL(url);
   };
 
-  // Filter attendees
   const filteredAttendees = attendees.filter((a) => {
     if (attendeeStatusFilter !== "ALL" && a.status !== attendeeStatusFilter) return false;
-    if (attendeeSearch.trim()) {
-      const q = attendeeSearch.toLowerCase();
-      return (
-        a.name.toLowerCase().includes(q) ||
-        a.batch.toLowerCase().includes(q) ||
-        a.phone.toLowerCase().includes(q) ||
-        a.email.toLowerCase().includes(q) ||
-        (a.trxId && a.trxId.toLowerCase().includes(q))
-      );
-    }
-    return true;
+    const q = attendeeSearch.trim().toLowerCase();
+    return !q || [a.name, a.email, a.phone, String(a.batch ?? ""), a.transactionId ?? ""].some((v) => v.toLowerCase().includes(q));
   });
-
-  // Calculate Attendance KPIs
-  const totalRevenue = attendees.reduce((sum, a) => sum + (a.totalFee || 0), 0);
   const checkedInCount = attendees.filter((a) => a.status === "CHECKED_IN").length;
-  const beefCount = attendees.filter((a) => a.mealChoice?.includes("Beef")).length;
-  const chickenCount = attendees.filter((a) => a.mealChoice?.includes("Chicken")).length;
-  const vegCount = attendees.filter((a) => a.mealChoice?.includes("Vegetarian")).length;
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -319,7 +216,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
         {/* Global Header Actions */}
         <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
           <Link
-            href={`/events/${event.id}`}
+            href={`/events/${event.slug}`}
             target="_blank"
             className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition-colors"
             title="Open Live Public Event Page"
@@ -353,7 +250,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
           return (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                 isActive
                   ? "bg-[#06281e] text-amber-300 shadow-md border border-emerald-700"
@@ -404,7 +301,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
               <label className="font-bold text-slate-700">Category</label>
               <select
                 value={event.category}
-                onChange={(e) => setEvent({ ...event, category: e.target.value as any })}
+                onChange={(e) => setEvent({ ...event, category: e.target.value as PublicEvent["category"] })}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               >
                 <option value="REUNION">REUNION</option>
@@ -564,10 +461,9 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
             <div className="space-y-1">
               <label className="font-bold text-slate-700">Registration Deadline</label>
               <input
-                type="text"
-                value={event.registrationDeadline || ""}
+                type="date"
+                value={event.registrationDeadline ? event.registrationDeadline.slice(0, 10) : ""}
                 onChange={(e) => setEvent({ ...event, registrationDeadline: e.target.value })}
-                placeholder="e.g. December 15, 2026"
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
             </div>
@@ -594,19 +490,42 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
             </button>
           </div>
 
-          {/* Quick Rate Card Policy input */}
           <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2 text-xs">
-            <span className="font-bold text-emerald-950 block">Registration Fee Summary String</span>
-            <input
-              type="text"
-              value={event.registrationFee || ""}
-              onChange={(e) => setEvent({ ...event, registrationFee: e.target.value })}
-              placeholder="e.g. ৳1,000 / Person (৳500 each extra adult, ৳300 below 12 yrs)"
-              className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl font-bold text-emerald-900 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-            />
-            <p className="text-[11px] text-emerald-700">
-              This summary is displayed prominently on banners, event cards, and ticket receipts.
-            </p>
+            <label className="font-bold text-emerald-950 block">
+              Registration fee per person, in ৳ (0 = free)
+              <input
+                type="number"
+                min={0}
+                value={event.registrationFeeAmount}
+                onChange={(e) => setEvent({ ...event, registrationFeeAmount: Number(e.target.value) || 0 })}
+                className="mt-1 w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl font-bold text-emerald-900 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+              />
+            </label>
+            <p className="text-[11px] text-emerald-700">Used when the event has no packages; the public fee text is generated from it.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <label className="font-bold text-slate-700">
+              Extra adult fee (৳)
+              <input type="number" min={0} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl" value={event.extraAdultFee}
+                onChange={(e) => setEvent({ ...event, extraAdultFee: Number(e.target.value) || 0 })} />
+            </label>
+            <label className="font-bold text-slate-700">
+              Child fee, under 12 (৳)
+              <input type="number" min={0} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl" value={event.childFee}
+                onChange={(e) => setEvent({ ...event, childFee: Number(e.target.value) || 0 })} />
+            </label>
+            <label className="font-bold text-slate-700 flex items-center gap-2 sm:mt-5">
+              <input type="checkbox" checked={event.isMembershipEvent}
+                onChange={(e) => setEvent({ ...event, isMembershipEvent: e.target.checked })} />
+              Membership event (joining = this registration)
+            </label>
+            <label className="sm:col-span-3 font-bold text-slate-700">
+              Payment instructions (shown to registrants; required for paid events)
+              <textarea rows={2} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-normal"
+                placeholder="Send to bKash 01XXXXXXXXX (Merchant), then enter your TrxID"
+                value={event.paymentInstructions ?? ""} onChange={(e) => setEvent({ ...event, paymentInstructions: e.target.value })} />
+            </label>
           </div>
 
           {/* Package Cards Grid */}
@@ -639,6 +558,9 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
                   </div>
 
                   <p className="text-xs text-slate-600 leading-relaxed">{pkg.description}</p>
+                  <p className="text-[11px] font-bold text-slate-500">
+                    {pkg.adults} adult{pkg.adults === 1 ? "" : "s"}{pkg.children > 0 ? ` + ${pkg.children} child${pkg.children === 1 ? "" : "ren"}` : ""}{pkg.guestsFree ? " · extra guests free" : ""}
+                  </p>
 
                   <div className="pt-2 border-t border-slate-200">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -691,6 +613,20 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
                     placeholder="e.g. ৳5,000"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-white"
                   />
+                </div>
+                <div className="grid grid-cols-3 gap-2 sm:col-span-2">
+                  <label className="font-bold text-slate-700">Adults incl.
+                    <input type="number" min={1} className="w-full px-3 py-2 border border-slate-300 rounded-xl" value={newPkg.adults}
+                      onChange={(e) => setNewPkg({ ...newPkg, adults: Math.max(1, Number(e.target.value) || 1) })} />
+                  </label>
+                  <label className="font-bold text-slate-700">Children incl.
+                    <input type="number" min={0} className="w-full px-3 py-2 border border-slate-300 rounded-xl" value={newPkg.children}
+                      onChange={(e) => setNewPkg({ ...newPkg, children: Math.max(0, Number(e.target.value) || 0) })} />
+                  </label>
+                  <label className="font-bold text-slate-700 flex items-center gap-1 mt-5">
+                    <input type="checkbox" checked={newPkg.guestsFree} onChange={(e) => setNewPkg({ ...newPkg, guestsFree: e.target.checked })} />
+                    Extra guests free
+                  </label>
                 </div>
               </div>
 
@@ -898,18 +834,11 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
             <div>
               <h3 className="text-base font-bold text-slate-900">Registered Delegates &amp; Door Check-In Roster</h3>
               <p className="text-xs text-slate-500">
-                Track real-time registrations, mark door attendance, inspect banquet meal counts, and add offline delegates.
+                Approve payments, mark door attendance and export the roster. Every registration belongs to a member account.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-              <button
-                onClick={() => setIsManualModalOpen(true)}
-                className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Register Attendee Manually
-              </button>
-
               <button
                 onClick={handleExportCSV}
                 className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200"
@@ -922,37 +851,29 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
           {/* Real-time KPI Metric Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Registered</span>
-              <strong className="text-xl font-black text-slate-900 block my-1">
-                {attendees.length} Delegates
-              </strong>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Head count</span>
+              <strong className="text-xl font-black text-slate-900 block my-1">{totals.headCount} people</strong>
               <span className="text-[11px] text-slate-500">Capacity: {event.maxAttendees}</span>
             </div>
 
             <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
-              <span className="text-[10px] uppercase font-bold text-emerald-700 block">Revenue Collected</span>
-              <strong className="text-xl font-black text-emerald-900 block my-1">
-                ৳{totalRevenue.toLocaleString()}
-              </strong>
-              <span className="text-[11px] text-emerald-700">From fees &amp; sponsors</span>
-            </div>
-
-            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
-              <span className="text-[10px] uppercase font-bold text-amber-800 block">Door Checked-In</span>
-              <strong className="text-xl font-black text-amber-900 block my-1">
-                {checkedInCount} / {attendees.length}
-              </strong>
-              <span className="text-[11px] text-amber-700">
-                {attendees.length > 0 ? Math.round((checkedInCount / attendees.length) * 100) : 0}% gate attendance
-              </span>
+              <span className="text-[10px] uppercase font-bold text-emerald-700 block">Confirmed revenue</span>
+              <strong className="text-xl font-black text-emerald-900 block my-1">{formatTaka(totals.confirmedRevenue)}</strong>
+              <span className="text-[11px] text-emerald-700">incl. {formatTaka(totals.confirmedDonations)} donations</span>
             </div>
 
             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200">
-              <span className="text-[10px] uppercase font-bold text-blue-800 block">Mezban Meal Counts</span>
-              <div className="text-[11px] text-slate-700 space-y-0.5 mt-1">
-                <span className="block font-bold">Beef: {beefCount}</span>
-                <span className="block">Chicken: {chickenCount} | Veg: {vegCount}</span>
-              </div>
+              <span className="text-[10px] uppercase font-bold text-blue-800 block">Pending payment</span>
+              <strong className="text-xl font-black text-blue-900 block my-1">{formatTaka(totals.pendingRevenue)}</strong>
+              <span className="text-[11px] text-blue-700">awaiting approval</span>
+            </div>
+
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
+              <span className="text-[10px] uppercase font-bold text-amber-800 block">Door checked-in</span>
+              <strong className="text-xl font-black text-amber-900 block my-1">{checkedInCount} / {attendees.length}</strong>
+              <span className="text-[11px] text-amber-700">
+                {attendees.length > 0 ? Math.round((checkedInCount / attendees.length) * 100) : 0}% gate attendance
+              </span>
             </div>
           </div>
 
@@ -970,7 +891,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
             </div>
 
             <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-              {["ALL", "CONFIRMED", "CHECKED_IN", "PENDING"].map((status) => (
+              {["ALL", "PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN", "CANCELLED"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setAttendeeStatusFilter(status)}
@@ -980,7 +901,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  {status}
+                  {status.replace("_", " ")}
                 </button>
               ))}
             </div>
@@ -991,243 +912,60 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                 <tr>
-                  <th className="p-3.5">Delegate Name &amp; Contact</th>
-                  <th className="p-3.5">Batch</th>
-                  <th className="p-3.5">Package &amp; Guests</th>
-                  <th className="p-3.5">Polo / Meal</th>
+                  <th className="p-3.5">Attendee</th>
+                  <th className="p-3.5">Batch &amp; membership</th>
+                  <th className="p-3.5">Package</th>
                   <th className="p-3.5">Payment</th>
-                  <th className="p-3.5">Gate Status</th>
+                  <th className="p-3.5">Status</th>
                   <th className="p-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredAttendees.length === 0 ? (
+              <tbody>
+                {filteredAttendees.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400">
-                      No attendees found matching filter.
+                    <td colSpan={6} className="p-8 text-center text-slate-400">No attendees found matching filter.</td>
+                  </tr>
+                )}
+                {filteredAttendees.map((a) => (
+                  <tr key={a.id} className="border-t border-slate-100 text-xs">
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-slate-900">{a.name}</div>
+                      <div className="text-slate-500">{a.email} · {a.phone}</div>
+                    </td>
+                    <td className="py-3 px-3">
+                      SSC {a.batch ?? "—"}{a.rollNumber ? ` · Roll ${a.rollNumber}` : ""}{a.section ? ` · ${a.section}` : ""}
+                      <div className={a.membershipStatus === "VERIFIED" ? "text-emerald-700" : a.membershipStatus === "REJECTED" ? "text-rose-700" : "text-amber-700"}>
+                        Membership: {a.membershipStatus.toLowerCase()}
+                      </div>
+                    </td>
+                    <td className="py-3 px-3">{a.packageName ?? "—"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}</td>
+                    <td className="py-3 px-3">
+                      {formatTaka(a.totalFee)}{a.donationAmount > 0 && <> + {formatTaka(a.donationAmount)} donation</>}
+                      <div className="text-slate-500 font-mono">{a.paymentMethod ?? "—"} {a.transactionId ?? ""}</div>
+                    </td>
+                    <td className="py-3 px-3 font-bold">{a.status.replace("_", " ")}</td>
+                    <td className="py-3 px-3 text-right space-x-1 whitespace-nowrap">
+                      {a.status === "PENDING_PAYMENT" && (
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "APPROVE")} className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white font-bold disabled:opacity-50">
+                          {event.isMembershipEvent ? "Approve (payment + membership)" : "Confirm payment"}
+                        </button>
+                      )}
+                      {a.status === "CONFIRMED" && (
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "CHECK_IN")} className="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold disabled:opacity-50">Check in</button>
+                      )}
+                      {a.status === "CHECKED_IN" && (
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "UNDO_CHECK_IN")} className="px-2.5 py-1 rounded-lg bg-slate-100 font-bold disabled:opacity-50">Undo check-in</button>
+                      )}
+                      {(a.status === "PENDING_PAYMENT" || a.status === "CONFIRMED") && (
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "CANCEL")} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold disabled:opacity-50">
+                          {a.status === "PENDING_PAYMENT" && event.isMembershipEvent ? "Reject" : "Cancel"}
+                        </button>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  filteredAttendees.map((att) => (
-                    <tr key={att.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="p-3.5">
-                        <strong className="text-slate-900 font-bold block">{att.name}</strong>
-                        <span className="text-[11px] text-slate-500 block">{att.phone}</span>
-                        <span className="text-[10px] text-slate-400 block">{att.email}</span>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="font-extrabold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md text-xs">
-                          {att.batch}
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="font-semibold text-slate-800 block">{att.packageName}</span>
-                        <span className="text-[11px] text-slate-500">
-                          {att.extraAdults > 0 && `+${att.extraAdults} Adult `}
-                          {att.childrenBelow12 > 0 && `+${att.childrenBelow12} Child`}
-                          {att.extraAdults === 0 && att.childrenBelow12 === 0 && "Individual Alumnus"}
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="font-bold text-slate-700 block">Size {att.tshirtSize}</span>
-                        <span className="text-[11px] text-emerald-800">{att.mealChoice}</span>
-                      </td>
-                      <td className="p-3.5">
-                        <strong className="text-emerald-900 font-black block">৳{att.totalFee}</strong>
-                        <span className="text-[10px] text-slate-500 block">
-                          {att.paymentMethod} • {att.trxId || "Direct"}
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                            att.status === "CHECKED_IN"
-                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                              : "bg-blue-50 text-blue-700 border border-blue-200"
-                          }`}
-                        >
-                          {att.status === "CHECKED_IN" ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                              <span>Checked In</span>
-                            </>
-                          ) : (
-                            <span>Confirmed</span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-right space-x-1.5">
-                        <button
-                          onClick={() => handleToggleCheckIn(att)}
-                          className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer ${
-                            att.status === "CHECKED_IN"
-                              ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                              : "bg-emerald-800 hover:bg-emerald-700 text-white shadow-xs"
-                          }`}
-                        >
-                          {att.status === "CHECKED_IN" ? "Undo Check-In" : "Door Check-In"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Manual Registration Modal */}
-      {isManualModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
-            <div className="bg-gradient-to-r from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-5 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider block">
-                  Secretariat &amp; Offline Desk
-                </span>
-                <h3 className="text-base font-bold">Register Walk-in Attendee Manually</h3>
-              </div>
-              <button
-                onClick={() => setIsManualModalOpen(false)}
-                className="text-white/70 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleManualAttendeeSubmit} className="p-6 space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualAttendee.name}
-                    onChange={(e) => setManualAttendee({ ...manualAttendee, name: e.target.value })}
-                    placeholder="e.g. Md. Shahidul Islam"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">SSC Batch Year *</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualAttendee.batch}
-                    onChange={(e) => setManualAttendee({ ...manualAttendee, batch: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Phone Number *</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualAttendee.phone}
-                    onChange={(e) => setManualAttendee({ ...manualAttendee, phone: e.target.value })}
-                    placeholder="+880 1819-..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={manualAttendee.email}
-                    onChange={(e) => setManualAttendee({ ...manualAttendee, email: e.target.value })}
-                    placeholder="optional@example.com"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Extra Adults (+৳500 each)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={manualAttendee.extraAdults}
-                    onChange={(e) =>
-                      setManualAttendee({ ...manualAttendee, extraAdults: Number(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Children &lt;12yr (+৳300 each)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={manualAttendee.childrenBelow12}
-                    onChange={(e) =>
-                      setManualAttendee({ ...manualAttendee, childrenBelow12: Number(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Polo T-Shirt Size</label>
-                  <select
-                    value={manualAttendee.tshirtSize}
-                    onChange={(e) =>
-                      setManualAttendee({ ...manualAttendee, tshirtSize: e.target.value as any })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  >
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Mezban Meal Choice</label>
-                  <select
-                    value={manualAttendee.mealChoice}
-                    onChange={(e) =>
-                      setManualAttendee({ ...manualAttendee, mealChoice: e.target.value as any })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl"
-                  >
-                    <option value="Traditional Mezban Beef">Traditional Mezban Beef</option>
-                    <option value="Special Chicken Roast">Special Chicken Roast</option>
-                    <option value="Vegetarian Delight">Vegetarian Delight</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
-                <span className="font-bold text-slate-700">Total Registration Fee:</span>
-                <span className="text-base font-black text-emerald-900">
-                  ৳{(1000 + manualAttendee.extraAdults * 500 + manualAttendee.childrenBelow12 * 300).toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t">
-                <button
-                  type="button"
-                  onClick={() => setIsManualModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md cursor-pointer"
-                >
-                  Confirm Registration
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
