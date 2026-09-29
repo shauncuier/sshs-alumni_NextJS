@@ -8,6 +8,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
+import MyEvents from "@/components/events/MyEvents";
 import {
   samplePosts,
   sampleAlumni,
@@ -228,6 +229,9 @@ export default function DashboardPage() {
 
             {/* Right 4 cols: Side widgets */}
             <div className="lg:col-span-4 space-y-6">
+              {/* My Events */}
+              <MyEvents />
+
               {/* Upcoming Event Widget */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">

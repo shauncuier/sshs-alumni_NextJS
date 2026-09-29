@@ -90,6 +90,7 @@ export interface MemberRegistration {
   eventTitle: string;
   eventDate: string;
   status: RegistrationStatusValue;
+  isMembershipEvent: boolean;
   packageName: string | null;
   headCount: number;
   totalFee: number;
