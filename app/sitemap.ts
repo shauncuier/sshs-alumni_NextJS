@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
-import { sampleBatches, sampleEvents, sampleStories } from "@/lib/data";
+import { sampleBatches, sampleStories } from "@/lib/data";
+import { listPublicEvents } from "@/lib/events/service";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ssghs-alumni.edu.bd";
   const now = new Date();
 
@@ -37,8 +38,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   // Dynamic Event pages
-  const eventPages = sampleEvents.map((e) => ({
-    url: `${baseUrl}/events/${e.id}`,
+  const eventPages = (await listPublicEvents().catch(() => [])).map((e) => ({
+    url: `${baseUrl}/events/${e.slug}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.7,

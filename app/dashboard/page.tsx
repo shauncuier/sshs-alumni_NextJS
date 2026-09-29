@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import AppSidebar from "@/components/layout/AppSidebar";
@@ -10,11 +10,11 @@ import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
 import {
   samplePosts,
-  sampleEvents,
   sampleAlumni,
   sampleBatches,
   sampleDonations,
-  PostItem
+  PostItem,
+  type EventItem
 } from "@/lib/data";
 import {
   Sparkles,
@@ -59,7 +59,13 @@ export default function DashboardPage() {
       : "Awaiting committee verification";
   const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
-  const upcomingEvent = sampleEvents[0];
+  const [upcomingEvent, setUpcomingEvent] = useState<EventItem | null>(null);
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    fetch("/api/events", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { events: [] }))
+      .then((body: { events: EventItem[] }) => setUpcomingEvent(body.events.find((e) => e.date >= today) ?? null));
+  }, []);
   const myBatch = sampleBatches.find((b) => b.year === userBatch) || {
     year: userBatch,
     name: `SSC Batch ${userBatch}`,
@@ -233,29 +239,33 @@ export default function DashboardPage() {
                   </Link>
                 </div>
 
-                <div className="rounded-xl overflow-hidden relative h-32 bg-slate-900">
-                  <img
-                    src={upcomingEvent.bannerImage}
-                    alt={upcomingEvent.title}
-                    className="w-full h-full object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                  <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white">
-                    <span className="text-[10px] font-bold text-amber-300 block">{upcomingEvent.date}</span>
-                    <h4 className="text-xs font-bold line-clamp-1">{upcomingEvent.title}</h4>
-                  </div>
-                </div>
+                {upcomingEvent && (
+                  <>
+                    <div className="rounded-xl overflow-hidden relative h-32 bg-slate-900">
+                      <img
+                        src={upcomingEvent.bannerImage}
+                        alt={upcomingEvent.title}
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                      <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white">
+                        <span className="text-[10px] font-bold text-amber-300 block">{upcomingEvent.date}</span>
+                        <h4 className="text-xs font-bold line-clamp-1">{upcomingEvent.title}</h4>
+                      </div>
+                    </div>
 
-                <p className="text-xs text-slate-600 line-clamp-2">
-                  {upcomingEvent.description}
-                </p>
+                    <p className="text-xs text-slate-600 line-clamp-2">
+                      {upcomingEvent.description}
+                    </p>
 
-                <Link
-                  href={`/events/${upcomingEvent.id}`}
-                  className="block text-center w-full py-2.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"
-                >
-                  View Details &amp; RSVP
-                </Link>
+                    <Link
+                      href={`/events/${upcomingEvent.slug}`}
+                      className="block text-center w-full py-2.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"
+                    >
+                      View Details &amp; RSVP
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* People You May Know */}

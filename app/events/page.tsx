@@ -5,24 +5,29 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
-import { sampleEvents, EventItem } from "@/lib/data";
-import { getStoredEvents } from "@/lib/events-service";
+import type { EventItem } from "@/lib/data";
 import { Calendar, Search, Filter, Loader2 } from "lucide-react";
 
 export default function EventsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [search, setSearch] = useState("");
-  const [events, setEvents] = useState<EventItem[]>(sampleEvents);
-  const [loading, setLoading] = useState(false);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = getStoredEvents();
-    if (stored && stored.length > 0) {
-      setEvents(stored);
-    }
+    fetch("/api/events", { cache: "no-store" })
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || "Events are unavailable right now.");
+        setEvents(body.events);
+      })
+      .catch((err: Error) => setLoadError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const categories = ["all", "REUNION", "SPORTS", "WEBINAR", "COMMUNITY"];
+  const jubileeEvent = events.find((e) => e.isMegaEvent);
 
   const filteredEvents = events.filter((e) => {
     if (selectedCategory !== "all" && e.category !== selectedCategory) return false;
@@ -147,7 +152,7 @@ export default function EventsPage() {
 
                   <div className="pt-3 flex flex-col sm:flex-row items-center gap-3">
                     <Link
-                      href="/events/evt-golden-jubilee-50"
+                      href={jubileeEvent ? `/events/${jubileeEvent.slug}` : "/events"}
                       className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                     >
                       <span>Explore 50-Year Mega Event &amp; Register</span>
@@ -171,6 +176,8 @@ export default function EventsPage() {
               {filteredEvents.length} events scheduled
             </span>
           </div>
+
+          {loadError && <p role="alert" className="text-xs text-rose-700">{loadError}</p>}
 
           {/* Events Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

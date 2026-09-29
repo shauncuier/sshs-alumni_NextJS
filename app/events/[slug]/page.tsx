@@ -6,8 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RSVPModal from "@/components/events/RSVPModal";
-import { sampleEvents, EventItem } from "@/lib/data";
-import { getStoredEventById } from "@/lib/events-service";
+import type { PublicEvent, MemberRegistration } from "@/lib/events/types";
 import {
   Calendar,
   Clock,
@@ -30,44 +29,51 @@ import {
   ChevronRight,
   Gift,
   Flame,
-  Radio,
-  Ticket
+  Radio
 } from "lucide-react";
 
 interface EventDetailPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
-// Resolves the event, then renders it. Events created in the admin console live in
-// this browser's storage, so an id that is not a sample event is only "missing"
-// (a 404) once storage has been checked.
 export default function EventDetailPage({ params }: EventDetailPageProps) {
-  const { id } = use(params);
-  const [event, setEvent] = useState<EventItem | undefined>(() => sampleEvents.find((e) => e.id === id));
-  const [storageChecked, setStorageChecked] = useState(false);
+  const { slug } = use(params);
+  const [event, setEvent] = useState<PublicEvent | null>(null);
+  const [registration, setRegistration] = useState<MemberRegistration | null>(null);
+  const [missing, setMissing] = useState(false);
 
   useEffect(() => {
-    const stored = getStoredEventById(id);
-    if (stored) {
-      setEvent(stored);
-    }
-    setStorageChecked(true);
-  }, [id]);
+    fetch(`/api/events/${slug}`, { cache: "no-store" }).then(async (res) => {
+      if (res.status === 404) return setMissing(true);
+      setEvent((await res.json()).event);
+    });
+    fetch(`/api/events/${slug}/rsvp`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { registration: null }))
+      .then((body) => setRegistration(body.registration));
+  }, [slug]);
 
+  if (missing) notFound();
   if (!event) {
-    if (storageChecked) notFound();
     return (
       <div role="status" className="min-h-screen flex items-center justify-center text-xs text-slate-500">
         Loading event…
       </div>
     );
   }
-  return <EventDetailView event={event} />;
+  return <EventDetailView event={event} registration={registration} onRegistered={setRegistration} />;
 }
 
-function EventDetailView({ event }: { event: EventItem }) {
+function EventDetailView({
+  event,
+  registration,
+  onRegistered,
+}: {
+  event: PublicEvent;
+  registration: MemberRegistration | null;
+  onRegistered: (r: MemberRegistration) => void;
+}) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
-  const [registered, setRegistered] = useState(false);
+  const registered = registration !== null;
   const [selectedPackage, setSelectedPackage] = useState<string | undefined>(undefined);
   const [activeDay, setActiveDay] = useState<number>(1);
 
@@ -108,7 +114,7 @@ function EventDetailView({ event }: { event: EventItem }) {
     setRsvpOpen(true);
   };
 
-  const isGoldenJubilee = event.isMegaEvent || event.id === "evt-golden-jubilee-50";
+  const isGoldenJubilee = event.isMegaEvent;
 
   // Filter agenda by days if Golden Jubilee
   const day1Agenda = event.agenda?.filter((a) => a.time.includes("Day 1")) || [];
@@ -585,37 +591,51 @@ function EventDetailView({ event }: { event: EventItem }) {
 
                 {/* Primary CTA */}
                 <div>
-                  <button
-                    onClick={() => handleOpenRsvpWithPackage()}
-                    className={`w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 ${
-                      registered
-                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                        : "bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white"
-                    }`}
-                  >
-                    {registered ? (
-                      <>
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        <span>Registration Confirmed!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 text-amber-300" />
-                        <span>Register for Golden Jubilee</span>
-                      </>
-                    )}
-                  </button>
+                  {!event.isRegistrationOpen && !registered ? (
+                    <p role="status" className="w-full py-4 rounded-2xl text-xs sm:text-sm font-bold text-center bg-rose-50 text-rose-700 border border-rose-200">
+                      {event.closedMessage}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => handleOpenRsvpWithPackage()}
+                      disabled={registered}
+                      className={`w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 ${
+                        registered
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-default"
+                          : "bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white"
+                      }`}
+                    >
+                      {registered ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                          <span>Registration Confirmed!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-amber-300" />
+                          <span>Register for Golden Jubilee</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                   <p className="text-[11px] text-slate-400 text-center mt-2">
                     Instant confirmation voucher • T-shirt size selection inside
                   </p>
 
-                  <Link
-                    href={`/events/${event.id}/ticket`}
-                    className="w-full mt-3 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Ticket className="w-4 h-4" />
-                    <span>Select Tiered Pass &amp; Kit Size</span>
-                  </Link>
+                  {registration && (
+                    <div className="mt-3 p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-xs space-y-2">
+                      <p className="font-bold text-emerald-900">
+                        {registration.status === "PENDING_PAYMENT"
+                          ? "Registered — payment and membership under review"
+                          : registration.status === "CANCELLED"
+                            ? "Your registration was cancelled"
+                            : "You're registered"}
+                      </p>
+                      {registration.ticket && (
+                        <img src={registration.ticket.qrDataUrl} alt="Event ticket QR code" className="w-40 h-40 bg-white rounded-xl border" />
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Metadata List */}
@@ -662,10 +682,10 @@ function EventDetailView({ event }: { event: EventItem }) {
       <RSVPModal
         event={event}
         isOpen={rsvpOpen}
-        initialPackage={selectedPackage}
         onClose={() => setRsvpOpen(false)}
-        onSuccess={() => {
-          setRegistered(true);
+        initialPackage={selectedPackage}
+        onRegistered={(r) => {
+          onRegistered(r);
           setRsvpOpen(false);
         }}
       />

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, X, User, Calendar, BookOpen, Layers, Newspaper, ArrowRight } from "lucide-react";
-import { sampleAlumni, sampleBatches, sampleEvents, sampleStories, sampleNews } from "@/lib/data";
+import { sampleAlumni, sampleBatches, sampleStories, sampleNews, type EventItem } from "@/lib/data";
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -12,6 +12,11 @@ interface GlobalSearchModalProps {
 
 export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const [query, setQuery] = useState("");
+  const [events, setEvents] = useState<EventItem[]>([]);
+  useEffect(() => {
+    if (!isOpen || events.length > 0) return;
+    fetch("/api/events").then((res) => (res.ok ? res.json() : { events: [] })).then((b) => setEvents(b.events));
+  }, [isOpen, events.length]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,7 +57,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
     : [];
 
   const filteredEvents = q
-    ? sampleEvents.filter(
+    ? events.filter(
         (e) =>
           e.title.toLowerCase().includes(q) ||
           e.venue.toLowerCase().includes(q) ||
@@ -203,7 +208,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                 {filteredEvents.slice(0, 3).map((evt) => (
                   <Link
                     key={evt.id}
-                    href={`/events/${evt.id}`}
+                    href={`/events/${evt.slug ?? evt.id}`}
                     onClick={onClose}
                     className="flex items-center justify-between p-2.5 rounded-xl hover:bg-emerald-50/80 transition-colors group"
                   >

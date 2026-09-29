@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Calendar, MapPin, Clock, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 import { EventItem } from "@/lib/data";
+import type { PublicEvent } from "@/lib/events/types";
 import RSVPModal from "./RSVPModal";
 
 interface EventCardProps {
@@ -46,6 +47,11 @@ export default function EventCard({ event }: EventCardProps) {
           <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-xs text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
             <Users className="w-3.5 h-3.5 text-emerald-400" />
             <span>{event.attendeesCount} / {event.maxAttendees} Attending</span>
+            {event.closedMessage ? (
+              <span className="text-[11px] font-bold text-rose-700">{event.closedMessage}</span>
+            ) : typeof event.placesLeft === "number" ? (
+              <span className="text-[11px] font-semibold text-emerald-700">{event.placesLeft} places left</span>
+            ) : null}
           </div>
         </div>
 
@@ -90,7 +96,7 @@ export default function EventCard({ event }: EventCardProps) {
               )}
             </button>
             <Link
-              href={`/events/${event.id}`}
+              href={`/events/${event.slug ?? event.id}`}
               className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
               title="View Event Details"
             >
@@ -101,10 +107,13 @@ export default function EventCard({ event }: EventCardProps) {
       </div>
 
       <RSVPModal
-        event={event}
+        // EventCard is always rendered from list/home pages backed by /api/events or
+        // listPublicEvents(), which return full PublicEvent objects; the card's own
+        // prop is typed as the looser EventItem so it can also be used with static data.
+        event={event as unknown as PublicEvent}
         isOpen={rsvpOpen}
         onClose={() => setRsvpOpen(false)}
-        onSuccess={() => {
+        onRegistered={() => {
           setIsRegistered(true);
           setRsvpOpen(false);
         }}

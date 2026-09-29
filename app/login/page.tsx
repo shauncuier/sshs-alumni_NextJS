@@ -162,7 +162,7 @@ function LoginForm() {
               className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-emerald-50 text-emerald-800 hover:text-emerald-900 border border-slate-200 hover:border-emerald-300 font-bold text-xs transition-colors"
             >
               <UserCheck className="w-3.5 h-3.5" />
-              <span>Apply for Alumni Membership (Register)</span>
+              <span>Join the Alumni Association (Register)</span>
             </Link>
           </div>
         </div>

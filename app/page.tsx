@@ -7,11 +7,11 @@ import AlumniCard from "@/components/alumni/AlumniCard";
 import BatchCard from "@/components/batches/BatchCard";
 import EventCard from "@/components/events/EventCard";
 import StoryCard from "@/components/stories/StoryCard";
+import { listPublicEvents } from "@/lib/events/service";
 import {
   schoolInfo,
   sampleBatches,
   sampleAlumni,
-  sampleEvents,
   sampleStories,
   sampleAchievements,
   sampleGallery,
@@ -35,10 +35,15 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
   const featuredAlumni = sampleAlumni.slice(0, 4);
   const featuredBatches = sampleBatches.slice(0, 3);
-  const upcomingEvents = sampleEvents.slice(0, 3);
+  const today = new Date().toISOString().slice(0, 10);
+  const allEvents = await listPublicEvents().catch(() => []);
+  const upcomingEvents = allEvents.filter((e) => e.date >= today).slice(0, 3);
+  const jubileeEvent = allEvents.find((e) => e.isMegaEvent);
   const featuredStories = sampleStories.slice(0, 2);
   const featuredDonation = sampleDonations[0];
   const galleryPreview = sampleGallery.slice(0, 4);
@@ -140,7 +145,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       <Link
-                        href="/events/evt-golden-jubilee-50"
+                        href={jubileeEvent ? `/events/${jubileeEvent.slug}` : "/events"}
                         className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition-colors shrink-0 shadow"
                       >
                         Register
