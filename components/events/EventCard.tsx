@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Calendar, MapPin, Clock, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 import { EventItem } from "@/lib/data";
-import type { PublicEvent } from "@/lib/events/types";
+import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 import RSVPModal from "./RSVPModal";
 
 interface EventCardProps {
@@ -13,7 +13,7 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [registration, setRegistration] = useState<MemberRegistration | null>(null);
 
   const eventDate = new Date(event.date);
   const day = eventDate.getDate();
@@ -79,22 +79,30 @@ export default function EventCard({ event }: EventCardProps) {
           </div>
 
           <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
-            <button
-              onClick={() => setRsvpOpen(true)}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm ${
-                isRegistered
-                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                  : "bg-emerald-800 hover:bg-emerald-700 text-white"
-              }`}
-            >
-              {isRegistered ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> RSVP Confirmed
-                </>
-              ) : (
+            {registration ? (
+              <div
+                role="status"
+                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border ${
+                  registration.status === "CANCELLED"
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                    : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                }`}
+              >
+                {registration.status !== "CANCELLED" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                {registration.status === "PENDING_PAYMENT"
+                  ? "Registered — under review"
+                  : registration.status === "CANCELLED"
+                    ? "Registration cancelled"
+                    : "Registered"}
+              </div>
+            ) : (
+              <button
+                onClick={() => setRsvpOpen(true)}
+                className="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm bg-emerald-800 hover:bg-emerald-700 text-white"
+              >
                 <span>RSVP / Register</span>
-              )}
-            </button>
+              </button>
+            )}
             <Link
               href={`/events/${event.slug ?? event.id}`}
               className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
@@ -113,8 +121,8 @@ export default function EventCard({ event }: EventCardProps) {
         event={event as unknown as PublicEvent}
         isOpen={rsvpOpen}
         onClose={() => setRsvpOpen(false)}
-        onRegistered={() => {
-          setIsRegistered(true);
+        onRegistered={(r) => {
+          setRegistration(r);
           setRsvpOpen(false);
         }}
       />

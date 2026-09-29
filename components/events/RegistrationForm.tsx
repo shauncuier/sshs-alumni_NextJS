@@ -46,7 +46,16 @@ export default function RegistrationForm({
   const [error, setError] = useState<string | null>(null);
   const [existingAccount, setExistingAccount] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [signInFailed, setSignInFailed] = useState(false);
 
+  if (signInFailed) {
+    return (
+      <p role="status" className="text-xs font-bold text-emerald-900">
+        Registered — payment and membership under review. Please{" "}
+        <Link href="/login?callbackUrl=/dashboard" className="underline">sign in</Link> to continue.
+      </p>
+    );
+  }
   if (sessionStatus === "loading") {
     return <p role="status" className="text-xs text-slate-500">Loading…</p>;
   }
@@ -103,7 +112,12 @@ export default function RegistrationForm({
       }
       if (body.createdAccount) {
         // Sign the new member in with the password they just chose.
-        await signIn("credentials", { redirect: false, email: body.createdAccount.email, password: account.password });
+        const res = await signIn("credentials", { redirect: false, email: body.createdAccount.email, password: account.password });
+        if (!res?.ok || res.error) {
+          // The registration is saved; only the automatic sign-in failed.
+          setSignInFailed(true);
+          return;
+        }
       }
       onRegistered(body.registration);
     } catch (err) {

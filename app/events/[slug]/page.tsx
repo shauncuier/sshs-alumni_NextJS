@@ -73,7 +73,6 @@ function EventDetailView({
   onRegistered: (r: MemberRegistration) => void;
 }) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
-  const registered = registration !== null;
   const [selectedPackage, setSelectedPackage] = useState<string | undefined>(undefined);
   const [activeDay, setActiveDay] = useState<number>(1);
 
@@ -585,37 +584,41 @@ function EventDetailView({
                     />
                   </div>
                   <span className="text-[11px] text-slate-400 block text-right">
-                    {event.maxAttendees - event.attendeesCount} seats remaining
+                    {event.placesLeft} seats remaining
                   </span>
                 </div>
 
                 {/* Primary CTA */}
                 <div>
-                  {!event.isRegistrationOpen && !registered ? (
+                  {registration ? (
+                    <div
+                      role="status"
+                      className={`w-full py-4 rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 border ${
+                        registration.status === "CANCELLED"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                      }`}
+                    >
+                      {registration.status !== "CANCELLED" && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                      <span>
+                        {registration.status === "PENDING_PAYMENT"
+                          ? "Registered — under review"
+                          : registration.status === "CANCELLED"
+                            ? "Registration cancelled"
+                            : "Registered"}
+                      </span>
+                    </div>
+                  ) : !event.isRegistrationOpen ? (
                     <p role="status" className="w-full py-4 rounded-2xl text-xs sm:text-sm font-bold text-center bg-rose-50 text-rose-700 border border-rose-200">
                       {event.closedMessage}
                     </p>
                   ) : (
                     <button
                       onClick={() => handleOpenRsvpWithPackage()}
-                      disabled={registered}
-                      className={`w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 ${
-                        registered
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-default"
-                          : "bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white"
-                      }`}
+                      className="w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white"
                     >
-                      {registered ? (
-                        <>
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                          <span>Registration Confirmed!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 text-amber-300" />
-                          <span>Register for Golden Jubilee</span>
-                        </>
-                      )}
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>Register for Golden Jubilee</span>
                     </button>
                   )}
                   <p className="text-[11px] text-slate-400 text-center mt-2">
