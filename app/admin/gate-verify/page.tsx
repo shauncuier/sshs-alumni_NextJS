@@ -21,7 +21,7 @@ import Link from "next/link";
 interface ScanLog {
   id: string;
   name: string;
-  batch: number;
+  batch: number | null;
   alumniId: string;
   status: "AUTHORIZED" | "DENIED";
   time: string;
@@ -71,6 +71,55 @@ export default function GateScannerPage() {
 
     // Extract token if user pasted full URL
     let token = qrInput.trim();
+
+    if (token.startsWith("SSGHS-TICKET:")) {
+      try {
+        const res = await fetch("/api/events/verify-ticket", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: token }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          setLatestResult({
+            valid: true,
+            alumnus: {
+              fullName: data.attendee.name,
+              sscBatch: data.attendee.batch,
+              alumniId: `${data.eventTitle} · ${data.packageName ?? "No package"} · ${data.headCount} ${data.headCount === 1 ? "person" : "people"}`,
+              membershipTier: "EVENT TICKET",
+              bloodGroup: null,
+            },
+          });
+          setScanHistory((prev) => [
+            {
+              id: `scan-${Date.now()}`,
+              name: data.attendee.name,
+              batch: data.attendee.batch,
+              alumniId: data.eventTitle,
+              status: "AUTHORIZED",
+              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              gate: "Event Ticket",
+            },
+            ...prev,
+          ]);
+        } else {
+          setLatestResult({
+            valid: false,
+            error: data.message || data.error || `Ticket check failed (HTTP ${res.status})`,
+          });
+        }
+      } catch (err) {
+        setLatestResult({
+          valid: false,
+          error: "Verification request failed: " + (err as Error).message,
+        });
+      } finally {
+        setIsVerifying(false);
+      }
+      return;
+    }
+
     if (token.includes("/verify/")) {
       token = token.split("/verify/")[1].split("?")[0];
     }
@@ -239,7 +288,7 @@ export default function GateScannerPage() {
                         <div>
                           <span className="text-emerald-700">Batch:</span>{" "}
                           <strong className="text-emerald-950">
-                            Batch {latestResult.alumnus.sscBatch}
+                            {latestResult.alumnus.sscBatch ? `Batch ${latestResult.alumnus.sscBatch}` : "N/A"}
                           </strong>
                         </div>
                         <div>
@@ -288,7 +337,7 @@ export default function GateScannerPage() {
                           {scan.name}
                         </div>
                         <div className="text-[11px] text-slate-500">
-                          SSC &apos;{String(scan.batch).slice(-2)} • {scan.alumniId}
+                          {scan.batch ? `SSC '${String(scan.batch).slice(-2)} • ` : ""}{scan.alumniId}
                         </div>
                       </div>
 
