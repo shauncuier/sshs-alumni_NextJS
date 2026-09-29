@@ -95,6 +95,15 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
   /** Saves the given fields (or the whole editable event) through the API. */
   const save = async (changes: Partial<PublicEvent> & Record<string, unknown>, message: string) => {
     const merged = { ...event, ...changes };
+    // Send the deadline only when the admin edited it (cleared, or picked a bare date);
+    // an unchanged value from the server is a full timestamp that a bare date would shift.
+    const deadline = merged.registrationDeadline ?? undefined;
+    const deadlineChange: { registrationDeadline?: string | null } =
+      deadline === ""
+        ? { registrationDeadline: null }
+        : deadline !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(deadline)
+          ? { registrationDeadline: deadline }
+          : {};
     const res = await fetch(`/api/admin/events/${event.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -102,8 +111,8 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
         title: merged.title, subtitle: merged.subtitle, category: merged.category, date: merged.date, time: merged.time,
         venue: merged.venue, locationCity: merged.locationCity, organizer: merged.organizer, bannerImage: merged.bannerImage,
         description: merged.description, maxAttendees: merged.maxAttendees, isRegistrationOpen: merged.registrationEnabled,
-        // only when the admin edited it: server values are full timestamps that a bare date would overwrite
-        ...(merged.registrationDeadline === "" ? { registrationDeadline: null } : /^d{4}-d{2}-d{2}$/.test(merged.registrationDeadline ?? "") ? { registrationDeadline: merged.registrationDeadline } : {}), guestOfHonor: merged.guestOfHonor, souvenirDetails: merged.souvenirDetails,
+        ...deadlineChange,
+        guestOfHonor: merged.guestOfHonor, souvenirDetails: merged.souvenirDetails,
         isMegaEvent: merged.isMegaEvent, isMembershipEvent: merged.isMembershipEvent, registrationFee: merged.registrationFeeAmount,
         extraAdultFee: merged.extraAdultFee, childFee: merged.childFee, paymentInstructions: merged.paymentInstructions,
         highlights: merged.highlights, agenda: merged.agenda,
