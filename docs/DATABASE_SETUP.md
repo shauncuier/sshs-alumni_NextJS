@@ -119,7 +119,7 @@ DATABASE_URL="$(node -e 'require("dotenv").config({path:".env.local",quiet:true}
 DATABASE_URL="$(node -e 'require("dotenv").config({path:".env.local",quiet:true});process.stdout.write(process.env.DATABASE_URL)')" npm run db:seed
 ```
 
-This reads the URL out of `.env.local` without ever printing it. Append `?allowPublicKeyRetrieval=true` to the URL if MySQL 8's `caching_sha2_password` auth needs it over a non-TLS local connection.
+This reads the URL out of `.env.local` without ever printing it. Local MySQL 8 needs `?allowPublicKeyRetrieval=true` appended to the local `DATABASE_URL` in `.env.local` (`caching_sha2_password` over a non-TLS local connection). Without it the app fails with `pool timeout ... active=0 idle=0` (Prisma error P2039).
 
 **Never run `db:push` / `db:seed` without an explicit `DATABASE_URL` override** — without one, both fall back to the remote URL in `.env`.
 

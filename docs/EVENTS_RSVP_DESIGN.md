@@ -1,6 +1,6 @@
 # Events & RSVP — Database Design
 
-**Status:** Design, awaiting spec review · **Date:** 28 Sept 2026
+**Status:** Implemented on `feat/events-rsvp` · **Date:** 28 Sept 2026
 
 ## 1. Goal
 
