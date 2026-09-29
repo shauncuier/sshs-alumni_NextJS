@@ -70,6 +70,8 @@ export type PublicEvent = Omit<EventItem, "packages"> & {
   placesLeft: number;
   closedReason: ClosedReason | null;
   closedMessage: string | null;
+  /** The admin's stored on/off switch (isRegistrationOpen is computed and also reflects deadline, capacity, payment details). */
+  registrationEnabled: boolean;
   isMembershipEvent: boolean;
   registrationFeeAmount: number;
   extraAdultFee: number;

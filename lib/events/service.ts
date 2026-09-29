@@ -52,6 +52,7 @@ export function toPublicEvent(row: Event, heads: { reserved: number; attending: 
     placesLeft: Math.max(0, row.maxAttendees - heads.reserved),
     description: row.description,
     isRegistrationOpen: closedReason === null,
+    registrationEnabled: row.isRegistrationOpen,
     closedReason,
     closedMessage: closedReason ? CLOSED_MESSAGES[closedReason] : null,
     isMegaEvent: row.isMegaEvent,

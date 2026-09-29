@@ -74,3 +74,16 @@ it("lists events by date", async () => {
   await makeEvent({ title: "Sooner", date: new Date("2030-06-01") });
   expect((await listPublicEvents()).map((e) => e.title)).toEqual(["Sooner", "Later"]);
 });
+
+it("keeps the stored registration switch separate from the computed open state", async () => {
+  const created = await createEvent({ ...jubileeBody, paymentInstructions: "" });
+  expect(created.isRegistrationOpen).toBe(false);
+  expect(created.registrationEnabled).toBe(true);
+
+  const updated = await updateEvent(created.id, {
+    paymentInstructions: "Send to bKash 01XXXXXXXXX",
+    isRegistrationOpen: created.registrationEnabled,
+  });
+  expect(updated.registrationEnabled).toBe(true);
+  expect(updated.isRegistrationOpen).toBe(true);
+});

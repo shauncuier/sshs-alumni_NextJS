@@ -103,3 +103,11 @@ export function computeFee(
 export function isPaidEvent(event: FeeEvent): boolean {
   return event.registrationFee > 0 || event.packages.some((p) => p.price > 0);
 }
+
+/** The YYYY-MM-DD calendar date of an ISO timestamp in Dhaka time (for date inputs). */
+export function dhakaDateInput(value: string | undefined | null): string {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" });
+}

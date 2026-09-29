@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import type { EventItem } from "@/lib/data";
+import { dhakaDateInput } from "@/lib/events/pricing";
 import type { AdminRegistration, PublicEvent } from "@/lib/events/types";
 import {
   Calendar,
@@ -68,7 +69,7 @@ export default function AdminEventsPage() {
     registrationFee: number;
     registrationDeadline: string;
     maxAttendees: number;
-    isRegistrationOpen: boolean;
+    registrationEnabled: boolean;
     description: string;
     bannerImage: string;
   } = {
@@ -84,7 +85,7 @@ export default function AdminEventsPage() {
     registrationFee: 0,
     registrationDeadline: "",
     maxAttendees: 1000,
-    isRegistrationOpen: true,
+    registrationEnabled: true,
     description: "",
     bannerImage: "/golden-jubilee.jpg",
   };
@@ -105,9 +106,9 @@ export default function AdminEventsPage() {
       locationCity: event.locationCity,
       organizer: event.organizer,
       registrationFee: event.registrationFeeAmount,
-      registrationDeadline: event.registrationDeadline ? event.registrationDeadline.slice(0, 10) : "",
+      registrationDeadline: dhakaDateInput(event.registrationDeadline),
       maxAttendees: event.maxAttendees,
-      isRegistrationOpen: event.isRegistrationOpen,
+      registrationEnabled: event.registrationEnabled,
       description: event.description,
       bannerImage: event.bannerImage,
     });
@@ -137,10 +138,12 @@ export default function AdminEventsPage() {
       organizer: formData.organizer,
       registrationFee: formData.registrationFee,
       maxAttendees: Number(formData.maxAttendees),
-      registrationDeadline: formData.registrationDeadline || null,
+      ...(formData.registrationDeadline !== dhakaDateInput(editingEvent?.registrationDeadline)
+        ? { registrationDeadline: formData.registrationDeadline || null }
+        : {}),
       bannerImage: formData.bannerImage,
       description: formData.description,
-      isRegistrationOpen: formData.isRegistrationOpen,
+      isRegistrationOpen: formData.registrationEnabled,
     };
     const res = await fetch(editingEvent ? `/api/admin/events/${editingEvent.id}` : "/api/admin/events", {
       method: editingEvent ? "PUT" : "POST",
@@ -615,8 +618,8 @@ export default function AdminEventsPage() {
                 <input
                   type="checkbox"
                   id="regOpen"
-                  checked={formData.isRegistrationOpen}
-                  onChange={(e) => setFormData({ ...formData, isRegistrationOpen: e.target.checked })}
+                  checked={formData.registrationEnabled}
+                  onChange={(e) => setFormData({ ...formData, registrationEnabled: e.target.checked })}
                   className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
                 />
                 <label htmlFor="regOpen" className="font-bold text-slate-700 cursor-pointer select-none">

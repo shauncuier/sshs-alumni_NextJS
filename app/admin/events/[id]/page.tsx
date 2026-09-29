@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
-import { formatTaka } from "@/lib/events/pricing";
+import { formatTaka, dhakaDateInput } from "@/lib/events/pricing";
 import {
   Calendar,
   Clock,
@@ -101,8 +101,9 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
       body: JSON.stringify({
         title: merged.title, subtitle: merged.subtitle, category: merged.category, date: merged.date, time: merged.time,
         venue: merged.venue, locationCity: merged.locationCity, organizer: merged.organizer, bannerImage: merged.bannerImage,
-        description: merged.description, maxAttendees: merged.maxAttendees, isRegistrationOpen: merged.isRegistrationOpen,
-        registrationDeadline: merged.registrationDeadline || null, guestOfHonor: merged.guestOfHonor, souvenirDetails: merged.souvenirDetails,
+        description: merged.description, maxAttendees: merged.maxAttendees, isRegistrationOpen: merged.registrationEnabled,
+        // only when the admin edited it: server values are full timestamps that a bare date would overwrite
+        ...(merged.registrationDeadline === "" ? { registrationDeadline: null } : /^d{4}-d{2}-d{2}$/.test(merged.registrationDeadline ?? "") ? { registrationDeadline: merged.registrationDeadline } : {}), guestOfHonor: merged.guestOfHonor, souvenirDetails: merged.souvenirDetails,
         isMegaEvent: merged.isMegaEvent, isMembershipEvent: merged.isMembershipEvent, registrationFee: merged.registrationFeeAmount,
         extraAdultFee: merged.extraAdultFee, childFee: merged.childFee, paymentInstructions: merged.paymentInstructions,
         highlights: merged.highlights, agenda: merged.agenda,
@@ -385,11 +386,12 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
               <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-800">
                 <input
                   type="checkbox"
-                  checked={event.isRegistrationOpen}
-                  onChange={(e) => setEvent({ ...event, isRegistrationOpen: e.target.checked })}
+                  checked={event.registrationEnabled}
+                  onChange={(e) => setEvent({ ...event, registrationEnabled: e.target.checked })}
                   className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
                 />
                 <span>Allow Online Public Registrations &amp; RSVPs</span>
+                {event.closedMessage && <span className="text-[11px] font-semibold text-amber-700">Currently closed: {event.closedMessage}</span>}
               </label>
             </div>
           </div>
@@ -462,7 +464,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
               <label className="font-bold text-slate-700">Registration Deadline</label>
               <input
                 type="date"
-                value={event.registrationDeadline ? event.registrationDeadline.slice(0, 10) : ""}
+                value={dhakaDateInput(event.registrationDeadline)}
                 onChange={(e) => setEvent({ ...event, registrationDeadline: e.target.value })}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
