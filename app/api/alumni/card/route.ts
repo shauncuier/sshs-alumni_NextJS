@@ -7,8 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { publicOrigin } from "@/lib/request-origin";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
 import {
   generateAlumniId,
@@ -34,7 +33,7 @@ const DEFAULT_AVATAR_URL =
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getMemberSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Sign in to view your digital card." }, { status: 401 });
     }

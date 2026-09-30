@@ -121,9 +121,10 @@ export default function EventCard({ event }: EventCardProps) {
         event={event as unknown as PublicEvent}
         isOpen={rsvpOpen}
         onClose={() => setRsvpOpen(false)}
-        onRegistered={(r) => {
+        onRegistered={(r, createdAccount) => {
           setRegistration(r);
-          setRsvpOpen(false);
+          // A new member stays on the modal's "under review" message; they are not signed in.
+          if (!createdAccount) setRsvpOpen(false);
         }}
       />
     </>

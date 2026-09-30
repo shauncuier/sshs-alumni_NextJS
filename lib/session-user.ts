@@ -9,15 +9,25 @@ export interface SessionUser {
 }
 
 /**
+ * The NextAuth session, or null when there is none or it belongs to a pending or
+ * rejected member (a token issued before approval). Use instead of getServerSession
+ * in member-facing routes that read other session fields.
+ */
+export async function getMemberSession() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+  if (accountAccessBlock({ role: session.user.role, status: session.user.status })) return null;
+  return session;
+}
+
+/**
  * The signed-in member, or null. APIs that act on a member's own data must take
  * the identity from here, never from a userId in the request, which anyone can forge.
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await getServerSession(authOptions);
+  const session = await getMemberSession();
   const user = session?.user;
   if (!user?.id || !user.email) return null;
-  // A token issued while the member was pending/rejected must not act as a member.
-  if (accountAccessBlock({ role: user.role, status: user.status })) return null;
   return { id: user.id, email: user.email, role: user.role ?? "ALUMNI" };
 }
 

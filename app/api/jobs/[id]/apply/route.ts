@@ -4,8 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getMemberSession } from "@/lib/session-user";
 
 export async function POST(
   req: NextRequest,
@@ -13,7 +12,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await getMemberSession();
     const body = await req.json();
 
     const {

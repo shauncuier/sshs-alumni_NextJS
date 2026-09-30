@@ -6,8 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getMemberSession } from "@/lib/session-user";
 
 // In-memory or Redis/DB store of push subscriptions
 interface PushSubscriptionRecord {
@@ -24,7 +23,7 @@ const pushSubscriptions: PushSubscriptionRecord[] = [];
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getMemberSession();
     const body = await req.json();
     const { subscription, userId } = body;
 

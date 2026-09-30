@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getMemberSession } from "@/lib/session-user";
 import { sampleJobs, JobListing } from "@/lib/career-data";
 
 // In-memory collection of dynamic jobs augmenting seed jobs
@@ -45,7 +44,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getMemberSession();
     const body = await req.json();
 
     const {

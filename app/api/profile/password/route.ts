@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getMemberSession } from "@/lib/session-user";
 import bcrypt from "bcryptjs";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 // POST /api/profile/password — change the signed-in member's password.
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getMemberSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
