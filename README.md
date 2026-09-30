@@ -61,3 +61,9 @@ All technical and operational documentation has been organized into the [`docs/`
 ## 📄 License & Ownership
 
 Developed for the **SSGHS Alumni Association**. All rights reserved © 2026.
+
+---
+
+## 🎨 Credits
+
+This platform is designed and developed by **[3s-Soft](https://3s-soft.com)** for the SSGHS Alumni Association.

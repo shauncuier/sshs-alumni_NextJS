@@ -1,6 +1,7 @@
 {
   "name": "sshs-alumni",
   "version": "0.1.0",
+  "author": "3s-Soft (https://3s-soft.com)",
   "private": true,
   "scripts": {
     "dev": "next dev",
