@@ -34,3 +34,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 export function isAdminRole(role: string): boolean {
   return role === "ADMIN" || role === "SUPER_ADMIN";
 }
+
+/** Roles that may use the gate scanner and check event tickets in: admins plus moderators (gate volunteers). */
+export const GATE_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR"] as const;
+
+export function isGateRole(role: string): boolean {
+  return (GATE_ROLES as readonly string[]).includes(role);
+}

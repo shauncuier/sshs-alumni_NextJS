@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   LogOut,
   GraduationCap,
-  ArrowLeft
+  ArrowLeft,
+  QrCode
 } from "lucide-react";
 
 // Admin console chrome (sidebar and navigation). Access is checked by app/admin/layout.tsx.
@@ -29,6 +30,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
     { name: "Manage Batches", href: "/admin/batches", icon: Layers },
     { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
+    { name: "Gate Scanner", href: "/gate", icon: QrCode },
     { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
     { name: "System Roles", href: "/admin/users", icon: Users },
   ];

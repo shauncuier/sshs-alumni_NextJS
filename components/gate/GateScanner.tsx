@@ -28,7 +28,8 @@ interface ScanLog {
   gate: string;
 }
 
-export default function GateScannerPage() {
+// Rendered by app/gate/page.tsx, which checks the gate-staff role on the server.
+export default function GateScanner() {
   const [qrInput, setQrInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [latestResult, setLatestResult] = useState<any | null>(null);

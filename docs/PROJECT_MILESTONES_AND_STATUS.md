@@ -29,7 +29,7 @@ This document is the **single source of truth** for project milestones, componen
 | **Prisma ORM Client** | `v7.10.0` | 🟢 **COMPILED** | Client generated in `node_modules/@prisma/client` | MySQL connector (MariaDB driver adapter) validated with 13 data models (11 core + `PaymentTransaction` + enhanced `Donation`) |
 | **Payment Gateway Suite** | `/api/payments/*` | 🟢 **ACTIVE** | bKash + Nagad + SSLCommerz | Sandbox mode by default. Set `BKASH_SANDBOX=false` for production. 7 API routes. |
 | **SSE Real-Time Engine** | `/api/realtime/stream` | 🟢 **ACTIVE** | Server-Sent Events with heartbeat | No external deps. Client hook: `useRealtime(userId)`. Direct messaging & live alerts wired. |
-| **Digital Smart ID Card** | `/card` & `/verify/*` | 🟢 **ACTIVE** | HMAC-SHA256 Token Signature + QR Generator | 3D Flippable card, Gate Scanner (`/admin/gate-verify`), Apple & Google Wallet pass APIs. |
+| **Digital Smart ID Card** | `/card` & `/verify/*` | 🟢 **ACTIVE** | HMAC-SHA256 Token Signature + QR Generator | 3D Flippable card, Gate Scanner (`/gate`), Apple & Google Wallet pass APIs. |
 | **Progressive Web App** | `public/sw.js` | 🟢 **ACTIVE** | PWA Service Worker + Web Manifest | Offline batch directory cache, offline campus banner, web push notifications (`/api/push/*`). |
 | **Career & Mentorship Hub**| `/careers` & `/mentorship` | 🟢 **ACTIVE** | Job Board + 1-on-1 Guidance Engine | Alumni vacancies, resume dispatch, mentorship scheduling with Google Meet links. |
 | **Email Service** | Resend / SMTP / Console | 🟡 **READY** | Auto-detects provider from env vars | Console fallback active until `RESEND_API_KEY` or `SMTP_HOST` is set. |
@@ -146,9 +146,9 @@ This document is the **single source of truth** for project milestones, componen
     - ✅ **Interactive 3D Flippable Smart ID Card**: Created `components/card/DigitalAlumniCard.tsx` with high-resolution QR code, school crest, EIIN 105070 watermark, graduation batch typography, blood group, and lifetime membership status.
     - ✅ **Member Card Portal**: Built `app/card/page.tsx` for card view, flip preview, print styling, link sharing, and pass saving.
     - ✅ **Public Gate Verification Page**: Built `app/verify/[token]/page.tsx` for gate security & reunion volunteers with instant alumnus authentication, batch check, and "Check-in Alumnus" confirmation.
-    - ✅ **Admin / Volunteer Gate QR Scanner**: Built `app/admin/gate-verify/page.tsx` with optical camera scanner viewfinder, manual token lookup, test scan simulator, and live verified delegate ledger.
+    - ✅ **Admin / Volunteer Gate QR Scanner**: Built the gate scanner (`app/gate/page.tsx` + `components/gate/GateScanner.tsx`, formerly `app/admin/gate-verify`) with optical camera scanner viewfinder, manual token lookup, test scan simulator, and live verified delegate ledger.
     - ✅ **Apple Wallet & Google Wallet Pass Endpoints**: Built `/api/alumni/card/wallet/apple` (.pkpass JSON manifest) and `/api/alumni/card/wallet/google` (Save to Google Pay payload).
-  - **Key Files**: `lib/id-card.ts`, `components/card/DigitalAlumniCard.tsx`, `app/card/page.tsx`, `app/verify/[token]/page.tsx`, `app/admin/gate-verify/page.tsx`, `app/api/alumni/card/*/route.ts`.
+  - **Key Files**: `lib/id-card.ts`, `components/card/DigitalAlumniCard.tsx`, `app/card/page.tsx`, `app/verify/[token]/page.tsx`, `app/gate/page.tsx`, `components/gate/GateScanner.tsx`, `app/api/alumni/card/*/route.ts`.
 
 - [x] **Milestone 3.2: Progressive Web Application (PWA) & Offline Directory**
   - **Finished**: 2026-09-26

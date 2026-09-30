@@ -32,6 +32,7 @@ export default function AppSidebar() {
   const userBatch = (session?.user as unknown as { batchYear?: number })?.batchYear || 2008;
   const userRole = (session?.user as unknown as { role?: string })?.role;
   const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const isGateStaff = isAdmin || userRole === "MODERATOR";
 
   const links = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -116,15 +117,24 @@ export default function AppSidebar() {
           );
         })}
 
-        {/* Dynamic Admin Link (Only for admins) */}
-        {isAdmin && (
-          <div className="pt-4 mt-2 border-t border-emerald-900/80">
+        {/* Staff links: the admin console for admins, the gate scanner for admins and moderators */}
+        {isGateStaff && (
+          <div className="pt-4 mt-2 border-t border-emerald-900/80 space-y-1">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-400/30 transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-300" />
+                <span>Admin Management</span>
+              </Link>
+            )}
             <Link
-              href="/admin"
+              href="/gate"
               className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-400/30 transition-colors"
             >
-              <ShieldCheck className="w-4 h-4 text-amber-300" />
-              <span>Admin Management</span>
+              <QrCode className="w-4 h-4 text-amber-300" />
+              <span>Gate Scanner</span>
             </Link>
           </div>
         )}

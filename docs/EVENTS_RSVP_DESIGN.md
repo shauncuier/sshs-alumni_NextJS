@@ -144,7 +144,7 @@ Existing `guestCount`, `mealPreference` and `notes` stay. Constraint: **`@@uniqu
 - `/admin/events` — list/create/edit/delete via the API, including a package editor (name, price, includes), agenda editor, fees, deadline, capacity, payment instructions and the "membership event" switch.
 - `/admin/events/[id]` — attendee list from the API: name, batch, roll, section, package, head count, fee, payment method, transaction ID, payment status, membership status; actions **Approve** (payment + membership on the membership event), **Reject/Cancel**, **Check in**; confirmed/pending revenue and head count.
 - `/admin/alumni` and the dashboard verification queue — members with a pending membership payment show "Awaiting payment confirmation" with a link to the attendee list, instead of an Approve button.
-- Gate scanner (`/admin/gate-verify`) — accepts alumni cards and event tickets; for a ticket shows attendee, package and head count and checks them in.
+- Gate scanner (`/gate`, admins and moderators; `/admin/gate-verify` redirects there) — accepts alumni cards and event tickets; for a ticket shows attendee, package and head count and checks them in.
 
 ### Removed
 - `lib/events-service.ts` (browser-storage events and attendees), the `/events/[id]/ticket` page and its API route, the RSVP modal's fake success timer, and the free registration form on `/register`.

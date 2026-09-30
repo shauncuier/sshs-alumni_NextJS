@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { checkInTicket } from "@/lib/events/tickets";
-import { getSessionUser } from "@/lib/session-user";
-
-const GATE_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR"];
+import { getSessionUser, isGateRole } from "@/lib/session-user";
 
 export async function POST(req: Request) {
   const me = await getSessionUser();
-  if (!me || !GATE_ROLES.includes(me.role)) {
+  if (!me || !isGateRole(me.role)) {
     return NextResponse.json({ error: "Only gate staff can check tickets in." }, { status: 403 });
   }
   try {

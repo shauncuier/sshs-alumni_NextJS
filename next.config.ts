@@ -19,6 +19,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // The gate scanner moved out of the admin console so moderators (gate volunteers) can use it.
+      { source: "/admin/gate-verify", destination: "/gate", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

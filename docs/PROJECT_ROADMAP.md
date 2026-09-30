@@ -31,7 +31,7 @@ Website: [https://sabujsghs.edu.bd/](https://sabujsghs.edu.bd/)
 ## 📍 Phase 3: Digital Alumni Smart Card & Mobile App ✅
 - [x] **Digital Alumni ID Card**:
   - Dynamically generated pass with unique QR Code (`/card` and `DigitalAlumniCard.tsx`).
-  - Scan-to-verify identity at school gate and official reunion registration counters (`/verify/[token]` and `/admin/gate-verify`).
+  - Scan-to-verify identity at school gate and official reunion registration counters (`/verify/[token]` and `/gate`).
   - Apple Wallet (.pkpass JSON manifest) & Google Wallet pass integration (`/api/alumni/card/wallet/*`).
 - [x] Progressive Web App (PWA) with offline batch directory caching, `public/sw.js` service worker, and web push notifications (`/api/push/subscribe`, `/api/push/send`).
 
