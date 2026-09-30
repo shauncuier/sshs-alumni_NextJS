@@ -53,7 +53,7 @@ New members also upload a document that shows they studied at SSGHS (SSC certifi
 
 - **Private:** they are served only through `/api/media/proofs/...`, which requires an admin session. **Never** expose `UPLOADS_DIR` (or `uploads/proofs`) through the web server as static files — no nginx `location`/`alias`, cPanel public folder or CDN pointing at it. Keep `UPLOADS_DIR` outside `public/` and the web root, readable only by the app's user (e.g. `chmod 700`).
 - **Backed up** with the rest of `UPLOADS_DIR`, and protected like the database backups (restricted access, encrypted where possible).
-- **Short-lived:** the app deletes each file once the membership is approved or rejected. If a deletion fails (logged as `[proof-retention] ...` with the request id), it is retried the next time an admin opens the verification queue.
+- **Short-lived:** the app deletes each file once the membership is approved or rejected. If a deletion fails (logged as `[proof-retention] ...` with the request id), it is retried in the background the next time an admin opens the verification queue or an event's attendee list.
 
 This needs a server with a persistent disk (a VPS or cPanel Node.js app, Option B, or Docker with a mounted volume, Option C). It is **not supported on Vercel** (serverless file systems are read-only or temporary); do not deploy the join form there without moving photo storage to object storage first.
 

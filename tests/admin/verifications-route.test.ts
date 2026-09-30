@@ -9,10 +9,19 @@ import { resetDatabase } from "../helpers/db";
 const auth = vi.hoisted(() => ({ session: null as { user: { email: string; role: string } } | null }));
 vi.mock("next-auth", () => ({ getServerSession: async () => auth.session }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+// `after` needs a live request scope; collect the callbacks and run them explicitly.
+const scheduled = vi.hoisted(() => [] as (() => unknown)[]);
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (task: () => unknown) => {
+    scheduled.push(task);
+  },
+}));
 
 import { GET, PATCH } from "@/app/api/admin/verifications/route";
 
 beforeEach(async () => {
+  scheduled.length = 0;
   auth.session = { user: { email: "admin@example.test", role: "ADMIN" } };
   await resetDatabase();
   await fs.rm(process.env.UPLOADS_DIR!, { recursive: true, force: true });
@@ -66,6 +75,20 @@ describe("verification queue and proof documents", () => {
       expect(await exists(dir)).toBe(false);
     });
   }
+
+  it("retries a failed deletion after the queue response, not during it", async () => {
+    const { request, dir } = await pendingMember();
+    // A decided request whose file an earlier attempt could not delete.
+    await prisma.verificationRequest.update({ where: { id: request.id }, data: { status: "VERIFIED" } });
+    const res = await GET(new Request("http://x/api/admin/verifications?status=all"));
+    expect(res.status).toBe(200);
+    expect((await res.json()).requests[0].proofFileUrl).toBe(request.proofFileUrl);
+    expect(await exists(dir)).toBe(true);
+    expect(scheduled).toHaveLength(1);
+    await scheduled[0]();
+    expect(await exists(dir)).toBe(false);
+    expect((await prisma.verificationRequest.findUniqueOrThrow({ where: { id: request.id } })).proofFileUrl).toBeNull();
+  });
 
   it("keeps the proof when the decision is refused", async () => {
     const { request, dir } = await pendingMember();

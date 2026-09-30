@@ -33,7 +33,7 @@ describe("GET /api/media/proofs/[id]/[file]", () => {
     }
   });
 
-  it("serves a PDF privately, sandboxed, to admins", async () => {
+  it("serves a PDF privately to admins, viewable in the browser's PDF viewer", async () => {
     const saved = await saveProof(await processProof(makePdf()));
     for (const role of ["ADMIN", "SUPER_ADMIN"]) {
       as(role);
@@ -43,7 +43,8 @@ describe("GET /api/media/proofs/[id]/[file]", () => {
       expect(res.headers.get("cache-control")).toBe("private, no-store");
       expect(res.headers.get("x-content-type-options")).toBe("nosniff");
       expect(res.headers.get("content-disposition")).toBe(`inline; filename="membership-proof-${saved.id}.pdf"`);
-      expect(res.headers.get("content-security-policy")).toContain("sandbox");
+      // A sandbox or default-src policy makes Chrome/Edge's PDF viewer show a blocked page.
+      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
       expect(Buffer.from(await res.arrayBuffer()).equals(makePdf())).toBe(true);
     }
   });

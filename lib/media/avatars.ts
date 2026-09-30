@@ -87,8 +87,11 @@ export async function saveAvatar(files: {
   };
 }
 
+/** Best-effort cleanup (e.g. after a failed join); never throws, but logs a failure (folder id only). */
 export async function removeAvatarDir(dir: string): Promise<void> {
-  await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+  await fs.rm(dir, { recursive: true, force: true }).catch((err: NodeJS.ErrnoException) => {
+    console.error(`[avatars] Could not remove avatar folder ${path.basename(dir)} (${err?.code ?? err?.name ?? "error"}).`);
+  });
 }
 
 /** The file's path, or null when the id or file name is not one we wrote. */

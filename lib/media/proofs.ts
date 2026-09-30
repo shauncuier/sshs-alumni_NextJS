@@ -88,9 +88,11 @@ export async function saveProof(
   return { id, dir, fileUrl: `/api/media/proofs/${id}/${file}`, mime: proof.mime };
 }
 
-/** Best-effort cleanup (e.g. after a failed join); never throws. */
+/** Best-effort cleanup (e.g. after a failed join); never throws, but logs a failure (folder id only). */
 export async function removeProofDir(dir: string): Promise<void> {
-  await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+  await fs.rm(dir, { recursive: true, force: true }).catch((err: NodeJS.ErrnoException) => {
+    console.error(`[proofs] Could not remove proof folder ${path.basename(dir)} (${err?.code ?? err?.name ?? "error"}).`);
+  });
 }
 
 /** The folder of a stored proof URL, or null when the URL is not one we wrote. */

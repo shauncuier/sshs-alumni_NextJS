@@ -8,8 +8,9 @@ type Params = { params: Promise<{ id: string; file: string }> };
 const notFound = () => NextResponse.json({ error: "Not found." }, { status: 404 });
 
 const TYPES = new Map<string, { contentType: string; ext: string; csp: string }>([
-  // A sandboxed document cannot run scripts or reach the app's origin, even if a PDF tries.
-  ["document.pdf", { contentType: "application/pdf", ext: "pdf", csp: "sandbox" }],
+  // No sandbox/default-src for PDFs: Chrome and Edge's built-in viewer shows a blocked
+  // page under them. The PDF is never rendered by the app itself, and it may not be framed.
+  ["document.pdf", { contentType: "application/pdf", ext: "pdf", csp: "frame-ancestors 'none'" }],
   [
     "document.jpg",
     { contentType: "image/jpeg", ext: "jpg", csp: "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox" },

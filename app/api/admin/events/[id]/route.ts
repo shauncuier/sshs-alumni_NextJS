@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { getAdminEvent } from "@/lib/events/admin";
 import { deleteEvent, updateEvent } from "@/lib/events/service";
+import { discardDecidedProofs } from "@/lib/members/proof-retention";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 type Params = { params: Promise<{ id: string }> };
@@ -10,6 +11,8 @@ const forbidden = () => NextResponse.json({ error: "Only administrators can mana
 export async function GET(_req: Request, { params }: Params) {
   const me = await getSessionUser();
   if (!me || !isAdminRole(me.role)) return forbidden();
+  // Retry deleting proofs an earlier decision could not remove, after the response (never throws).
+  after(() => discardDecidedProofs());
   try {
     return NextResponse.json(await getAdminEvent((await params).id));
   } catch (err) {

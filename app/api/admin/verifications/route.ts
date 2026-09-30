@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
@@ -18,6 +18,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
+    // Retry deleting proofs an earlier decision could not remove, after the response
+    // is sent so it never slows the queue down (never throws).
+    after(() => discardDecidedProofs());
+
     const statusParam = new URL(req.url).searchParams.get("status") ?? "PENDING";
     if (statusParam !== "all" && !REQUEST_STATUSES.includes(statusParam as RequestStatus)) {
       return NextResponse.json(
@@ -27,8 +31,6 @@ export async function GET(req: Request) {
     }
 
     try {
-      // Retry deleting proofs an earlier decision could not remove (never throws).
-      await discardDecidedProofs();
       const requests = await prisma.verificationRequest.findMany({
         where: statusParam === "all" ? {} : { status: statusParam as RequestStatus },
         include: {
