@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { sampleEvents } from "../lib/data";
 import { normalizePackages, parseTaka } from "../lib/events/pricing";
+import { backfillEventJsonColumns } from "./backfill-events";
 
 // Earlier seeds created these accounts with published passwords; replace them on sight.
 const LEGACY_ADMIN = { email: "admin@sabujsghs.edu.bd", password: "admin123" };
@@ -154,6 +155,12 @@ async function main() {
   // event: joining the association is its paid registration. Payment instructions are
   // left for an admin to fill in, so joining stays closed until they exist.
   console.log("Seeding Events...");
+  // Events that existed before `db push` added the agenda/highlights/packages JSON
+  // columns hold no value there; repair them before Prisma reads any event.
+  const repairedJson = await backfillEventJsonColumns(prisma);
+  if (repairedJson > 0) {
+    console.log(`Backfilled ${repairedJson} empty event agenda/highlights/packages value(s) to [].`);
+  }
   const JUBILEE_ID = "evt-golden-jubilee-50";
   const packageHeads: Record<string, { adults: number; children: number; guestsFree?: boolean }> = {
     "General Alumnus Delegate": { adults: 1, children: 0 },

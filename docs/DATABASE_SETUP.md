@@ -102,7 +102,27 @@ JSON columns (`skills`, `images`) get their `[]` default from the Prisma client,
 
 ## Events & membership registration (Oct 2026)
 
-`npm run db:push` adds event content (packages, agenda, fees, payment instructions, membership flag) and registration details; nothing is dropped. `npm run db:seed` then adds the site's 5 events, with the Golden Jubilee as the **membership event**.
+`npm run db:push` adds event content (packages, agenda, fees, payment instructions, membership flag), registration details (status, payment, check-in) and two unique constraints on `EventRegistration`. `npm run db:seed` then repairs existing rows and adds the site's 5 events, with the Golden Jubilee as the **membership event**.
+
+### Upgrading the live (remote) database
+
+The push is not prompt-free on a database that already has events and registrations. Do it in this order:
+
+1. **Back up** the remote database (phpMyAdmin → Export, or `mysqldump`).
+2. **Rehearse on a copy first:** restore that backup into a scratch database, then run `db:push` and `db:seed` against the scratch copy (override `DATABASE_URL` on the command line, as in *Local development* below). Confirm both finish and the site's events load before touching the live database.
+3. **Check for duplicates** on the live database. Both queries must return no rows:
+
+   ```sql
+   SELECT eventId, userId, COUNT(*) FROM EventRegistration GROUP BY eventId, userId HAVING COUNT(*) > 1;
+   SELECT transactionId, COUNT(*) FROM EventRegistration WHERE transactionId IS NOT NULL GROUP BY transactionId HAVING COUNT(*) > 1;
+   SELECT COUNT(*) FROM EventRegistration;
+   ```
+
+   Note the registration count, and compare it after the push.
+4. **Run `npm run db:push`.** Prisma warns that it will add unique constraints on `EventRegistration` (`[eventId, userId]` and `transactionId`) and asks whether to continue. Answer **yes only if the duplicate checks in step 3 returned nothing**; otherwise answer no, resolve the duplicates, and start again.
+5. **Run `npm run db:seed` straight after the push.** MySQL cannot give a JSON column a default, so events that existed before the push have empty `agenda`/`highlights`/`packages` values and fail to load until the seed sets them to `[]`. The seed also marks old free registrations (no fee, no transaction ID) as `CONFIRMED`.
+
+**Never use `prisma db push --force-reset`** (Prisma may suggest it when a push cannot be applied): it drops and recreates every table, deleting all members, events and registrations. If Prisma suggests it, stop and work out the cause on the scratch copy instead.
 
 `AlumniProfile.avatarOriginalUrl` (`VARCHAR(500)`, nullable) holds the print-quality copy of the profile photo given when joining; `avatarUrl` holds the 400 x 400 web avatar. Run `npm run db:push` to add the column. The image files themselves live on the server disk (see the production deployment guide), not in the database.
 
@@ -125,9 +145,4 @@ This reads the URL out of `.env.local` without ever printing it. Local MySQL 8 n
 
 **Never run `db:push` / `db:seed` without an explicit `DATABASE_URL` override** — without one, both fall back to the remote URL in `.env`.
 
-> ⚠️ `db:push` adds unique constraints on `EventRegistration` (`[eventId, userId]`, `transactionId`). If a database already has duplicate `(eventId, userId)` registrations or duplicate transaction IDs, `db:push` will fail. Check for duplicates before pushing to the remote database, and back it up first:
->
-> ```sql
-> SELECT eventId, userId, COUNT(*) FROM EventRegistration GROUP BY eventId, userId HAVING COUNT(*) > 1;
-> SELECT transactionId, COUNT(*) FROM EventRegistration WHERE transactionId IS NOT NULL GROUP BY transactionId HAVING COUNT(*) > 1;
-> ```
+> ⚠️ `db:push` adds unique constraints on `EventRegistration` (`[eventId, userId]`, `transactionId`). If a database already has duplicate `(eventId, userId)` registrations or duplicate transaction IDs, `db:push` will fail. Before pushing to the remote database, follow *Upgrading the live (remote) database* above: back up, rehearse on a copy, run the duplicate checks, and seed straight after the push.
