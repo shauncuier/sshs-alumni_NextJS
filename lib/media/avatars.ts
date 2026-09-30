@@ -6,6 +6,9 @@ import { AppError } from "@/lib/app-error";
 
 export const AVATAR_LIMITS = { maxBytes: 5 * 1024 * 1024, minSide: 600 } as const;
 
+// Decoded size guard: a small file can declare enormous dimensions (decompression bomb).
+const MAX_INPUT_PIXELS = 100_000_000;
+const SHARP_INPUT = { limitInputPixels: MAX_INPUT_PIXELS };
 const MASTER_MAX_SIDE = 2400;
 const AVATAR_SIZE = 400;
 const ALLOWED_FORMATS = new Set(["jpeg", "png", "webp"]);
@@ -31,7 +34,7 @@ export async function processAvatar(input: Buffer): Promise<{ original: Buffer; 
 
   let meta: Awaited<ReturnType<ReturnType<typeof sharp>["metadata"]>>;
   try {
-    meta = await sharp(input).metadata();
+    meta = await sharp(input, SHARP_INPUT).metadata();
   } catch {
     throw invalid("Please upload a JPEG, PNG or WebP photo.");
   }
@@ -40,15 +43,17 @@ export async function processAvatar(input: Buffer): Promise<{ original: Buffer; 
     throw invalid("The photo must be at least 600 × 600 pixels.");
   }
 
+  if (meta.width * meta.height > MAX_INPUT_PIXELS) throw invalid("The photo dimensions are too large. Please use a smaller photo.");
+
   try {
     // sharp drops all metadata on output unless asked to keep it.
-    const original = await sharp(input)
+    const original = await sharp(input, SHARP_INPUT)
       .rotate()
       .flatten({ background: "#ffffff" })
       .resize({ width: MASTER_MAX_SIDE, height: MASTER_MAX_SIDE, fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: 90 })
       .toBuffer();
-    const avatar = await sharp(input)
+    const avatar = await sharp(input, SHARP_INPUT)
       .rotate()
       .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: "cover", position: sharp.strategy.attention })
       .webp({ quality: 82 })

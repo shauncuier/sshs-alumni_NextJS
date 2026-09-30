@@ -54,7 +54,8 @@ export async function registerForEvent(args: {
 
   // A new member needs a photo. Save it BEFORE the transaction (file writes cannot
   // roll back) and delete it again if anything below fails, so no orphan files remain.
-  let account = args.account;
+  // Avatar URLs are only ever set by the server, never taken from the request.
+  let account: AccountInput | undefined = args.account && { ...args.account, avatarUrl: null, avatarOriginalUrl: null };
   let photoDir: string | null = null;
   if (!args.sessionUserId && account) {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
@@ -82,6 +83,8 @@ export async function registerForEvent(args: {
           throw new AppError("SIGN_IN_REQUIRED", 401, "Sign in to register for this event.");
         }
         if (!account) throw new AppError("INVALID_ACCOUNT", 400, "Please fill in your details.");
+        // The membership flag was read before the transaction; re-check under the lock.
+        if (!account.avatarUrl) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
         const created = await createMemberAccount(tx, account);
         userId = created.id;
         createdAccount = { email: created.email };

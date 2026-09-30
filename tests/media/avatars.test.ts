@@ -51,6 +51,12 @@ describe("processAvatar", () => {
     await expect(processAvatar(Buffer.from("hello, I am not a jpg"))).rejects.toMatchObject({ code: "INVALID_PHOTO", message: msg });
   });
 
+  it("rejects images with an enormous pixel count even when the file is small", async () => {
+    const bomb = await sharp({ create: { width: 12000, height: 12000, channels: 3, background: "#808080" } }).png({ compressionLevel: 9 }).toBuffer();
+    expect(bomb.length).toBeLessThan(AVATAR_LIMITS.maxBytes);
+    await expect(processAvatar(bomb)).rejects.toMatchObject({ code: "INVALID_PHOTO", status: 400 });
+  });
+
   it("rejects photos over 5 MB", async () => {
     await expect(processAvatar(Buffer.alloc(AVATAR_LIMITS.maxBytes + 1))).rejects.toMatchObject({
       code: "INVALID_PHOTO",
@@ -66,7 +72,7 @@ describe("saveAvatar and avatarFilePath", () => {
     expect(saved.id).toMatch(/^[a-f0-9]{32}$/);
     expect(saved.avatarUrl).toBe(`/api/media/avatars/${saved.id}/avatar.webp`);
     expect(saved.originalUrl).toBe(`/api/media/avatars/${saved.id}/original.jpg`);
-    expect(await fs.readdir(saved.dir)).toEqual(["avatar.webp", "original.jpg"]);
+    expect((await fs.readdir(saved.dir)).sort()).toEqual(["avatar.webp", "original.jpg"]);
     expect(avatarFilePath(saved.id, "avatar.webp")).toBe(path.join(saved.dir, "avatar.webp"));
     await removeAvatarDir(saved.dir);
     await expect(fs.access(saved.dir)).rejects.toThrow();

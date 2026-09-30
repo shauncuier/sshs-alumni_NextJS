@@ -115,6 +115,17 @@ describe("profile photo when joining", () => {
     expect(await avatarFolders()).toEqual([]);
   });
 
+  it("ignores avatar URLs sent by the client", async () => {
+    await membershipEvent();
+    const evil = { ...account, avatarUrl: "https://evil.example/x.png", avatarOriginalUrl: "https://evil.example/y.jpg" };
+    await expect(registerForEvent({ slug: "jubilee", sessionUserId: null, account: evil, rsvp: paidRsvp })).rejects.toMatchObject({ code: "PHOTO_REQUIRED" });
+    expect(await prisma.user.count()).toBe(0);
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account: evil, photo, rsvp: paidRsvp });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.avatarUrl).toMatch(/^\/api\/media\/avatars\/[a-f0-9]{32}\/avatar\.webp$/);
+    expect(profile.avatarOriginalUrl).toMatch(/^\/api\/media\/avatars\/[a-f0-9]{32}\/original\.jpg$/);
+  });
+
   it("needs no photo from a signed-in member", async () => {
     await membershipEvent();
     const member = await makeMember();
