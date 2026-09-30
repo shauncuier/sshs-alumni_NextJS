@@ -3,6 +3,8 @@
 
 This document outlines the end-to-end production deployment, configuration, security hardening, and operational maintenance procedures for the **SSGHS Alumni Association Platform**.
 
+> **Hosting requirement — read first.** The join form stores every member's profile photo on the server's disk (under `UPLOADS_DIR`, see [Member photos](#member-photos-uploads-directory)). Production must therefore run on a host with a **persistent, backed-up disk**: a VPS (Option B), a cPanel Node.js app, or Docker with a mounted volume (Option C). **Vercel and other serverless hosts are not supported for joining** — their file systems are read-only or wiped between requests, so member photos would be lost. The photo processing library `sharp` also needs its native binary for the server's own platform: run `npm ci` **on the server** (never copy `node_modules` from a Windows or macOS machine).
+
 ---
 
 ## 1. Production Architecture Overview
@@ -15,7 +17,7 @@ This document outlines the end-to-end production deployment, configuration, secu
                  │
                  ▼
         [ Next.js 16 App Router ]
-      (Node.js Runtime / Serverless)
+      (Node.js server, persistent disk)
        ├── NextAuth Authentication (JWT + Bcrypt)
        ├── API Routes & Data Validation
        └── Dynamic Server-Rendered & Static Pages
@@ -45,11 +47,13 @@ Ensure the following variables are configured in your production hosting dashboa
 
 Profile photos given when joining are written to disk under `UPLOADS_DIR` (default `<app folder>/uploads`, i.e. `uploads/avatars/<id>/avatar.webp` and `original.jpg`). Point `UPLOADS_DIR` at a directory outside the release folder that **persists across deploys and is included in your backups**: losing it loses every member photo, including the print masters for the magazine and cards. The app process needs write access to it.
 
-This needs a server with a persistent disk (VPS or cPanel host, Options B and C). It is **not supported on Vercel** (serverless file systems are read-only or temporary); do not deploy the join form there without moving photo storage to object storage first.
+This needs a server with a persistent disk (a VPS or cPanel Node.js app, Option B, or Docker with a mounted volume, Option C). It is **not supported on Vercel** (serverless file systems are read-only or temporary); do not deploy the join form there without moving photo storage to object storage first.
 
 ---
 
-## 3. Deployment Option A: Vercel (Recommended)
+## 3. Deployment Option A: Vercel (not supported for joining)
+
+> ⚠️ **Not supported while member photos are stored on disk.** Vercel's serverless file system does not keep files, so photos uploaded through the join form would be lost. Use Option B or C. The steps below only apply if photo storage is first moved to object storage (e.g. S3 or R2).
 
 1. Push your code to a GitHub or GitLab repository.
 2. Log into [Vercel](https://vercel.com/) and click **New Project**.
@@ -136,6 +140,8 @@ COPY --from=builder /app/package.json ./package.json
 EXPOSE 3000
 CMD ["npm", "start"]
 ```
+
+Member photos must survive container rebuilds: mount a persistent, backed-up volume and point `UPLOADS_DIR` at it, e.g. `docker run -v /srv/sshs-alumni/uploads:/data/uploads -e UPLOADS_DIR=/data/uploads ...`. The image runs `npm ci` inside the Linux build stage, so `sharp` gets the Linux binary it needs.
 
 ---
 
