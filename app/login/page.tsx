@@ -5,7 +5,7 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
-import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_APPROVAL_MESSAGE } from "@/lib/account-access";
+import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/account-access";
 import { ArrowRight, ShieldCheck, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 
 function LoginForm() {
@@ -18,7 +18,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const blocked = searchParams.get("blocked");
   const [errorMessage, setErrorMessage] = useState(
-    blocked === "pending" ? PENDING_APPROVAL_MESSAGE : blocked === "rejected" ? MEMBERSHIP_REJECTED_MESSAGE : ""
+    blocked === "pending" ? PENDING_BANNER_MESSAGE : blocked === "rejected" ? MEMBERSHIP_REJECTED_MESSAGE : ""
   );
 
   // Sent here by the proxy with a session that is no longer allowed: drop it.

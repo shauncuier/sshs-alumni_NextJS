@@ -2,7 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-import { accountAccessBlock } from "@/lib/account-access";
+import { accountAccessBlock, LEGACY_PENDING_MESSAGE } from "@/lib/account-access";
+import { hasPendingMembershipPayment } from "@/lib/events/membership";
 
 export async function authorizeCredentials(credentials: Record<"email" | "password", string> | undefined) {
   if (!credentials?.email || !credentials?.password) {
@@ -30,6 +31,17 @@ export async function authorizeCredentials(credentials: Record<"email" | "passwo
   }
 
   const block = accountAccessBlock(user);
+  if (block?.code === "PENDING_APPROVAL") {
+    let paymentUnderReview: boolean;
+    try {
+      paymentUnderReview = await hasPendingMembershipPayment(prisma, user.id);
+    } catch (dbError) {
+      console.error("Sign-in membership lookup failed:", dbError);
+      throw new Error("Sign-in is temporarily unavailable. Please try again shortly.");
+    }
+    // No membership payment to review: an old free sign-up that never paid.
+    if (!paymentUnderReview) throw new Error(LEGACY_PENDING_MESSAGE);
+  }
   if (block) throw new Error(block.message);
 
   return {
