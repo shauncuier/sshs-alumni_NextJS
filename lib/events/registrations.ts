@@ -1,7 +1,7 @@
 import { Prisma, type Event, type EventRegistration } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
-import { createMemberAccount } from "@/lib/members/create-member";
+import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
 import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee } from "./pricing";
@@ -57,10 +57,14 @@ export async function registerForEvent(args: {
   // Avatar URLs are only ever set by the server, never taken from the request.
   let account: AccountInput | undefined = args.account && { ...args.account, avatarUrl: null, avatarOriginalUrl: null };
   let photoDir: string | null = null;
+  // Hashed here, not inside the transaction: bcrypt is slow and the transaction
+  // holds the event row lock, which would make every join wait for it.
+  let passwordHash: string | null = null;
   if (!args.sessionUserId && account) {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
     if (event?.isMembershipEvent) {
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
+      passwordHash = await hashMemberPassword(account.password);
       const saved = await saveAvatar(await processAvatar(args.photo));
       photoDir = saved.dir;
       account = { ...account, avatarUrl: saved.avatarUrl, avatarOriginalUrl: saved.originalUrl };
@@ -85,7 +89,7 @@ export async function registerForEvent(args: {
         if (!account) throw new AppError("INVALID_ACCOUNT", 400, "Please fill in your details.");
         // The membership flag was read before the transaction; re-check under the lock.
         if (!account.avatarUrl) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
-        const created = await createMemberAccount(tx, account);
+        const created = await createMemberAccount(tx, account, passwordHash);
         userId = created.id;
         createdAccount = { email: created.email };
       } else if (!event.isMembershipEvent) {

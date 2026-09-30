@@ -5,15 +5,29 @@ import type { AccountInput } from "@/lib/events/types";
 
 const FIRST_SSC_BATCH = 1985;
 const MIN_PASSWORD_LENGTH = 8;
+const BCRYPT_COST = 12;
+
+/**
+ * Hashes a new member's password, or returns null when it is too short to accept
+ * (createMemberAccount then reports why). bcrypt at cost 12 takes ~250 ms, so call
+ * this BEFORE opening a transaction that holds row locks, never inside one.
+ */
+export async function hashMemberPassword(password: unknown): Promise<string | null> {
+  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) return null;
+  return bcrypt.hash(password, BCRYPT_COST);
+}
 
 /**
  * Creates a PENDING member account with profile and verification request.
  * Shared by the combined membership registration form now, and by a separate
  * sign-up flow later, so separating membership from the Jubilee stays cheap.
+ * `passwordHash` comes from hashMemberPassword(input.password), computed before
+ * the caller's transaction so the slow hash never runs while locks are held.
  */
 export async function createMemberAccount(
   db: Prisma.TransactionClient,
-  input: AccountInput
+  input: AccountInput,
+  passwordHash: string | null
 ): Promise<{ id: string; email: string }> {
   const fullName = input.fullName?.trim();
   const email = input.email?.trim().toLowerCase();
@@ -30,6 +44,10 @@ export async function createMemberAccount(
   if (!Number.isInteger(batch) || batch < FIRST_SSC_BATCH || batch > new Date().getFullYear()) {
     throw new AppError("INVALID_ACCOUNT", 400, "Please choose your SSC batch year.");
   }
+  if (!passwordHash) {
+    // The password passed the checks above, so the caller forgot to hash it.
+    throw new Error("createMemberAccount needs the hash of input.password from hashMemberPassword().");
+  }
 
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
@@ -40,7 +58,7 @@ export async function createMemberAccount(
   const user = await db.user.create({
     data: {
       email,
-      passwordHash: await bcrypt.hash(input.password, 12),
+      passwordHash,
       role: "ALUMNI",
       status: "PENDING",
       profile: {
