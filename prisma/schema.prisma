@@ -97,6 +97,7 @@ model AlumniProfile {
   locationCountry    String // e.g. Bangladesh
   bio                String?            @db.Text
   avatarUrl          String?            @db.VarChar(500)
+  avatarOriginalUrl  String?            @db.VarChar(500)
   coverUrl           String?            @db.VarChar(500)
   phone              String?
   isPhonePublic      Boolean            @default(false)

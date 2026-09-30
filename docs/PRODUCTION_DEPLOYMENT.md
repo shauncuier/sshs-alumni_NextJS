@@ -38,7 +38,14 @@ Ensure the following variables are configured in your production hosting dashboa
 | `NEXTAUTH_URL` | **Yes** | Canonical public domain | `https://alumni.sabujsghs.edu.bd` |
 | `NEXT_PUBLIC_APP_URL` | **Yes** | Public frontend URL | `https://alumni.sabujsghs.edu.bd` |
 | `NEXT_PUBLIC_SCHOOL_NAME` | **Yes** | Official school name | `Sabuj Shikshayatan Government High School` |
+| `UPLOADS_DIR` | No | Absolute path where member photos are stored (must persist and be backed up) | `/var/lib/sshs-alumni/uploads` |
 | `NEXT_PUBLIC_SCHOOL_EIIN` | **Yes** | Bangladesh Board EIIN | `105070` |
+
+### Member photos (uploads directory)
+
+Profile photos given when joining are written to disk under `UPLOADS_DIR` (default `<app folder>/uploads`, i.e. `uploads/avatars/<id>/avatar.webp` and `original.jpg`). Point `UPLOADS_DIR` at a directory outside the release folder that **persists across deploys and is included in your backups**: losing it loses every member photo, including the print masters for the magazine and cards. The app process needs write access to it.
+
+This needs a server with a persistent disk (VPS or cPanel host, Options B and C). It is **not supported on Vercel** (serverless file systems are read-only or temporary); do not deploy the join form there without moving photo storage to object storage first.
 
 ---
 

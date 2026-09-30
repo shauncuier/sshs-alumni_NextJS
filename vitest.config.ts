@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import os from "node:os";
 import path from "node:path";
 import dotenv from "dotenv";
 
@@ -39,6 +40,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       TEST_DATABASE_URL,
+      UPLOADS_DIR: path.join(os.tmpdir(), `sshs-test-uploads-${process.pid}`),
       NEXTAUTH_SECRET: "test-secret-for-vitest-0123456789abcdef",
     },
   },

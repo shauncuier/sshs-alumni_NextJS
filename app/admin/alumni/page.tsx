@@ -128,8 +128,13 @@ export default function AdminAlumniPage() {
               {filteredRequests.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50">
                   <td className="py-4 px-6">
-                    <div className="font-bold text-slate-900">{r.fullName}</div>
-                    <div className="text-slate-400 text-[11px]">{r.email}</div>
+                    <div className="flex items-center gap-3">
+                      <img src={r.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
+                      <div>
+                        <div className="font-bold text-slate-900">{r.fullName}</div>
+                        <div className="text-slate-400 text-[11px]">{r.email}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="py-4 px-4 font-bold text-emerald-800">SSC {r.sscBatch}</td>
                   <td className="py-4 px-4 font-medium text-slate-600">{r.rollNumber}</td>

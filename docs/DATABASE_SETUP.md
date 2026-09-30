@@ -104,6 +104,8 @@ JSON columns (`skills`, `images`) get their `[]` default from the Prisma client,
 
 `npm run db:push` adds event content (packages, agenda, fees, payment instructions, membership flag) and registration details; nothing is dropped. `npm run db:seed` then adds the site's 5 events, with the Golden Jubilee as the **membership event**.
 
+`AlumniProfile.avatarOriginalUrl` (`VARCHAR(500)`, nullable) holds the print-quality copy of the profile photo given when joining; `avatarUrl` holds the 400 x 400 web avatar. Run `npm run db:push` to add the column. The image files themselves live on the server disk (see the production deployment guide), not in the database.
+
 Joining the association is the Jubilee registration. It stays closed ("Payment details coming soon") until an admin enters the Jubilee's **payment instructions** (bKash/Nagad number) in Admin → Events → Golden Jubilee → Pricing.
 
 ---

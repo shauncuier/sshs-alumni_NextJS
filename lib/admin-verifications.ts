@@ -18,6 +18,7 @@ interface VerificationRequestRow {
     profile: {
       fullName: string;
       phone: string | null;
+      avatarUrl: string | null;
       profession: string;
       locationCity: string;
       locationCountry: string;
@@ -32,6 +33,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     fullName: profile?.fullName ?? row.user.email,
     email: row.user.email,
     phone: profile?.phone ?? "",
+    avatarUrl: profile?.avatarUrl || "/logo.png",
     sscBatch: row.sscBatch,
     rollNumber: row.rollNumber ?? "",
     profession: profile?.profession ?? "",

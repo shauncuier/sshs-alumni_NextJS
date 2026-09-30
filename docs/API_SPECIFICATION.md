@@ -64,9 +64,17 @@ Body:
   "rsvp": { "packageName": "", "extraAdults": 0, "extraChildren": 0, "tshirtSize": "", "mealPreference": "", "paymentMethod": "bKash|Nagad|Bank|Cash", "transactionId": "", "donationAmount": 0, "notes": "" }
 }
 ```
+**Joining needs a profile photo.** A signed-out join is sent as `multipart/form-data` with two fields: `payload` (the JSON above, stringified) and `photo` (JPEG, PNG or WebP, at most 5 MB, at least 600 x 600 px). Signed-in members send plain `application/json` and no photo. The server checks the real image format, applies the EXIF rotation, strips all metadata, and stores a print master (`original.jpg`, JPEG, long side up to 2400 px) and a 400 x 400 web avatar (`avatar.webp`) under `UPLOADS_DIR/avatars/<id>/` before the registration is saved (removed again if the registration fails). The profile gets `avatarUrl` and `avatarOriginalUrl`.
+
 Success: `201 { registration: MemberRegistration, createdAccount: { email } | null }`. The registration starts `PENDING_PAYMENT` whenever a fee or donation is due; only a free event (verified members only) starts `CONFIRMED`.
 
-Errors: `400 INVALID_ACCOUNT`, `UNKNOWN_PACKAGE`, `INVALID_GUESTS`, `INVALID_DONATION`, `PAYMENT_REQUIRED`, `MEMBERSHIP_MUST_BE_PAID`; `401 SIGN_IN_REQUIRED`; `403 VERIFIED_MEMBERS_ONLY`; `404 EVENT_NOT_FOUND`; `409 ALREADY_REGISTERED`, `DUPLICATE_TRANSACTION`, `REGISTRATION_CLOSED`.
+Errors: `400 PHOTO_REQUIRED` ("Please add a profile photo."), `400 INVALID_PHOTO` ("Please upload a JPEG, PNG or WebP photo." / "The photo must be 5 MB or smaller." / "The photo must be at least 600 × 600 pixels."), `400 INVALID_ACCOUNT`, `UNKNOWN_PACKAGE`, `INVALID_GUESTS`, `INVALID_DONATION`, `PAYMENT_REQUIRED`, `MEMBERSHIP_MUST_BE_PAID`; `401 SIGN_IN_REQUIRED`; `403 VERIFIED_MEMBERS_ONLY`; `404 EVENT_NOT_FOUND`; `409 ALREADY_REGISTERED`, `DUPLICATE_TRANSACTION`, `REGISTRATION_CLOSED`.
+
+### `GET /api/media/avatars/[id]/avatar.webp`
+Public. `id` is a 32-character lowercase hex id; anything else is `404`. `image/webp`, `Cache-Control: public, max-age=31536000, immutable`, `X-Content-Type-Options: nosniff`.
+
+### `GET /api/media/avatars/[id]/original.jpg`
+The print-quality master. Admin / super admin only (`403` otherwise), `Cache-Control: private, no-store`, served inline as `member-photo-<id>.jpg`. Any other file name is `404`.
 
 ### `GET /api/me/registrations`
 Auth: signed in. `200 { registrations: MemberRegistration[] }` (each `CONFIRMED`/`CHECKED_IN` one carries its `ticket`); `401 { error: "Unauthorized" }`.

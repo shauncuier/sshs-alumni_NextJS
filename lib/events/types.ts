@@ -48,6 +48,9 @@ export interface AccountInput {
   profession?: string | null;
   company?: string | null;
   locationCity?: string | null;
+  /** Set by the server after the profile photo is saved; never read from the request. */
+  avatarUrl?: string | null;
+  avatarOriginalUrl?: string | null;
 }
 
 /** Package as sent to pages: display price plus the numbers the form needs. */
@@ -112,6 +115,7 @@ export interface AdminRegistration {
   batch: number | null;
   rollNumber: string | null;
   section: string | null;
+  avatarUrl: string | null;
   membershipStatus: "PENDING" | "VERIFIED" | "REJECTED";
   packageName: string | null;
   extraAdults: number;

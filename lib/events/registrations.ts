@@ -2,6 +2,7 @@ import { Prisma, type Event, type EventRegistration } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { createMemberAccount } from "@/lib/members/create-member";
+import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee } from "./pricing";
 import { eventFeeRules } from "./service";
@@ -45,9 +46,25 @@ export async function registerForEvent(args: {
   sessionUserId: string | null;
   account?: AccountInput;
   rsvp: RsvpInput;
+  /** Profile photo (raw upload); required when a signed-out visitor joins. */
+  photo?: Buffer;
   now?: Date;
 }): Promise<{ registration: MemberRegistration; createdAccount: { email: string } | null }> {
   const now = args.now ?? new Date();
+
+  // A new member needs a photo. Save it BEFORE the transaction (file writes cannot
+  // roll back) and delete it again if anything below fails, so no orphan files remain.
+  let account = args.account;
+  let photoDir: string | null = null;
+  if (!args.sessionUserId && account) {
+    const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
+    if (event?.isMembershipEvent) {
+      if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
+      const saved = await saveAvatar(await processAvatar(args.photo));
+      photoDir = saved.dir;
+      account = { ...account, avatarUrl: saved.avatarUrl, avatarOriginalUrl: saved.originalUrl };
+    }
+  }
 
   const result = await prisma
     .$transaction(async (tx) => {
@@ -64,8 +81,8 @@ export async function registerForEvent(args: {
         if (!event.isMembershipEvent) {
           throw new AppError("SIGN_IN_REQUIRED", 401, "Sign in to register for this event.");
         }
-        if (!args.account) throw new AppError("INVALID_ACCOUNT", 400, "Please fill in your details.");
-        const created = await createMemberAccount(tx, args.account);
+        if (!account) throw new AppError("INVALID_ACCOUNT", 400, "Please fill in your details.");
+        const created = await createMemberAccount(tx, account);
         userId = created.id;
         createdAccount = { email: created.email };
       } else if (!event.isMembershipEvent) {
@@ -153,6 +170,10 @@ export async function registerForEvent(args: {
           ? new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been used for a registration.")
           : new AppError("ALREADY_REGISTERED", 409, "You are already registered for this event.");
       }
+      throw err;
+    })
+    .catch(async (err: unknown) => {
+      if (photoDir) await removeAvatarDir(photoDir);
       throw err;
     });
 

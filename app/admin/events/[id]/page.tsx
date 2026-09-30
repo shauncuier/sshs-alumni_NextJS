@@ -940,8 +940,16 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
                 {filteredAttendees.map((a) => (
                   <tr key={a.id} className="border-t border-slate-100 text-xs">
                     <td className="py-3 px-3">
-                      <div className="font-bold text-slate-900">{a.name}</div>
-                      <div className="text-slate-500">{a.email} · {a.phone}</div>
+                      <div className="flex items-center gap-3">
+                        <img src={a.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
+                        <div>
+                          <div className="font-bold text-slate-900">{a.name}</div>
+                          <div className="text-slate-500">{a.email} · {a.phone}</div>
+                          {a.avatarUrl?.startsWith("/api/media/avatars/") && (
+                            <a href={a.avatarUrl.replace("avatar.webp", "original.jpg")} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold underline">View print photo</a>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="py-3 px-3">
                       SSC {a.batch ?? "—"}{a.rollNumber ? ` · Roll ${a.rollNumber}` : ""}{a.section ? ` · ${a.section}` : ""}

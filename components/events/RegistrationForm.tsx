@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
@@ -10,7 +10,25 @@ const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
 const PAYMENT_METHODS = ["bKash", "Nagad", "Bank", "Cash"];
 const input = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600";
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+const PHOTO_MIN_SIDE = 600;
 const label = "block text-xs font-semibold text-slate-700 mb-1";
+
+/** Returns an error message, or null when the file is an acceptable profile photo. */
+async function checkPhoto(file: File): Promise<string | null> {
+  if (!PHOTO_TYPES.includes(file.type)) return "Please upload a JPEG, PNG or WebP photo.";
+  if (file.size > PHOTO_MAX_BYTES) return "The photo must be 5 MB or smaller.";
+  try {
+    const bitmap = await createImageBitmap(file);
+    const { width, height } = bitmap;
+    bitmap.close();
+    if (Math.min(width, height) < PHOTO_MIN_SIDE) return "The photo must be at least 600 × 600 pixels.";
+  } catch {
+    return "Please upload a JPEG, PNG or WebP photo.";
+  }
+  return null;
+}
 
 /**
  * One form for joining (membership event, signed out: account + registration) and
@@ -43,10 +61,32 @@ export default function RegistrationForm({
   const [donation, setDonation] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bKash");
   const [transactionId, setTransactionId] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingAccount, setExistingAccount] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [joined, setJoined] = useState(false);
+
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null); // eslint-disable-line react-hooks/set-state-in-effect
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+
+  const choosePhoto = async (file: File | undefined) => {
+    setPhoto(null);
+    setPhotoError(null);
+    if (!file) return;
+    const problem = await checkPhoto(file);
+    if (problem) setPhotoError(problem);
+    else setPhoto(file);
+  };
 
   if (joined) {
     return (
@@ -93,10 +133,7 @@ export default function RegistrationForm({
     setExistingAccount(false);
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/events/${event.slug}/rsvp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const payload = JSON.stringify({
           account: needsAccount ? { ...account, sscBatch: Number(account.sscBatch) } : undefined,
           rsvp: {
             packageName: event.packages.length ? packageName : null,
@@ -108,8 +145,18 @@ export default function RegistrationForm({
             paymentMethod: paid ? paymentMethod : null,
             transactionId: paid ? transactionId : null,
           },
-        }),
-      });
+        });
+      // Joining sends the photo along, so it goes as multipart; signed-in members stay JSON.
+      let res: Response;
+      if (needsAccount) {
+        if (!photo) throw new Error("Please add a profile photo.");
+        const form = new FormData();
+        form.append("payload", payload);
+        form.append("photo", photo);
+        res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", body: form });
+      } else {
+        res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+      }
       const body = await res.json();
       if (!res.ok) {
         if (body.code === "EMAIL_EXISTS") setExistingAccount(true);
@@ -137,6 +184,26 @@ export default function RegistrationForm({
 
       {showAccount && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2 flex items-center gap-4">
+            <div className="w-20 h-20 shrink-0 rounded-full overflow-hidden bg-slate-100 border border-slate-300 flex items-center justify-center text-[10px] text-slate-400 text-center">
+              {photoPreview ? <img src={photoPreview} alt="Your profile photo preview" className="w-full h-full object-cover" /> : "No photo"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <label htmlFor="reg-photo" className={label}>Profile photo *</label>
+              <input
+                id="reg-photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => void choosePhoto(e.target.files?.[0])}
+                aria-describedby="reg-photo-help"
+                className="block w-full text-xs text-slate-600 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-800 file:font-bold"
+              />
+              <p id="reg-photo-help" className="text-[11px] text-slate-500 mt-1">
+                A clear, recent photo of your face. It will be used on your alumni card and in association publications. JPEG, PNG or WebP, up to 5 MB, at least 600 × 600 px.
+              </p>
+              {photoError && <p role="alert" className="text-[11px] font-bold text-rose-700 mt-1">{photoError}</p>}
+            </div>
+          </div>
           <div className="sm:col-span-2">
             <label htmlFor="reg-name" className={label}>Full name *</label>
             <input id="reg-name" required className={input} value={account.fullName} onChange={(e) => setAccount({ ...account, fullName: e.target.value })} />
@@ -178,7 +245,8 @@ export default function RegistrationForm({
             className="sm:col-span-2 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold"
             onClick={(e) => {
               const form = (e.currentTarget as HTMLButtonElement).form!;
-              if (form.reportValidity()) setStep(2);
+              if (!photo && !photoError) setPhotoError("Please add a profile photo.");
+              if (form.reportValidity() && photo) setStep(2);
             }}
           >
             Continue to registration &amp; payment
