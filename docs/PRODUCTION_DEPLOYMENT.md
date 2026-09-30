@@ -40,12 +40,20 @@ Ensure the following variables are configured in your production hosting dashboa
 | `NEXTAUTH_URL` | **Yes** | Canonical public domain | `https://alumni.sabujsghs.edu.bd` |
 | `NEXT_PUBLIC_APP_URL` | **Yes** | Public frontend URL | `https://alumni.sabujsghs.edu.bd` |
 | `NEXT_PUBLIC_SCHOOL_NAME` | **Yes** | Official school name | `Sabuj Shikshayatan Government High School` |
-| `UPLOADS_DIR` | No | Absolute path where member photos are stored (must persist and be backed up) | `/var/lib/sshs-alumni/uploads` |
+| `UPLOADS_DIR` | No | Absolute path where member photos and proof-of-study documents are stored (must persist, be backed up, and never be served as static files) | `/var/lib/sshs-alumni/uploads` |
 | `NEXT_PUBLIC_SCHOOL_EIIN` | **Yes** | Bangladesh Board EIIN | `105070` |
 
 ### Member photos (uploads directory)
 
 Profile photos given when joining are written to disk under `UPLOADS_DIR` (default `<app folder>/uploads`, i.e. `uploads/avatars/<id>/avatar.webp` and `original.jpg`). Point `UPLOADS_DIR` at a directory outside the release folder that **persists across deploys and is included in your backups**: losing it loses every member photo, including the print masters for the magazine and cards. The app process needs write access to it.
+
+### Proof-of-study documents (`uploads/proofs`) — sensitive
+
+New members also upload a document that shows they studied at SSGHS (SSC certificate, marksheet, school ID card and so on). These are stored under `UPLOADS_DIR/proofs/<id>/document.pdf` or `document.jpg` and contain personal data:
+
+- **Private:** they are served only through `/api/media/proofs/...`, which requires an admin session. **Never** expose `UPLOADS_DIR` (or `uploads/proofs`) through the web server as static files — no nginx `location`/`alias`, cPanel public folder or CDN pointing at it. Keep `UPLOADS_DIR` outside `public/` and the web root, readable only by the app's user (e.g. `chmod 700`).
+- **Backed up** with the rest of `UPLOADS_DIR`, and protected like the database backups (restricted access, encrypted where possible).
+- **Short-lived:** the app deletes each file once the membership is approved or rejected. If a deletion fails (logged as `[proof-retention] ...` with the request id), it is retried the next time an admin opens the verification queue.
 
 This needs a server with a persistent disk (a VPS or cPanel Node.js app, Option B, or Docker with a mounted volume, Option C). It is **not supported on Vercel** (serverless file systems are read-only or temporary); do not deploy the join form there without moving photo storage to object storage first.
 

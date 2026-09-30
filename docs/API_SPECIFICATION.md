@@ -61,17 +61,20 @@ Body:
 ```json
 {
   "account": { "fullName": "", "email": "", "phone": "", "password": "", "sscBatch": 1995, "rollNumber": "", "section": "", "profession": "", "company": "", "locationCity": "" },
-  "rsvp": { "packageName": "", "extraAdults": 0, "extraChildren": 0, "tshirtSize": "", "mealPreference": "", "paymentMethod": "bKash|Nagad|Bank|Cash", "transactionId": "", "donationAmount": 0, "notes": "" }
+  "rsvp": { "packageName": "", "extraAdults": 0, "extraChildren": 0, "tshirtSize": "", "mealPreference": "", "paymentMethod": "bKash|Nagad|Bank|Cash", "transactionId": "", "donationAmount": 0, "notes": "" },
+  "proof": { "type": "SSC_CERTIFICATE", "note": "" }
 }
 ```
-**Joining needs a profile photo.** A signed-out join is sent as `multipart/form-data` with two fields: `payload` (the JSON above, stringified) and `photo` (JPEG, PNG or WebP, at most 5 MB, at least 600 x 600 px). Signed-in members send plain `application/json` and no photo. The server checks the real image format, applies the EXIF rotation, strips all metadata, and stores a print master (`original.jpg`, JPEG, long side up to 2400 px) and a 400 x 400 web avatar (`avatar.webp`) under `UPLOADS_DIR/avatars/<id>/` before the registration is saved (removed again if the registration fails). The profile gets `avatarUrl` and `avatarOriginalUrl`.
+**Joining needs a profile photo and a proof of study.** A signed-out join is sent as `multipart/form-data` with three fields: `payload` (the JSON above, stringified), `photo` (JPEG, PNG or WebP, at most 5 MB, at least 600 x 600 px) and `proof` (a document that shows the member studied at SSGHS: JPEG, PNG or WebP image or PDF, at most 10 MB). Signed-in members send plain `application/json` with no photo and no proof; files and `proof` sent by a signed-in member are ignored. The server checks the real image format, applies the EXIF rotation, strips all metadata, and stores a print master (`original.jpg`, JPEG, long side up to 2400 px) and a 400 x 400 web avatar (`avatar.webp`) under `UPLOADS_DIR/avatars/<id>/` before the registration is saved (removed again if the registration fails). The profile gets `avatarUrl` and `avatarOriginalUrl`.
+
+`payload.proof.type` is one of `SSC_CERTIFICATE` (SSC certificate), `SSC_MARKSHEET` (SSC marksheet / transcript), `SSC_ADMIT_OR_REGISTRATION` (SSC admit or registration card), `SCHOOL_TESTIMONIAL` (school testimonial / leaving certificate), `SCHOOL_ID_CARD` (old school ID card) or `OTHER`; `OTHER` needs `payload.proof.note`, a short description (at most 200 characters). The server checks the real bytes: a PDF (starting with `%PDF-`) is stored unchanged and never parsed; an image is re-encoded as JPEG with the EXIF rotation applied, all metadata stripped and the long side at most 2400 px. The file is saved as `document.pdf` or `document.jpg` under `UPLOADS_DIR/proofs/<id>/` before the registration is saved (removed again, together with the photo, if the registration fails). The new member's verification request gets `proofType`, `proofNote`, `proofFileUrl` and `proofMime`; URLs sent by the client are never used. The file is private (admins only, see below) and is deleted once the membership is decided.
 
 Success: `201 { registration: MemberRegistration, createdAccount: { email } | null }`. The registration starts `PENDING_PAYMENT` whenever a fee or donation is due; only a free event (verified members only) starts `CONFIRMED`.
 
-Errors: `400 PHOTO_REQUIRED` ("Please add a profile photo."), `400 INVALID_PHOTO` ("Please upload a JPEG, PNG or WebP photo." / "The photo must be 5 MB or smaller." / "The photo must be at least 600 × 600 pixels."), `400 INVALID_ACCOUNT`, `UNKNOWN_PACKAGE`, `INVALID_GUESTS`, `INVALID_DONATION`, `PAYMENT_REQUIRED`, `MEMBERSHIP_MUST_BE_PAID`; `401 SIGN_IN_REQUIRED`; `403 VERIFIED_MEMBERS_ONLY`; `404 EVENT_NOT_FOUND`; `409 ALREADY_REGISTERED`, `DUPLICATE_TRANSACTION`, `REGISTRATION_CLOSED`.
+Errors: `400 PHOTO_REQUIRED` ("Please add a profile photo."), `400 INVALID_PHOTO` ("Please upload a JPEG, PNG or WebP photo." / "The photo must be 5 MB or smaller." / "The photo must be at least 600 × 600 pixels."), `400 PROOF_REQUIRED` ("Please add a document that shows you studied at SSGHS."), `400 INVALID_PROOF` ("Please choose the type of document." / "Please describe the document." / "Please keep the description to 200 characters or fewer." / "Please upload your proof as a JPEG, PNG, WebP or PDF file." / "The proof document must be 10 MB or smaller."), `400 INVALID_ACCOUNT`, `UNKNOWN_PACKAGE`, `INVALID_GUESTS`, `INVALID_DONATION`, `PAYMENT_REQUIRED`, `MEMBERSHIP_MUST_BE_PAID`; `401 SIGN_IN_REQUIRED`; `403 VERIFIED_MEMBERS_ONLY`; `404 EVENT_NOT_FOUND`; `409 ALREADY_REGISTERED`, `DUPLICATE_TRANSACTION`, `REGISTRATION_CLOSED`.
 
 Request-level errors, returned before any of the checks above:
-- **Size limit:** the whole multipart body may be at most the 5 MB photo limit plus 64 KB for the other fields. A larger body is refused with `400 INVALID_PHOTO` ("The photo must be 5 MB or smaller."). This happens up front when `Content-Length` is too large, or as soon as a streamed body passes the cap, so an oversized upload is never read in full. A `photo` part over 5 MB inside a smaller body gets the same response.
+- **Size limit:** the whole multipart body may be at most 5 MB (photo) + 10 MB (proof) + 64 KB for the other fields. A larger body is refused with `400 UPLOAD_TOO_LARGE` ("The upload is too large. The photo must be 5 MB or smaller and the proof document 10 MB or smaller."). This happens up front when `Content-Length` is too large, or as soon as a streamed body passes the cap, so an oversized upload is never read in full. Inside an allowed body, a `photo` part over 5 MB is `400 INVALID_PHOTO` ("The photo must be 5 MB or smaller.") and a `proof` part over 10 MB is `400 INVALID_PROOF` ("The proof document must be 10 MB or smaller.").
 - **`400 INVALID_REQUEST`** ("Invalid request."): the body is not valid JSON, the `payload` field is missing or is not a JSON object, or the multipart body cannot be parsed (including a multipart request with no body).
 
 ### `GET /api/media/avatars/[id]/avatar.webp`
@@ -79,6 +82,9 @@ Public. `id` is a 32-character lowercase hex id; anything else is `404`. `image/
 
 ### `GET /api/media/avatars/[id]/original.jpg`
 The print-quality master. Admin / super admin only (`403` otherwise), `Cache-Control: private, no-store`, served inline as `member-photo-<id>.jpg`. Any other file name is `404`.
+
+### `GET /api/media/proofs/[id]/document.pdf` and `GET /api/media/proofs/[id]/document.jpg`
+A new member's proof of study. Admin / super admin only: `401` when signed out, `403` for anyone else (including moderators). `id` is a 32-character lowercase hex id and the file name must be `document.pdf` or `document.jpg`; anything else, or a proof already deleted after the decision, is `404`. Headers: `Content-Type` `application/pdf` or `image/jpeg`, `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`, `Content-Disposition: inline; filename="membership-proof-<id>.<pdf|jpg>"`, and `Content-Security-Policy: sandbox` (images: `default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox`).
 
 ### `GET /api/me/registrations`
 Auth: signed in. `200 { registrations: MemberRegistration[] }` (each `CONFIRMED`/`CHECKED_IN` one carries its `ticket`); `401 { error: "Unauthorized" }`.
@@ -110,6 +116,8 @@ Auth: admin. Body `{ "action": "APPROVE" | "CANCEL" | "CHECK_IN" | "UNDO_CHECK_I
 
 - `APPROVE` (from `PENDING_PAYMENT`) records `confirmedBy`/`confirmedAt`; for the membership event it also verifies the member (user and profile `VERIFIED`, pending verification request `VERIFIED`) in the same transaction.
 - `CANCEL` on a membership registration rejects a member who is still `PENDING`.
+- Once the membership is decided (`APPROVE`, or a `CANCEL` that rejects), the member's proof-of-study file is deleted after the transaction commits: `proofFileUrl` becomes `null` and `proofDeletedAt` is set, while `proofType`, `proofNote` and `reviewedBy` stay. A `CANCEL` that does not reject (the member is already verified) leaves the proof alone. A deletion failure never fails the decision: it is logged with the request id and retried when the verification queue is next loaded.
+- `AdminRegistration.proof` is `{ type, note, fileUrl, mime, reviewedBy, deletedAt } | null` from the member's latest verification request (`fileUrl` is `null` once deleted).
 - Errors: `400 { error: "Unknown action." }` (also `INVALID_ACTION` from the service); `404 REGISTRATION_NOT_FOUND`; `409 INVALID_TRANSITION` (wrong current status, or another admin changed it first); `403`.
 
 ---
@@ -124,7 +132,7 @@ Fetches transparent fundraising campaigns.
 ## 🛡️ 6. Admin Endpoints
 
 ### `GET /api/admin/verifications?status=PENDING|VERIFIED|REJECTED|all`
-Auth: `ADMIN` / `SUPER_ADMIN` (`403` otherwise). Default status `PENDING`; an unknown value is `400`. `200 { requests, total }`; each request carries its `user` (email, status, profile) and `awaitingPayment: boolean`, true when the member has a pending membership (Jubilee) registration payment. Database failure: `503`.
+Auth: `ADMIN` / `SUPER_ADMIN` (`403` otherwise). Default status `PENDING`; an unknown value is `400`. `200 { requests, total }`; each request carries its `user` (email, status, profile) and `awaitingPayment: boolean`, true when the member has a pending membership (Jubilee) registration payment, plus the proof fields `proofType`, `proofNote`, `proofFileUrl` (`null` once deleted), `proofMime`, `proofDeletedAt` and `reviewedBy`. Loading the queue also retries deleting proofs of decided requests that an earlier attempt could not remove. Database failure: `503`.
 
 ### `PATCH /api/admin/verifications`
-Auth: admin. Body `{ requestId, status: "VERIFIED" | "REJECTED" }`. `200 { message, request }`. Errors: `400` invalid input; `404` request not found; `409` already decided, or the member is awaiting payment ("Confirm their Jubilee payment from the event's attendee list."); `503` database failure.
+Auth: admin. Body `{ requestId, status: "VERIFIED" | "REJECTED" }`. `200 { message, request }`; after the decision commits the member's proof-of-study file is deleted (as for the attendee list), and `request` shows the result (`proofFileUrl: null`, `proofDeletedAt` set). Errors: `400` invalid input; `404` request not found; `409` already decided, or the member is awaiting payment ("Confirm their Jubilee payment from the event's attendee list."); `503` database failure.

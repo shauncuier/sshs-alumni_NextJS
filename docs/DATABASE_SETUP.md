@@ -94,9 +94,25 @@ npx prisma db push --accept-data-loss
 | **`NewsArticle`**, **`AlumniStory`**, **`Achievement`** | Editorial content. | `title`, `category`, `publishedAt` |
 | **`GalleryAlbum`** / **`GalleryPhoto`** | Photo albums. | `title`, `category`, `coverUrl` (album); `imageUrl`, `caption` (photo) |
 | **`Message`** / **`Notification`** / **`Announcement`** | Messaging and alerts. | `senderId`, `receiverId`, `isRead`, `priority` |
-| **`VerificationRequest`** | Admin queue for verifying graduation records. | `userId`, `sscBatch`, `proofDocumentUrl`, `status` |
+| **`VerificationRequest`** | Admin queue for verifying graduation records. | `userId`, `sscBatch`, `proofDocumentUrl`, `status`, `reviewedBy`, `proofType`, `proofNote`, `proofFileUrl`, `proofMime`, `proofDeletedAt` |
 
 JSON columns (`skills`, `images`) get their `[]` default from the Prisma client, not from the database. Raw SQL inserts must supply a value.
+
+---
+
+## Proof of study when joining (Oct 2026)
+
+New members upload a document that shows they studied at SSGHS when they join. `VerificationRequest` gets five **nullable** columns, so existing rows are unaffected and `npm run db:push` adds them without prompts or data changes:
+
+| Column | Type | Meaning |
+| :--- | :--- | :--- |
+| `proofType` | `VARCHAR(40)` | `SSC_CERTIFICATE`, `SSC_MARKSHEET`, `SSC_ADMIT_OR_REGISTRATION`, `SCHOOL_TESTIMONIAL`, `SCHOOL_ID_CARD` or `OTHER` |
+| `proofNote` | `VARCHAR(200)` | The member's description (required for `OTHER`) |
+| `proofFileUrl` | `VARCHAR(500)` | `/api/media/proofs/<id>/document.pdf` or `.jpg` while the file exists; `NULL` once deleted |
+| `proofMime` | `VARCHAR(50)` | `application/pdf` or `image/jpeg` |
+| `proofDeletedAt` | `DATETIME(3)` | When the file was deleted after the membership decision |
+
+The file itself lives on disk under `UPLOADS_DIR/proofs/<id>/` (see `docs/PRODUCTION_DEPLOYMENT.md`), not in the database. After the membership is approved or rejected the file is deleted and `proofFileUrl` set to `NULL`; `proofType`, `proofNote`, `reviewedBy` and `proofDeletedAt` stay as the record of what was checked. Back up the database and follow *Upgrading the live (remote) database* below before pushing to production.
 
 ---
 
