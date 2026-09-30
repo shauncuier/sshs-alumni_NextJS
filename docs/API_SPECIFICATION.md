@@ -70,6 +70,10 @@ Success: `201 { registration: MemberRegistration, createdAccount: { email } | nu
 
 Errors: `400 PHOTO_REQUIRED` ("Please add a profile photo."), `400 INVALID_PHOTO` ("Please upload a JPEG, PNG or WebP photo." / "The photo must be 5 MB or smaller." / "The photo must be at least 600 × 600 pixels."), `400 INVALID_ACCOUNT`, `UNKNOWN_PACKAGE`, `INVALID_GUESTS`, `INVALID_DONATION`, `PAYMENT_REQUIRED`, `MEMBERSHIP_MUST_BE_PAID`; `401 SIGN_IN_REQUIRED`; `403 VERIFIED_MEMBERS_ONLY`; `404 EVENT_NOT_FOUND`; `409 ALREADY_REGISTERED`, `DUPLICATE_TRANSACTION`, `REGISTRATION_CLOSED`.
 
+Request-level errors, returned before any of the checks above:
+- **Size limit:** the whole multipart body may be at most the 5 MB photo limit plus 64 KB for the other fields. A larger body is refused with `400 INVALID_PHOTO` ("The photo must be 5 MB or smaller."). This happens up front when `Content-Length` is too large, or as soon as a streamed body passes the cap, so an oversized upload is never read in full. A `photo` part over 5 MB inside a smaller body gets the same response.
+- **`400 INVALID_REQUEST`** ("Invalid request."): the body is not valid JSON, the `payload` field is missing or is not a JSON object, or the multipart body cannot be parsed (including a multipart request with no body).
+
 ### `GET /api/media/avatars/[id]/avatar.webp`
 Public. `id` is a 32-character lowercase hex id; anything else is `404`. `image/webp`, `Cache-Control: public, max-age=31536000, immutable`, `X-Content-Type-Options: nosniff`.
 
