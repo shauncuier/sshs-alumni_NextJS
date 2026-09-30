@@ -12,6 +12,19 @@ export async function makeImage(
   return format === "gif" ? img.gif().toBuffer() : img.toFormat(format).toBuffer();
 }
 
+/** A minimal, valid one-page PDF. */
+export function makePdf(): Buffer {
+  return Buffer.from(
+    "%PDF-1.4\n" +
+      "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n" +
+      "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n" +
+      "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >> endobj\n" +
+      "trailer << /Root 1 0 R >>\n" +
+      "%%EOF\n",
+    "latin1"
+  );
+}
+
 /** A JPEG that carries EXIF (including an orientation tag). */
 export async function makeImageWithExif(width = 800, height = 800, orientation = 1): Promise<Buffer> {
   return sharp(await makeImage(width, height))

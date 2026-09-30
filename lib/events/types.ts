@@ -51,6 +51,18 @@ export interface AccountInput {
   /** Set by the server after the profile photo is saved; never read from the request. */
   avatarUrl?: string | null;
   avatarOriginalUrl?: string | null;
+  /** Set by the server after the proof-of-study document is saved; never read from the request. */
+  proofType?: string | null;
+  proofNote?: string | null;
+  proofFileUrl?: string | null;
+  proofMime?: string | null;
+}
+
+/** Proof of study sent with a signed-out join: `payload.proof` plus the `proof` file. */
+export interface ProofInput {
+  type?: unknown;
+  note?: unknown;
+  file?: Buffer;
 }
 
 /** Package as sent to pages: display price plus the numbers the form needs. */

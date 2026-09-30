@@ -19,8 +19,8 @@ const AVATAR_FILES: readonly AvatarFile[] = ["avatar.webp", "original.jpg"];
 
 const invalid = (message: string) => new AppError("INVALID_PHOTO", 400, message);
 
-/** Where member photos live on disk: env UPLOADS_DIR, or ./uploads next to the app. */
-function uploadsRoot(): string {
+/** Where member uploads live on disk: env UPLOADS_DIR, or ./uploads next to the app. */
+export function uploadsRoot(): string {
   return path.resolve(process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads"));
 }
 

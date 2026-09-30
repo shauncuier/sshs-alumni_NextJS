@@ -44,6 +44,9 @@ export default function RegisterPage() {
           <p className="text-sm text-slate-600">
             Membership is through the <strong>{event.title}</strong> registration. Fill in your details, pay, and enter your
             transaction ID; the committee confirms your payment and verifies your membership together.
+            {sessionStatus === "unauthenticated" && (
+              <> New members add a profile photo and a document that shows they studied at SSGHS (for example an SSC certificate or marksheet).</>
+            )}
           </p>
         )}
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">

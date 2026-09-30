@@ -3,16 +3,32 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
 import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
+import { processProof, removeProofDir, saveProof } from "@/lib/media/proofs";
+import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee } from "./pricing";
 import { eventFeeRules } from "./service";
 import { ticketInfo } from "./tickets";
-import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type RsvpInput } from "./types";
+import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type ProofInput, type RsvpInput } from "./types";
 
 const ACTIVE_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] as const;
 
 function normalizeTransactionId(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, "").toUpperCase();
+}
+
+const proofRequired = () => new AppError("PROOF_REQUIRED", 400, "Please add a document that shows you studied at SSGHS.");
+
+/** Checks the proof-of-study details a new member sent (the file itself is checked by processProof). */
+function checkProofDetails(proof: ProofInput | undefined): { type: ProofType; note: string | null; file: Buffer } {
+  if (!proof?.file || proof.file.length === 0) throw proofRequired();
+  if (!isProofType(proof.type)) throw new AppError("INVALID_PROOF", 400, "Please choose the type of document.");
+  const note = typeof proof.note === "string" ? proof.note.trim() : "";
+  if (proof.type === "OTHER" && !note) throw new AppError("INVALID_PROOF", 400, "Please describe the document.");
+  if (note.length > PROOF_NOTE_MAX) {
+    throw new AppError("INVALID_PROOF", 400, `Please keep the description to ${PROOF_NOTE_MAX} characters or fewer.`);
+  }
+  return { type: proof.type, note: note || null, file: proof.file };
 }
 
 async function toMemberRegistration(reg: EventRegistration & { event: Event }): Promise<MemberRegistration> {
@@ -48,15 +64,31 @@ export async function registerForEvent(args: {
   rsvp: RsvpInput;
   /** Profile photo (raw upload); required when a signed-out visitor joins. */
   photo?: Buffer;
+  /** Proof of study (type, note and raw upload); required when a signed-out visitor joins. */
+  proof?: ProofInput;
   now?: Date;
 }): Promise<{ registration: MemberRegistration; createdAccount: { email: string } | null }> {
   const now = args.now ?? new Date();
 
-  // A new member needs a photo. Save it BEFORE the transaction (file writes cannot
-  // roll back) and delete it again if anything below fails, so no orphan files remain.
-  // Avatar URLs are only ever set by the server, never taken from the request.
-  let account: AccountInput | undefined = args.account && { ...args.account, avatarUrl: null, avatarOriginalUrl: null };
+  // A new member needs a photo and a proof-of-study document. Both are saved BEFORE
+  // the transaction (file writes cannot roll back) and deleted again if anything
+  // below fails, so no orphan files remain. Their URLs are only ever set by the
+  // server, never taken from the request.
+  let account: AccountInput | undefined = args.account && {
+    ...args.account,
+    avatarUrl: null,
+    avatarOriginalUrl: null,
+    proofType: null,
+    proofNote: null,
+    proofFileUrl: null,
+    proofMime: null,
+  };
   let photoDir: string | null = null;
+  let proofDir: string | null = null;
+  const removeUploads = async () => {
+    if (photoDir) await removeAvatarDir(photoDir);
+    if (proofDir) await removeProofDir(proofDir);
+  };
   // Hashed here, not inside the transaction: bcrypt is slow and the transaction
   // holds the event row lock, which would make every join wait for it.
   let passwordHash: string | null = null;
@@ -64,10 +96,29 @@ export async function registerForEvent(args: {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
     if (event?.isMembershipEvent) {
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
+      const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);
-      const saved = await saveAvatar(await processAvatar(args.photo));
-      photoDir = saved.dir;
-      account = { ...account, avatarUrl: saved.avatarUrl, avatarOriginalUrl: saved.originalUrl };
+      // Validate both files before writing either of them.
+      const photoFiles = await processAvatar(args.photo);
+      const proofFile = await processProof(proof.file);
+      try {
+        const savedPhoto = await saveAvatar(photoFiles);
+        photoDir = savedPhoto.dir;
+        const savedProof = await saveProof(proofFile);
+        proofDir = savedProof.dir;
+        account = {
+          ...account,
+          avatarUrl: savedPhoto.avatarUrl,
+          avatarOriginalUrl: savedPhoto.originalUrl,
+          proofType: proof.type,
+          proofNote: proof.note,
+          proofFileUrl: savedProof.fileUrl,
+          proofMime: savedProof.mime,
+        };
+      } catch (err) {
+        await removeUploads();
+        throw err;
+      }
     }
   }
 
@@ -89,6 +140,7 @@ export async function registerForEvent(args: {
         if (!account) throw new AppError("INVALID_ACCOUNT", 400, "Please fill in your details.");
         // The membership flag was read before the transaction; re-check under the lock.
         if (!account.avatarUrl) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
+        if (!account.proofFileUrl) throw proofRequired();
         const created = await createMemberAccount(tx, account, passwordHash);
         userId = created.id;
         createdAccount = { email: created.email };
@@ -180,7 +232,7 @@ export async function registerForEvent(args: {
       throw err;
     })
     .catch(async (err: unknown) => {
-      if (photoDir) await removeAvatarDir(photoDir);
+      await removeUploads();
       throw err;
     });
 

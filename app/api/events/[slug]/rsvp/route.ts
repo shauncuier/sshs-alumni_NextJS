@@ -4,16 +4,22 @@ import { getMemberRegistration, registerForEvent } from "@/lib/events/registrati
 import { AppError } from "@/lib/app-error";
 import type { AccountInput, RsvpInput } from "@/lib/events/types";
 import { AVATAR_LIMITS } from "@/lib/media/avatars";
+import { PROOF_LIMITS } from "@/lib/media/proofs";
 import { getSessionUser } from "@/lib/session-user";
 
 type Params = { params: Promise<{ slug: string }> };
+type Payload = { account?: AccountInput; rsvp?: RsvpInput; proof?: { type?: unknown; note?: unknown } | null };
 
-// The photo may be 5 MB; the rest of the multipart body (JSON details, boundaries) is small.
-const MAX_BODY_BYTES = AVATAR_LIMITS.maxBytes + 64 * 1024;
-const tooLarge = () => new AppError("INVALID_PHOTO", 400, "The photo must be 5 MB or smaller.");
+// The photo may be 5 MB and the proof document 10 MB; the rest of the multipart
+// body (JSON details, boundaries) is small.
+const MAX_BODY_BYTES = AVATAR_LIMITS.maxBytes + PROOF_LIMITS.maxBytes + 64 * 1024;
+const tooLarge = () =>
+  new AppError("UPLOAD_TOO_LARGE", 400, "The upload is too large. The photo must be 5 MB or smaller and the proof document 10 MB or smaller.");
+const photoTooLarge = () => new AppError("INVALID_PHOTO", 400, "The photo must be 5 MB or smaller.");
+const proofTooLarge = () => new AppError("INVALID_PROOF", 400, "The proof document must be 10 MB or smaller.");
 const invalidRequest = () => new AppError("INVALID_REQUEST", 400, "Invalid request.");
 
-function parsePayload(raw: unknown): { account?: AccountInput; rsvp?: RsvpInput } {
+function parsePayload(raw: unknown): Payload {
   try {
     const parsed = JSON.parse(String(raw ?? ""));
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
@@ -61,16 +67,23 @@ export async function GET(_req: Request, { params }: Params) {
 export async function POST(req: Request, { params }: Params) {
   const me = await getSessionUser();
   try {
-    let body: { account?: AccountInput; rsvp?: RsvpInput };
+    let body: Payload;
     let photo: Buffer | undefined;
+    let proofFile: Buffer | undefined;
     if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
-      // Joining: JSON details in `payload`, the profile photo in `photo`.
+      // Joining: JSON details in `payload`, the profile photo in `photo` and the
+      // proof-of-study document in `proof`.
       const form = await readLimitedForm(req);
       body = parsePayload(form.get("payload"));
       const file = form.get("photo");
       if (file instanceof File && file.size > 0) {
-        if (file.size > AVATAR_LIMITS.maxBytes) throw tooLarge();
+        if (file.size > AVATAR_LIMITS.maxBytes) throw photoTooLarge();
         photo = Buffer.from(await file.arrayBuffer());
+      }
+      const proof = form.get("proof");
+      if (proof instanceof File && proof.size > 0) {
+        if (proof.size > PROOF_LIMITS.maxBytes) throw proofTooLarge();
+        proofFile = Buffer.from(await proof.arrayBuffer());
       }
     } else {
       body = parsePayload(await req.text().catch(() => ""));
@@ -78,9 +91,10 @@ export async function POST(req: Request, { params }: Params) {
     const result = await registerForEvent({
       slug: (await params).slug,
       sessionUserId: me?.id ?? null,
-      // Account details and the photo only count for signed-out visitors.
+      // Account details, the photo and the proof only count for signed-out visitors.
       account: me ? undefined : body.account,
       photo: me ? undefined : photo,
+      proof: me ? undefined : { type: body.proof?.type, note: body.proof?.note, file: proofFile },
       rsvp: body.rsvp ?? {},
     });
     return NextResponse.json(result, { status: 201 });

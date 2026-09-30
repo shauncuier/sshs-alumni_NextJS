@@ -402,6 +402,14 @@ model VerificationRequest {
   sscBatch         Int
   rollNumber       String?
   proofDocumentUrl String?            @db.VarChar(500)
+  // Proof of study uploaded when joining (lib/media/proofs.ts). Admin-only; the
+  // file is deleted once the membership is decided (proofFileUrl -> null,
+  // proofDeletedAt set), while the type, note and reviewer stay on record.
+  proofType        String?            @db.VarChar(40)
+  proofNote        String?            @db.VarChar(200)
+  proofFileUrl     String?            @db.VarChar(500)
+  proofMime        String?            @db.VarChar(50)
+  proofDeletedAt   DateTime?
   status           VerificationStatus @default(PENDING)
   reviewedBy       String?
   reviewNotes      String?            @db.Text

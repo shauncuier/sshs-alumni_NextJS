@@ -79,7 +79,17 @@ export async function createMemberAccount(
           avatarOriginalUrl: input.avatarOriginalUrl || null,
         },
       },
-      verificationRequests: { create: { sscBatch: batch, rollNumber, status: "PENDING" } },
+      verificationRequests: {
+        create: {
+          sscBatch: batch,
+          rollNumber,
+          status: "PENDING",
+          proofType: input.proofType || null,
+          proofNote: input.proofNote || null,
+          proofFileUrl: input.proofFileUrl || null,
+          proofMime: input.proofMime || null,
+        },
+      },
     },
     select: { id: true, email: true },
   });

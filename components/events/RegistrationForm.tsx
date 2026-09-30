@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
+import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_NOTE_MAX, PROOF_TYPES } from "@/lib/members/proof-types";
 
 const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
@@ -28,6 +29,22 @@ async function checkPhoto(file: File): Promise<string | null> {
     return "Please upload a JPEG, PNG or WebP photo.";
   }
   return null;
+}
+
+const PROOF_FILE_TYPES = PROOF_ACCEPT.split(",");
+const PROOF_MISSING = "Please add a document that shows you studied at SSGHS.";
+
+/** Returns an error message, or null when the file can be sent as the proof document. */
+function checkProof(file: File): string | null {
+  // Some systems send PDFs without a MIME type; the server checks the real bytes anyway.
+  const looksLikePdf = !file.type && /\.pdf$/i.test(file.name);
+  if (!PROOF_FILE_TYPES.includes(file.type) && !looksLikePdf) return "Please upload your proof as a JPEG, PNG, WebP or PDF file.";
+  if (file.size > PROOF_MAX_BYTES) return "The proof document must be 10 MB or smaller.";
+  return null;
+}
+
+function formatSize(bytes: number): string {
+  return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 /**
@@ -64,6 +81,11 @@ export default function RegistrationForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [proofType, setProofType] = useState("");
+  const [proofNote, setProofNote] = useState("");
+  const [proof, setProof] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [proofError, setProofError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingAccount, setExistingAccount] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -78,6 +100,33 @@ export default function RegistrationForm({
     setPhotoPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [photo]);
+
+  useEffect(() => {
+    if (!proof || !proof.type.startsWith("image/")) {
+      setProofPreview(null); // eslint-disable-line react-hooks/set-state-in-effect
+      return;
+    }
+    const url = URL.createObjectURL(proof);
+    setProofPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [proof]);
+
+  const chooseProof = (file: File | undefined) => {
+    setProof(null);
+    setProofError(null);
+    if (!file) return;
+    const problem = checkProof(file);
+    if (problem) setProofError(problem);
+    else setProof(file);
+  };
+
+  /** The first problem with the proof section, or null when it is complete. */
+  const proofProblem = (): string | null => {
+    if (!proofType) return "Please choose the type of document.";
+    if (proofType === "OTHER" && !proofNote.trim()) return "Please describe the document.";
+    if (!proof) return proofError ?? PROOF_MISSING;
+    return null;
+  };
 
   const choosePhoto = async (file: File | undefined) => {
     setPhoto(null);
@@ -135,6 +184,7 @@ export default function RegistrationForm({
     try {
       const payload = JSON.stringify({
           account: needsAccount ? { ...account, sscBatch: Number(account.sscBatch) } : undefined,
+          proof: needsAccount ? { type: proofType, note: proofType === "OTHER" ? proofNote.trim() : null } : undefined,
           rsvp: {
             packageName: event.packages.length ? packageName : null,
             extraAdults,
@@ -146,13 +196,16 @@ export default function RegistrationForm({
             transactionId: paid ? transactionId : null,
           },
         });
-      // Joining sends the photo along, so it goes as multipart; signed-in members stay JSON.
+      // Joining sends the photo and the proof along, so it goes as multipart; signed-in members stay JSON.
       let res: Response;
       if (needsAccount) {
         if (!photo) throw new Error("Please add a profile photo.");
+        const problem = proofProblem();
+        if (problem || !proof) throw new Error(problem ?? PROOF_MISSING);
         const form = new FormData();
         form.append("payload", payload);
         form.append("photo", photo);
+        form.append("proof", proof);
         res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", body: form });
       } else {
         res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
@@ -240,13 +293,66 @@ export default function RegistrationForm({
               <option value="Commerce">Commerce / Arts</option>
             </select>
           </div>
+          <fieldset className="sm:col-span-2 min-w-0 p-3 rounded-xl border border-slate-300 bg-slate-50/60 space-y-3" aria-describedby="reg-proof-help">
+            <legend className="px-1 text-xs font-bold text-slate-800">Proof you studied at SSGHS *</legend>
+            <p id="reg-proof-help" className="text-[11px] text-slate-500">
+              Only the alumni committee can see this. It is deleted after your membership is decided.
+            </p>
+            <div>
+              <label htmlFor="reg-proof-type" className={label}>Type of document *</label>
+              <select id="reg-proof-type" required className={input} value={proofType} onChange={(e) => setProofType(e.target.value)}>
+                <option value="">Choose a document…</option>
+                {PROOF_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            {proofType === "OTHER" && (
+              <div>
+                <label htmlFor="reg-proof-note" className={label}>Describe the document *</label>
+                <input
+                  id="reg-proof-note"
+                  required
+                  maxLength={PROOF_NOTE_MAX}
+                  className={input}
+                  value={proofNote}
+                  onChange={(e) => setProofNote(e.target.value)}
+                  placeholder="e.g. Letter from the headmistress"
+                />
+              </div>
+            )}
+            <div>
+              <label htmlFor="reg-proof-file" className={label}>Document *</label>
+              <input
+                id="reg-proof-file"
+                type="file"
+                accept={PROOF_ACCEPT}
+                onChange={(e) => chooseProof(e.target.files?.[0])}
+                aria-describedby="reg-proof-file-help"
+                className="block w-full min-w-0 text-xs text-slate-600 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-800 file:font-bold"
+              />
+              <p id="reg-proof-file-help" className="text-[11px] text-slate-500 mt-1">A photo or scan (JPEG, PNG or WebP) or a PDF, up to 10 MB.</p>
+              {proof && (
+                <div className="mt-2 flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-white border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                    {proofPreview ? <img src={proofPreview} alt="Your proof document preview" className="w-full h-full object-cover" /> : "PDF"}
+                  </div>
+                  <div className="min-w-0 text-[11px]">
+                    <div className="font-semibold text-slate-800 truncate">{proof.name}</div>
+                    <div className="text-slate-500">{formatSize(proof.size)}</div>
+                  </div>
+                </div>
+              )}
+              {proofError && <p role="alert" className="text-[11px] font-bold text-rose-700 mt-1">{proofError}</p>}
+            </div>
+          </fieldset>
           <button
             type="button"
             className="sm:col-span-2 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold"
             onClick={(e) => {
               const form = (e.currentTarget as HTMLButtonElement).form!;
               if (!photo && !photoError) setPhotoError("Please add a profile photo.");
-              if (form.reportValidity() && photo) setStep(2);
+              // The type and note are required fields (reportValidity shows those); the file is checked here.
+              if (!proof && !proofError) setProofError(PROOF_MISSING);
+              if (form.reportValidity() && photo && !proofProblem()) setStep(2);
             }}
           >
             Continue to registration &amp; payment

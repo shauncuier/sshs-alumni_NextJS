@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { decideRegistration, getAdminEvent } from "@/lib/events/admin";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { registerForEvent } from "@/lib/events/registrations";
-import { makeImage } from "../helpers/images";
+import { makeImage, makePdf } from "../helpers/images";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 
 beforeEach(resetDatabase);
@@ -14,6 +14,7 @@ const join = async () => {
     slug: "jubilee",
     sessionUserId: null,
     photo: await makeImage(800, 800),
+    proof: { type: "SSC_CERTIFICATE", file: makePdf() },
     account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001 },
     rsvp: { packageName: "General", paymentMethod: "bKash", transactionId: "TRX123456", donationAmount: 250 },
   });
