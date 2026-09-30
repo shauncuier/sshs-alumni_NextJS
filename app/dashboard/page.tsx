@@ -61,11 +61,16 @@ export default function DashboardPage() {
   const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
   const [upcomingEvent, setUpcomingEvent] = useState<EventItem | null>(null);
+  const [upcomingError, setUpcomingError] = useState(false);
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     fetch("/api/events", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : { events: [] }))
-      .then((body: { events: EventItem[] }) => setUpcomingEvent(body.events.find((e) => e.date >= today) ?? null));
+      .then((res) => {
+        if (!res.ok) throw new Error(`Events request failed (${res.status})`);
+        return res.json();
+      })
+      .then((body: { events: EventItem[] }) => setUpcomingEvent(body.events.find((e) => e.date >= today) ?? null))
+      .catch(() => setUpcomingError(true));
   }, []);
   const myBatch = sampleBatches.find((b) => b.year === userBatch) || {
     year: userBatch,
@@ -242,6 +247,12 @@ export default function DashboardPage() {
                     All
                   </Link>
                 </div>
+
+                {upcomingError && (
+                  <p role="alert" className="text-xs text-rose-700">
+                    Couldn&apos;t load upcoming events. Please refresh the page to try again.
+                  </p>
+                )}
 
                 {upcomingEvent && (
                   <>

@@ -13,9 +13,19 @@ interface GlobalSearchModalProps {
 export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const [query, setQuery] = useState("");
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [eventsError, setEventsError] = useState(false);
   useEffect(() => {
     if (!isOpen || events.length > 0) return;
-    fetch("/api/events").then((res) => (res.ok ? res.json() : { events: [] })).then((b) => setEvents(b.events));
+    fetch("/api/events")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Events request failed (${res.status})`);
+        return res.json();
+      })
+      .then((b) => {
+        setEventsError(false);
+        setEvents(b.events);
+      })
+      .catch(() => setEventsError(true));
   }, [isOpen, events.length]);
 
   useEffect(() => {
@@ -104,6 +114,11 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
 
         {/* Results Area */}
         <div className="overflow-y-auto p-4 space-y-5">
+          {query && eventsError && (
+            <p role="alert" className="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+              Events couldn&apos;t be loaded, so they are missing from these results. Please try again later.
+            </p>
+          )}
           {!query && (
             <div className="py-12 text-center text-slate-400">
               <p className="text-sm font-medium">Type to search the Sabuj Shikshayatan community...</p>

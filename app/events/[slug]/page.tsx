@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RSVPModal from "@/components/events/RSVPModal";
 import type { PublicEvent, MemberRegistration } from "@/lib/events/types";
+import { formatTaka } from "@/lib/events/pricing";
 import {
   Calendar,
   Clock,
@@ -41,18 +42,40 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
   const [event, setEvent] = useState<PublicEvent | null>(null);
   const [registration, setRegistration] = useState<MemberRegistration | null>(null);
   const [missing, setMissing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/events/${slug}`, { cache: "no-store" }).then(async (res) => {
-      if (res.status === 404) return setMissing(true);
-      setEvent((await res.json()).event);
-    });
+    fetch(`/api/events/${slug}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (res.status === 404) return setMissing(true);
+        if (!res.ok) throw new Error(`Event request failed (${res.status})`);
+        setEvent((await res.json()).event);
+      })
+      .catch(() => setLoadError(true));
     fetch(`/api/events/${slug}/rsvp`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : { registration: null }))
-      .then((body) => setRegistration(body.registration));
+      .then((body) => setRegistration(body.registration))
+      // Not knowing the member's own registration only hides their status; the event still shows.
+      .catch(() => setRegistration(null));
   }, [slug]);
 
   if (missing) notFound();
+  if (loadError) {
+    return (
+      <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-3 px-4 text-center">
+        <p className="text-sm font-bold text-rose-700">We couldn&apos;t load this event. Please check your connection and try again.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white"
+        >
+          Try again
+        </button>
+        <Link href="/events" className="text-xs font-bold text-emerald-800 hover:underline">
+          Back to all events
+        </Link>
+      </div>
+    );
+  }
   if (!event) {
     return (
       <div role="status" className="min-h-screen flex items-center justify-center text-xs text-slate-500">
@@ -114,6 +137,20 @@ function EventDetailView({
   };
 
   const isGoldenJubilee = event.isMegaEvent;
+
+  // With packages the price starts at the cheapest package; otherwise it is the flat fee.
+  const lowestPackagePrice = event.packages.length > 0 ? Math.min(...event.packages.map((p) => p.priceAmount)) : null;
+  const priceLabel =
+    lowestPackagePrice === null
+      ? formatTaka(event.registrationFeeAmount)
+      : lowestPackagePrice > 0
+        ? `From ${formatTaka(lowestPackagePrice)}`
+        : "Free";
+  const isPaid =
+    event.registrationFeeAmount > 0 ||
+    event.packages.some((p) => p.priceAmount > 0) ||
+    event.extraAdultFee > 0 ||
+    event.childFee > 0;
 
   // Filter agenda by days if Golden Jubilee
   const day1Agenda = event.agenda?.filter((a) => a.time.includes("Day 1")) || [];
@@ -569,7 +606,7 @@ function EventDetailView({
                     <span>Official Registration Status</span>
                   </span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900">
-                    {event.registrationFee || "Free for Registered Alumni"}
+                    {priceLabel}
                   </div>
                   <div className="text-xs text-slate-500 flex items-center gap-1.5">
                     <Users className="w-4 h-4 text-emerald-600" />
@@ -618,11 +655,13 @@ function EventDetailView({
                       className="w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white"
                     >
                       <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>Register for Golden Jubilee</span>
+                      <span>{event.isMembershipEvent ? "Join & register" : "Register"}</span>
                     </button>
                   )}
                   <p className="text-[11px] text-slate-400 text-center mt-2">
-                    Instant confirmation voucher • T-shirt size selection inside
+                    {isPaid
+                      ? "Pay by bKash/Nagad/Bank, then enter your transaction ID — the committee confirms it"
+                      : "Free — confirmed instantly"}
                   </p>
 
                   {registration && (
