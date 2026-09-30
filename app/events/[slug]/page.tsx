@@ -7,7 +7,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RSVPModal from "@/components/events/RSVPModal";
 import type { PublicEvent, MemberRegistration } from "@/lib/events/types";
-import { formatTaka } from "@/lib/events/pricing";
+import { formatTaka, formatDeadline } from "@/lib/events/pricing";
 import {
   Calendar,
   Clock,
@@ -395,9 +395,11 @@ function EventDetailView({
                         Choose your registration tier. Every package includes full festival access and commemorative souvenirs.
                       </p>
                     </div>
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full self-start">
-                      Deadline: {event.registrationDeadline || "Nov 30, 2026"}
-                    </span>
+                    {formatDeadline(event.registrationDeadline) && (
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full self-start">
+                        Deadline: {formatDeadline(event.registrationDeadline)}
+                      </span>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -690,10 +692,12 @@ function EventDetailView({
                     <span className="font-medium">Expected Attendance:</span>
                     <span className="font-bold text-slate-900">{event.maxAttendees}+ Alumni &amp; Families</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Registration Deadline:</span>
-                    <span className="font-bold text-amber-700">{event.registrationDeadline || "November 30, 2026"}</span>
-                  </div>
+                  {formatDeadline(event.registrationDeadline) && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">Registration Deadline:</span>
+                      <span className="font-bold text-amber-700 text-right">{formatDeadline(event.registrationDeadline)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Chief Guests:</span>
                     <span className="font-bold text-slate-900">Distinguished Dignitaries</span>

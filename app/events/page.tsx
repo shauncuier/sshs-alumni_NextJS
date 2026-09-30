@@ -5,13 +5,25 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
-import type { EventItem } from "@/lib/data";
+import type { PublicEvent } from "@/lib/events/types";
+import { formatTaka } from "@/lib/events/pricing";
 import { Calendar, Search, Filter, Loader2 } from "lucide-react";
+
+function jubileePriceText(event: PublicEvent): string {
+  const prices = event.packages.map((p) => p.priceAmount).filter((n) => n > 0);
+  if (prices.length === 0) return "";
+  let text = `From ${formatTaka(Math.min(...prices))} / person`;
+  const extras: string[] = [];
+  if (event.extraAdultFee > 0) extras.push(`+${formatTaka(event.extraAdultFee)} per extra adult`);
+  if (event.childFee > 0) extras.push(`+${formatTaka(event.childFee)} per child under 12`);
+  if (extras.length > 0) text += ` (${extras.join(", ")})`;
+  return text;
+}
 
 export default function EventsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [search, setSearch] = useState("");
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const [events, setEvents] = useState<PublicEvent[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +40,7 @@ export default function EventsPage() {
 
   const categories = ["all", "REUNION", "SPORTS", "WEBINAR", "COMMUNITY"];
   const jubileeEvent = events.find((e) => e.isMegaEvent);
+  const jubileePrice = jubileeEvent ? jubileePriceText(jubileeEvent) : "";
 
   const filteredEvents = events.filter((e) => {
     if (selectedCategory !== "all" && e.category !== selectedCategory) return false;
@@ -122,9 +135,11 @@ export default function EventsPage() {
                       <Calendar className="w-3.5 h-3.5 text-amber-300" />
                       <span>Approx. Dec 30, 2026 • Landmark Festival</span>
                     </div>
-                    <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
-                      <span>৳1,000 / Person (৳500 extra, ৳300 below 12yr)</span>
-                    </div>
+                    {jubileePrice && (
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
+                        <span>{jubileePrice}</span>
+                      </div>
+                    )}
                   </div>
 
                   <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
@@ -158,9 +173,11 @@ export default function EventsPage() {
                       <span>Explore 50-Year Mega Event &amp; Register</span>
                       <span>&rarr;</span>
                     </Link>
-                    <span className="text-[11px] text-emerald-200">
-                      2,340+ already registered
-                    </span>
+                    {!loading && jubileeEvent && jubileeEvent.attendeesCount > 0 && (
+                      <span className="text-[11px] text-emerald-200">
+                        {jubileeEvent.attendeesCount} already registered
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

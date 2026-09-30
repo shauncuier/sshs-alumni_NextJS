@@ -16,6 +16,22 @@ export function formatTaka(amount: number): string {
   return amount === 0 ? "Free" : `৳${amount.toLocaleString("en-US")}`;
 }
 
+/** Readable Asia/Dhaka date/time for a stored ISO deadline; empty string when missing or invalid. */
+export function formatDeadline(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("en-GB", {
+    timeZone: "Asia/Dhaka",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    hour12: true,
+    minute: "2-digit",
+  });
+}
+
 function toCount(value: unknown, fallback: number): number {
   const n = Number(value);
   return value !== undefined && Number.isInteger(n) && n >= 0 && n <= 20 ? n : fallback;
