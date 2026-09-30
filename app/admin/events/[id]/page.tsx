@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
+import ProofOfStudy from "@/components/admin/ProofOfStudy";
 import { formatTaka, dhakaDateInput } from "@/lib/events/pricing";
 import {
   Calendar,
@@ -956,6 +957,7 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
                       <div className={a.membershipStatus === "VERIFIED" ? "text-emerald-700" : a.membershipStatus === "REJECTED" ? "text-rose-700" : "text-amber-700"}>
                         Membership: {a.membershipStatus.toLowerCase()}
                       </div>
+                      {event.isMembershipEvent && <ProofOfStudy proof={a.proof} />}
                     </td>
                     <td className="py-3 px-3">{a.packageName ?? "—"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}</td>
                     <td className="py-3 px-3">

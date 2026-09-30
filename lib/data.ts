@@ -1,3 +1,5 @@
+import type { ProofSummary } from "@/lib/members/proof-types";
+
 export interface AlumniMember {
   id: string;
   fullName: string;
@@ -162,6 +164,8 @@ export interface VerificationRequestItem {
   status: "PENDING" | "VERIFIED" | "REJECTED";
   awaitingPayment?: boolean;
   avatarUrl?: string;
+  /** Proof of study uploaded when joining (admin queue only). */
+  proof?: ProofSummary | null;
 }
 
 // -----------------------------------------------------------------

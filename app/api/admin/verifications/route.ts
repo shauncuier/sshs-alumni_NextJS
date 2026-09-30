@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
+import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
 import prisma from "@/lib/prisma";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
@@ -26,6 +27,8 @@ export async function GET(req: Request) {
     }
 
     try {
+      // Retry deleting proofs an earlier decision could not remove (never throws).
+      await discardDecidedProofs();
       const requests = await prisma.verificationRequest.findMany({
         where: statusParam === "all" ? {} : { status: statusParam as RequestStatus },
         include: {
@@ -107,7 +110,11 @@ export async function PATCH(req: Request) {
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: result.code });
       }
-      const updated = result.updated;
+      // The membership is decided: delete the proof-of-study file now that the
+      // decision has committed. Never throws; a failure is logged and retried.
+      await discardProofsForUser(result.updated.userId);
+      const updated =
+        (await prisma.verificationRequest.findUnique({ where: { id: requestId } }).catch(() => null)) ?? result.updated;
 
       return NextResponse.json({
         message: `Verification request ${status.toLowerCase()} successfully`,

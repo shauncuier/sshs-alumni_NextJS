@@ -1,6 +1,7 @@
 // Client helpers for the admin verification queue (/api/admin/verifications).
 
 import type { VerificationRequestItem } from "@/lib/data";
+import { proofTypeLabel, toProofSummary, type ProofSummary } from "@/lib/members/proof-types";
 
 type RequestStatus = VerificationRequestItem["status"];
 
@@ -10,6 +11,12 @@ interface VerificationRequestRow {
   sscBatch: number;
   rollNumber: string | null;
   proofDocumentUrl: string | null;
+  proofType: string | null;
+  proofNote: string | null;
+  proofFileUrl: string | null;
+  proofMime: string | null;
+  proofDeletedAt: string | null;
+  reviewedBy: string | null;
   status: RequestStatus;
   createdAt: string;
   awaitingPayment?: boolean;
@@ -38,8 +45,13 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     rollNumber: row.rollNumber ?? "",
     profession: profile?.profession ?? "",
     location: profile ? `${profile.locationCity}, ${profile.locationCountry}` : "",
-    documentType: row.proofDocumentUrl ? "Uploaded document" : "No document uploaded",
-    documentUrl: row.proofDocumentUrl ?? "",
+    documentType: row.proofType
+      ? proofTypeLabel(row.proofType)
+      : row.proofDocumentUrl
+        ? "Uploaded document"
+        : "No document uploaded",
+    documentUrl: row.proofFileUrl ?? row.proofDocumentUrl ?? "",
+    proof: toProofSummary(row),
     submittedAt: new Date(row.createdAt).toLocaleString("en-GB", {
       dateStyle: "medium",
       timeStyle: "short",
@@ -68,14 +80,17 @@ export async function fetchVerificationRequests(
 }
 
 // Approving also verifies the member's account and profile; see the PATCH handler.
+// Resolves to the request's proof after the decision (its file is deleted by then).
 export async function decideVerification(
   requestId: string,
   status: "VERIFIED" | "REJECTED"
-): Promise<void> {
+): Promise<ProofSummary | null> {
   const res = await fetch("/api/admin/verifications", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requestId, status }),
   });
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save the verification decision."));
+  const body: { request?: VerificationRequestRow } = await res.json().catch(() => ({}));
+  return body.request ? toProofSummary(body.request) : null;
 }

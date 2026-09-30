@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
+import ProofOfStudy from "@/components/admin/ProofOfStudy";
 
 export default function AdminDashboardPage() {
   const [requests, setRequests] = useState<VerificationRequestItem[]>([]);
@@ -42,8 +43,8 @@ export default function AdminDashboardPage() {
     const target = requests.find((r) => r.id === id);
     setBusyId(id);
     try {
-      await decideVerification(id, status);
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      const proof = await decideVerification(id, status);
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status, proof: proof ?? r.proof } : r)));
       showNotice(
         status === "VERIFIED"
           ? `Approved ${target?.fullName || "alumnus"}. Official verified badge granted.`
@@ -207,10 +208,14 @@ export default function AdminDashboardPage() {
                     <div className="font-medium text-slate-800">{r.profession}</div>
                     <div className="text-[11px] text-slate-400">{r.location}</div>
                   </td>
-                  <td className="py-4 px-4">
-                    <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-700 font-medium">
-                      {r.documentType}
-                    </span>
+                  <td className="py-4 px-4 max-w-[16rem]">
+                    {r.proof ? (
+                      <ProofOfStudy proof={r.proof} />
+                    ) : (
+                      <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-700 font-medium">
+                        {r.documentType}
+                      </span>
+                    )}
                   </td>
                   <td className="py-4 px-4">
                     {r.status === "VERIFIED" ? (

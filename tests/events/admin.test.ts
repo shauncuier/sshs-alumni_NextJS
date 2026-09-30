@@ -1,12 +1,24 @@
-import { beforeEach, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import fs from "node:fs/promises";
+import path from "node:path";
 import prisma from "@/lib/prisma";
 import { decideRegistration, getAdminEvent } from "@/lib/events/admin";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { registerForEvent } from "@/lib/events/registrations";
+import { discardDecidedProofs } from "@/lib/members/proof-retention";
 import { makeImage, makePdf } from "../helpers/images";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 
-beforeEach(resetDatabase);
+beforeEach(async () => {
+  await resetDatabase();
+  await fs.rm(process.env.UPLOADS_DIR!, { recursive: true, force: true });
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+afterAll(async () => {
+  await fs.rm(process.env.UPLOADS_DIR!, { recursive: true, force: true });
+});
 
 const join = async () => {
   const event = await makeEvent({ slug: "jubilee", isMembershipEvent: true, packages: [{ name: "General", price: 1000 }], paymentInstructions: "bKash 01XXXXXXXXX" });
@@ -100,8 +112,11 @@ it("resolves a concurrent APPROVE + CANCEL race safely: exactly one wins, and th
       expected,
       expected,
     ]);
+    // Whichever decision won, the proof file is gone afterwards.
+    expect(user.verificationRequests[0]?.proofFileUrl).toBeNull();
   }
-});
+  // Eight full joins (photo + proof processing, bcrypt) and races: allow more than the default 20 s.
+}, 60_000);
 
 it("returns 409 (not a second success) when the same APPROVE is issued twice concurrently", async () => {
   const { event, registration } = await join();
@@ -114,4 +129,71 @@ it("returns 409 (not a second success) when the same APPROVE is issued twice con
   const rejected = outcomes.filter((r): r is PromiseRejectedResult => r.status === "rejected");
   expect(rejected).toHaveLength(1);
   expect(rejected[0].reason).toMatchObject({ status: 409 });
+});
+
+describe("proof of study after the membership decision", () => {
+  const request = () => prisma.verificationRequest.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+  const proofDir = (fileUrl: string) => path.join(process.env.UPLOADS_DIR!, "proofs", fileUrl.split("/")[4]);
+  const exists = (dir: string) => fs.access(dir).then(() => true, () => false);
+
+  it("shows the proof in the attendee list while it is waiting for a decision", async () => {
+    const { event } = await join();
+    const fileUrl = (await request()).proofFileUrl!;
+    const [row] = (await getAdminEvent(event.id)).registrations;
+    expect(row.proof).toEqual({ type: "SSC_CERTIFICATE", note: null, fileUrl, mime: "application/pdf", reviewedBy: null, deletedAt: null });
+  });
+
+  it("deletes the proof file when the membership is approved, keeping the type and reviewer", async () => {
+    const { event, registration } = await join();
+    const before = await request();
+    const decided = await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin@example.test" });
+    const after = await request();
+    expect(after).toMatchObject({ status: "VERIFIED", proofType: "SSC_CERTIFICATE", proofFileUrl: null, proofMime: "application/pdf", reviewedBy: "admin@example.test" });
+    expect(after.proofDeletedAt).toBeInstanceOf(Date);
+    expect(await exists(proofDir(before.proofFileUrl!))).toBe(false);
+    expect(decided.proof).toMatchObject({ type: "SSC_CERTIFICATE", fileUrl: null, reviewedBy: "admin@example.test" });
+    expect(decided.proof?.deletedAt).toEqual(after.proofDeletedAt!.toISOString());
+  });
+
+  it("deletes the proof file when the membership is rejected", async () => {
+    const { event, registration } = await join();
+    const before = await request();
+    await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "CANCEL", adminEmail: "admin@example.test" });
+    const after = await request();
+    expect(after).toMatchObject({ status: "REJECTED", proofType: "SSC_CERTIFICATE", proofFileUrl: null, reviewedBy: "admin@example.test" });
+    expect(after.proofDeletedAt).toBeInstanceOf(Date);
+    expect(await exists(proofDir(before.proofFileUrl!))).toBe(false);
+  });
+
+  it("keeps the proof when cancelling the registration of a member who is already verified", async () => {
+    const { event, registration } = await join();
+    const before = await request();
+    await prisma.user.update({ where: { email: "new@example.test" }, data: { status: "VERIFIED" } });
+    await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "CANCEL", adminEmail: "admin@example.test" });
+    const after = await request();
+    expect(after).toMatchObject({ status: "PENDING", proofFileUrl: before.proofFileUrl, proofDeletedAt: null });
+    expect(await exists(proofDir(before.proofFileUrl!))).toBe(true);
+  });
+
+  it("does not undo the decision when the file cannot be deleted, and retries later", async () => {
+    const { event, registration } = await join();
+    const before = await request();
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(fs, "rm").mockRejectedValueOnce(Object.assign(new Error("EBUSY: resource busy"), { code: "EBUSY" }));
+    const decided = await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin@example.test" });
+    expect(decided).toMatchObject({ status: "CONFIRMED", membershipStatus: "VERIFIED" });
+    const after = await request();
+    expect(after).toMatchObject({ status: "VERIFIED", proofFileUrl: before.proofFileUrl, proofDeletedAt: null });
+    expect(await exists(proofDir(before.proofFileUrl!))).toBe(true);
+    expect(errors).toHaveBeenCalledTimes(1);
+    const logged = errors.mock.calls[0].map(String).join(" ");
+    expect(logged).toContain(before.id);
+    expect(logged).not.toContain("new@example.test");
+    expect(logged).not.toContain("New Member");
+
+    vi.restoreAllMocks();
+    await discardDecidedProofs();
+    expect(await request()).toMatchObject({ proofFileUrl: null });
+    expect(await exists(proofDir(before.proofFileUrl!))).toBe(false);
+  });
 });

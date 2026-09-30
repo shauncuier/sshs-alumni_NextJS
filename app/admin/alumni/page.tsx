@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
+import ProofOfStudy from "@/components/admin/ProofOfStudy";
 import { Search, Filter, Check, X, ShieldCheck, Download } from "lucide-react";
 
 export default function AdminAlumniPage() {
@@ -37,8 +38,8 @@ export default function AdminAlumniPage() {
     setBusyId(id);
     setError(null);
     try {
-      await decideVerification(id, status);
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      const proof = await decideVerification(id, status);
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status, proof: proof ?? r.proof } : r)));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -112,6 +113,7 @@ export default function AdminAlumniPage() {
                 <th className="py-3 px-4">Batch</th>
                 <th className="py-3 px-4">Roll</th>
                 <th className="py-3 px-4">Profession</th>
+                <th className="py-3 px-4">Proof of study</th>
                 <th className="py-3 px-4">Submitted At</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-6 text-right">Actions</th>
@@ -120,7 +122,7 @@ export default function AdminAlumniPage() {
             <tbody className="divide-y divide-slate-100">
               {(loading || filteredRequests.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="py-8 px-6 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 px-6 text-center text-slate-400">
                     {loading ? "Loading verification requests…" : "No verification requests match."}
                   </td>
                 </tr>
@@ -139,6 +141,9 @@ export default function AdminAlumniPage() {
                   <td className="py-4 px-4 font-bold text-emerald-800">SSC {r.sscBatch}</td>
                   <td className="py-4 px-4 font-medium text-slate-600">{r.rollNumber}</td>
                   <td className="py-4 px-4 text-slate-700">{r.profession}</td>
+                  <td className="py-4 px-4 max-w-[16rem]">
+                    <ProofOfStudy proof={r.proof} emptyText="No proof uploaded" />
+                  </td>
                   <td className="py-4 px-4 text-slate-400">{r.submittedAt}</td>
                   <td className="py-4 px-4">
                     <span

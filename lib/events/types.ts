@@ -1,4 +1,5 @@
 import type { EventItem } from "@/lib/data";
+import type { ProofSummary } from "@/lib/members/proof-types";
 import type { ClosedReason } from "./availability";
 
 export const PAYMENT_METHODS = ["bKash", "Nagad", "Bank", "Cash"] as const;
@@ -144,4 +145,6 @@ export interface AdminRegistration {
   confirmedAt: string | null;
   checkedInAt: string | null;
   createdAt: string;
+  /** The member's proof of study (latest verification request), if they uploaded one when joining. */
+  proof: ProofSummary | null;
 }

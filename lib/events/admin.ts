@@ -1,10 +1,19 @@
-import type { AlumniProfile, EventRegistration, User } from "@prisma/client";
+import type { AlumniProfile, EventRegistration, User, VerificationRequest } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
+import { discardProofsForUser } from "@/lib/members/proof-retention";
+import { toProofSummary } from "@/lib/members/proof-types";
 import { getPublicEventBySlug } from "./service";
 import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./types";
 
-type RegWithUser = EventRegistration & { user: User & { profile: AlumniProfile | null } };
+type RegWithUser = EventRegistration & {
+  user: User & { profile: AlumniProfile | null; verificationRequests: VerificationRequest[] };
+};
+
+// The member's latest verification request carries the proof uploaded when joining.
+const WITH_USER = {
+  user: { include: { profile: true, verificationRequests: { orderBy: { createdAt: "desc" as const }, take: 1 } } },
+};
 
 function toAdminRegistration(reg: RegWithUser): AdminRegistration {
   return {
@@ -33,6 +42,7 @@ function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     confirmedAt: reg.confirmedAt?.toISOString() ?? null,
     checkedInAt: reg.checkedInAt?.toISOString() ?? null,
     createdAt: reg.createdAt.toISOString(),
+    proof: reg.user.verificationRequests[0] ? toProofSummary(reg.user.verificationRequests[0]) : null,
   };
 }
 
@@ -47,7 +57,7 @@ export async function getAdminEvent(id: string): Promise<{
 
   const regs = await prisma.eventRegistration.findMany({
     where: { eventId: id },
-    include: { user: { include: { profile: true } } },
+    include: WITH_USER,
     orderBy: { createdAt: "desc" },
   });
   const registrations = regs.map(toAdminRegistration);
@@ -90,6 +100,9 @@ const TRANSITIONS: Record<Action, { from: RegistrationStatusValue[]; to: Registr
  * concurrent decisions on the same registration succeeds — the loser gets a
  * 409 before it ever touches the member's account, profile or verification
  * request.
+ *
+ * Once the membership is decided (approved or rejected), the member's proof-of-
+ * study file is deleted, after the transaction commits.
  */
 export async function decideRegistration(args: {
   eventId: string;
@@ -100,7 +113,7 @@ export async function decideRegistration(args: {
   const transition = TRANSITIONS[args.action];
   if (!transition) throw new AppError("INVALID_ACTION", 400, "Unknown action.");
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const { regId, userId, memberDecided } = await prisma.$transaction(async (tx) => {
     const reg = await tx.eventRegistration.findUnique({ where: { id: args.registrationId }, include: { event: true, user: true } });
     if (!reg || reg.eventId !== args.eventId) throw new AppError("REGISTRATION_NOT_FOUND", 404, "Registration not found.");
     if (!transition.from.includes(reg.status)) {
@@ -121,8 +134,10 @@ export async function decideRegistration(args: {
       throw new AppError("INVALID_TRANSITION", 409, "Another admin just changed this registration. Refresh and try again.");
     }
 
+    let memberDecided = false;
     if (reg.event.isMembershipEvent) {
       if (args.action === "APPROVE") {
+        memberDecided = true;
         await tx.user.update({ where: { id: reg.userId }, data: { status: "VERIFIED" } });
         await tx.alumniProfile.updateMany({ where: { userId: reg.userId }, data: { verificationStatus: "VERIFIED" } });
         await tx.verificationRequest.updateMany({
@@ -135,6 +150,7 @@ export async function decideRegistration(args: {
         // via the same race above) is never downgraded.
         const rejected = await tx.user.updateMany({ where: { id: reg.userId, status: "PENDING" }, data: { status: "REJECTED" } });
         if (rejected.count === 1) {
+          memberDecided = true;
           await tx.alumniProfile.updateMany({ where: { userId: reg.userId }, data: { verificationStatus: "REJECTED" } });
           await tx.verificationRequest.updateMany({
             where: { userId: reg.userId, status: "PENDING" },
@@ -144,10 +160,11 @@ export async function decideRegistration(args: {
       }
     }
 
-    return tx.eventRegistration.findUniqueOrThrow({
-      where: { id: reg.id },
-      include: { user: { include: { profile: true } } },
-    });
+    return { regId: reg.id, userId: reg.userId, memberDecided };
   });
-  return toAdminRegistration(updated);
+
+  // Never throws: a failed deletion is logged and retried later (see proof-retention).
+  if (memberDecided) await discardProofsForUser(userId);
+
+  return toAdminRegistration(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: regId }, include: WITH_USER }));
 }

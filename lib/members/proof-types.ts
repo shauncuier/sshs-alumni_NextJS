@@ -28,3 +28,34 @@ export function proofTypeLabel(value: string | null | undefined): string {
   if (!value) return "";
   return PROOF_TYPES.find((t) => t.value === value)?.label ?? value;
 }
+
+/** What the admin views show about a member's proof (the file URL is null once deleted). */
+export interface ProofSummary {
+  type: string;
+  note: string | null;
+  fileUrl: string | null;
+  mime: string | null;
+  reviewedBy: string | null;
+  /** ISO time the file was deleted after the decision. */
+  deletedAt: string | null;
+}
+
+/** The proof on a verification request, or null when none was uploaded. */
+export function toProofSummary(request: {
+  proofType: string | null;
+  proofNote: string | null;
+  proofFileUrl: string | null;
+  proofMime: string | null;
+  reviewedBy: string | null;
+  proofDeletedAt: Date | string | null;
+}): ProofSummary | null {
+  if (!request.proofType) return null;
+  return {
+    type: request.proofType,
+    note: request.proofNote,
+    fileUrl: request.proofFileUrl,
+    mime: request.proofMime,
+    reviewedBy: request.reviewedBy,
+    deletedAt: request.proofDeletedAt ? new Date(request.proofDeletedAt).toISOString() : null,
+  };
+}
