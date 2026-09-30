@@ -70,7 +70,10 @@ export default function RegisterPage() {
               </button>
             </div>
           )}
-          {ready && !registration && <RegistrationForm event={event} onRegistered={setRegistration} />}
+          {ready && !registration && <RegistrationForm event={event} onRegistered={(r, createdAccount) => {
+            // A new member sees the form's "under review" message; they are not signed in.
+            if (!createdAccount) setRegistration(r);
+          }} />}
         </div>
       </main>
       <Footer />

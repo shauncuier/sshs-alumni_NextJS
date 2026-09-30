@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 
@@ -24,7 +24,7 @@ export default function RegistrationForm({
 }: {
   event: PublicEvent;
   initialPackage?: string;
-  onRegistered: (registration: MemberRegistration) => void;
+  onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
   const { status: sessionStatus } = useSession();
   const needsAccount = sessionStatus === "unauthenticated" && event.isMembershipEvent;
@@ -46,14 +46,19 @@ export default function RegistrationForm({
   const [error, setError] = useState<string | null>(null);
   const [existingAccount, setExistingAccount] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [signInFailed, setSignInFailed] = useState(false);
+  const [joined, setJoined] = useState(false);
 
-  if (signInFailed) {
+  if (joined) {
     return (
-      <p role="status" className="text-xs font-bold text-emerald-900">
-        Registered — payment and membership under review. Please{" "}
-        <Link href="/login?callbackUrl=/dashboard" className="underline">sign in</Link> to continue.
-      </p>
+      <div role="status" className="space-y-3 text-xs">
+        <p className="font-bold text-emerald-900">
+          Registered — payment and membership under review. You can sign in once the committee approves your membership.
+        </p>
+        <div className="flex gap-2">
+          <Link href="/events" className="px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold">Back to events</Link>
+          <Link href="/" className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold">Home</Link>
+        </div>
+      </div>
     );
   }
   if (sessionStatus === "loading") {
@@ -110,16 +115,9 @@ export default function RegistrationForm({
         if (body.code === "EMAIL_EXISTS") setExistingAccount(true);
         throw new Error(body.error || "Registration failed. Please try again.");
       }
-      if (body.createdAccount) {
-        // Sign the new member in with the password they just chose.
-        const res = await signIn("credentials", { redirect: false, email: body.createdAccount.email, password: account.password });
-        if (!res?.ok || res.error) {
-          // The registration is saved; only the automatic sign-in failed.
-          setSignInFailed(true);
-          return;
-        }
-      }
-      onRegistered(body.registration);
+      // A new member is not signed in: the committee must approve the membership first.
+      if (body.createdAccount) setJoined(true);
+      onRegistered(body.registration, Boolean(body.createdAccount));
     } catch (err) {
       setError((err as Error).message);
     } finally {

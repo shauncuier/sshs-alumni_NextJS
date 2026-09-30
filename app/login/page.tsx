@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
+import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_APPROVAL_MESSAGE } from "@/lib/account-access";
 import { ArrowRight, ShieldCheck, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 
 function LoginForm() {
@@ -15,7 +16,15 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const blocked = searchParams.get("blocked");
+  const [errorMessage, setErrorMessage] = useState(
+    blocked === "pending" ? PENDING_APPROVAL_MESSAGE : blocked === "rejected" ? MEMBERSHIP_REJECTED_MESSAGE : ""
+  );
+
+  // Sent here by the proxy with a session that is no longer allowed: drop it.
+  useEffect(() => {
+    if (blocked) void signOut({ redirect: false });
+  }, [blocked]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -193,3 +193,4 @@ Against a throwaway local MariaDB (Docker), as in earlier rounds.
 - **Reject** only rejects a membership that is still pending.
 
 Implementation plan: `docs/EVENTS_RSVP_PLAN.md`.
+- Pending and rejected members cannot sign in (staff roles are never blocked), and joining no longer signs the new member in; §5 "signed in automatically" is superseded. Stale sessions of such members are redirected to `/login?blocked=…` by `proxy.ts` and treated as signed out by `getSessionUser()`.

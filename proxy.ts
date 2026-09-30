@@ -1,10 +1,19 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { accountAccessBlock } from "@/lib/account-access";
 
 // Next.js 16 "proxy" (formerly middleware): runs before routes to require sign-in
 // on member pages. Role checks happen on the server in the pages themselves.
 export default withAuth(
-  function proxy() {
+  function proxy(req) {
+    // A session issued while the member was pending or rejected is no longer valid here.
+    const token = req.nextauth.token;
+    const block = token ? accountAccessBlock({ role: token.role as string, status: token.status as string }) : null;
+    if (block) {
+      const url = new URL("/login", req.url);
+      url.searchParams.set("blocked", block.code === "PENDING_APPROVAL" ? "pending" : "rejected");
+      return NextResponse.redirect(url);
+    }
     // Admin role checks live in app/admin/layout.tsx, which shows a 403 page
     // (app/forbidden.tsx) instead of silently redirecting members elsewhere.
     return NextResponse.next();

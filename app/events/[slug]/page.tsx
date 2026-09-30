@@ -687,9 +687,10 @@ function EventDetailView({
         isOpen={rsvpOpen}
         onClose={() => setRsvpOpen(false)}
         initialPackage={selectedPackage}
-        onRegistered={(r) => {
+        onRegistered={(r, createdAccount) => {
           onRegistered(r);
-          setRsvpOpen(false);
+          // A new member stays on the modal's "under review" message; they are not signed in.
+          if (!createdAccount) setRsvpOpen(false);
         }}
       />
     </div>

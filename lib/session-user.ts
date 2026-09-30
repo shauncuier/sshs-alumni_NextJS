@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { accountAccessBlock } from "@/lib/account-access";
 
 export interface SessionUser {
   id: string;
@@ -15,6 +16,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await getServerSession(authOptions);
   const user = session?.user;
   if (!user?.id || !user.email) return null;
+  // A token issued while the member was pending/rejected must not act as a member.
+  if (accountAccessBlock({ role: user.role, status: user.status })) return null;
   return { id: user.id, email: user.email, role: user.role ?? "ALUMNI" };
 }
 

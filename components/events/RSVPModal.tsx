@@ -16,7 +16,7 @@ export default function RSVPModal({
   isOpen: boolean;
   onClose: () => void;
   initialPackage?: string;
-  onRegistered: (registration: MemberRegistration) => void;
+  onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
   if (!isOpen) return null;
   return (
