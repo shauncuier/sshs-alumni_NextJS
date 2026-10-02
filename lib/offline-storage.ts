@@ -5,20 +5,20 @@
  * for offline availability during campus visits and reunions.
  */
 
-export interface CachedBatchDirectory {
+export interface CachedBatchDirectory<T = unknown> {
   batchYear: number;
   cachedAt: number;
-  members: any[];
+  members: T[];
 }
 
 const STORAGE_PREFIX = "ssghs_cache_batch_";
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export function saveBatchToOfflineStorage(batchYear: number, members: any[]): void {
+export function saveBatchToOfflineStorage<T = unknown>(batchYear: number, members: T[]): void {
   if (typeof window === "undefined") return;
 
   try {
-    const data: CachedBatchDirectory = {
+    const data: CachedBatchDirectory<T> = {
       batchYear,
       cachedAt: Date.now(),
       members,
@@ -29,14 +29,14 @@ export function saveBatchToOfflineStorage(batchYear: number, members: any[]): vo
   }
 }
 
-export function getBatchFromOfflineStorage(batchYear: number): any[] | null {
+export function getBatchFromOfflineStorage<T = unknown>(batchYear: number): T[] | null {
   if (typeof window === "undefined") return null;
 
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${batchYear}`);
     if (!raw) return null;
 
-    const data: CachedBatchDirectory = JSON.parse(raw);
+    const data: CachedBatchDirectory<T> = JSON.parse(raw);
     if (Date.now() - data.cachedAt > TTL_MS) {
       localStorage.removeItem(`${STORAGE_PREFIX}${batchYear}`);
       return null;

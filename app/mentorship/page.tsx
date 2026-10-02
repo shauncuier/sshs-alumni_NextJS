@@ -23,6 +23,12 @@ import {
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
+interface BookingResult {
+  menteeEmail?: string;
+  meetingLink?: string;
+  [key: string]: unknown;
+}
+
 export default function MentorshipPage() {
   const [mentors] = useState<MentorProfile[]>(sampleMentors);
   const [selectedDomain, setSelectedDomain] = useState("ALL");
@@ -40,7 +46,7 @@ export default function MentorshipPage() {
   const [preferredDate, setPreferredDate] = useState("");
   const [questions, setQuestions] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingResult, setBookingResult] = useState<any | null>(null);
+  const [bookingResult, setBookingResult] = useState<BookingResult | null>(null);
 
   const domains = [
     { label: "All Pathways", value: "ALL" },

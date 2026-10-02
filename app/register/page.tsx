@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +10,7 @@ import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 
 // Joining the association is the membership event's (Golden Jubilee's) paid registration.
 export default function RegisterPage() {
+  const router = useRouter();
   const { status: sessionStatus } = useSession();
   const [event, setEvent] = useState<PublicEvent | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export default function RegisterPage() {
               )}
               <button
                 type="button"
-                onClick={() => window.location.assign("/dashboard")}
+                onClick={() => router.push("/dashboard")}
                 className="px-5 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold"
               >
                 Go to your dashboard

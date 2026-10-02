@@ -97,10 +97,9 @@ async function sendViaResend(payload: EmailPayload) {
  */
 async function sendViaSMTP(payload: EmailPayload) {
   try {
-    // Dynamic require to avoid build errors when nodemailer is not installed
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-    let nodemailer: any = null;
-    try { nodemailer = require("nodemailer"); } catch { nodemailer = null; }
+    // Dynamic import to avoid bundling nodemailer when not installed
+    const nodemailerModule = await import("nodemailer" as string).catch(() => null);
+    const nodemailer = nodemailerModule?.default || nodemailerModule;
 
     if (!nodemailer) {
       console.warn("[Email/SMTP] nodemailer not installed. Run: npm install nodemailer");

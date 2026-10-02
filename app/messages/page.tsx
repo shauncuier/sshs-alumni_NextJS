@@ -29,7 +29,7 @@ interface MessageEntry {
 
 export default function MessagesPage() {
   const { data: session } = useSession();
-  const currentUserId = (session?.user as any)?.id || "usr-current-demo";
+  const currentUserId = (session?.user as { id?: string })?.id || "usr-current-demo";
 
   const [selectedAlumnusId, setSelectedAlumnusId] = useState("alm-2"); // Dr. Nusrat Jahan
   const [messageInput, setMessageInput] = useState("");

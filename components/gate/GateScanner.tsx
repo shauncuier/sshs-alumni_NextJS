@@ -28,11 +28,30 @@ interface ScanLog {
   gate: string;
 }
 
+interface GateScanResult {
+  valid: boolean;
+  alumnus?: {
+    fullName: string;
+    sscBatch: number;
+    alumniId: string;
+    membershipTier?: string | null;
+    bloodGroup?: string | null;
+    photoUrl?: string;
+    [key: string]: unknown;
+  };
+  event?: {
+    title: string;
+    checkedInAt?: string;
+  };
+  error?: string;
+  [key: string]: unknown;
+}
+
 // Rendered by app/gate/page.tsx, which checks the gate-staff role on the server.
 export default function GateScanner() {
   const [qrInput, setQrInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [latestResult, setLatestResult] = useState<any | null>(null);
+  const [latestResult, setLatestResult] = useState<GateScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanLog[]>([
     {
       id: "scan-1",
@@ -147,10 +166,11 @@ export default function GateScanner() {
         };
         setScanHistory([newLog, ...scanHistory]);
       }
-    } catch (err: any) {
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Network error";
       setLatestResult({
         valid: false,
-        error: "Verification request failed: " + err.message,
+        error: "Verification request failed: " + errorMsg,
       });
     } finally {
       setIsVerifying(false);

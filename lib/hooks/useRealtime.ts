@@ -46,6 +46,7 @@ export function useRealtime(userId: string | undefined | null): UseRealtimeRetur
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
     if (!userId || typeof window === "undefined") return;
@@ -110,12 +111,16 @@ export function useRealtime(userId: string | undefined | null): UseRealtimeRetur
       }
       reconnectTimeoutRef.current = setTimeout(() => {
         console.log("[SSGHS Realtime] Reconnecting...");
-        connect();
+        connectRef.current();
       }, 5000);
     };
 
     eventSourceRef.current = es;
   }, [userId]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  });
 
   useEffect(() => {
     connect();

@@ -134,7 +134,7 @@ self.addEventListener("push", (event) => {
     if (event.data) {
       data = event.data.json();
     }
-  } catch (err) {
+  } catch {
     if (event.data) {
       data.body = event.data.text();
     }

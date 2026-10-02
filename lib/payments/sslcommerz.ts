@@ -14,6 +14,7 @@
  * 5. Transaction validation API for final verification
  */
 
+import crypto from "node:crypto";
 import type {
   GatewayConfig,
   PaymentInitiateRequest,
@@ -181,13 +182,13 @@ export function validateIPNHash(
 
   const finalInput = `${hashInput}&store_passwd=${
     // MD5 hash of store password as required by SSLCommerz
-    require("crypto")
+    crypto
       .createHash("md5")
       .update(config.storePassword || "")
       .digest("hex")
   }`;
 
-  const computedHash = require("crypto")
+  const computedHash = crypto
     .createHash("md5")
     .update(finalInput)
     .digest("hex");

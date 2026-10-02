@@ -68,8 +68,8 @@ export default function NewJobPage() {
       setTimeout(() => {
         router.push("/careers");
       }, 1500);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to post job opening.");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Failed to post job opening.");
     } finally {
       setSubmitting(false);
     }

@@ -71,8 +71,8 @@ export default function JobDetailPage() {
       if (!res.ok) throw new Error(data.error || "Failed to submit application");
 
       setSubmitted(true);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong.");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
     }

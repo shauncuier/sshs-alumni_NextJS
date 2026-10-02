@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
-import { X, Image, Tag, Send, CheckCircle2 } from "lucide-react";
+import { X, Image as ImageIcon, Send } from "lucide-react";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -17,14 +17,9 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
   const userImage = session?.user?.image;
 
   const [content, setContent] = useState("");
-  const [batchTag, setBatchTag] = useState(userBatch.toString());
+  const [batchTag, setBatchTag] = useState<string | null>(null);
+  const effectiveBatchTag = batchTag ?? userBatch.toString();
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (session?.user?.batchYear) {
-      setBatchTag(session.user.batchYear.toString());
-    }
-  }, [session?.user?.batchYear]);
 
   if (!isOpen) return null;
 
@@ -33,7 +28,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
     if (!content.trim()) return;
     setSubmitting(true);
     setTimeout(() => {
-      onPostCreated(content.trim(), batchTag && batchTag !== "all" ? parseInt(batchTag, 10) : undefined);
+      onPostCreated(content.trim(), effectiveBatchTag && effectiveBatchTag !== "all" ? parseInt(effectiveBatchTag, 10) : undefined);
       setContent("");
       setSubmitting(false);
       onClose();
@@ -73,7 +68,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                 <span>Posting as SSC Batch</span>
                 <select
-                  value={batchTag}
+                  value={effectiveBatchTag}
                   onChange={(e) => setBatchTag(e.target.value)}
                   className="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]"
                 >
@@ -101,7 +96,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
                 type="button"
                 className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 rounded-lg border border-slate-200 text-xs flex items-center gap-1 transition-colors"
               >
-                <Image className="w-3.5 h-3.5 text-emerald-600" /> Photo
+                <ImageIcon className="w-3.5 h-3.5 text-emerald-600" /> Photo
               </button>
             </div>
           </div>

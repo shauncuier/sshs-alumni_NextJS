@@ -21,7 +21,7 @@ const invalid = (message: string) => new AppError("INVALID_PHOTO", 400, message)
 
 /** Where member uploads live on disk: env UPLOADS_DIR, or ./uploads next to the app. */
 export function uploadsRoot(): string {
-  return path.resolve(process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads"));
+  return path.resolve(/*turbopackIgnore: true*/ process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads"));
 }
 
 /**

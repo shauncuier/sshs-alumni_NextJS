@@ -109,9 +109,9 @@ export default function DonatePage() {
       if (data.gatewayUrl) {
         window.location.href = data.gatewayUrl;
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("[Donation Error]", err);
-      setErrorMsg(err.message || "An unexpected error occurred. Please try again.");
+      setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
