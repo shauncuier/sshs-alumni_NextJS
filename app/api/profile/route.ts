@@ -40,7 +40,27 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { fullName, profession, company, locationCity, bio, phone, skills, isPhonePublic, isEmailPublic } = body;
+    const {
+      fullName,
+      profession,
+      company,
+      industry,
+      locationCity,
+      locationCountry,
+      rollNumber,
+      section,
+      bio,
+      phone,
+      skills,
+      linkedin,
+      facebook,
+      github,
+      website,
+      schoolMemories,
+      contributions,
+      isPhonePublic,
+      isEmailPublic,
+    } = body;
 
     // Optional text fields: undefined leaves the value as is, an empty string clears it.
     const optional = (value: unknown) =>
@@ -64,10 +84,20 @@ export async function PUT(req: Request) {
           fullName: required(fullName),
           profession: required(profession),
           locationCity: required(locationCity),
+          locationCountry: optional(locationCountry) || undefined,
           company: optional(company),
+          industry: optional(industry),
+          rollNumber: optional(rollNumber),
+          section: optional(section),
           bio: optional(bio),
           phone: optional(phone),
           skills: Array.isArray(skills) ? skills : undefined,
+          linkedin: optional(linkedin),
+          facebook: optional(facebook),
+          github: optional(github),
+          website: optional(website),
+          schoolMemories: optional(schoolMemories),
+          contributions: optional(contributions),
           isPhonePublic: typeof isPhonePublic === "boolean" ? isPhonePublic : undefined,
           isEmailPublic: typeof isEmailPublic === "boolean" ? isEmailPublic : undefined,
         },
@@ -78,11 +108,22 @@ export async function PUT(req: Request) {
           graduationYear: batchYear,
           profession: required(profession) || "Alumnus",
           locationCity: required(locationCity) || "Chattogram",
-          locationCountry: "Bangladesh",
+          locationCountry: optional(locationCountry) || "Bangladesh",
           company: optional(company) ?? null,
+          industry: optional(industry) ?? null,
+          rollNumber: optional(rollNumber) ?? null,
+          section: optional(section) ?? null,
           bio: optional(bio) ?? null,
           phone: optional(phone) ?? null,
           skills: Array.isArray(skills) ? skills : [],
+          linkedin: optional(linkedin) ?? null,
+          facebook: optional(facebook) ?? null,
+          github: optional(github) ?? null,
+          website: optional(website) ?? null,
+          schoolMemories: optional(schoolMemories) ?? null,
+          contributions: optional(contributions) ?? null,
+          isPhonePublic: typeof isPhonePublic === "boolean" ? isPhonePublic : false,
+          isEmailPublic: typeof isEmailPublic === "boolean" ? isEmailPublic : false,
         },
       });
 
