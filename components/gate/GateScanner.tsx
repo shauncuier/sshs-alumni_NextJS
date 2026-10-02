@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
+import MobileNav from "@/components/layout/MobileNav";
 import {
   QrCode,
   Camera,
@@ -258,22 +259,22 @@ export default function GateScanner() {
                 {/* Manual Input / Barcode reader input */}
                 <form onSubmit={handleVerify} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Scanned QR Code Token or Verification URL
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2.5">
                       <input
                         type="text"
-                        placeholder="Paste or scan QR string here..."
+                        placeholder="Paste or scan QR string / Ticket code here..."
                         value={qrInput}
                         onChange={(e) => setQrInput(e.target.value)}
-                        className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                        className="flex-1 px-4 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs font-mono min-h-[48px] focus:outline-none focus:ring-2 focus:ring-emerald-600"
                       />
                       <button
                         id="verify-btn"
                         type="submit"
                         disabled={isVerifying || !qrInput.trim()}
-                        className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shrink-0"
+                        className="w-full sm:w-auto px-6 py-3 min-h-[48px] bg-emerald-800 hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50 text-white rounded-xl text-sm sm:text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer flex items-center justify-center gap-2"
                       >
                         {isVerifying ? "Verifying..." : "Verify Gate Pass"}
                       </button>
@@ -378,6 +379,8 @@ export default function GateScanner() {
           </div>
         </main>
       </div>
+
+      <MobileNav />
     </div>
   );
 }
