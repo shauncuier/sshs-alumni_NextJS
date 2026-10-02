@@ -190,8 +190,12 @@ export default function RegistrationForm({
       </div>
     );
   }
-  if (sessionStatus === "loading") {
-    return <p role="status" className="text-xs text-slate-500">Loading…</p>;
+  if (sessionStatus === "loading" && !event.isMembershipEvent) {
+    return (
+      <div className="py-8 flex flex-col items-center justify-center space-y-2">
+        <p role="status" className="text-xs font-semibold text-slate-500 animate-pulse">Loading event registration…</p>
+      </div>
+    );
   }
   if (sessionStatus === "unauthenticated" && !event.isMembershipEvent) {
     return (
