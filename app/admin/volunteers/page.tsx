@@ -18,8 +18,8 @@ import {
   ExternalLink,
   RefreshCw,
 } from "lucide-react";
-import type { VolunteerItem } from "@/lib/volunteers";
-import { SUBCOMMITTEES, SUBCOMMITTEE_LABELS } from "@/lib/volunteers";
+import type { VolunteerItem } from "@/lib/volunteers-types";
+import { SUBCOMMITTEES, SUBCOMMITTEE_LABELS } from "@/lib/volunteers-types";
 
 const ICONS_MAP: Record<string, React.ElementType> = {
   Sparkles,

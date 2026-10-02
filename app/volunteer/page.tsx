@@ -18,7 +18,7 @@ import {
   ChevronRight,
   ArrowRight,
 } from "lucide-react";
-import { SUBCOMMITTEES } from "@/lib/volunteers";
+import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 
 const ICONS_MAP: Record<string, React.ElementType> = {
   Sparkles,
