@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -10,33 +10,48 @@ import {
   Layers,
   Calendar,
   Heart,
-  Newspaper,
   Users,
   ShieldCheck,
-  LogOut,
-  GraduationCap,
   ArrowLeft,
   QrCode,
-  HeartHandshake
+  HeartHandshake,
 } from "lucide-react";
 
+export interface AdminShellUser {
+  email: string | null;
+  role: string;
+}
+
+export interface AdminShellProps {
+  children: React.ReactNode;
+  user?: AdminShellUser;
+}
+
+const ADMIN_NAV = [
+  { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck },
+  { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
+  { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake },
+  { name: "Manage Batches", href: "/admin/batches", icon: Layers },
+  { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
+  { name: "Gate Scanner", href: "/gate", icon: QrCode },
+  { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
+  { name: "System Roles", href: "/admin/users", icon: Users },
+] as const;
+
 // Admin console chrome (sidebar and navigation). Access is checked by app/admin/layout.tsx.
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({ children, user }: AdminShellProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const roleLabel = session?.user?.role === "SUPER_ADMIN" ? "Super Admin" : "Administrator";
+  const [mounted, setMounted] = useState(false);
 
-  const adminNav = [
-    { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck },
-    { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
-    { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake },
-    { name: "Manage Batches", href: "/admin/batches", icon: Layers },
-    { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
-    { name: "Gate Scanner", href: "/gate", icon: QrCode },
-    { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
-    { name: "System Roles", href: "/admin/users", icon: Users },
-  ];
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const effectiveRole = user?.role || session?.user?.role;
+  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : "Administrator";
+  const userEmail = user?.email ?? (mounted ? session?.user?.email : null);
 
   return (
     <div className="min-h-screen flex bg-slate-100">
@@ -64,13 +79,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Links */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {adminNav.map((item) => {
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto" suppressHydrationWarning>
+          {ADMIN_NAV.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
@@ -87,7 +102,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
         <div className="p-4 border-t border-emerald-950 text-xs text-slate-400">
           <div className="font-semibold text-slate-200">Logged in as {roleLabel}</div>
-          <div className="text-[10px] text-slate-400">{session?.user?.email}</div>
+          {userEmail && <div className="text-[10px] text-slate-400 truncate">{userEmail}</div>}
         </div>
       </aside>
 

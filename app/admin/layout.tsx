@@ -11,5 +11,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) unauthorized();
   if (!isAdminRole(user.role)) forbidden();
 
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell user={{ email: user.email, role: user.role }}>{children}</AdminShell>;
 }
