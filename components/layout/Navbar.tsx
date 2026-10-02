@@ -156,8 +156,8 @@ export default function Navbar() {
           scrolled ? "shadow-2xl shadow-black/25" : "shadow-md"
         }`}
       >
-        {/* Top Institutional Utility Ribbon */}
-        <div className="bg-[#041a13] border-b border-emerald-900/60 text-slate-300 text-[11px] font-medium tracking-normal">
+        {/* Top Institutional Utility Ribbon (Hidden on mobile screens to prevent text overlap) */}
+        <div className="hidden sm:block bg-[#041a13] border-b border-emerald-900/60 text-slate-300 text-[11px] font-medium tracking-normal">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
             {/* Left: Official School Accreditation */}
             <div className="flex items-center gap-2 sm:gap-3 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -182,9 +182,8 @@ export default function Navbar() {
                 href="/dashboard"
                 className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
               >
-                <LayoutDashboard className="w-3 h-3 text-emerald-400" />
+                <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden sm:inline">Member Portal</span>
-                <span className="sm:hidden">Portal</span>
               </Link>
 
               <span className="text-emerald-900 select-none">|</span>
@@ -193,7 +192,7 @@ export default function Navbar() {
                 href="/admin"
                 className="inline-flex items-center gap-1.5 text-amber-300/90 hover:text-amber-200 transition-colors font-medium"
               >
-                <ShieldCheck className="w-3 h-3 text-amber-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
                 <span>Admin Console</span>
               </Link>
             </div>
@@ -202,38 +201,38 @@ export default function Navbar() {
 
         {/* Main Navbar */}
         <div className="bg-[#06281e]/98 backdrop-blur-xl border-b border-emerald-800/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[68px] sm:h-[72px] flex items-center justify-between gap-3 sm:gap-6">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-1.5 sm:gap-6">
             
             {/* 1. Official Identity & Crest */}
             <Link
               href="/"
-              className="flex items-center gap-3.5 group shrink-0 select-none"
+              className="flex items-center gap-2 sm:gap-3 group shrink min-w-0 select-none"
               aria-label="SSGHS Alumni Association Home"
             >
               {/* Official Alumni Seal / Crest */}
-              <div className="relative w-12 h-12 rounded-full p-0.5 shadow-lg shadow-black/40 ring-2 ring-amber-400/50 bg-white flex items-center justify-center transition-all duration-200 group-hover:scale-105 shrink-0 overflow-hidden">
+              <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-full p-0.5 shadow-lg shadow-black/40 ring-2 ring-amber-400/50 bg-white flex items-center justify-center transition-all duration-200 group-hover:scale-105 shrink-0 overflow-hidden">
                 <NextImage
                   src="/logo.png"
                   alt="SSGHS Alumni Association Official Crest"
-                  width={48}
-                  height={48}
+                  width={44}
+                  height={44}
                   className="w-full h-full object-contain rounded-full"
                   priority
                 />
               </div>
 
               {/* Wordmark Hierarchy */}
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-base sm:text-lg tracking-tight text-white leading-none">
+              <div className="flex flex-col justify-center min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="font-extrabold text-sm sm:text-lg tracking-tight text-white leading-none">
                     SSGHS
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30 leading-none">
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 leading-none shrink-0">
                     Alumni
                   </span>
                 </div>
                 {/* Hidden on phones: with the header controls it would overflow the screen. */}
-                <span className="hidden sm:block text-xs font-semibold text-emerald-200/90 tracking-normal mt-1 leading-tight line-clamp-1">
+                <span className="hidden md:block text-xs font-semibold text-emerald-200/90 tracking-normal mt-1 leading-tight line-clamp-1">
                   Sabuj Shikshayatan Govt. High School
                 </span>
                 <span className="text-[10px] text-emerald-400/70 font-normal leading-none mt-0.5 hidden xl:block">
@@ -340,16 +339,16 @@ export default function Navbar() {
             </nav>
 
             {/* 3. Action Controls */}
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 whitespace-nowrap">
               {/* Global Search Icon Button */}
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="h-9 w-9 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-slate-300 hover:text-white border border-emerald-800/70 flex items-center justify-center transition-all shadow-inner"
+                className="h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-slate-300 hover:text-white border border-emerald-800/70 flex items-center justify-center transition-all shadow-inner"
                 title="Search Alumni, Batches, Events (Ctrl+K)"
                 aria-label="Search directory"
               >
-                <Search className="w-4 h-4 text-emerald-400" />
+                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
               </button>
 
               {/* Auth Buttons: Logged In vs Logged Out */}
@@ -358,7 +357,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     aria-label="My dashboard"
-                    className="flex items-center gap-2 h-9 px-2 sm:px-3 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 sm:gap-2 h-8.5 sm:h-9 px-2 sm:px-3 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
                   >
                     <div className="w-5 h-5 rounded-full bg-emerald-600 border border-amber-400/40 flex items-center justify-center text-[10px] text-amber-300 font-bold shrink-0">
                       {session?.user?.name ? session.user.name[0] : "A"}
@@ -382,7 +381,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-1.5 h-8.5 sm:h-9 px-2.5 sm:px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <LogIn className="w-3.5 h-3.5 text-emerald-200" />
                   <span>Sign In</span>
@@ -393,11 +392,11 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden h-9 w-9 rounded-lg bg-emerald-950 text-slate-200 hover:text-white hover:bg-emerald-900 border border-emerald-800 flex items-center justify-center transition-colors"
+                className="lg:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-lg bg-emerald-950 text-slate-200 hover:text-white hover:bg-emerald-900 border border-emerald-800 flex items-center justify-center transition-colors"
                 aria-label="Toggle mobile navigation menu"
                 aria-expanded={mobileMenuOpen}
               >
-                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                {mobileMenuOpen ? <X className="w-4 h-4 text-amber-300" /> : <Menu className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -513,6 +512,26 @@ export default function Navbar() {
                   <span>Sign In to Alumni Portal</span>
                 </Link>
               )}
+
+              {/* Quick Portal & Admin Links in Mobile Drawer */}
+              <div className="pt-2 flex items-center justify-between text-xs border-t border-emerald-900/60">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white font-semibold"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Member Portal</span>
+                </Link>
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Admin Console</span>
+                </Link>
+              </div>
             </div>
           </div>
         )}
