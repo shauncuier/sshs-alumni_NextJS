@@ -16,7 +16,8 @@ import {
   LogOut,
   GraduationCap,
   ArrowLeft,
-  QrCode
+  QrCode,
+  HeartHandshake
 } from "lucide-react";
 
 // Admin console chrome (sidebar and navigation). Access is checked by app/admin/layout.tsx.
@@ -28,6 +29,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const adminNav = [
     { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
+    { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake },
     { name: "Manage Batches", href: "/admin/batches", icon: Layers },
     { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
     { name: "Gate Scanner", href: "/gate", icon: QrCode },

@@ -949,6 +949,13 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
                           {a.avatarUrl?.startsWith("/api/media/avatars/") && (
                             <a href={a.avatarUrl.replace("avatar.webp", "original.jpg")} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold underline">View print photo</a>
                           )}
+                          {a.notes && a.notes.includes("[Volunteer:") && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300/80">
+                                🤝 {a.notes.replace("[Volunteer:", "Volunteer:").replace("]", " —")}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>

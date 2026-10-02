@@ -106,6 +106,12 @@ export default function Navbar() {
       desc: "BCS, Medicine & Tech career guidance",
     },
     {
+      name: "Volunteer Squad",
+      href: "/volunteer",
+      icon: HeartHandshake,
+      desc: "Join organizing committees & event wings",
+    },
+    {
       name: "About Association",
       href: "/about",
       icon: Users,

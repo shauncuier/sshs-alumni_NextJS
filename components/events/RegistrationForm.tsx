@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_NOTE_MAX, PROOF_TYPES } from "@/lib/members/proof-types";
+import { SUBCOMMITTEES } from "@/lib/volunteers";
 
 const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
@@ -61,7 +62,7 @@ export default function RegistrationForm({
   initialPackage?: string;
   onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
-  const { status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const needsAccount = sessionStatus === "unauthenticated" && event.isMembershipEvent;
   // Step 1 (account details) only exists for signed-out visitors joining. The session
   // is still "loading" on the first render, so derive what to show on every render.
@@ -75,6 +76,9 @@ export default function RegistrationForm({
   const [extraChildren, setExtraChildren] = useState(0);
   const [tshirtSize, setTshirtSize] = useState("L");
   const [mealPreference, setMealPreference] = useState("");
+  const [isVolunteer, setIsVolunteer] = useState(false);
+  const [volunteerSubcommittee, setVolunteerSubcommittee] = useState<string>(SUBCOMMITTEES[0].id);
+  const [volunteerNotes, setVolunteerNotes] = useState("");
   const [donation, setDonation] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bKash");
   const [transactionId, setTransactionId] = useState("");
@@ -182,6 +186,10 @@ export default function RegistrationForm({
     setExistingAccount(false);
     setSubmitting(true);
     try {
+      const volunteerNoteFormatted = isVolunteer
+        ? `[Volunteer: ${SUBCOMMITTEES.find((s) => s.id === volunteerSubcommittee)?.name || volunteerSubcommittee}]${volunteerNotes.trim() ? ` ${volunteerNotes.trim()}` : ""}`
+        : null;
+
       const payload = JSON.stringify({
           account: needsAccount ? { ...account, sscBatch: Number(account.sscBatch) } : undefined,
           proof: needsAccount ? { type: proofType, note: proofType === "OTHER" ? proofNote.trim() : null } : undefined,
@@ -191,6 +199,7 @@ export default function RegistrationForm({
             extraChildren,
             tshirtSize,
             mealPreference: mealPreference || null,
+            notes: volunteerNoteFormatted,
             donationAmount: donation ? Number(donation) : 0,
             paymentMethod: paid ? paymentMethod : null,
             transactionId: paid ? transactionId : null,
@@ -217,6 +226,21 @@ export default function RegistrationForm({
       }
       // A new member is not signed in: the committee must approve the membership first.
       if (body.createdAccount) setJoined(true);
+      if (isVolunteer) {
+        fetch("/api/volunteers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: needsAccount ? account.fullName : (session?.user?.name || "Event Attendee"),
+            email: needsAccount ? account.email : (session?.user?.email || "alumni@ssghs.org"),
+            phone: needsAccount ? account.phone : "Registered Attendee",
+            sscBatch: Number(needsAccount ? account.sscBatch : 2010),
+            subcommittee: volunteerSubcommittee,
+            notes: volunteerNotes.trim() || undefined,
+            source: "EVENT_REGISTRATION",
+          }),
+        }).catch(() => {});
+      }
       onRegistered(body.registration, Boolean(body.createdAccount));
     } catch (err) {
       setError((err as Error).message);
@@ -393,6 +417,68 @@ export default function RegistrationForm({
           <div>
             <label htmlFor="reg-donation" className={label}>Additional donation (optional, ৳)</label>
             <input id="reg-donation" type="number" min={0} step={1} className={input} value={donation} onChange={(e) => setDonation(e.target.value)} placeholder="Any amount you'd like to give" />
+          </div>
+
+          {/* Volunteer Squad Opt-In */}
+          <div className="p-3.5 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/70 to-emerald-100/30 text-xs space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isVolunteer}
+                onChange={(e) => setIsVolunteer(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded text-emerald-700 border-slate-300 focus:ring-emerald-600 focus:ring-offset-0 cursor-pointer"
+              />
+              <div className="flex-1">
+                <span className="font-bold text-slate-900 block">
+                  Join the Organizing Committee Volunteer Squad (ঐচ্ছিক স্বেচ্ছাসেবী)
+                </span>
+                <span className="text-[11px] text-slate-600 block mt-0.5">
+                  Contribute your skills during the event. Volunteers receive special commemorative squad badges and certificate of appreciation.
+                </span>
+              </div>
+            </label>
+
+            {isVolunteer && (
+              <div className="pt-2 border-t border-emerald-200/60 space-y-2.5">
+                <div>
+                  <label htmlFor="reg-subcommittee" className={label}>
+                    Preferred Committee Wing / Sub-Committee *
+                  </label>
+                  <select
+                    id="reg-subcommittee"
+                    className={input}
+                    value={volunteerSubcommittee}
+                    onChange={(e) => setVolunteerSubcommittee(e.target.value)}
+                  >
+                    {SUBCOMMITTEES.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name} — {sub.bengaliName}
+                      </option>
+                    ))}
+                  </select>
+                  {SUBCOMMITTEES.find((s) => s.id === volunteerSubcommittee) && (
+                    <p className="text-[11px] text-emerald-800 mt-1 italic">
+                      {SUBCOMMITTEES.find((s) => s.id === volunteerSubcommittee)?.description}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="reg-vol-notes" className={label}>
+                    Relevant experience or availability notes (optional)
+                  </label>
+                  <input
+                    id="reg-vol-notes"
+                    type="text"
+                    maxLength={150}
+                    className={input}
+                    value={volunteerNotes}
+                    onChange={(e) => setVolunteerNotes(e.target.value)}
+                    placeholder="e.g. Doctor on standby, photography gear, gate scanner shift"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {total && (

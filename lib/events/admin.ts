@@ -37,6 +37,7 @@ function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     mealPreference: reg.mealPreference,
     paymentMethod: reg.paymentMethod,
     transactionId: reg.transactionId,
+    notes: reg.notes,
     status: reg.status,
     confirmedBy: reg.confirmedBy,
     confirmedAt: reg.confirmedAt?.toISOString() ?? null,

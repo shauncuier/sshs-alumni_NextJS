@@ -208,6 +208,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/volunteer" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">
+                  Volunteer Squad (স্বেচ্ছাসেবী)
+                </Link>
+              </li>
+              <li>
                 <Link href="/contact" className="hover:text-emerald-300 transition-colors">
                   Contact Committee
                 </Link>

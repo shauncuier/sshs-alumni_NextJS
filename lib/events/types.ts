@@ -140,6 +140,7 @@ export interface AdminRegistration {
   mealPreference: string | null;
   paymentMethod: string | null;
   transactionId: string | null;
+  notes: string | null;
   status: RegistrationStatusValue;
   confirmedBy: string | null;
   confirmedAt: string | null;
