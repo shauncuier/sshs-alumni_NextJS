@@ -63,9 +63,9 @@ export default function RegistrationForm({
   onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
   const { data: session, status: sessionStatus } = useSession();
-  const needsAccount = sessionStatus === "unauthenticated" && event.isMembershipEvent;
-  // Step 1 (account details) only exists for signed-out visitors joining. The session
-  // is still "loading" on the first render, so derive what to show on every render.
+  const isAuthed = sessionStatus === "authenticated" && Boolean(session?.user);
+  const needsAccount = !isAuthed && Boolean(event.isMembershipEvent);
+  // Step 1 (account details) only exists for signed-out visitors joining.
   const [step, setStep] = useState<1 | 2>(1);
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
