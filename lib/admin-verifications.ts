@@ -20,6 +20,7 @@ interface VerificationRequestRow {
   status: RequestStatus;
   createdAt: string;
   awaitingPayment?: boolean;
+  paymentStatus?: string | null;
   membershipEventId?: string | null;
   membershipEventSlug?: string | null;
   registrationId?: string | null;
@@ -64,6 +65,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     }),
     status: row.status,
     awaitingPayment: row.awaitingPayment ?? false,
+    paymentStatus: row.paymentStatus ?? null,
     membershipEventId: row.membershipEventId ?? null,
     membershipEventSlug: row.membershipEventSlug ?? null,
     registrationId: row.registrationId ?? null,

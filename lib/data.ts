@@ -163,6 +163,7 @@ export interface VerificationRequestItem {
   submittedAt: string;
   status: "PENDING" | "VERIFIED" | "REJECTED";
   awaitingPayment?: boolean;
+  paymentStatus?: "PENDING_PAYMENT" | "CONFIRMED" | "CANCELLED" | string | null;
   membershipEventId?: string | null;
   membershipEventSlug?: string | null;
   registrationId?: string | null;

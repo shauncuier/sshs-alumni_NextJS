@@ -42,26 +42,42 @@ export async function GET(req: Request) {
 
       const withPayment = await Promise.all(
         requests.map(async (r) => {
-          const pendingReg = await prisma.eventRegistration.findFirst({
-            where: { userId: r.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
-            select: {
-              id: true,
-              eventId: true,
-              transactionId: true,
-              paymentMethod: true,
-              totalFee: true,
-              event: { select: { id: true, title: true, slug: true } },
-            },
-          });
+          const reg =
+            (await prisma.eventRegistration.findFirst({
+              where: { userId: r.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
+              select: {
+                id: true,
+                eventId: true,
+                status: true,
+                transactionId: true,
+                paymentMethod: true,
+                totalFee: true,
+                event: { select: { id: true, title: true, slug: true } },
+              },
+            })) ??
+            (await prisma.eventRegistration.findFirst({
+              where: { userId: r.userId, event: { isMembershipEvent: true } },
+              orderBy: { createdAt: "desc" },
+              select: {
+                id: true,
+                eventId: true,
+                status: true,
+                transactionId: true,
+                paymentMethod: true,
+                totalFee: true,
+                event: { select: { id: true, title: true, slug: true } },
+              },
+            }));
           return {
             ...r,
-            awaitingPayment: Boolean(pendingReg),
-            membershipEventId: pendingReg?.event?.id ?? null,
-            membershipEventSlug: pendingReg?.event?.slug ?? null,
-            registrationId: pendingReg?.id ?? null,
-            paymentMethod: pendingReg?.paymentMethod ?? null,
-            transactionId: pendingReg?.transactionId ?? null,
-            totalFee: pendingReg?.totalFee ?? null,
+            awaitingPayment: reg?.status === "PENDING_PAYMENT",
+            paymentStatus: reg?.status ?? null,
+            membershipEventId: reg?.event?.id ?? null,
+            membershipEventSlug: reg?.event?.slug ?? null,
+            registrationId: reg?.id ?? null,
+            paymentMethod: reg?.paymentMethod ?? null,
+            transactionId: reg?.transactionId ?? null,
+            totalFee: reg?.totalFee ?? null,
           };
         })
       );

@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  Plus
+  Plus,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
@@ -26,6 +28,13 @@ export default function AdminDashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<{ text: string; isError: boolean } | null>(null);
+  const [copiedTrx, setCopiedTrx] = useState<string | null>(null);
+
+  const handleCopyTrx = (trx: string) => {
+    navigator.clipboard.writeText(trx);
+    setCopiedTrx(trx);
+    setTimeout(() => setCopiedTrx(null), 2000);
+  };
 
   useEffect(() => {
     fetchVerificationRequests("PENDING")
@@ -235,6 +244,35 @@ export default function AdminDashboardPage() {
                   <td className="py-4 px-6 text-right">
                     {r.status === "PENDING" && r.awaitingPayment ? (
                       <div className="flex flex-col items-end gap-1.5">
+                        {(r.paymentMethod || r.transactionId) && (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            {r.paymentMethod && (
+                              <span className="px-1.5 py-0.5 rounded font-black text-[10px] uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                                {r.paymentMethod}
+                              </span>
+                            )}
+                            {r.totalFee !== null && r.totalFee !== undefined && (
+                              <span className="font-bold text-slate-800">৳{r.totalFee.toLocaleString("en-BD")}</span>
+                            )}
+                            {r.transactionId && (
+                              <span className="flex items-center gap-1 font-mono font-semibold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-slate-800 text-[10px]">
+                                {r.transactionId}
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyTrx(r.transactionId!)}
+                                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                                  title="Copy TrxID"
+                                >
+                                  {copiedTrx === r.transactionId ? (
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleApprove(r.id)}
