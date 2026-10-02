@@ -171,6 +171,8 @@ export interface VerificationRequestItem {
   transactionId?: string | null;
   totalFee?: number | null;
   avatarUrl?: string;
+  avatarOriginalUrl?: string | null;
+  hasValidPhoto?: boolean;
   /** Proof of study uploaded when joining (admin queue only). */
   proof?: ProofSummary | null;
 }

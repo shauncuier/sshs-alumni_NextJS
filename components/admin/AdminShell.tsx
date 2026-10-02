@@ -28,6 +28,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const adminNav = [
     { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
+    { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck },
     { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
     { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake },
     { name: "Manage Batches", href: "/admin/batches", icon: Layers },

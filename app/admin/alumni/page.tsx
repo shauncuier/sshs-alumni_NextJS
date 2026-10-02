@@ -14,6 +14,7 @@ import {
   CreditCard,
   Copy,
   ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function AdminAlumniPage() {
@@ -91,9 +92,18 @@ export default function AdminAlumniPage() {
           </p>
         </div>
 
-        <button className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 self-start sm:self-auto">
-          <Download className="w-4 h-4" /> Export CSV
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            href="/admin/verifications"
+            className="px-3.5 py-2 bg-emerald-950 hover:bg-emerald-900 text-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <span>Verify Payments &amp; Docs</span>
+          </Link>
+          <button className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5">
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search */}
@@ -302,6 +312,14 @@ export default function AdminAlumniPage() {
                     {r.status === "PENDING" && r.awaitingPayment ? (
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="flex items-center gap-1.5 justify-end">
+                          <Link
+                            href={`/admin/verifications?id=${r.id}`}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Open full document, photo and payment verification workspace"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                            <span>Review</span>
+                          </Link>
                           <button
                             onClick={() => handleApprove(r.id)}
                             disabled={busyId !== null}
@@ -324,6 +342,14 @@ export default function AdminAlumniPage() {
                       </div>
                     ) : r.status === "PENDING" ? (
                       <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/verifications?id=${r.id}`}
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                          title="Open full verification workspace"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Review</span>
+                        </Link>
                         <button
                           onClick={() => handleApprove(r.id)}
                           disabled={busyId !== null}

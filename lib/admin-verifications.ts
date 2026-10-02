@@ -33,6 +33,7 @@ interface VerificationRequestRow {
       fullName: string;
       phone: string | null;
       avatarUrl: string | null;
+      avatarOriginalUrl?: string | null;
       profession: string;
       locationCity: string;
       locationCountry: string;
@@ -42,12 +43,19 @@ interface VerificationRequestRow {
 
 function toItem(row: VerificationRequestRow): VerificationRequestItem {
   const profile = row.user.profile;
+  const hasPhoto = Boolean(
+    profile?.avatarUrl &&
+    profile.avatarUrl !== "/logo.png" &&
+    !profile.avatarUrl.includes("placeholder")
+  );
   return {
     id: row.id,
     fullName: profile?.fullName ?? row.user.email,
     email: row.user.email,
     phone: profile?.phone ?? "",
     avatarUrl: profile?.avatarUrl || "/logo.png",
+    avatarOriginalUrl: profile?.avatarOriginalUrl ?? null,
+    hasValidPhoto: hasPhoto,
     sscBatch: row.sscBatch,
     rollNumber: row.rollNumber ?? "",
     profession: profile?.profession ?? "",
