@@ -30,6 +30,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
     setTimeout(() => {
       onPostCreated(content.trim(), effectiveBatchTag && effectiveBatchTag !== "all" ? parseInt(effectiveBatchTag, 10) : undefined);
       setContent("");
+      setBatchTag(null);
       setSubmitting(false);
       onClose();
     }, 600);
