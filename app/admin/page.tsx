@@ -22,8 +22,24 @@ import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
 
+interface AdminStats {
+  totalRegistered: number;
+  registeredThisWeek: number;
+  verifiedAlumni: number;
+  pendingReview: number;
+  verificationRate: number;
+  activeBatchesCount: number;
+  batchRange: string;
+  totalFunds: number;
+  fundsFormatted: string;
+  activeDrivesCount: number;
+  reunionRsvpCount: number;
+  reunionTitle: string;
+}
+
 export default function AdminDashboardPage() {
   const [requests, setRequests] = useState<VerificationRequestItem[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -37,8 +53,17 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    fetchVerificationRequests("PENDING")
-      .then(setRequests)
+    Promise.all([
+      fetchVerificationRequests("PENDING"),
+      fetch("/api/admin/stats")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => data?.stats ?? null)
+        .catch(() => null),
+    ])
+      .then(([reqs, dynamicStats]) => {
+        setRequests(reqs);
+        if (dynamicStats) setStats(dynamicStats);
+      })
       .catch((err: Error) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -54,6 +79,16 @@ export default function AdminDashboardPage() {
     try {
       const proof = await decideVerification(id, status);
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status, proof: proof ?? r.proof } : r)));
+      // Also update dynamic counts optimistically
+      setStats((prev) =>
+        prev
+          ? {
+              ...prev,
+              pendingReview: Math.max(0, prev.pendingReview - 1),
+              verifiedAlumni: status === "VERIFIED" ? prev.verifiedAlumni + 1 : prev.verifiedAlumni,
+            }
+          : null
+      );
       showNotice(
         status === "VERIFIED"
           ? `Approved ${target?.fullName || "alumnus"}. Official verified badge granted.`
@@ -69,8 +104,8 @@ export default function AdminDashboardPage() {
   const handleApprove = (id: string) => decide(id, "VERIFIED");
   const handleReject = (id: string) => decide(id, "REJECTED");
 
-  const pendingCount = requests.filter((r) => r.status === "PENDING").length;
-  const verifiedCount = 4890 + requests.filter((r) => r.status === "VERIFIED").length;
+  const pendingCount = stats?.pendingReview ?? requests.filter((r) => r.status === "PENDING").length;
+  const verifiedCount = stats?.verifiedAlumni ?? requests.filter((r) => r.status === "VERIFIED").length;
 
   return (
     <div className="p-6 sm:p-8 space-y-8 max-w-7xl w-full mx-auto">
@@ -121,18 +156,24 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Stats Grid */}
+      {/* KPI Stats Grid - 100% Dynamic from live database */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Total Registered</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">5,200</div>
-          <span className="text-[10px] text-emerald-600 font-semibold">+24 this week</span>
+          <div className="text-2xl font-black text-slate-900 mt-1">
+            {stats ? stats.totalRegistered.toLocaleString() : "..."}
+          </div>
+          <span className="text-[10px] text-emerald-600 font-semibold">
+            +{stats ? stats.registeredThisWeek : 0} this week
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Verified Alumni</div>
           <div className="text-2xl font-black text-emerald-700 mt-1">{verifiedCount.toLocaleString()}</div>
-          <span className="text-[10px] text-slate-400">94% verification rate</span>
+          <span className="text-[10px] text-slate-400">
+            {stats ? stats.verificationRate : 100}% verification rate
+          </span>
         </div>
 
         <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200 shadow-xs">
@@ -143,20 +184,32 @@ export default function AdminDashboardPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Active Batches</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">41</div>
-          <span className="text-[10px] text-slate-400">1985 — 2025</span>
+          <div className="text-2xl font-black text-slate-900 mt-1">
+            {stats ? stats.activeBatchesCount : 0}
+          </div>
+          <span className="text-[10px] text-slate-400">
+            {stats ? stats.batchRange : "All Batches"}
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Funds Raised</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">৳18.5L</div>
-          <span className="text-[10px] text-emerald-600 font-semibold">4 active drives</span>
+          <div className="text-2xl font-black text-slate-900 mt-1">
+            {stats ? stats.fundsFormatted : "৳0"}
+          </div>
+          <span className="text-[10px] text-emerald-600 font-semibold">
+            {stats ? stats.activeDrivesCount : 1} active drives
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Reunion RSVPs</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">840</div>
-          <span className="text-[10px] text-emerald-600 font-semibold">Nov 20 Reunion</span>
+          <div className="text-2xl font-black text-slate-900 mt-1">
+            {stats ? stats.reunionRsvpCount.toLocaleString() : 0}
+          </div>
+          <span className="text-[10px] text-emerald-600 font-semibold truncate block" title={stats?.reunionTitle}>
+            {stats ? stats.reunionTitle : "Grand Reunion"}
+          </span>
         </div>
       </div>
 

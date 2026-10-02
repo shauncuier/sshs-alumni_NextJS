@@ -170,6 +170,7 @@ export interface VerificationRequestItem {
   paymentMethod?: string | null;
   transactionId?: string | null;
   totalFee?: number | null;
+  paymentReceiptUrl?: string | null;
   avatarUrl?: string;
   avatarOriginalUrl?: string | null;
   hasValidPhoto?: boolean;

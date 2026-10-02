@@ -27,6 +27,7 @@ interface VerificationRequestRow {
   paymentMethod?: string | null;
   transactionId?: string | null;
   totalFee?: number | null;
+  paymentReceiptUrl?: string | null;
   user: {
     email: string;
     profile: {
@@ -80,6 +81,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     paymentMethod: row.paymentMethod ?? null,
     transactionId: row.transactionId ?? null,
     totalFee: row.totalFee ?? null,
+    paymentReceiptUrl: row.paymentReceiptUrl ?? null,
   };
 }
 

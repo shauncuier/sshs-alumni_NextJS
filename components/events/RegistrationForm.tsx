@@ -90,6 +90,10 @@ export default function RegistrationForm({
   const [proof, setProof] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [proofError, setProofError] = useState<string | null>(null);
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+  const [paymentReceiptPreview, setPaymentReceiptPreview] = useState<string | null>(null);
+  const [isScanningReceipt, setIsScanningReceipt] = useState(false);
+  const [ocrDetectedTrx, setOcrDetectedTrx] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingAccount, setExistingAccount] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -122,6 +126,38 @@ export default function RegistrationForm({
     const problem = checkProof(file);
     if (problem) setProofError(problem);
     else setProof(file);
+  };
+
+  const chooseReceipt = async (file: File | undefined) => {
+    setPaymentReceipt(null);
+    setPaymentReceiptPreview(null);
+    setOcrDetectedTrx(null);
+    if (!file) return;
+
+    setPaymentReceipt(file);
+    if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file);
+      setPaymentReceiptPreview(url);
+
+      // Trigger automatic OCR scan to read Transaction ID from screenshot
+      setIsScanningReceipt(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/media/ocr", { method: "POST", body: formData });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.detectedTrxId) {
+            setTransactionId(data.detectedTrxId);
+            setOcrDetectedTrx(data.detectedTrxId);
+          }
+        }
+      } catch (ocrErr) {
+        console.warn("Auto OCR scan note:", ocrErr);
+      } finally {
+        setIsScanningReceipt(false);
+      }
+    }
   };
 
   /** The first problem with the proof section, or null when it is complete. */
@@ -205,7 +241,7 @@ export default function RegistrationForm({
             transactionId: paid ? transactionId : null,
           },
         });
-      // Joining sends the photo and the proof along, so it goes as multipart; signed-in members stay JSON.
+      // Joining sends the photo and the proof along, so it goes as multipart; signed-in members stay JSON unless sending a payment receipt.
       let res: Response;
       if (needsAccount) {
         if (!photo) throw new Error("Please add a profile photo.");
@@ -215,6 +251,12 @@ export default function RegistrationForm({
         form.append("payload", payload);
         form.append("photo", photo);
         form.append("proof", proof);
+        if (paymentReceipt) form.append("paymentReceipt", paymentReceipt);
+        res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", body: form });
+      } else if (paymentReceipt) {
+        const form = new FormData();
+        form.append("payload", payload);
+        form.append("paymentReceipt", paymentReceipt);
         res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", body: form });
       } else {
         res = await fetch(`/api/events/${event.slug}/rsvp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
@@ -308,13 +350,14 @@ export default function RegistrationForm({
             <input id="reg-roll" className={input} value={account.rollNumber} onChange={(e) => setAccount({ ...account, rollNumber: e.target.value })} />
           </div>
           <div>
-            <label htmlFor="reg-section" className={label}>Section</label>
+            <label htmlFor="reg-section" className={label}>Section / Discipline</label>
             <select id="reg-section" className={input} value={account.section} onChange={(e) => setAccount({ ...account, section: e.target.value })}>
-              <option value="">—</option>
-              <option value="A">Section A (Morning)</option>
-              <option value="B">Section B (Day)</option>
-              <option value="Science">Science Cohort</option>
-              <option value="Commerce">Commerce / Arts</option>
+              <option value="">— Select Section or Discipline —</option>
+              <option value="Science">Science (বিজ্ঞান বিভাগ)</option>
+              <option value="Business Studies">Business Studies (ব্যবসায় শিক্ষা / বাণিজ্য)</option>
+              <option value="Humanities">Humanities (মানবিক বিভাগ)</option>
+              <option value="Section A">Section A (Morning Shift)</option>
+              <option value="Section B">Section B (Day Shift)</option>
             </select>
           </div>
           <fieldset className="sm:col-span-2 min-w-0 p-3 rounded-xl border border-slate-300 bg-slate-50/60 space-y-3" aria-describedby="reg-proof-help">
@@ -503,7 +546,49 @@ export default function RegistrationForm({
                 <div>
                   <label htmlFor="reg-trx" className={label}>Transaction ID *</label>
                   <input id="reg-trx" required className={input} value={transactionId} onChange={(e) => setTransactionId(e.target.value)} placeholder="e.g. 9AB3XK1LQ" />
+                  {ocrDetectedTrx && (
+                    <span className="text-[10px] text-emerald-700 font-bold block mt-1">
+                      ✨ Auto-detected from receipt: {ocrDetectedTrx}
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              {/* Payment Proof Screenshot Upload with OCR */}
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="reg-receipt" className={label}>
+                    Upload Payment Proof Screenshot (Recommended)
+                  </label>
+                  {isScanningReceipt && (
+                    <span className="text-[10px] text-amber-700 font-semibold animate-pulse">
+                      🤖 Scanning with OCR…
+                    </span>
+                  )}
+                </div>
+                <input
+                  id="reg-receipt"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(e) => void chooseReceipt(e.target.files?.[0])}
+                  className="block w-full text-xs text-slate-600 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-emerald-100 file:text-emerald-900 file:font-bold cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-500">
+                  Upload screenshot of your bKash, Nagad, Rocket or Bank SMS/App confirmation (JPEG, PNG, WebP or PDF, up to 10 MB).
+                </p>
+                {paymentReceiptPreview && (
+                  <div className="mt-2 flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200">
+                    <img
+                      src={paymentReceiptPreview}
+                      alt="Payment receipt preview"
+                      className="w-12 h-12 object-cover rounded-md border border-slate-200 shrink-0"
+                    />
+                    <div className="text-xs">
+                      <div className="font-semibold text-slate-800">{paymentReceipt?.name}</div>
+                      <div className="text-[10px] text-emerald-600 font-bold">✓ Screenshot attached for faster verification</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

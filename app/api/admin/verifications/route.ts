@@ -52,6 +52,7 @@ export async function GET(req: Request) {
                 transactionId: true,
                 paymentMethod: true,
                 totalFee: true,
+                notes: true,
                 event: { select: { id: true, title: true, slug: true } },
               },
             })) ??
@@ -65,9 +66,13 @@ export async function GET(req: Request) {
                 transactionId: true,
                 paymentMethod: true,
                 totalFee: true,
+                notes: true,
                 event: { select: { id: true, title: true, slug: true } },
               },
             }));
+          const receiptMatch = reg?.notes ? /\[Payment Screenshot:\s*([^\]]+)\]/.exec(reg.notes) : null;
+          const paymentReceiptUrl = receiptMatch ? receiptMatch[1].trim() : null;
+
           return {
             ...r,
             awaitingPayment: reg?.status === "PENDING_PAYMENT",
@@ -78,6 +83,7 @@ export async function GET(req: Request) {
             paymentMethod: reg?.paymentMethod ?? null,
             transactionId: reg?.transactionId ?? null,
             totalFee: reg?.totalFee ?? null,
+            paymentReceiptUrl,
           };
         })
       );

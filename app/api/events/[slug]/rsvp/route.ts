@@ -85,6 +85,19 @@ export async function POST(req: Request, { params }: Params) {
         if (proof.size > PROOF_LIMITS.maxBytes) throw proofTooLarge();
         proofFile = Buffer.from(await proof.arrayBuffer());
       }
+      const receipt = form.get("paymentReceipt");
+      if (receipt instanceof File && receipt.size > 0) {
+        try {
+          const { processReceipt, saveReceipt } = await import("@/lib/media/receipts");
+          const processed = await processReceipt(Buffer.from(await receipt.arrayBuffer()));
+          const saved = await saveReceipt(processed);
+          const currentNotes = body.rsvp?.notes ? `${body.rsvp.notes}\n` : "";
+          if (!body.rsvp) body.rsvp = {};
+          body.rsvp.notes = `${currentNotes}[Payment Screenshot: ${saved.fileUrl}]`;
+        } catch (receiptErr) {
+          console.warn("Could not save payment receipt, continuing registration:", receiptErr);
+        }
+      }
     } else {
       body = parsePayload(await req.text().catch(() => ""));
     }
