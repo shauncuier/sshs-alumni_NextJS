@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["sharp", "tesseract.js", "@prisma/client", "mariadb", "bcryptjs"],
   experimental: {
     // Enables forbidden()/unauthorized() with app/forbidden.tsx and app/unauthorized.tsx.
     authInterrupts: true,
