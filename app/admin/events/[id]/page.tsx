@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
 import { formatTaka, dhakaDateInput } from "@/lib/events/pricing";
@@ -41,13 +41,29 @@ interface AdminEventStudioProps {
   params: Promise<{ id: string }>;
 }
 
-export default function AdminEventStudioPage({ params }: AdminEventStudioProps) {
+function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const validTab =
+    tabParam === "attendees" ||
+    tabParam === "schedule" ||
+    tabParam === "pricing" ||
+    tabParam === "agenda" ||
+    tabParam === "souvenirs" ||
+    tabParam === "overview"
+      ? tabParam
+      : null;
 
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "schedule" | "pricing" | "agenda" | "souvenirs" | "attendees"
-  >("overview");
+  const [userTab, setUserTab] = useState<
+    "overview" | "schedule" | "pricing" | "agenda" | "souvenirs" | "attendees" | null
+  >(null);
+
+  const activeTab = userTab ?? validTab ?? "overview";
+  const setActiveTab = (tab: "overview" | "schedule" | "pricing" | "agenda" | "souvenirs" | "attendees") => {
+    setUserTab(tab);
+  };
 
   const [event, setEvent] = useState<PublicEvent | null>(null);
   const [attendees, setAttendees] = useState<AdminRegistration[]>([]);
@@ -998,5 +1014,13 @@ export default function AdminEventStudioPage({ params }: AdminEventStudioProps) 
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminEventStudioPage(props: AdminEventStudioProps) {
+  return (
+    <Suspense fallback={<div className="p-8 text-slate-500 font-medium">Loading event studio...</div>}>
+      <AdminEventStudioContent {...props} />
+    </Suspense>
   );
 }

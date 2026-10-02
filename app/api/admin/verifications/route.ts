@@ -41,7 +41,29 @@ export async function GET(req: Request) {
       });
 
       const withPayment = await Promise.all(
-        requests.map(async (r) => ({ ...r, awaitingPayment: await hasPendingMembershipPayment(prisma, r.userId) }))
+        requests.map(async (r) => {
+          const pendingReg = await prisma.eventRegistration.findFirst({
+            where: { userId: r.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
+            select: {
+              id: true,
+              eventId: true,
+              transactionId: true,
+              paymentMethod: true,
+              totalFee: true,
+              event: { select: { id: true, title: true, slug: true } },
+            },
+          });
+          return {
+            ...r,
+            awaitingPayment: Boolean(pendingReg),
+            membershipEventId: pendingReg?.event?.id ?? null,
+            membershipEventSlug: pendingReg?.event?.slug ?? null,
+            registrationId: pendingReg?.id ?? null,
+            paymentMethod: pendingReg?.paymentMethod ?? null,
+            transactionId: pendingReg?.transactionId ?? null,
+            totalFee: pendingReg?.totalFee ?? null,
+          };
+        })
       );
       return NextResponse.json({ requests: withPayment, total: withPayment.length });
     } catch (dbErr) {
@@ -90,10 +112,31 @@ export async function PATCH(req: Request) {
         if (request.status !== "PENDING") {
           return { error: `Verification request is already ${request.status.toLowerCase()}.`, code: 409 } as const;
         }
-        // Joining is the paid Jubilee registration: approve it from the event's
-        // attendee list, where the payment and the membership are decided together.
-        if (await hasPendingMembershipPayment(tx, request.userId)) {
-          return { error: "Confirm their Jubilee payment from the event's attendee list.", code: 409 } as const;
+
+        // If this user has an unconfirmed Jubilee membership registration,
+        // confirm the event registration and payment directly alongside verification.
+        const pendingPayment = await hasPendingMembershipPayment(tx, request.userId);
+        if (pendingPayment) {
+          if (decision === "VERIFIED") {
+            const pendingReg = await tx.eventRegistration.findFirst({
+              where: { userId: request.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
+            });
+            if (pendingReg) {
+              await tx.eventRegistration.update({
+                where: { id: pendingReg.id },
+                data: {
+                  status: "CONFIRMED",
+                  confirmedBy: session?.user?.email ?? "admin",
+                  confirmedAt: new Date(),
+                },
+              });
+            }
+          } else {
+            await tx.eventRegistration.updateMany({
+              where: { userId: request.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
+              data: { status: "CANCELLED" },
+            });
+          }
         }
 
         const updated = await tx.verificationRequest.update({

@@ -163,6 +163,12 @@ export interface VerificationRequestItem {
   submittedAt: string;
   status: "PENDING" | "VERIFIED" | "REJECTED";
   awaitingPayment?: boolean;
+  membershipEventId?: string | null;
+  membershipEventSlug?: string | null;
+  registrationId?: string | null;
+  paymentMethod?: string | null;
+  transactionId?: string | null;
+  totalFee?: number | null;
   avatarUrl?: string;
   /** Proof of study uploaded when joining (admin queue only). */
   proof?: ProofSummary | null;

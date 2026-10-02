@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
+import Link from "next/link";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
-import { Search, Filter, Check, X, ShieldCheck, Download } from "lucide-react";
+import { Search, Filter, Check, X, ShieldCheck, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function AdminAlumniPage() {
   const [search, setSearch] = useState("");
@@ -160,7 +161,28 @@ export default function AdminAlumniPage() {
                   </td>
                   <td className="py-4 px-6 text-right">
                     {r.status === "PENDING" && r.awaitingPayment ? (
-                      <span className="text-[11px] font-semibold text-amber-700">Awaiting payment confirmation — approve from the Jubilee attendee list</span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <button
+                            onClick={() => handleApprove(r.id)}
+                            disabled={busyId !== null}
+                            className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            title="Directly approve member and confirm Jubilee registration"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                            <span>Approve &amp; Confirm</span>
+                          </button>
+                          <Link
+                            href={r.membershipEventId ? `/admin/events/${r.membershipEventId}?tab=attendees` : `/admin/events`}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            title="Open Jubilee attendee list to review transaction"
+                          >
+                            <span>Jubilee List</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-amber-700" />
+                          </Link>
+                        </div>
+                        <span className="text-[10px] font-semibold text-amber-700">Awaiting Jubilee payment</span>
+                      </div>
                     ) : r.status === "PENDING" ? (
                       <div className="flex items-center justify-end gap-2">
                         <button

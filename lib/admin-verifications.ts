@@ -20,6 +20,12 @@ interface VerificationRequestRow {
   status: RequestStatus;
   createdAt: string;
   awaitingPayment?: boolean;
+  membershipEventId?: string | null;
+  membershipEventSlug?: string | null;
+  registrationId?: string | null;
+  paymentMethod?: string | null;
+  transactionId?: string | null;
+  totalFee?: number | null;
   user: {
     email: string;
     profile: {
@@ -58,6 +64,12 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     }),
     status: row.status,
     awaitingPayment: row.awaitingPayment ?? false,
+    membershipEventId: row.membershipEventId ?? null,
+    membershipEventSlug: row.membershipEventSlug ?? null,
+    registrationId: row.registrationId ?? null,
+    paymentMethod: row.paymentMethod ?? null,
+    transactionId: row.transactionId ?? null,
+    totalFee: row.totalFee ?? null,
   };
 }
 
