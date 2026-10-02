@@ -74,12 +74,10 @@ export default function Navbar() {
   }, []);
 
   // Close mobile menu on route change
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
+  useEffect(() => {
     setMobileMenuOpen(false);
     setMoreDropdownOpen(false);
-  }
+  }, [pathname]);
 
   // Primary navigation links with clean single-line naming
   const primaryLinks = [
@@ -343,12 +341,13 @@ export default function Navbar() {
               {/* Global Search Icon Button */}
               <button
                 type="button"
+                id="global-search-btn"
                 onClick={() => setSearchOpen(true)}
-                className="h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-slate-300 hover:text-white border border-emerald-800/70 flex items-center justify-center transition-all shadow-inner"
+                className="h-10 w-10 sm:h-9 sm:w-9 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 active:scale-95 text-slate-300 hover:text-white border border-emerald-800/70 flex items-center justify-center transition-all shadow-inner cursor-pointer touch-manipulation"
                 title="Search Alumni, Batches, Events (Ctrl+K)"
                 aria-label="Search directory"
               >
-                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                <Search className="w-4 h-4 text-emerald-400" />
               </button>
 
               {/* Auth Buttons: Logged In vs Logged Out */}
@@ -357,7 +356,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     aria-label="My dashboard"
-                    className="flex items-center gap-1.5 sm:gap-2 h-8.5 sm:h-9 px-2 sm:px-3 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 sm:gap-2 h-10 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
                   >
                     <div className="w-5 h-5 rounded-full bg-emerald-600 border border-amber-400/40 flex items-center justify-center text-[10px] text-amber-300 font-bold shrink-0">
                       {session?.user?.name ? session.user.name[0] : "A"}
@@ -371,7 +370,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="hidden sm:flex h-9 w-9 rounded-lg bg-emerald-950/80 hover:bg-red-950/80 text-slate-300 hover:text-red-300 border border-emerald-800/70 hover:border-red-800/70 items-center justify-center transition-colors shadow-inner"
+                    className="hidden sm:flex h-9 w-9 rounded-xl bg-emerald-950/80 hover:bg-red-950/80 text-slate-300 hover:text-red-300 border border-emerald-800/70 hover:border-red-800/70 items-center justify-center transition-colors shadow-inner cursor-pointer"
                     title="Sign Out"
                     aria-label="Sign Out"
                   >
@@ -381,7 +380,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1.5 h-8.5 sm:h-9 px-2.5 sm:px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-1.5 h-10 sm:h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <LogIn className="w-3.5 h-3.5 text-emerald-200" />
                   <span>Sign In</span>
@@ -391,12 +390,13 @@ export default function Navbar() {
               {/* Mobile Drawer Trigger */}
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-lg bg-emerald-950 text-slate-200 hover:text-white hover:bg-emerald-900 border border-emerald-800 flex items-center justify-center transition-colors"
+                id="mobile-nav-toggle"
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                className="lg:hidden h-10 w-10 sm:h-9 sm:w-9 rounded-xl bg-emerald-950 text-slate-200 hover:text-white hover:bg-emerald-900 border border-emerald-800 flex items-center justify-center transition-all cursor-pointer touch-manipulation active:scale-95"
                 aria-label="Toggle mobile navigation menu"
                 aria-expanded={mobileMenuOpen}
               >
-                {mobileMenuOpen ? <X className="w-4 h-4 text-amber-300" /> : <Menu className="w-4 h-4" />}
+                {mobileMenuOpen ? <X className="w-5 h-5 text-amber-300" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>

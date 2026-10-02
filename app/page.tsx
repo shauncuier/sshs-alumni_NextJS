@@ -8,6 +8,15 @@ import BatchCard from "@/components/batches/BatchCard";
 import EventCard from "@/components/events/EventCard";
 import StoryCard from "@/components/stories/StoryCard";
 import { listPublicEvents } from "@/lib/events/service";
+import prisma from "@/lib/prisma";
+import type {
+  AlumniMember,
+  BatchInfo,
+  AlumniStoryItem,
+  AchievementItem,
+  GalleryPhotoItem,
+  DonationCampaignItem,
+} from "@/lib/data";
 import {
   schoolInfo,
   sampleBatches,
@@ -38,15 +47,196 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const featuredAlumni = sampleAlumni.slice(0, 4);
-  const featuredBatches = sampleBatches.slice(0, 3);
   const today = new Date().toISOString().slice(0, 10);
-  const allEvents = await listPublicEvents().catch(() => []);
+
+  // Fetch dynamic records from database with safety fallbacks
+  const [
+    dbVerifiedCount,
+    dbBatchCount,
+    dbProfiles,
+    dbBatches,
+    dbCampaigns,
+    dbStories,
+    dbAchievements,
+    dbPhotos,
+    allEvents,
+  ] = await Promise.all([
+    prisma.user.count({ where: { status: "VERIFIED" } }).catch(() => 0),
+    prisma.batch.count().catch(() => 0),
+    prisma.alumniProfile
+      .findMany({
+        take: 4,
+        orderBy: { createdAt: "desc" },
+        include: { user: true },
+      })
+      .catch(() => []),
+    prisma.batch
+      .findMany({
+        take: 3,
+        orderBy: { year: "desc" },
+      })
+      .catch(() => []),
+    prisma.donationCampaign
+      .findMany({
+        where: { isActive: true },
+        take: 1,
+        orderBy: { createdAt: "desc" },
+      })
+      .catch(() => []),
+    prisma.alumniStory
+      .findMany({
+        take: 2,
+        orderBy: { publishedAt: "desc" },
+      })
+      .catch(() => []),
+    prisma.achievement
+      .findMany({
+        take: 3,
+        orderBy: { yearAwarded: "desc" },
+      })
+      .catch(() => []),
+    prisma.galleryPhoto
+      .findMany({
+        take: 4,
+        include: { album: true },
+        orderBy: { createdAt: "desc" },
+      })
+      .catch(() => []),
+    listPublicEvents().catch(() => []),
+  ]);
+
+  // Dynamic Featured Alumni
+  const dynamicAlumni: AlumniMember[] = dbProfiles.map((p) => ({
+    id: p.id,
+    fullName: p.fullName,
+    sscBatch: p.sscBatch,
+    graduationYear: p.graduationYear || p.sscBatch,
+    rollNumber: p.rollNumber || undefined,
+    profession: p.profession || "Distinguished Alumnus",
+    company: p.company || "",
+    industry: p.industry || "General",
+    locationCity: p.locationCity || "Chattogram",
+    locationCountry: p.locationCountry || "Bangladesh",
+    bio: p.bio || `Sabuj Shikshayatan SSC Batch of ${p.sscBatch}`,
+    avatarUrl:
+      p.avatarUrl ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(p.fullName)}&background=06281e&color=fcd34d&bold=true`,
+    coverUrl: p.coverUrl || undefined,
+    isVerified: p.user?.status === "VERIFIED",
+    phone: p.isPhonePublic ? p.phone || undefined : undefined,
+    email: p.isEmailPublic ? p.user?.email || "" : "",
+    skills: Array.isArray(p.skills) ? (p.skills as string[]) : [],
+    connectionCount: 15,
+  }));
+  const featuredAlumni: AlumniMember[] =
+    dynamicAlumni.length >= 4
+      ? dynamicAlumni
+      : [...dynamicAlumni, ...sampleAlumni.slice(0, 4 - dynamicAlumni.length)];
+
+  // Dynamic Batches
+  const dynamicBatches: BatchInfo[] = dbBatches.map((b) => ({
+    year: b.year,
+    name: b.name || `SSC Batch ${b.year}`,
+    tagline: b.tagline || `The Pioneering Class of ${b.year}`,
+    totalAlumni: b.totalMembers > 0 ? b.totalMembers : 120,
+    classRepresentative: b.classRepresentative || "Batch Secretariat",
+    representativePhone: b.representativePhone || "+880 1745-950025",
+    reunionDate: b.reunionDate ? b.reunionDate.toISOString().slice(0, 10) : undefined,
+    coverImage:
+      b.coverImage ||
+      "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80",
+    description:
+      b.description ||
+      `Celebrating lifelong bonds and mutual achievements of the ${b.year} SSC graduates.`,
+  }));
+  const featuredBatches: BatchInfo[] =
+    dynamicBatches.length >= 3
+      ? dynamicBatches
+      : [...dynamicBatches, ...sampleBatches.slice(0, 3 - dynamicBatches.length)];
+
+  // Dynamic Donation Campaign
+  const featuredDonation: DonationCampaignItem =
+    dbCampaigns.length > 0
+      ? {
+          id: dbCampaigns[0].id,
+          title: dbCampaigns[0].title,
+          category: (dbCampaigns[0].category as DonationCampaignItem["category"]) || "Scholarship",
+          description: dbCampaigns[0].description,
+          goalAmount: dbCampaigns[0].goalAmount,
+          raisedAmount: dbCampaigns[0].raisedAmount,
+          donorCount: dbCampaigns[0].donorCount,
+          bannerImage: dbCampaigns[0].bannerImage || sampleDonations[0].bannerImage,
+          daysLeft: dbCampaigns[0].endDate
+            ? Math.max(
+                0,
+                Math.ceil(
+                  (new Date(dbCampaigns[0].endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                )
+              )
+            : 45,
+          featured: true,
+        }
+      : sampleDonations[0];
+
+  // Dynamic Stories
+  const dynamicStories: AlumniStoryItem[] = dbStories.map((s) => ({
+    id: s.id,
+    title: s.title,
+    authorName: s.authorName,
+    batchYear: s.batchYear,
+    profession: s.profession,
+    currentOrganization: "Alumni Leader",
+    coverImage:
+      s.coverImage ||
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+    summary: s.summary,
+    fullStory: s.fullStory,
+    quote: s.quote || "",
+    publishedDate: s.publishedAt.toISOString().slice(0, 10),
+    readTime: "4 min read",
+  }));
+  const featuredStories: AlumniStoryItem[] =
+    dynamicStories.length >= 2
+      ? dynamicStories
+      : [...dynamicStories, ...sampleStories.slice(0, 2 - dynamicStories.length)];
+
+  // Dynamic Achievements
+  const dynamicAchievements: AchievementItem[] = dbAchievements.map((a) => ({
+    id: a.id,
+    recipientName: a.recipientName,
+    batchYear: a.batchYear,
+    category: (a.category as AchievementItem["category"]) || "Entrepreneurs",
+    title: a.title,
+    organization: a.organization,
+    description: a.description,
+    photoUrl:
+      a.photoUrl ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(a.recipientName)}&background=06281e&color=fcd34d&bold=true`,
+    yearAwarded: a.yearAwarded,
+  }));
+  const featuredAchievements: AchievementItem[] =
+    dynamicAchievements.length >= 3
+      ? dynamicAchievements
+      : [...dynamicAchievements, ...sampleAchievements.slice(0, 3 - dynamicAchievements.length)];
+
+  // Dynamic Gallery Photos
+  const dynamicGallery: GalleryPhotoItem[] = dbPhotos.map((p) => ({
+    id: p.id,
+    albumCategory: (p.album?.category as GalleryPhotoItem["albumCategory"]) || "Reunions",
+    title: p.caption || "School Memory",
+    imageUrl: p.imageUrl,
+    year: p.batchYear || undefined,
+    caption: p.caption || "",
+    submittedBy: p.uploadedBy || "Alumnus",
+  }));
+  const galleryPreview: GalleryPhotoItem[] =
+    dynamicGallery.length >= 4
+      ? dynamicGallery
+      : [...dynamicGallery, ...sampleGallery.slice(0, 4 - dynamicGallery.length)];
+
   const upcomingEvents = allEvents.filter((e) => e.date >= today).slice(0, 3);
   const jubileeEvent = allEvents.find((e) => e.isMegaEvent);
-  const featuredStories = sampleStories.slice(0, 2);
-  const featuredDonation = sampleDonations[0];
-  const galleryPreview = sampleGallery.slice(0, 4);
+  const batchDisplayCount = dbBatchCount > 0 ? dbBatchCount : 41;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -105,7 +295,7 @@ export default async function HomePage() {
                 {/* Verified Members Badge */}
                 <div className="pt-4 flex items-center justify-center lg:justify-start gap-4 text-xs text-emerald-300/80">
                   <div className="flex -space-x-2">
-                    {sampleAlumni.slice(0, 4).map((a) => (
+                    {featuredAlumni.slice(0, 4).map((a) => (
                       <img
                         key={a.id}
                         src={a.avatarUrl}
@@ -114,7 +304,7 @@ export default async function HomePage() {
                       />
                     ))}
                   </div>
-                  <span>Over 5,000+ alumni registered across 40 batches</span>
+                  <span>Over 5,000+ alumni registered across {batchDisplayCount} batches</span>
                 </div>
               </div>
 
@@ -182,7 +372,7 @@ export default async function HomePage() {
 
               <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                 <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={41} suffix="+" />
+                  <StatCounter end={batchDisplayCount} suffix="+" />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
                   SSC Batches
@@ -462,7 +652,7 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {sampleAchievements.slice(0, 3).map((ach) => (
+              {featuredAchievements.map((ach) => (
                 <div
                   key={ach.id}
                   className="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-shadow"

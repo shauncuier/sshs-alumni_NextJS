@@ -91,7 +91,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
     filteredStories.length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[80vh]">
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3.5 border-b border-slate-100 bg-slate-50/50">
