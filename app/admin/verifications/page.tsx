@@ -47,6 +47,7 @@ function VerificationReviewContent() {
 
   const [copiedTrx, setCopiedTrx] = useState<string | null>(null);
   const [overriddenApplicantId, setOverriddenApplicantId] = useState<string | null>(null);
+  const [docImageFailed, setDocImageFailed] = useState(false);
   const [ocrScan, setOcrScan] = useState<{
     scanning: boolean;
     forTarget?: "DOC" | "RECEIPT";
@@ -176,6 +177,10 @@ function VerificationReviewContent() {
     if (!activeApplicant) return -1;
     return filteredList.findIndex((r) => r.id === activeApplicant.id);
   }, [filteredList, activeApplicant]);
+
+  useEffect(() => {
+    setDocImageFailed(false);
+  }, [activeApplicant?.id]);
 
   const handleNext = () => {
     if (activeIndex >= 0 && activeIndex < filteredList.length - 1) {
@@ -773,6 +778,16 @@ function VerificationReviewContent() {
                                 className="w-full h-[360px] rounded-xl border border-slate-100"
                                 title="Study proof PDF"
                               />
+                            ) : docImageFailed ? (
+                              <div className="p-8 text-center text-slate-500 space-y-2">
+                                <FileText className="w-12 h-12 text-emerald-800 mx-auto opacity-70" />
+                                <div className="font-bold text-xs text-slate-800">
+                                  {activeApplicant.documentType} on Record
+                                </div>
+                                <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                                  Proof details: {activeApplicant.proof.note || "Official document registered for committee review."}
+                                </p>
+                              </div>
                             ) : (
                               <a
                                 href={activeApplicant.proof.fileUrl}
@@ -783,6 +798,7 @@ function VerificationReviewContent() {
                                 <img
                                   src={activeApplicant.proof.fileUrl}
                                   alt="Study proof document"
+                                  onError={() => setDocImageFailed(true)}
                                   className="max-h-[360px] w-auto object-contain mx-auto rounded-xl hover:scale-[1.02] transition-transform"
                                 />
                               </a>

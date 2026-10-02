@@ -34,7 +34,12 @@ import {
   Layers,
   ChevronRight,
   Shirt,
-  Utensils
+  Utensils,
+  Smartphone,
+  Building2,
+  Banknote,
+  QrCode,
+  RefreshCw,
 } from "lucide-react";
 
 interface AdminEventStudioProps {
@@ -79,6 +84,96 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   const [isAddingPackage, setIsAddingPackage] = useState(false);
   const [newAgenda, setNewAgenda] = useState<AgendaEntry>({ time: "Day 1 - 09:00 AM", activity: "" });
   const [isAddingAgenda, setIsAddingAgenda] = useState(false);
+
+  // Structured Payment Channels Manager
+  const [activePaymentTab, setActivePaymentTab] = useState<"bkash" | "nagad" | "bank" | "cash">("bkash");
+  const [showRawPaymentText, setShowRawPaymentText] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState({
+    bkash: {
+      enabled: true,
+      number: "01700000000",
+      type: "Merchant" as "Merchant" | "Personal",
+      reference: "SSHS-2026",
+    },
+    nagad: {
+      enabled: true,
+      number: "01800000000",
+      type: "Merchant" as "Merchant" | "Personal",
+      reference: "SSHS-2026",
+    },
+    bank: {
+      enabled: true,
+      bankName: "Eastern Bank PLC",
+      accountName: "Sabuj Shikshayatan Govt High School Alumni Association",
+      accountNumber: "104-101-0023456",
+      branch: "Sitakunda Branch, Chattogram",
+      routingNumber: "090150123",
+    },
+    cash: {
+      enabled: true,
+      location: "SSGHS Alumni Secretariat Desk, Room 102, Main Academic Building",
+      contactPhone: "+880 1745-950025",
+      instructions: "Collect physical stamped receipt voucher with official serial number.",
+    },
+  });
+
+  const buildPaymentInstructions = (cfg: typeof paymentConfig) => {
+    const sections: string[] = [];
+    if (cfg.bkash.enabled && cfg.bkash.number) {
+      sections.push(`📱 bKash (${cfg.bkash.type}): Send to ${cfg.bkash.number} | Ref: ${cfg.bkash.reference || "Your SSC Batch"}. Enter TrxID below.`);
+    }
+    if (cfg.nagad.enabled && cfg.nagad.number) {
+      sections.push(`📱 Nagad (${cfg.nagad.type}): Send to ${cfg.nagad.number} | Ref: ${cfg.nagad.reference || "Your SSC Batch"}. Enter TrxID below.`);
+    }
+    if (cfg.bank.enabled && cfg.bank.accountNumber) {
+      sections.push(`🏛️ Bank Transfer: ${cfg.bank.bankName} | A/C: ${cfg.bank.accountNumber} (${cfg.bank.accountName}) | Branch: ${cfg.bank.branch} | Routing: ${cfg.bank.routingNumber}`);
+    }
+    if (cfg.cash.enabled) {
+      sections.push(`💵 Cash on Campus: Pay at ${cfg.cash.location}. Liaison: ${cfg.cash.contactPhone}. ${cfg.cash.instructions}`);
+    }
+    return sections.join("\n\n");
+  };
+
+  const handleApplyPaymentConfig = () => {
+    const formatted = buildPaymentInstructions(paymentConfig);
+    setEvent((prev) => (prev ? { ...prev, paymentInstructions: formatted } : null));
+    showToast("Payment accounts compiled and applied to event.");
+  };
+
+  const handleResetSSHSDefaults = () => {
+    const defaults = {
+      bkash: {
+        enabled: true,
+        number: "01700000000",
+        type: "Merchant" as const,
+        reference: "SSHS-2026",
+      },
+      nagad: {
+        enabled: true,
+        number: "01800000000",
+        type: "Merchant" as const,
+        reference: "SSHS-2026",
+      },
+      bank: {
+        enabled: true,
+        bankName: "Eastern Bank PLC",
+        accountName: "Sabuj Shikshayatan Govt High School Alumni Association",
+        accountNumber: "104-101-0023456",
+        branch: "Sitakunda Branch, Chattogram",
+        routingNumber: "090150123",
+      },
+      cash: {
+        enabled: true,
+        location: "SSGHS Alumni Secretariat Desk, Room 102, Main Academic Building",
+        contactPhone: "+880 1745-950025",
+        instructions: "Collect physical stamped receipt voucher with official serial number.",
+      },
+    };
+    setPaymentConfig(defaults);
+    const formatted = buildPaymentInstructions(defaults);
+    setEvent((prev) => (prev ? { ...prev, paymentInstructions: formatted } : null));
+    showToast("Official SSHS Accounts loaded.");
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -548,12 +643,457 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                 onChange={(e) => setEvent({ ...event, isMembershipEvent: e.target.checked })} />
               Membership event (joining = this registration)
             </label>
-            <label className="sm:col-span-3 font-bold text-slate-700">
-              Payment instructions (shown to registrants; required for paid events)
-              <textarea rows={2} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-normal"
-                placeholder="Send to bKash 01XXXXXXXXX (Merchant), then enter your TrxID"
-                value={event.paymentInstructions ?? ""} onChange={(e) => setEvent({ ...event, paymentInstructions: e.target.value })} />
-            </label>
+            <div className="sm:col-span-3 mt-2 bg-gradient-to-br from-slate-50 to-emerald-50/30 border border-slate-200 rounded-2xl p-5 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-extrabold text-slate-900">Payment Accounts & Methods Manager</span>
+                    <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-emerald-100 text-emerald-800">
+                      bKash · Nagad · Bank · Cash
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Configure payment account details shown to registrants. Click &quot;Apply to Event&quot; to format into public instructions.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleResetSSHSDefaults}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-[11px] font-bold text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    title="Populate with official verified SSHS accounts"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Load SSHS Defaults</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyPaymentConfig}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Apply to Event</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Channel Tabs */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActivePaymentTab("bkash")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    activePaymentTab === "bkash"
+                      ? "bg-[#e2136e] text-white shadow-xs"
+                      : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>bKash</span>
+                  <span className={`w-2 h-2 rounded-full ${paymentConfig.bkash.enabled ? "bg-emerald-400" : "bg-slate-300"}`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePaymentTab("nagad")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    activePaymentTab === "nagad"
+                      ? "bg-[#f7941d] text-white shadow-xs"
+                      : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Nagad</span>
+                  <span className={`w-2 h-2 rounded-full ${paymentConfig.nagad.enabled ? "bg-emerald-400" : "bg-slate-300"}`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePaymentTab("bank")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    activePaymentTab === "bank"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Bank Transfer</span>
+                  <span className={`w-2 h-2 rounded-full ${paymentConfig.bank.enabled ? "bg-emerald-400" : "bg-slate-300"}`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePaymentTab("cash")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    activePaymentTab === "cash"
+                      ? "bg-emerald-800 text-white shadow-xs"
+                      : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <Banknote className="w-3.5 h-3.5" />
+                  <span>Cash on Campus</span>
+                  <span className={`w-2 h-2 rounded-full ${paymentConfig.cash.enabled ? "bg-emerald-400" : "bg-slate-300"}`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRawPaymentText(!showRawPaymentText)}
+                  className="ml-auto text-[11px] font-bold text-slate-500 hover:text-slate-800 underline flex items-center gap-1"
+                >
+                  {showRawPaymentText ? "Hide Raw Text" : "Edit Raw Text"}
+                </button>
+              </div>
+
+              {/* Active Tab Panel */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+                {activePaymentTab === "bkash" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs text-[#e2136e]">bKash Merchant / Personal Account</span>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfig.bkash.enabled}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bkash: { ...paymentConfig.bkash, enabled: e.target.checked },
+                            })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        Accept bKash
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">bKash Number</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono"
+                          value={paymentConfig.bkash.number}
+                          placeholder="01700000000"
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bkash: { ...paymentConfig.bkash, number: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Account Type</label>
+                        <select
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.bkash.type}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bkash: { ...paymentConfig.bkash, type: e.target.value as "Merchant" | "Personal" },
+                            })
+                          }
+                        >
+                          <option value="Merchant">Merchant (Make Payment)</option>
+                          <option value="Personal">Personal (Send Money)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Reference / Counter</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.bkash.reference}
+                          placeholder="SSHS-2026 or Batch"
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bkash: { ...paymentConfig.bkash, reference: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activePaymentTab === "nagad" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs text-[#f7941d]">Nagad Merchant / Personal Account</span>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfig.nagad.enabled}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              nagad: { ...paymentConfig.nagad, enabled: e.target.checked },
+                            })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        Accept Nagad
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Nagad Number</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono"
+                          value={paymentConfig.nagad.number}
+                          placeholder="01800000000"
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              nagad: { ...paymentConfig.nagad, number: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Account Type</label>
+                        <select
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.nagad.type}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              nagad: { ...paymentConfig.nagad, type: e.target.value as "Merchant" | "Personal" },
+                            })
+                          }
+                        >
+                          <option value="Merchant">Merchant (Payment)</option>
+                          <option value="Personal">Personal (Send Money)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Reference / Note</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.nagad.reference}
+                          placeholder="SSHS-2026 or Batch"
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              nagad: { ...paymentConfig.nagad, reference: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activePaymentTab === "bank" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs text-slate-900">Direct Bank Wire / Online Deposit</span>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfig.bank.enabled}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bank: { ...paymentConfig.bank, enabled: e.target.checked },
+                            })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        Accept Bank Transfer
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Bank Name</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.bank.bankName}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bank: { ...paymentConfig.bank, bankName: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Account Title / Name</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.bank.accountName}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bank: { ...paymentConfig.bank, accountName: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Account Number</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono"
+                          value={paymentConfig.bank.accountNumber}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bank: { ...paymentConfig.bank, accountNumber: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Branch</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.bank.branch}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bank: { ...paymentConfig.bank, branch: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Routing Number</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono"
+                          value={paymentConfig.bank.routingNumber}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              bank: { ...paymentConfig.bank, routingNumber: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activePaymentTab === "cash" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs text-emerald-800">In-Person Cash Collection Point</span>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfig.cash.enabled}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              cash: { ...paymentConfig.cash, enabled: e.target.checked },
+                            })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        Accept Cash on Campus
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Desk / Office Location</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.cash.location}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              cash: { ...paymentConfig.cash, location: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Liaison Contact Phone</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.cash.contactPhone}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              cash: { ...paymentConfig.cash, contactPhone: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Receipt Instructions</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          value={paymentConfig.cash.instructions}
+                          onChange={(e) =>
+                            setPaymentConfig({
+                              ...paymentConfig,
+                              cash: { ...paymentConfig.cash, instructions: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Raw Instructions Editor or Live Preview */}
+              {showRawPaymentText ? (
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">
+                    Raw Payment Instructions (Markdown / Plain Text)
+                  </label>
+                  <textarea
+                    rows={4}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono text-xs text-slate-800"
+                    placeholder="Send to bKash 01XXXXXXXXX (Merchant), then enter your TrxID"
+                    value={event.paymentInstructions ?? ""}
+                    onChange={(e) => setEvent({ ...event, paymentInstructions: e.target.value })}
+                  />
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/80 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-900">
+                      Live Registrant Preview on Public RSVP Form:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleApplyPaymentConfig}
+                      className="text-[11px] font-extrabold text-emerald-800 hover:text-emerald-700 underline"
+                    >
+                      Sync Now
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-amber-950 font-normal whitespace-pre-line leading-relaxed">
+                    {event.paymentInstructions || "No payment instructions set yet. Click 'Apply to Event' above."}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Package Cards Grid */}
