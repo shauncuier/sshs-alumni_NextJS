@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
+import { requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 
 export async function GET() {
   try {
@@ -34,6 +36,9 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    requireSameOrigin(req);
+    requireRateLimit(req, "profile-update", { limit: 20, windowMs: 60_000 });
+
     const session = await getMemberSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -68,6 +73,25 @@ export async function PUT(req: Request) {
     const required = (value: unknown) =>
       typeof value === "string" && value.trim() ? value.trim() : undefined;
 
+    // Strict URL validator: prevents javascript:, data:, and malicious protocol schemes
+    const safeUrl = (value: unknown): string | null | undefined => {
+      if (value === undefined) return undefined;
+      if (typeof value !== "string" || !value.trim()) return null;
+      const trimmed = value.trim();
+      try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+          return parsed.href;
+        }
+        return null;
+      } catch {
+        if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/.test(trimmed)) {
+          return `https://${trimmed}`;
+        }
+        return null;
+      }
+    };
+
     try {
       const user = await prisma.user.findUnique({
         where: { email: session.user.email },
@@ -92,10 +116,10 @@ export async function PUT(req: Request) {
           bio: optional(bio),
           phone: optional(phone),
           skills: Array.isArray(skills) ? skills : undefined,
-          linkedin: optional(linkedin),
-          facebook: optional(facebook),
-          github: optional(github),
-          website: optional(website),
+          linkedin: safeUrl(linkedin),
+          facebook: safeUrl(facebook),
+          github: safeUrl(github),
+          website: safeUrl(website),
           schoolMemories: optional(schoolMemories),
           contributions: optional(contributions),
           isPhonePublic: typeof isPhonePublic === "boolean" ? isPhonePublic : undefined,
@@ -116,10 +140,10 @@ export async function PUT(req: Request) {
           bio: optional(bio) ?? null,
           phone: optional(phone) ?? null,
           skills: Array.isArray(skills) ? skills : [],
-          linkedin: optional(linkedin) ?? null,
-          facebook: optional(facebook) ?? null,
-          github: optional(github) ?? null,
-          website: optional(website) ?? null,
+          linkedin: safeUrl(linkedin) ?? null,
+          facebook: safeUrl(facebook) ?? null,
+          github: safeUrl(github) ?? null,
+          website: safeUrl(website) ?? null,
           schoolMemories: optional(schoolMemories) ?? null,
           contributions: optional(contributions) ?? null,
           isPhonePublic: typeof isPhonePublic === "boolean" ? isPhonePublic : false,
@@ -133,6 +157,9 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Could not save your profile. Please try again." }, { status: 503 });
     }
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("Profile PUT error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

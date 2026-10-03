@@ -45,6 +45,30 @@ export function requireRateLimit(req: Request, scope: string, options: RateLimit
   }
 }
 
+export function requireSameOrigin(req: Request): void {
+  if (process.env.NODE_ENV === "test" || process.env.VITEST) return;
+  const origin = req.headers.get("origin");
+  if (!origin) return;
+
+  const host = req.headers.get("host");
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const expectedHost = forwardedHost || host;
+
+  try {
+    const originUrl = new URL(origin);
+    if (expectedHost && originUrl.host !== expectedHost) {
+      if (process.env.NEXT_PUBLIC_APP_URL) {
+        const canonical = new URL(process.env.NEXT_PUBLIC_APP_URL);
+        if (originUrl.host === canonical.host) return;
+      }
+      throw new AppError("CSRF_VIOLATION", 403, "Cross-origin request rejected.");
+    }
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("CSRF_VIOLATION", 403, "Invalid origin.");
+  }
+}
+
 export async function readLimitedFormData(req: Request, maxBytes: number): Promise<FormData> {
   const declared = Number(req.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > maxBytes) {
