@@ -14,7 +14,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "docker run -d --rm --name sshs-test-db -e MARIADB_ROOT_PASSWORD=test -p 127.0.0.1:3307:3306 mariadb:11"
+    "test:db": "docker run -d --rm --name sshs-test-db -e MARIADB_ROOT_PASSWORD=test -p 127.0.0.1:3307:3306 mariadb:11",
+    "test:admin": "tsx scripts/test-admin-suite.ts"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
