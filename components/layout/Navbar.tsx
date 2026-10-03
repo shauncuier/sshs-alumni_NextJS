@@ -73,14 +73,23 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const [prevPath, setPrevPath] = useState(pathname);
-
-  // Close mobile menu and dropdown on route change during render
-  if (prevPath !== pathname) {
-    setPrevPath(pathname);
+  // Close mobile menu and dropdown on route change
+  useEffect(() => {
     setMobileMenuOpen(false);
     setMoreDropdownOpen(false);
-  }
+  }, [pathname]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   // Primary navigation links with clean single-line naming
   const primaryLinks = [
@@ -405,9 +414,18 @@ export default function Navbar() {
           </div>
         </div>
 
+        {/* Mobile Navigation Drawer Backdrop */}
+        {mobileMenuOpen && (
+          <div
+            className="lg:hidden fixed inset-0 top-16 sm:top-[72px] z-40 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#052118] border-t border-emerald-800/80 px-4 py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 shadow-2xl">
+          <div className="lg:hidden fixed inset-x-0 top-16 sm:top-[72px] z-50 bg-[#052118] border-t border-emerald-800/80 px-4 py-5 space-y-4 max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain shadow-2xl animate-in slide-in-from-top-2 duration-200">
             {/* Search Trigger for Mobile */}
             <button
               onClick={() => {

@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["sharp", "tesseract.js", "@prisma/client", "mariadb", "bcryptjs"],
+  allowedDevOrigins: [
+    "ungerminant-saran-normatively.ngrok-free.dev",
+    "*.ngrok-free.dev",
+    "*.ngrok.app",
+    "localhost:3000",
+  ],
   experimental: {
     // Enables forbidden()/unauthorized() with app/forbidden.tsx and app/unauthorized.tsx.
     authInterrupts: true,
@@ -37,7 +43,7 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      "connect-src 'self' https: wss: ws:",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
     ].join("; ");
