@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { accountAccessBlock } from "@/lib/account-access";
+import prisma from "@/lib/prisma";
 
 export interface SessionUser {
   id: string;
@@ -16,7 +17,27 @@ export interface SessionUser {
 export async function getMemberSession() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
-  if (accountAccessBlock({ role: session.user.role, status: session.user.status })) return null;
+  const userId = session.user.id;
+  const userEmail = session.user.email;
+  if (!userId && !userEmail) return null;
+  const currentSessionVersion = typeof session.user.sessionVersion === "number" ? session.user.sessionVersion : 0;
+  const current = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true, status: true, sessionVersion: true },
+      })
+    : userEmail
+    ? await prisma.user.findUnique({
+        where: { email: userEmail },
+        select: { id: true, role: true, status: true, sessionVersion: true },
+      })
+    : null;
+  const dbVersion = (current as { sessionVersion?: number })?.sessionVersion ?? 0;
+  if (!current || dbVersion !== currentSessionVersion) return null;
+  if (accountAccessBlock(current)) return null;
+  session.user.id = current.id || userId || session.user.id;
+  session.user.role = current.role;
+  session.user.status = current.status;
   return session;
 }
 

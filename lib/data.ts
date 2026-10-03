@@ -200,7 +200,7 @@ export const schoolInfo = {
     activeBatches: 41,
     countries: 28,
     professions: 110,
-    fundsRaised: 1850000,
+    fundsRaised: 0,
   },
 };
 
@@ -862,8 +862,8 @@ export const sampleDonations: DonationCampaignItem[] = [
     category: "Scholarship",
     description: "Supporting 50 high-achieving underprivileged secondary students with full tuition, uniform sets, textbooks, and monthly educational stipends.",
     goalAmount: 800000,
-    raisedAmount: 585000,
-    donorCount: 142,
+    raisedAmount: 0,
+    donorCount: 0,
     bannerImage: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
     daysLeft: 35,
     featured: true
@@ -874,8 +874,8 @@ export const sampleDonations: DonationCampaignItem[] = [
     category: "STEM Lab",
     description: "Equipping the school laboratory with 30 modern workstations, Arduino & Raspberry Pi kits, 3D printers, and high-speed fiber internet for the next generation of engineers.",
     goalAmount: 1200000,
-    raisedAmount: 760000,
-    donorCount: 98,
+    raisedAmount: 0,
+    donorCount: 0,
     bannerImage: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=1200&q=80",
     daysLeft: 50,
     featured: true
@@ -886,8 +886,8 @@ export const sampleDonations: DonationCampaignItem[] = [
     category: "Library",
     description: "Adding 2,500 new Bengali & English classic literature, science encyclopedias, and digital e-reader tablets for students.",
     goalAmount: 400000,
-    raisedAmount: 320000,
-    donorCount: 75,
+    raisedAmount: 0,
+    donorCount: 0,
     bannerImage: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80",
     daysLeft: 20,
     featured: false
@@ -898,8 +898,8 @@ export const sampleDonations: DonationCampaignItem[] = [
     category: "Emergency Aid",
     description: "A revolving transparent emergency medical reserve providing immediate grants for critical surgeries and hospitalizations.",
     goalAmount: 600000,
-    raisedAmount: 410000,
-    donorCount: 88,
+    raisedAmount: 0,
+    donorCount: 0,
     bannerImage: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80",
     daysLeft: 42,
     featured: false

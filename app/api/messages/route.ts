@@ -13,6 +13,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS, isUserOnline } from "@/lib/realtime";
 import { getSessionUser } from "@/lib/session-user";
+import { requireRateLimit } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 
 /**
  * GET: Fetch conversations or specific thread
@@ -42,15 +44,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ messages });
     }
 
-    // Fetch all conversations (latest message per conversation partner)
+    // Fetch conversations (bounded to latest 200 messages per direction to prevent query exhaustion)
     const sentMessages = await prisma.message.findMany({
       where: { senderId: userId },
       orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     const receivedMessages = await prisma.message.findMany({
       where: { receiverId: userId },
       orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     // Build conversation list with latest message per partner
@@ -102,9 +106,11 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    requireRateLimit(req, "send-message", { limit: 30, windowMs: 60_000 });
+
     const me = await getSessionUser();
     if (!me) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const senderId = me.id;
 
@@ -114,6 +120,20 @@ export async function POST(req: NextRequest) {
     if (!receiverId || typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
         { error: "receiverId and content are required" },
+        { status: 400 }
+      );
+    }
+
+    if (receiverId === senderId) {
+      return NextResponse.json(
+        { error: "Cannot send messages to yourself" },
+        { status: 400 }
+      );
+    }
+
+    if (content.length > 5000) {
+      return NextResponse.json(
+        { error: "Message content cannot exceed 5000 characters" },
         { status: 400 }
       );
     }
@@ -174,6 +194,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Messages API] POST error:", error);
     return NextResponse.json(
       { error: "Failed to send message" },

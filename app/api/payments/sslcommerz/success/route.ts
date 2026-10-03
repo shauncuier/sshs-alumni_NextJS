@@ -9,8 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { validateTransaction } from "@/lib/payments/sslcommerz";
+import { finalizeDonationPayment } from "@/lib/payments/finalize";
 
 export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -23,9 +23,6 @@ export async function POST(req: NextRequest) {
     });
 
     const valId = data.val_id;
-    const tranId = data.tran_id;
-    const donationId = data.value_a; // We passed donationId in value_a
-
     if (!valId) {
       return NextResponse.redirect(
         `${appUrl}/donate?payment=failed&reason=missing_validation_id`
@@ -35,56 +32,20 @@ export async function POST(req: NextRequest) {
     // Validate with SSLCommerz server
     const result = await validateTransaction(valId);
 
-    if (result.verified && result.status === "COMPLETED") {
-      // Update donation and transaction records
-      try {
-        if (donationId) {
-          await prisma.donation.update({
-            where: { id: donationId },
-            data: {
-              paymentStatus: "COMPLETED",
-              gatewayTrxId: tranId,
-              paidAt: new Date(),
-              ipnPayload: JSON.stringify(data),
-            },
-          });
-
-          const tx = await prisma.paymentTransaction.findUnique({
-            where: { donationId },
-          });
-          if (tx) {
-            await prisma.paymentTransaction.update({
-              where: { id: tx.id },
-              data: {
-                status: "COMPLETED",
-                gatewayTrxId: tranId,
-                completedAt: new Date(),
-                gatewayResponse: JSON.stringify(data),
-              },
-            });
-          }
-
-          // Update campaign
-          const donation = await prisma.donation.findUnique({
-            where: { id: donationId },
-          });
-          if (donation) {
-            await prisma.donationCampaign.update({
-              where: { id: donation.campaignId },
-              data: {
-                raisedAmount: { increment: donation.amount },
-                donorCount: { increment: 1 },
-              },
-            });
-          }
-        }
-      } catch (dbErr) {
-        console.error("[SSLCommerz Success] DB update error:", dbErr);
-      }
-
+    if (result.verified && result.status === "COMPLETED" && result.donationId && result.merchantInvoice && result.amount && result.currency === "BDT") {
+      const finalized = await finalizeDonationPayment({
+        donationId: result.donationId,
+        gateway: "SSLCOMMERZ",
+        merchantInvoice: result.merchantInvoice,
+        gatewayTrxId: result.gatewayTrxId,
+        amount: result.amount,
+        payload: JSON.stringify(data),
+      });
+      if (finalized.ok) {
       return NextResponse.redirect(
-        `${appUrl}/donate?payment=success&trxId=${tranId}`
+          `${appUrl}/donate?payment=success&trxId=${encodeURIComponent(result.gatewayTrxId || "")}`
       );
+      }
     }
 
     return NextResponse.redirect(

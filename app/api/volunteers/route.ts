@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { requireRateLimit } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 import {
   createVolunteer,
   getVolunteers,
@@ -10,6 +11,8 @@ import {
 
 export async function GET(req: Request) {
   try {
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     const url = new URL(req.url);
     const statusParam = url.searchParams.get("status") || "ALL";
     const items = await getVolunteers(statusParam);
@@ -26,6 +29,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    requireRateLimit(req, "volunteer-application", { limit: 3, windowMs: 60 * 60_000 });
     const body = await req.json();
     const {
       fullName,
@@ -72,6 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, volunteer: created }, { status: 201 });
   } catch (error) {
+    if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
     console.error("[Volunteers API POST Error]:", error);
     return NextResponse.json({ error: "Failed to submit volunteer application" }, { status: 500 });
   }
@@ -79,9 +84,8 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as unknown as { role?: string })?.role;
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 

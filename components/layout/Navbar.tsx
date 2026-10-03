@@ -73,11 +73,14 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(pathname);
+
+  // Close mobile menu and dropdown on route change during render
+  if (prevPath !== pathname) {
+    setPrevPath(pathname);
     setMobileMenuOpen(false);
     setMoreDropdownOpen(false);
-  }, [pathname]);
+  }
 
   // Primary navigation links with clean single-line naming
   const primaryLinks = [

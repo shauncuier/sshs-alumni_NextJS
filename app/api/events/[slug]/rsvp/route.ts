@@ -6,6 +6,7 @@ import type { AccountInput, RsvpInput } from "@/lib/events/types";
 import { AVATAR_LIMITS } from "@/lib/media/avatars";
 import { PROOF_LIMITS } from "@/lib/media/proofs";
 import { getSessionUser } from "@/lib/session-user";
+import { requireRateLimit } from "@/lib/request-security";
 
 type Params = { params: Promise<{ slug: string }> };
 type Payload = { account?: AccountInput; rsvp?: RsvpInput; proof?: { type?: unknown; note?: unknown } | null };
@@ -67,6 +68,7 @@ export async function GET(_req: Request, { params }: Params) {
 export async function POST(req: Request, { params }: Params) {
   const me = await getSessionUser();
   try {
+    requireRateLimit(req, me ? "event-rsvp-member" : "event-rsvp-public", { limit: me ? 20 : 5, windowMs: 60 * 60_000 });
     let body: Payload;
     let photo: Buffer | undefined;
     let proofFile: Buffer | undefined;

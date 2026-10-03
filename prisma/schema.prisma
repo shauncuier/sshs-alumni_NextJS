@@ -65,6 +65,7 @@ model User {
   passwordHash String
   role         Role               @default(ALUMNI)
   status       VerificationStatus @default(PENDING)
+  sessionVersion Int               @default(0)
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 

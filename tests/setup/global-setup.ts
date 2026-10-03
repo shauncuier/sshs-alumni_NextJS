@@ -42,7 +42,9 @@ export default async function globalSetup() {
     await conn.query(`DROP DATABASE IF EXISTS \`${database}\``);
     await conn.query(`CREATE DATABASE \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
     await conn.query(`USE \`${database}\``);
-    await conn.query(sql);
+    const sqlStartIndex = sql.indexOf("--");
+    const cleanSql = sqlStartIndex >= 0 ? sql.slice(sqlStartIndex) : sql;
+    await conn.query(cleanSql);
   } finally {
     await conn.end();
   }

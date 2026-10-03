@@ -142,8 +142,11 @@ export async function validateTransaction(
       success: true,
       verified: isValid,
       status: isValid ? "COMPLETED" : "FAILED",
-      gatewayTrxId: data.tran_id,
+      gatewayTrxId: data.bank_tran_id || data.tran_id,
+      merchantInvoice: data.tran_id,
+      donationId: data.value_a,
       amount: data.amount ? parseFloat(data.amount) : undefined,
+      currency: data.currency,
       paidAt: data.tran_date,
     };
   } catch (error) {

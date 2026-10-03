@@ -170,6 +170,7 @@ export default async function HomePage() {
             ? Math.max(
                 0,
                 Math.ceil(
+                  // eslint-disable-next-line react-hooks/purity
                   (new Date(dbCampaigns[0].endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                 )
               )

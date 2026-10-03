@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getMemberSession } from "@/lib/session-user";
+import { getSessionUser } from "@/lib/session-user";
 
 // In-memory or Redis/DB store of push subscriptions
 interface PushSubscriptionRecord {
@@ -15,7 +15,7 @@ interface PushSubscriptionRecord {
     p256dh: string;
     auth: string;
   };
-  userId?: string;
+  userId: string;
   subscribedAt: string;
 }
 
@@ -23,27 +23,36 @@ const pushSubscriptions: PushSubscriptionRecord[] = [];
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getMemberSession();
+    const session = await getSessionUser();
+    if (!session) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     const body = await req.json();
-    const { subscription, userId } = body;
+    const { subscription } = body;
 
-    if (!subscription || !subscription.endpoint) {
+    if (!subscription || typeof subscription.endpoint !== "string" || !subscription.keys || typeof subscription.keys.p256dh !== "string" || typeof subscription.keys.auth !== "string") {
       return NextResponse.json(
         { error: "Invalid push subscription object" },
         { status: 400 }
       );
     }
 
+    let endpoint: URL;
+    try {
+      endpoint = new URL(subscription.endpoint);
+    } catch {
+      return NextResponse.json({ error: "Invalid push subscription endpoint" }, { status: 400 });
+    }
+    if (endpoint.protocol !== "https:") return NextResponse.json({ error: "Invalid push subscription endpoint" }, { status: 400 });
+
     const record: PushSubscriptionRecord = {
-      endpoint: subscription.endpoint,
-      keys: subscription.keys || {},
-      userId: userId || session?.user?.id || "anonymous",
+      endpoint: endpoint.href,
+      keys: subscription.keys,
+      userId: session.id,
       subscribedAt: new Date().toISOString(),
     };
 
     // Remove existing if duplicate
     const index = pushSubscriptions.findIndex(
-      (s) => s.endpoint === subscription.endpoint
+      (s) => s.endpoint === endpoint.href
     );
     if (index >= 0) {
       pushSubscriptions[index] = record;
@@ -67,7 +76,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    totalSubscriptions: pushSubscriptions.length,
     vapidPublicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BNo-SampleVapidKey-SSGHS-Alumni-2026",
   });
 }

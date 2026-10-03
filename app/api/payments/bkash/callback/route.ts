@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { executePayment, queryPayment } from "@/lib/payments/bkash";
+import { finalizeDonationPayment } from "@/lib/payments/finalize";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -18,31 +19,6 @@ export async function GET(req: NextRequest) {
 
   // If user cancelled
   if (status === "cancel" || status === "failure") {
-    // Update donation status
-    try {
-      const tx = await prisma.paymentTransaction.findFirst({
-        where: { gatewaySessionKey: paymentID },
-      });
-      if (tx) {
-        await prisma.donation.update({
-          where: { id: tx.donationId },
-          data: {
-            paymentStatus: status === "cancel" ? "CANCELLED" : "FAILED",
-            failureReason: `bKash ${status}`,
-          },
-        });
-        await prisma.paymentTransaction.update({
-          where: { id: tx.id },
-          data: {
-            status: status === "cancel" ? "CANCELLED" : "FAILED",
-            errorMessage: `User ${status} on bKash checkout`,
-          },
-        });
-      }
-    } catch (err) {
-      console.error("[bKash Callback] DB update error:", err);
-    }
-
     return NextResponse.redirect(
       `${appUrl}/donate?payment=failed&reason=${status}`
     );
@@ -58,76 +34,57 @@ export async function GET(req: NextRequest) {
   try {
     const result = await executePayment(paymentID);
 
-    // Find the transaction record
-    let tx;
-    try {
-      tx = await prisma.paymentTransaction.findFirst({
-        where: { gatewaySessionKey: paymentID },
-      });
-    } catch {
-      // Fallback mode
-    }
-
     if (result.verified && result.status === "COMPLETED") {
-      // Update records on success
-      try {
-        if (tx) {
-          await prisma.paymentTransaction.update({
-            where: { id: tx.id },
-            data: {
-              status: "COMPLETED",
-              gatewayTrxId: result.gatewayTrxId,
-              completedAt: new Date(),
-              gatewayResponse: JSON.stringify(result),
-            },
-          });
-
-          await prisma.donation.update({
-            where: { id: tx.donationId },
-            data: {
-              paymentStatus: "COMPLETED",
-              gatewayTrxId: result.gatewayTrxId,
-              paidAt: new Date(),
-            },
-          });
-
-          // Update campaign raised amount
-          const donation = await prisma.donation.findUnique({
-            where: { id: tx.donationId },
-          });
-          if (donation) {
-            await prisma.donationCampaign.update({
-              where: { id: donation.campaignId },
-              data: {
-                raisedAmount: { increment: donation.amount },
-                donorCount: { increment: 1 },
-              },
-            });
-          }
+      const tx = await prisma.paymentTransaction.findFirst({
+        where: { gateway: "BKASH", gatewaySessionKey: paymentID },
+        select: { donationId: true },
+      });
+      if (tx && result.amount !== undefined) {
+        const finalized = await finalizeDonationPayment({
+          donationId: tx.donationId,
+          gateway: "BKASH",
+          gatewaySessionKey: paymentID,
+          gatewayTrxId: result.gatewayTrxId,
+          amount: result.amount,
+          payload: JSON.stringify(result),
+        });
+        if (finalized.ok) {
+          const receiptId = (await prisma.donation.findUnique({ where: { id: tx.donationId }, select: { receiptId: true } }))?.receiptId || "";
+          return NextResponse.redirect(
+            `${appUrl}/donate?payment=success&trxId=${encodeURIComponent(result.gatewayTrxId || "")}&receipt=${encodeURIComponent(receiptId)}`
+          );
         }
-      } catch (dbErr) {
-        console.error("[bKash Callback] DB success update error:", dbErr);
       }
-
-      const receiptId = tx
-        ? (
-            await prisma.donation.findUnique({
-              where: { id: tx.donationId },
-              select: { receiptId: true },
-            })
-          )?.receiptId
-        : "";
-
-      return NextResponse.redirect(
-        `${appUrl}/donate?payment=success&trxId=${result.gatewayTrxId}&receipt=${receiptId || ""}`
-      );
     }
 
     // Payment not verified — query to double check
     const queryResult = await queryPayment(paymentID);
-    if (queryResult.verified) {
+    if (queryResult.verified && queryResult.amount !== undefined) {
+      const tx = await prisma.paymentTransaction.findFirst({
+        where: { gateway: "BKASH", gatewaySessionKey: paymentID },
+        select: { donationId: true },
+      });
+      if (tx) {
+        const finalized = await finalizeDonationPayment({
+          donationId: tx.donationId,
+          gateway: "BKASH",
+          gatewaySessionKey: paymentID,
+          gatewayTrxId: queryResult.gatewayTrxId,
+          amount: queryResult.amount,
+          payload: JSON.stringify(queryResult),
+        });
+        if (!finalized.ok) {
+          return NextResponse.redirect(
+            `${appUrl}/donate?payment=failed&reason=verification_failed`
+          );
+        }
+      } else {
+        return NextResponse.redirect(
+          `${appUrl}/donate?payment=failed&reason=verification_failed`
+        );
+      }
       return NextResponse.redirect(
-        `${appUrl}/donate?payment=success&trxId=${queryResult.gatewayTrxId}`
+        `${appUrl}/donate?payment=success&trxId=${encodeURIComponent(queryResult.gatewayTrxId || "")}`
       );
     }
 

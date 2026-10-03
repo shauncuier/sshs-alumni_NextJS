@@ -10,6 +10,7 @@ declare module "next-auth" {
       role?: string;
       status?: string;
       batchYear?: number;
+      sessionVersion?: number;
     };
   }
 
@@ -18,6 +19,7 @@ declare module "next-auth" {
     role?: string;
     status?: string;
     batchYear?: number;
+    sessionVersion?: number;
   }
 }
 
@@ -27,5 +29,6 @@ declare module "next-auth/jwt" {
     role?: string;
     status?: string;
     batchYear?: number;
+    sessionVersion?: number;
   }
 }

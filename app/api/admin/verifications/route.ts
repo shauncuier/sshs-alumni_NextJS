@@ -1,9 +1,8 @@
 import { after, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
 import prisma from "@/lib/prisma";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
 type RequestStatus = (typeof REQUEST_STATUSES)[number];
@@ -11,10 +10,8 @@ type RequestStatus = (typeof REQUEST_STATUSES)[number];
 // GET /api/admin/verifications?status=PENDING|VERIFIED|REJECTED|all (default PENDING)
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as unknown as { role?: string })?.role;
-
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
@@ -103,10 +100,8 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as unknown as { role?: string })?.role;
-
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
@@ -148,7 +143,7 @@ export async function PATCH(req: Request) {
                 where: { id: pendingReg.id },
                 data: {
                   status: "CONFIRMED",
-                  confirmedBy: session?.user?.email ?? "admin",
+                  confirmedBy: me.email,
                   confirmedAt: new Date(),
                 },
               });
@@ -164,9 +159,9 @@ export async function PATCH(req: Request) {
         const updated = await tx.verificationRequest.update({
           where: { id: requestId },
           // updatedAt records when the review happened.
-          data: { status: decision, reviewedBy: session?.user?.email ?? null },
+          data: { status: decision, reviewedBy: me.email },
         });
-        await tx.user.update({ where: { id: request.userId }, data: { status: decision } });
+        await tx.user.update({ where: { id: request.userId }, data: { status: decision, sessionVersion: { increment: 1 } } });
         await tx.alumniProfile.updateMany({
           where: { userId: request.userId },
           data: { verificationStatus: decision },

@@ -1,6 +1,9 @@
 import { createWorker } from "tesseract.js";
 import sharp from "sharp";
 
+export const OCR_LIMITS = { maxBytes: 5 * 1024 * 1024, maxPixels: 20_000_000 } as const;
+const OCR_FORMATS = new Set(["jpeg", "png", "webp"]);
+
 export interface OcrResult {
   rawText: string;
   confidence: number;
@@ -8,6 +11,15 @@ export interface OcrResult {
   detectedBatch: number | null;
   detectedRoll: string | null;
   schoolDetected: boolean;
+}
+
+export async function validateOcrImage(imageBuffer: Buffer): Promise<void> {
+  if (imageBuffer.length === 0 || imageBuffer.length > OCR_LIMITS.maxBytes) throw new Error("Invalid image size");
+  const metadata = await sharp(imageBuffer, { limitInputPixels: OCR_LIMITS.maxPixels }).metadata();
+  if (!metadata.format || !OCR_FORMATS.has(metadata.format) || !metadata.width || !metadata.height) {
+    throw new Error("Unsupported image format");
+  }
+  if (metadata.width * metadata.height > OCR_LIMITS.maxPixels) throw new Error("Image dimensions are too large");
 }
 
 /**
@@ -28,7 +40,7 @@ export async function performOcr(imageBuffer: Buffer): Promise<OcrResult> {
   try {
     // 1. Optimize image for OCR using sharp:
     // Convert to grayscale, enhance contrast, resize if too small/large.
-    const preprocessed = await sharp(imageBuffer)
+    const preprocessed = await sharp(imageBuffer, { limitInputPixels: OCR_LIMITS.maxPixels })
       .greyscale()
       .normalize()
       .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })

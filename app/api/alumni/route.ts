@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { requireRateLimit } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 
 // Public directory: only fields a member would expect strangers to see.
 // Phone and email appear only when the member has made them public; the school
@@ -35,16 +37,18 @@ const DIRECTORY_FIELDS = {
 
 export async function GET(req: Request) {
   try {
+    requireRateLimit(req, "alumni-directory", { limit: 120, windowMs: 60_000 });
+
     const { searchParams } = new URL(req.url);
-    const q = searchParams.get("q")?.trim() || "";
+    const rawQ = searchParams.get("q")?.trim() || "";
+    const q = rawQ.slice(0, 100);
     const batch = searchParams.get("batch");
-    const profession = searchParams.get("profession");
-    const location = searchParams.get("location");
-    const verifiedOnly = searchParams.get("verified") === "true";
+    const profession = searchParams.get("profession")?.slice(0, 100);
+    const location = searchParams.get("location")?.slice(0, 100);
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "100", 10), 1), 200);
 
     const filters: Prisma.AlumniProfileWhereInput[] = [
-      // Members the committee rejected are never listed.
-      verifiedOnly ? { verificationStatus: "VERIFIED" } : { verificationStatus: { not: "REJECTED" } },
+      { verificationStatus: "VERIFIED" },
     ];
     if (batch && batch !== "all" && !Number.isNaN(parseInt(batch, 10))) {
       filters.push({ sscBatch: parseInt(batch, 10) });
@@ -72,6 +76,7 @@ export async function GET(req: Request) {
         where: { AND: filters },
         select: DIRECTORY_FIELDS,
         orderBy: { sscBatch: "desc" },
+        take: limit,
       });
     } catch (dbErr) {
       console.error("Alumni directory query failed:", dbErr);
@@ -88,6 +93,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ alumni, total: alumni.length, source: "database" });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("API error:", error);
     return NextResponse.json({ error: "Failed to fetch alumni directory" }, { status: 500 });
   }

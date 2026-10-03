@@ -139,38 +139,38 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
 
       <main className="flex-1 pb-24">
         {/* Hero Cover */}
-        <div className="relative h-64 sm:h-80 bg-slate-900 overflow-hidden">
+        <div className="relative min-h-[380px] sm:min-h-[440px] bg-slate-900 overflow-hidden flex flex-col justify-between">
           <img
             src={batch.coverImage}
             alt={batch.name}
-            className="w-full h-full object-cover opacity-80"
+            className="absolute inset-0 w-full h-full object-cover opacity-75"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/75 to-black/40" />
 
-          <div className="absolute top-6 left-4 sm:left-8">
+          <div className="relative z-10 pt-6 px-4 sm:px-8">
             <Link
               href="/batches"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/60 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black/40 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/60 transition-colors border border-white/10 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" /> All Batches
             </Link>
           </div>
 
-          <div className="absolute bottom-6 left-4 sm:left-8 right-4 sm:right-8 text-white max-w-4xl">
-            <div className="inline-block px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider mb-2">
+          <div className="relative z-10 px-4 sm:px-8 pt-6 pb-20 sm:pb-24 lg:pb-28 text-white max-w-4xl">
+            <div className="inline-block px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider mb-3 shadow-sm">
               SSC Batch {batch.year}
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
               {batch.name} — {batch.tagline}
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-emerald-100 mt-2.5 max-w-2xl leading-relaxed">
               {batch.description}
             </p>
           </div>
         </div>
 
         {/* Info Grid - 100% Dynamic */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-12 relative z-20">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center gap-4">
               <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-2xl flex items-center justify-center shrink-0">

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
 import { samplePosts, PostItem } from "@/lib/data";
+import { requireRateLimit } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 
 export async function GET(req: Request) {
   try {
@@ -14,21 +16,54 @@ export async function GET(req: Request) {
         whereClause.batchTag = parseInt(batch, 10);
       }
 
+      // Explicitly select safe public fields only; never leak passwordHash or sessionVersion.
       const posts = await prisma.post.findMany({
         where: whereClause,
-        include: {
+        select: {
+          id: true,
+          content: true,
+          batchTag: true,
+          createdAt: true,
+          updatedAt: true,
           author: {
-            include: { profile: true },
+            select: {
+              id: true,
+              role: true,
+              status: true,
+              profile: {
+                select: {
+                  fullName: true,
+                  avatarUrl: true,
+                  sscBatch: true,
+                  profession: true,
+                  verificationStatus: true,
+                },
+              },
+            },
           },
           comments: {
-            include: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
               author: {
-                include: { profile: true },
+                select: {
+                  id: true,
+                  role: true,
+                  profile: {
+                    select: {
+                      fullName: true,
+                      avatarUrl: true,
+                      sscBatch: true,
+                    },
+                  },
+                },
               },
             },
           },
         },
         orderBy: { createdAt: "desc" },
+        take: 100,
       });
 
       if (posts && posts.length > 0) {
@@ -53,6 +88,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    requireRateLimit(req, "create-post", { limit: 10, windowMs: 10 * 60_000 });
+
     const session = await getMemberSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
@@ -65,12 +102,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Post content cannot be empty." }, { status: 400 });
     }
 
+    if (content.length > 5000) {
+      return NextResponse.json({ error: "Post content cannot exceed 5000 characters." }, { status: 400 });
+    }
+
     const userName = session.user.name || "Alumnus";
     const userBatch = (session.user as unknown as { batchYear?: number })?.batchYear || 2008;
 
     try {
       const user = await prisma.user.findUnique({
         where: { email: session.user.email },
+        select: { id: true },
       });
 
       if (user) {
@@ -80,8 +122,25 @@ export async function POST(req: Request) {
             content: content.trim(),
             batchTag: batchTag ? parseInt(batchTag, 10) : userBatch,
           },
-          include: {
-            author: { include: { profile: true } },
+          select: {
+            id: true,
+            content: true,
+            batchTag: true,
+            createdAt: true,
+            author: {
+              select: {
+                id: true,
+                role: true,
+                profile: {
+                  select: {
+                    fullName: true,
+                    avatarUrl: true,
+                    sscBatch: true,
+                    profession: true,
+                  },
+                },
+              },
+            },
           },
         });
 
@@ -117,7 +176,11 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("Posts POST error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

@@ -8,9 +8,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCardToken } from "@/lib/id-card";
 import { checkCardMembership } from "@/lib/card-membership";
+import { requireRateLimit } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 
 export async function POST(req: NextRequest) {
   try {
+    requireRateLimit(req, "card-verify", { limit: 60, windowMs: 60_000 });
+
     const body = await req.json();
     const { token, gateId, scannedBy } = body;
 
@@ -74,6 +78,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ valid: false, error: error.message }, { status: error.status });
+    }
     console.error("[Gate Verify API Error]", error);
     return NextResponse.json(
       { valid: false, error: "Internal gate verification system error" },

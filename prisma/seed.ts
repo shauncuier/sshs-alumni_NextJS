@@ -236,8 +236,8 @@ async function main() {
       slug: "student-merit-scholarship",
       category: "SCHOLARSHIP" as const,
       goalAmount: 500000,
-      raisedAmount: 385000,
-      donorCount: 142,
+      raisedAmount: 0,
+      donorCount: 0,
       description:
         "Providing full annual tuition, books, and uniforms for 50 meritorious students facing economic hardships at Sabuj Shikshayatan Govt. High School.",
       bannerImage:
@@ -250,8 +250,8 @@ async function main() {
       slug: "modern-stem-lab",
       category: "STEM_LAB" as const,
       goalAmount: 800000,
-      raisedAmount: 640000,
-      donorCount: 98,
+      raisedAmount: 0,
+      donorCount: 0,
       description:
         "Equipping the campus science lab with 25 modern computers, robotics kits, and high-speed internet to prepare students for the 4th Industrial Revolution.",
       bannerImage:
@@ -264,8 +264,8 @@ async function main() {
       slug: "library-renovation-fund",
       category: "LIBRARY" as const,
       goalAmount: 300000,
-      raisedAmount: 120000,
-      donorCount: 45,
+      raisedAmount: 0,
+      donorCount: 0,
       description: "Modernising the school library with digital cataloguing and 2000 new books.",
       bannerImage:
         "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=1000",

@@ -178,9 +178,11 @@ function VerificationReviewContent() {
     return filteredList.findIndex((r) => r.id === activeApplicant.id);
   }, [filteredList, activeApplicant]);
 
-  useEffect(() => {
+  const [prevApplicantId, setPrevApplicantId] = useState(activeApplicant?.id);
+  if (prevApplicantId !== activeApplicant?.id) {
+    setPrevApplicantId(activeApplicant?.id);
     setDocImageFailed(false);
-  }, [activeApplicant?.id]);
+  }
 
   const handleNext = () => {
     if (activeIndex >= 0 && activeIndex < filteredList.length - 1) {

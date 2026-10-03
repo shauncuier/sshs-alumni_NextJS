@@ -11,9 +11,12 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { initiatePayment, resolveGateway } from "@/lib/payments";
 import { getSessionUser } from "@/lib/session-user";
+import { requireRateLimit } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
 
 export async function POST(req: Request) {
   try {
+    requireRateLimit(req, "payment-initiation", { limit: 10, windowMs: 60 * 60_000 });
     const body = await req.json();
     const {
       campaignId,
@@ -173,6 +176,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
     console.error("[Payment] Initiation error:", error);
     return NextResponse.json(
       { error: "Internal server error during payment initiation" },

@@ -3,9 +3,12 @@ import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
 import { AVATAR_LIMITS, processAvatar, saveAvatar } from "@/lib/media/avatars";
 import { AppError } from "@/lib/app-error";
+import { readLimitedFormData, requireRateLimit } from "@/lib/request-security";
 
 export async function POST(req: Request) {
   try {
+    requireRateLimit(req, "avatar-upload", { limit: 10, windowMs: 15 * 60_000 });
+
     const session = await getMemberSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
@@ -19,7 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
-    const formData = await req.formData();
+    const formData = await readLimitedFormData(req, AVATAR_LIMITS.maxBytes + 64 * 1024);
     const file = formData.get("photo") || formData.get("avatar");
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Please select an image file" }, { status: 400 });
@@ -66,6 +69,9 @@ export async function POST(req: Request) {
       originalUrl: updated.avatarOriginalUrl,
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Profile Avatar POST Error]:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

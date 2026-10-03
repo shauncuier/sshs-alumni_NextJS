@@ -27,6 +27,20 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    const contentSecurityPolicy = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'self'",
+      "form-action 'self'",
+      "script-src 'self' 'unsafe-inline'" + (process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""),
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org",
+      "font-src 'self' data:",
+      "connect-src 'self'",
+      "worker-src 'self' blob:",
+      "manifest-src 'self'",
+    ].join("; ");
     return [
       {
         source: "/:path*",
@@ -58,6 +72,10 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: contentSecurityPolicy,
           },
         ],
       },

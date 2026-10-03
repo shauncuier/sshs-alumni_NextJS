@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { accountAccessBlock, LEGACY_PENDING_MESSAGE } from "@/lib/account-access";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
+import { consumeRateLimit, resetRateLimit } from "@/lib/request-security";
 
 export async function authorizeCredentials(credentials: Record<"email" | "password", string> | undefined) {
   if (!credentials?.email || !credentials?.password) {
@@ -11,6 +12,10 @@ export async function authorizeCredentials(credentials: Record<"email" | "passwo
   }
 
   const email = credentials.email.trim().toLowerCase();
+  const rateLimitKey = `login:${email}`;
+  if (!consumeRateLimit(rateLimitKey, { limit: 10, windowMs: 15 * 60_000 })) {
+    throw new Error("Too many sign-in attempts. Please try again later.");
+  }
 
   // Accounts live only in the database; there are no built-in fallback logins.
   let user;
@@ -29,6 +34,8 @@ export async function authorizeCredentials(credentials: Record<"email" | "passwo
   if (!user || !(await bcrypt.compare(credentials.password, user.passwordHash))) {
     throw new Error("Invalid email or password. Please verify your credentials.");
   }
+
+  resetRateLimit(rateLimitKey);
 
   const block = accountAccessBlock(user);
   if (block?.code === "PENDING_APPROVAL") {
@@ -52,6 +59,7 @@ export async function authorizeCredentials(credentials: Record<"email" | "passwo
     status: user.status,
     image: user.profile?.avatarUrl || "/logo.png",
     batchYear: user.profile?.sscBatch || 2015,
+    sessionVersion: user.sessionVersion,
   };
 }
 
@@ -84,15 +92,21 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as unknown as { role: string }).role;
         token.status = (user as unknown as { status: string }).status;
         token.batchYear = (user as unknown as { batchYear: number }).batchYear;
+        token.sessionVersion = (user as unknown as { sessionVersion: number }).sessionVersion ?? 0;
+      }
+      if (typeof token.sessionVersion !== "number") {
+        token.sessionVersion = 0;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as unknown as { id: string }).id = token.id as string;
+        (session.user as unknown as { id: string }).id = ((token.id as string) || (token.sub as string)) ?? "";
         (session.user as unknown as { role: string }).role = token.role as string;
         (session.user as unknown as { status: string }).status = token.status as string;
         (session.user as unknown as { batchYear: number }).batchYear = token.batchYear as number;
+        (session.user as unknown as { sessionVersion: number }).sessionVersion =
+          typeof token.sessionVersion === "number" ? token.sessionVersion : 0;
       }
       return session;
     },

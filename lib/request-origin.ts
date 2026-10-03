@@ -5,10 +5,8 @@
  * name (guessing turned http://127.0.0.1 or a LAN address into a dead https link).
  */
 export function publicOrigin(req: Request): string {
-  const url = new URL(req.url);
-  const forwardedProto = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const forwardedHost = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const protocol = forwardedProto || url.protocol.replace(/:$/, "");
-  const host = forwardedHost || req.headers.get("host") || url.host;
-  return `${protocol}://${host}`;
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) return new URL(configured).origin;
+  if (process.env.NODE_ENV !== "production") return new URL(req.url).origin;
+  throw new Error("NEXT_PUBLIC_APP_URL must be set in production.");
 }

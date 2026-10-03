@@ -7,6 +7,7 @@ import { Heart, Plus, TrendingUp, Users, CheckCircle2 } from "lucide-react";
 export default function AdminDonationsPage() {
   const totalRaised = sampleDonations.reduce((acc, c) => acc + c.raisedAmount, 0);
   const totalGoal = sampleDonations.reduce((acc, c) => acc + c.goalAmount, 0);
+  const totalDonors = sampleDonations.reduce((acc, c) => acc + (c.donorCount || 0), 0);
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -43,7 +44,9 @@ export default function AdminDonationsPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <span className="text-xs font-semibold text-slate-500">Total Unique Donors</span>
-          <div className="text-2xl font-black text-amber-700 mt-1">403 Alumni</div>
+          <div className="text-2xl font-black text-amber-700 mt-1">
+            {totalDonors} Alumni
+          </div>
         </div>
       </div>
 

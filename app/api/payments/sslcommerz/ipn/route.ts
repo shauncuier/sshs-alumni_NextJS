@@ -7,8 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { validateTransaction, validateIPNHash } from "@/lib/payments/sslcommerz";
+import { finalizeDonationPayment } from "@/lib/payments/finalize";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,13 +29,9 @@ export async function POST(req: NextRequest) {
     }
 
     const valId = data.val_id;
-    const tranId = data.tran_id;
-    const donationId = data.value_a;
-    const status = data.status; // VALID, FAILED, CANCELLED
-
-    if (!valId || !tranId) {
+    if (!valId) {
       return NextResponse.json(
-        { error: "Missing val_id or tran_id" },
+        { error: "Missing val_id" },
         { status: 400 }
       );
     }
@@ -43,72 +39,18 @@ export async function POST(req: NextRequest) {
     // Double-verify with SSLCommerz validation API
     const validation = await validateTransaction(valId);
 
-    if (validation.verified && validation.status === "COMPLETED") {
+    if (validation.verified && validation.status === "COMPLETED" && validation.donationId && validation.merchantInvoice && validation.amount && validation.currency === "BDT") {
       try {
-        if (donationId) {
-          // Check if already marked complete (idempotent)
-          const existing = await prisma.donation.findUnique({
-            where: { id: donationId },
-            select: { paymentStatus: true },
-          });
-
-          if (existing && existing.paymentStatus !== "COMPLETED") {
-            await prisma.donation.update({
-              where: { id: donationId },
-              data: {
-                paymentStatus: "COMPLETED",
-                gatewayTrxId: tranId,
-                paidAt: new Date(),
-                ipnPayload: JSON.stringify(data),
-              },
-            });
-
-            const tx = await prisma.paymentTransaction.findUnique({
-              where: { donationId },
-            });
-            if (tx) {
-              await prisma.paymentTransaction.update({
-                where: { id: tx.id },
-                data: {
-                  status: "COMPLETED",
-                  gatewayTrxId: tranId,
-                  completedAt: new Date(),
-                  callbackPayload: JSON.stringify(data),
-                },
-              });
-            }
-
-            // Update campaign totals
-            const donation = await prisma.donation.findUnique({
-              where: { id: donationId },
-            });
-            if (donation) {
-              await prisma.donationCampaign.update({
-                where: { id: donation.campaignId },
-                data: {
-                  raisedAmount: { increment: donation.amount },
-                  donorCount: { increment: 1 },
-                },
-              });
-            }
-          }
-        }
+        await finalizeDonationPayment({
+          donationId: validation.donationId,
+          gateway: "SSLCOMMERZ",
+          merchantInvoice: validation.merchantInvoice,
+          gatewayTrxId: validation.gatewayTrxId,
+          amount: validation.amount,
+          payload: JSON.stringify(data),
+        });
       } catch (dbErr) {
         console.error("[SSLCommerz IPN] DB update error:", dbErr);
-      }
-    } else if (status === "FAILED") {
-      try {
-        if (donationId) {
-          await prisma.donation.update({
-            where: { id: donationId },
-            data: {
-              paymentStatus: "FAILED",
-              failureReason: "SSLCommerz IPN reported failure",
-            },
-          });
-        }
-      } catch {
-        // non-critical
       }
     }
 

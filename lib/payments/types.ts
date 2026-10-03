@@ -53,6 +53,9 @@ export interface PaymentVerifyResponse {
   verified: boolean;
   status: PaymentStatusType;
   gatewayTrxId?: string;
+  merchantInvoice?: string;
+  donationId?: string;
+  currency?: string;
   amount?: number;
   paidAt?: string;
   error?: string;

@@ -6,16 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userRole = session?.user?.role;
-
-    // Broadcasting reaches every subscribed device, so only admins may send.
-    if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 

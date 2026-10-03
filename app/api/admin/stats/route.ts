@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as unknown as { role?: string })?.role;
-
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    const me = await getSessionUser();
+    if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
@@ -98,16 +95,16 @@ export async function GET() {
         ? Math.round((verifiedAlumni / totalRegistered) * 100)
         : 100;
 
-    // Total funds raised (from event fees + extra donations + campaigns)
-    const eventTotalFunds = confirmedRegistrations.reduce(
-      (sum, r) => sum + (r.totalFee || 0) + (r.donationAmount || 0),
-      0
-    );
+    // Total funds raised (from donation campaigns and voluntary donations)
     const campaignTotalFunds = donationDrives.reduce(
       (sum, d) => sum + (d.raisedAmount || 0),
       0
     );
-    const totalFunds = eventTotalFunds + campaignTotalFunds;
+    const voluntaryDonations = confirmedRegistrations.reduce(
+      (sum, r) => sum + (r.donationAmount || 0),
+      0
+    );
+    const totalFunds = campaignTotalFunds + voluntaryDonations;
 
     // Format funds in Bangladeshi standard (Lakhs if >= 100,000)
     let fundsFormatted = `৳${totalFunds.toLocaleString()}`;

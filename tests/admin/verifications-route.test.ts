@@ -7,8 +7,10 @@ import { makePdf } from "../helpers/images";
 import { resetDatabase } from "../helpers/db";
 
 const auth = vi.hoisted(() => ({ session: null as { user: { email: string; role: string } } | null }));
-vi.mock("next-auth", () => ({ getServerSession: async () => auth.session }));
-vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/session-user", () => ({
+  getSessionUser: async () => auth.session?.user ?? null,
+  isAdminRole: (role: string) => role === "ADMIN" || role === "SUPER_ADMIN",
+}));
 // `after` needs a live request scope; collect the callbacks and run them explicitly.
 const scheduled = vi.hoisted(() => [] as (() => unknown)[]);
 vi.mock("next/server", async (importOriginal) => ({

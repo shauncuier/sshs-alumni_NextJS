@@ -23,7 +23,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.2",
     "lucide-react": "^1.47.0",
-    "next": "16.3.6",
+    "next": "16.3.8",
     "next-auth": "^4.24.15",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
@@ -41,12 +41,17 @@
     "@types/ws": "^8.18.1",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.3.8",
     "mariadb": "^3.5.4",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "@prisma/adapter-mariadb": {
+      "mariadb": "3.5.4"
+    }
   }
 }

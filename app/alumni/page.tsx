@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AlumniCard from "@/components/alumni/AlumniCard";
@@ -68,13 +69,24 @@ import {
   Loader2
 } from "lucide-react";
 
-export default function AlumniDirectoryPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedBatch, setSelectedBatch] = useState("all");
-  const [selectedProfession, setSelectedProfession] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("all");
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
+function DirectoryContent() {
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [selectedBatch, setSelectedBatch] = useState(searchParams.get("batch") || "all");
+  const [selectedProfession, setSelectedProfession] = useState(searchParams.get("profession") || "all");
+  const [selectedLocation, setSelectedLocation] = useState(searchParams.get("location") || "all");
+  const [verifiedOnly, setVerifiedOnly] = useState(searchParams.get("verified") === "true");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Keep query params in sync if URL updates
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q !== null && q !== undefined) {
+      setSearchQuery(q);
+    }
+    const b = searchParams.get("batch");
+    if (b) setSelectedBatch(b);
+  }, [searchParams]);
 
   // Real members only: start empty and show a loading state, never sample people.
   const [alumniList, setAlumniList] = useState<AlumniMember[]>([]);
@@ -328,5 +340,23 @@ export default function AlumniDirectoryPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function AlumniDirectoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+          <Navbar />
+          <main className="flex-1 flex items-center justify-center p-12">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+          </main>
+          <Footer />
+        </div>
+      }
+    >
+      <DirectoryContent />
+    </Suspense>
   );
 }

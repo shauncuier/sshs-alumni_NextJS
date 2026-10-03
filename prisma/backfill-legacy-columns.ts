@@ -49,6 +49,14 @@ async function main() {
     );
     console.log(`DonationCampaign.targetAmount -> goalAmount: ${n} row(s)`);
   }
+
+  const user = await columnsOf("User");
+  if (!user.has("sessionVersion")) {
+    await prisma.$executeRawUnsafe(
+      "ALTER TABLE `User` ADD COLUMN `sessionVersion` INT NOT NULL DEFAULT 0 AFTER `status`"
+    );
+    console.log("User.sessionVersion: added column");
+  }
 }
 
 main()

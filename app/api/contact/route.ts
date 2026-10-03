@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { AppError } from "@/lib/app-error";
+import { requireRateLimit } from "@/lib/request-security";
 
 export async function POST(req: Request) {
   try {
+    requireRateLimit(req, "contact", { limit: 5, windowMs: 60 * 60_000 });
     const body = await req.json();
     const { name, email, subject, message } = body;
 
@@ -29,6 +32,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
     console.error("Contact API error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
