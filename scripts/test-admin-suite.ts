@@ -13,10 +13,14 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
-async function logResult(step: string, res: Response, check: (body: string, json: any) => boolean, extraNote = "") {
+// Response bodies differ per endpoint; each check probes its own fields loosely.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LooseJson = any;
+
+async function logResult(step: string, res: Response, check: (body: string, json: LooseJson) => boolean, extraNote = "") {
   const httpStatus = res.status;
   const text = await res.text();
-  let json: any = null;
+  let json: LooseJson = null;
   try {
     json = JSON.parse(text);
   } catch {}
@@ -25,8 +29,8 @@ async function logResult(step: string, res: Response, check: (body: string, json
   let detailMsg = "";
   try {
     passed = check(text, json);
-  } catch (e: any) {
-    detailMsg = `Check error: ${e.message}`;
+  } catch (e) {
+    detailMsg = `Check error: ${(e as Error).message}`;
   }
 
   results.push({
@@ -49,15 +53,17 @@ async function run() {
   const csrfRes = await fetch(`${BASE_URL}/api/auth/csrf`);
   const csrfData = await csrfRes.json();
   const csrfToken = csrfData.csrfToken;
-  const csrfCookies = (csrfRes.headers as any).getSetCookie 
-    ? (csrfRes.headers as any).getSetCookie() 
-    : [csrfRes.headers.get("set-cookie") || ""];
+  const csrfCookies = csrfRes.headers.getSetCookie();
   const rawCookies = csrfCookies.map((c: string) => c.split(";")[0]).join("; ");
   console.log("1. CSRF Token obtained:", csrfToken ? "Yes" : "No");
 
   // 2. Perform Real Sign-in as Administrator
   const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@sabujsghs.edu.bd";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD || "XumRiIMWDvk8hH4J7qnfwpZhVYVLAxvG";
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminPassword) {
+    console.error("SEED_ADMIN_PASSWORD is not set. Add it to .env.local before running this suite.");
+    process.exit(1);
+  }
 
   console.log(`2. Attempting sign-in as: ${adminEmail}...`);
   const loginRes = await fetch(`${BASE_URL}/api/auth/callback/credentials`, {
@@ -76,9 +82,7 @@ async function run() {
     redirect: "manual",
   });
 
-  const loginCookies = (loginRes.headers as any).getSetCookie 
-    ? (loginRes.headers as any).getSetCookie() 
-    : [loginRes.headers.get("set-cookie") || ""];
+  const loginCookies = loginRes.headers.getSetCookie();
   const sessionTokenCookie = loginCookies.map((c: string) => c.split(";")[0]).join("; ");
   const allCookies = [rawCookies, sessionTokenCookie].filter(Boolean).join("; ");
 
