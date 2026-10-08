@@ -20,6 +20,7 @@ export async function GET() {
       batchProfiles,
       confirmedRegistrations,
       donationDrives,
+      completedDonationAgg,
       jubileeEvent,
     ] = await Promise.all([
       // Total registered users
@@ -56,6 +57,12 @@ export async function GET() {
       prisma.donationCampaign.findMany({
         where: { isActive: true },
         select: { raisedAmount: true },
+      }),
+
+      // Direct completed donations
+      prisma.donation.aggregate({
+        where: { paymentStatus: "COMPLETED" },
+        _sum: { amount: true },
       }),
 
       // Jubilee / Reunion Event
@@ -95,16 +102,18 @@ export async function GET() {
         ? Math.round((verifiedAlumni / totalRegistered) * 100)
         : 100;
 
-    // Total funds raised (from donation campaigns and voluntary donations)
+    // Total funds raised (from donation campaigns, direct donations, and event fees)
     const campaignTotalFunds = donationDrives.reduce(
       (sum, d) => sum + (d.raisedAmount || 0),
       0
     );
-    const voluntaryDonations = confirmedRegistrations.reduce(
-      (sum, r) => sum + (r.donationAmount || 0),
+    const directDonationFunds = completedDonationAgg._sum.amount || 0;
+    const donationFunds = Math.max(campaignTotalFunds, directDonationFunds);
+    const eventFunds = confirmedRegistrations.reduce(
+      (sum, r) => sum + (r.totalFee || 0) + (r.donationAmount || 0),
       0
     );
-    const totalFunds = campaignTotalFunds + voluntaryDonations;
+    const totalFunds = donationFunds + eventFunds;
 
     // Format funds in Bangladeshi standard (Lakhs if >= 100,000)
     let fundsFormatted = `৳${totalFunds.toLocaleString()}`;

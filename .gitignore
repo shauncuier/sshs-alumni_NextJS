@@ -43,3 +43,6 @@ next-env.d.ts
 
 # member photo uploads (server disk)
 /uploads/
+
+# tesseract.js downloads its OCR language model at runtime
+*.traineddata

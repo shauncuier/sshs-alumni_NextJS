@@ -2,31 +2,63 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, X, User, Calendar, BookOpen, Layers, Newspaper, ArrowRight } from "lucide-react";
-import { sampleAlumni, sampleBatches, sampleStories, sampleNews, type EventItem } from "@/lib/data";
+import { Search, X, User, Calendar, Layers, ArrowRight } from "lucide-react";
+import type { EventItem } from "@/lib/data";
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Shapes returned by /api/alumni and /api/batches; profile fields are optional in the database.
+interface SearchAlumnus {
+  id: string;
+  fullName: string;
+  sscBatch: number;
+  profession: string | null;
+  company: string | null;
+  locationCity: string | null;
+  avatarUrl: string | null;
+}
+
+interface SearchBatch {
+  year: number;
+  name: string;
+  tagline: string;
+  totalAlumni: number;
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} failed (${res.status})`);
+  return res.json();
+}
+
+const matches = (value: string | null | undefined, q: string) => !!value && value.toLowerCase().includes(q);
+
 export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const [query, setQuery] = useState("");
+  const [alumni, setAlumni] = useState<SearchAlumnus[]>([]);
+  const [batches, setBatches] = useState<SearchBatch[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [eventsError, setEventsError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   useEffect(() => {
-    if (!isOpen || events.length > 0) return;
-    fetch("/api/events")
-      .then((res) => {
-        if (!res.ok) throw new Error(`Events request failed (${res.status})`);
-        return res.json();
+    if (!isOpen || loaded) return;
+    Promise.all([
+      getJson<{ alumni: SearchAlumnus[] }>("/api/alumni?limit=200"),
+      getJson<{ batches: SearchBatch[] }>("/api/batches"),
+      getJson<{ events: EventItem[] }>("/api/events"),
+    ])
+      .then(([a, b, e]) => {
+        setAlumni(a.alumni);
+        setBatches(b.batches);
+        setEvents(e.events);
+        setLoadError(false);
+        setLoaded(true);
       })
-      .then((b) => {
-        setEventsError(false);
-        setEvents(b.events);
-      })
-      .catch(() => setEventsError(true));
-  }, [isOpen, events.length]);
+      .catch(() => setLoadError(true));
+  }, [isOpen, loaded]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,48 +79,35 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
   const q = query.trim().toLowerCase();
 
   const filteredAlumni = q
-    ? sampleAlumni.filter(
+    ? alumni.filter(
         (a) =>
-          a.fullName.toLowerCase().includes(q) ||
-          a.profession.toLowerCase().includes(q) ||
-          a.company.toLowerCase().includes(q) ||
-          a.locationCity.toLowerCase().includes(q) ||
-          a.sscBatch.toString().includes(q)
+          matches(a.fullName, q) ||
+          matches(a.profession, q) ||
+          matches(a.company, q) ||
+          matches(a.locationCity, q) ||
+          String(a.sscBatch).includes(q)
       )
     : [];
 
+  // Only batches with registered members are worth surfacing; the rest are empty pages.
   const filteredBatches = q
-    ? sampleBatches.filter(
-        (b) =>
-          b.name.toLowerCase().includes(q) ||
-          b.year.toString().includes(q) ||
-          b.tagline.toLowerCase().includes(q)
+    ? batches.filter(
+        (b) => b.totalAlumni > 0 && (matches(b.name, q) || String(b.year).includes(q) || matches(b.tagline, q))
       )
     : [];
 
   const filteredEvents = q
-    ? events.filter(
-        (e) =>
-          e.title.toLowerCase().includes(q) ||
-          e.venue.toLowerCase().includes(q) ||
-          e.category.toLowerCase().includes(q)
-      )
+    ? events.filter((e) => matches(e.title, q) || matches(e.venue, q) || matches(e.category, q))
     : [];
 
-  const filteredStories = q
-    ? sampleStories.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q) ||
-          s.authorName.toLowerCase().includes(q) ||
-          s.profession.toLowerCase().includes(q)
-      )
-    : [];
+  const totalResults = filteredAlumni.length + filteredBatches.length + filteredEvents.length;
 
-  const totalResults =
-    filteredAlumni.length +
-    filteredBatches.length +
-    filteredEvents.length +
-    filteredStories.length;
+  // Suggest the batches that actually have members, largest first.
+  const suggestions = batches
+    .filter((b) => b.totalAlumni > 0)
+    .sort((a, b) => b.totalAlumni - a.totalAlumni)
+    .slice(0, 5)
+    .map((b) => `Batch ${b.year}`);
 
   return (
     <div
@@ -111,7 +130,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search alumni, batches, events, news, or stories..."
+            placeholder="Search alumni, batches, or events..."
             className="w-full bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none text-base"
             autoFocus
           />
@@ -127,16 +146,16 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
 
         {/* Results Area */}
         <div className="overflow-y-auto p-4 space-y-5">
-          {query && eventsError && (
+          {query && loadError && (
             <p role="alert" className="text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
-              Events couldn&apos;t be loaded, so they are missing from these results. Please try again later.
+              Search data couldn&apos;t be loaded. Please close search and try again.
             </p>
           )}
           {!query && (
             <div className="py-12 text-center text-slate-400">
               <p className="text-sm font-medium">Type to search the Sabuj Shikshayatan community...</p>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
-                {["Batch 2008", "Cardiologist", "Reunion", "Software", "Doctor"].map((suggestion) => (
+                {suggestions.map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setQuery(suggestion)}
@@ -172,7 +191,10 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                   >
                     <div className="flex items-center gap-3">
                       <img
-                        src={alumnus.avatarUrl}
+                        src={
+                          alumnus.avatarUrl ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(alumnus.fullName)}&background=06281e&color=fcd34d&bold=true`
+                        }
                         alt={alumnus.fullName}
                         className="w-10 h-10 rounded-full object-cover border border-emerald-200"
                       />
@@ -181,7 +203,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                           {alumnus.fullName}
                         </div>
                         <div className="text-xs text-slate-500">
-                          SSC &apos;{alumnus.sscBatch} • {alumnus.profession} ({alumnus.locationCity})
+                          {[`SSC '${alumnus.sscBatch}`, alumnus.profession, alumnus.locationCity].filter(Boolean).join(" • ")}
                         </div>
                       </div>
                     </div>
@@ -215,7 +237,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                           {batch.name}
                         </div>
                         <div className="text-xs text-slate-500">
-                          {batch.totalAlumni} Members • Rep: {batch.classRepresentative}
+                          {batch.totalAlumni} {batch.totalAlumni === 1 ? "Member" : "Members"}
                         </div>
                       </div>
                     </div>
@@ -252,35 +274,6 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                         <div className="text-xs text-slate-500">
                           {evt.venue} • {evt.attendeesCount} Registered
                         </div>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-700 transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Stories Matches */}
-          {filteredStories.length > 0 && (
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2 px-1">
-                <BookOpen className="w-3.5 h-3.5" /> Stories ({filteredStories.length})
-              </div>
-              <div className="space-y-1">
-                {filteredStories.slice(0, 2).map((story) => (
-                  <Link
-                    key={story.id}
-                    href={`/stories/${story.id}`}
-                    onClick={onClose}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-emerald-50/80 transition-colors group"
-                  >
-                    <div>
-                      <div className="font-semibold text-slate-900 group-hover:text-emerald-800 text-sm line-clamp-1">
-                        {story.title}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        By {story.authorName} (SSC &apos;{story.batchYear}) • {story.readTime}
                       </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-700 transition-colors" />

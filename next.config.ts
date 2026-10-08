@@ -44,7 +44,8 @@ const nextConfig: NextConfig = {
       "form-action 'self'",
       "script-src 'self' 'unsafe-inline'" + (process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org",
+      // ui-avatars.com draws the initials fallback for members without a photo.
+      "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://ui-avatars.com",
       "font-src 'self' data:",
       "connect-src 'self' https: wss: ws:",
       "worker-src 'self' blob:",

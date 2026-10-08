@@ -17,16 +17,7 @@ import type {
   GalleryPhotoItem,
   DonationCampaignItem,
 } from "@/lib/data";
-import {
-  schoolInfo,
-  sampleBatches,
-  sampleAlumni,
-  sampleStories,
-  sampleAchievements,
-  sampleGallery,
-  sampleDonations,
-  sampleNews,
-} from "@/lib/data";
+import { schoolInfo } from "@/lib/data";
 import {
   GraduationCap,
   Users,
@@ -50,9 +41,12 @@ export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
 
   // Fetch dynamic records from database with safety fallbacks
+  const verifiedProfile = { verificationStatus: "VERIFIED" as const };
   const [
     dbVerifiedCount,
-    dbBatchCount,
+    dbBatchCounts,
+    dbCountries,
+    dbProfessions,
     dbProfiles,
     dbBatches,
     dbCampaigns,
@@ -62,20 +56,25 @@ export default async function HomePage() {
     allEvents,
   ] = await Promise.all([
     prisma.user.count({ where: { status: "VERIFIED" } }).catch(() => 0),
-    prisma.batch.count().catch(() => 0),
+    prisma.alumniProfile
+      .groupBy({ by: ["sscBatch"], where: verifiedProfile, _count: { id: true } })
+      .catch(() => []),
+    prisma.alumniProfile
+      .groupBy({ by: ["locationCountry"], where: { ...verifiedProfile, locationCountry: { not: "" } } })
+      .catch(() => []),
+    prisma.alumniProfile
+      .groupBy({ by: ["profession"], where: { ...verifiedProfile, profession: { not: "" } } })
+      .catch(() => []),
+    // Only verified members are public; pending and rejected profiles must never be featured.
     prisma.alumniProfile
       .findMany({
+        where: verifiedProfile,
         take: 4,
         orderBy: { createdAt: "desc" },
         include: { user: true },
       })
       .catch(() => []),
-    prisma.batch
-      .findMany({
-        take: 3,
-        orderBy: { year: "desc" },
-      })
-      .catch(() => []),
+    prisma.batch.findMany().catch(() => []),
     prisma.donationCampaign
       .findMany({
         where: { isActive: true },
@@ -126,36 +125,38 @@ export default async function HomePage() {
     phone: p.isPhonePublic ? p.phone || undefined : undefined,
     email: p.isEmailPublic ? p.user?.email || "" : "",
     skills: Array.isArray(p.skills) ? (p.skills as string[]) : [],
-    connectionCount: 15,
+    connectionCount: 0,
   }));
-  const featuredAlumni: AlumniMember[] =
-    dynamicAlumni.length >= 4
-      ? dynamicAlumni
-      : [...dynamicAlumni, ...sampleAlumni.slice(0, 4 - dynamicAlumni.length)];
+  const featuredAlumni = dynamicAlumni;
 
-  // Dynamic Batches
-  const dynamicBatches: BatchInfo[] = dbBatches.map((b) => ({
-    year: b.year,
-    name: b.name || `SSC Batch ${b.year}`,
-    tagline: b.tagline || `The Pioneering Class of ${b.year}`,
-    totalAlumni: b.totalMembers > 0 ? b.totalMembers : 120,
-    classRepresentative: b.classRepresentative || "Batch Secretariat",
-    representativePhone: b.representativePhone || "+880 1745-950025",
-    reunionDate: b.reunionDate ? b.reunionDate.toISOString().slice(0, 10) : undefined,
-    coverImage:
-      b.coverImage ||
-      "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80",
-    description:
-      b.description ||
-      `Celebrating lifelong bonds and mutual achievements of the ${b.year} SSC graduates.`,
-  }));
-  const featuredBatches: BatchInfo[] =
-    dynamicBatches.length >= 3
-      ? dynamicBatches
-      : [...dynamicBatches, ...sampleBatches.slice(0, 3 - dynamicBatches.length)];
+  // Featured batches: the three with the most verified members
+  const memberCount = new Map(dbBatchCounts.map((c) => [c.sscBatch, c._count.id]));
+  const batchByYear = new Map(dbBatches.map((b) => [b.year, b]));
+  const topBatchYears = [...memberCount.entries()]
+    .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+    .slice(0, 3)
+    .map(([year]) => year);
+  const featuredBatches: BatchInfo[] = topBatchYears.map((year) => {
+    const b = batchByYear.get(year);
+    return {
+      year,
+      name: b?.name || `SSC Batch ${year}`,
+      tagline: b?.tagline || `Class of ${year}`,
+      totalAlumni: memberCount.get(year) ?? 0,
+      classRepresentative: b?.classRepresentative || "Batch Secretariat",
+      representativePhone: b?.representativePhone || "",
+      reunionDate: b?.reunionDate ? b.reunionDate.toISOString().slice(0, 10) : undefined,
+      coverImage:
+        b?.coverImage ||
+        "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80",
+      description:
+        b?.description ||
+        `Celebrating lifelong bonds and mutual achievements of the ${year} SSC graduates.`,
+    };
+  });
 
   // Dynamic Donation Campaign
-  const featuredDonation: DonationCampaignItem =
+  const featuredDonation: DonationCampaignItem | null =
     dbCampaigns.length > 0
       ? {
           id: dbCampaigns[0].id,
@@ -165,7 +166,7 @@ export default async function HomePage() {
           goalAmount: dbCampaigns[0].goalAmount,
           raisedAmount: dbCampaigns[0].raisedAmount,
           donorCount: dbCampaigns[0].donorCount,
-          bannerImage: dbCampaigns[0].bannerImage || sampleDonations[0].bannerImage,
+          bannerImage: dbCampaigns[0].bannerImage || "",
           daysLeft: dbCampaigns[0].endDate
             ? Math.max(
                 0,
@@ -177,7 +178,7 @@ export default async function HomePage() {
             : 45,
           featured: true,
         }
-      : sampleDonations[0];
+      : null;
 
   // Dynamic Stories
   const dynamicStories: AlumniStoryItem[] = dbStories.map((s) => ({
@@ -196,10 +197,7 @@ export default async function HomePage() {
     publishedDate: s.publishedAt.toISOString().slice(0, 10),
     readTime: "4 min read",
   }));
-  const featuredStories: AlumniStoryItem[] =
-    dynamicStories.length >= 2
-      ? dynamicStories
-      : [...dynamicStories, ...sampleStories.slice(0, 2 - dynamicStories.length)];
+  const featuredStories = dynamicStories;
 
   // Dynamic Achievements
   const dynamicAchievements: AchievementItem[] = dbAchievements.map((a) => ({
@@ -215,10 +213,7 @@ export default async function HomePage() {
       `https://ui-avatars.com/api/?name=${encodeURIComponent(a.recipientName)}&background=06281e&color=fcd34d&bold=true`,
     yearAwarded: a.yearAwarded,
   }));
-  const featuredAchievements: AchievementItem[] =
-    dynamicAchievements.length >= 3
-      ? dynamicAchievements
-      : [...dynamicAchievements, ...sampleAchievements.slice(0, 3 - dynamicAchievements.length)];
+  const featuredAchievements = dynamicAchievements;
 
   // Dynamic Gallery Photos
   const dynamicGallery: GalleryPhotoItem[] = dbPhotos.map((p) => ({
@@ -230,14 +225,13 @@ export default async function HomePage() {
     caption: p.caption || "",
     submittedBy: p.uploadedBy || "Alumnus",
   }));
-  const galleryPreview: GalleryPhotoItem[] =
-    dynamicGallery.length >= 4
-      ? dynamicGallery
-      : [...dynamicGallery, ...sampleGallery.slice(0, 4 - dynamicGallery.length)];
+  const galleryPreview = dynamicGallery;
 
   const upcomingEvents = allEvents.filter((e) => e.date >= today).slice(0, 3);
   const jubileeEvent = allEvents.find((e) => e.isMegaEvent);
-  const batchDisplayCount = dbBatchCount > 0 ? dbBatchCount : 41;
+  const batchDisplayCount = memberCount.size;
+  const countryCount = dbCountries.length;
+  const professionCount = dbProfessions.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -305,7 +299,7 @@ export default async function HomePage() {
                       />
                     ))}
                   </div>
-                  <span>Over 5,000+ alumni registered across {batchDisplayCount} batches</span>
+                  <span>{dbVerifiedCount} verified alumni across {batchDisplayCount} batches</span>
                 </div>
               </div>
 
@@ -363,7 +357,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
               <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                 <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={5000} suffix="+" />
+                  <StatCounter end={dbVerifiedCount} />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
                   Registered Alumni
@@ -373,27 +367,27 @@ export default async function HomePage() {
 
               <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                 <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={batchDisplayCount} suffix="+" />
+                  <StatCounter end={batchDisplayCount} />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
                   SSC Batches
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">From Class of 1985 to 2025</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">With verified members</p>
               </div>
 
               <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                 <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={28} suffix="+" />
+                  <StatCounter end={countryCount} />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
                   Countries Worldwide
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">Global alumni chapters</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Where our members live</p>
               </div>
 
               <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                 <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={110} suffix="+" />
+                  <StatCounter end={professionCount} />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
                   Professions &amp; Fields
@@ -498,370 +492,384 @@ export default async function HomePage() {
         {/* =========================================================
             4. FEATURED ALUMNI DIRECTORY PREVIEW
         ========================================================= */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                  Global Directory
+        {featuredAlumni.length > 0 && (
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                    Global Directory
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Meet Our Distinguished Alumni
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
+                    Discover classmates, industry pioneers, and fellow graduates making a proud impact across Bangladesh and abroad.
+                  </p>
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Meet Our Distinguished Alumni
-                </h2>
-                <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                  Discover classmates, industry pioneers, and fellow graduates making a proud impact across Bangladesh and abroad.
-                </p>
+
+                <Link
+                  href="/alumni"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
+                >
+                  <span>Browse Full Directory ({dbVerifiedCount})</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
 
-              <Link
-                href="/alumni"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-              >
-                <span>Browse Full Directory (5,000+)</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredAlumni.map((alumnus) => (
+                  <AlumniCard key={alumnus.id} alumni={alumnus} viewMode="grid" />
+                ))}
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredAlumni.map((alumnus) => (
-                <AlumniCard key={alumnus.id} alumni={alumnus} viewMode="grid" />
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             5. EXPLORE BATCHES (SSC 1985 - 2025)
         ========================================================= */}
-        <section className="py-20 bg-slate-50 border-t border-slate-200/80">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                  Four Decades of Brotherhood
+        {featuredBatches.length > 0 && (
+          <section className="py-20 bg-slate-50 border-t border-slate-200/80">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                    Four Decades of Brotherhood
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Explore by SSC Batch
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
+                    Each batch has its own unique heritage, class representatives, reunion archives, and active discussions.
+                  </p>
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Explore by SSC Batch
-                </h2>
-                <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                  Each batch has its own unique heritage, class representatives, reunion archives, and active discussions.
-                </p>
+
+                <Link
+                  href="/batches"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
+                >
+                  <span>View All Batches (1985-2025)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
 
-              <Link
-                href="/batches"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-              >
-                <span>View All Batches (1985-2025)</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredBatches.map((batch) => (
+                  <BatchCard key={batch.year} batch={batch} />
+                ))}
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {featuredBatches.map((batch) => (
-                <BatchCard key={batch.year} batch={batch} />
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             6. UPCOMING EVENTS & REUNIONS
         ========================================================= */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                  Connect &amp; Celebrate
+        {upcomingEvents.length > 0 && (
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                    Connect &amp; Celebrate
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Upcoming Reunions &amp; Gatherings
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
+                    From our signature annual mega-reunion to sports tournaments and career summits.
+                  </p>
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Upcoming Reunions &amp; Gatherings
-                </h2>
-                <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                  From our signature annual mega-reunion to sports tournaments and career summits.
-                </p>
+
+                <Link
+                  href="/events"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
+                >
+                  <span>See All Events</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
 
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-              >
-                <span>See All Events</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {upcomingEvents.map((evt) => (
+                  <EventCard key={evt.id} event={evt} />
+                ))}
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {upcomingEvents.map((evt) => (
-                <EventCard key={evt.id} event={evt} />
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             7. INSPIRATIONAL ALUMNI STORIES
         ========================================================= */}
-        <section className="py-20 bg-[#06281e] text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">
-                  Editorial Spotlight
+        {featuredStories.length > 0 && (
+          <section className="py-20 bg-[#06281e] text-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">
+                    Editorial Spotlight
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-white tracking-tight">
+                    Stories That Inspire
+                  </h2>
+                  <p className="text-sm text-emerald-200 mt-1 max-w-xl">
+                    Personal reflections, career journeys, and inspiring milestones from fellow alumni across the world.
+                  </p>
                 </div>
-                <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                  Stories That Inspire
-                </h2>
-                <p className="text-sm text-emerald-200 mt-1 max-w-xl">
-                  Personal reflections, career journeys, and inspiring milestones from fellow alumni across the world.
-                </p>
+
+                <Link
+                  href="/stories"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 hover:text-white border border-emerald-700/60 font-semibold text-xs transition-colors shrink-0"
+                >
+                  <span>Read All Stories</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
 
-              <Link
-                href="/stories"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 hover:text-white border border-emerald-700/60 font-semibold text-xs transition-colors shrink-0"
-              >
-                <span>Read All Stories</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {featuredStories.map((story) => (
+                  <StoryCard key={story.id} story={story} />
+                ))}
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {featuredStories.map((story) => (
-                <StoryCard key={story.id} story={story} />
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             8. ACHIEVEMENTS (HALL OF FAME)
         ========================================================= */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-12">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                Pride of Sabuj Shikshayatan
-              </div>
-              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                Alumni Hall of Fame
-              </h2>
-              <p className="text-sm text-slate-500 mt-2">
-                Honoring exceptional accomplishments in medicine, civil engineering, entrepreneurship, research, and governance.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {featuredAchievements.map((ach) => (
-                <div
-                  key={ach.id}
-                  className="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-shadow"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
-                        {ach.category}
-                      </span>
-                      <span className="text-xs font-semibold text-slate-400">
-                        Year {ach.yearAwarded}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 pt-2">
-                      <img
-                        src={ach.photoUrl}
-                        alt={ach.recipientName}
-                        className="w-12 h-12 rounded-xl object-cover border border-emerald-300"
-                      />
-                      <div>
-                        <div className="font-bold text-sm text-slate-900">{ach.recipientName}</div>
-                        <div className="text-xs text-slate-500">SSC Batch &apos;{ach.batchYear}</div>
-                      </div>
-                    </div>
-
-                    <h4 className="font-bold text-base text-slate-800 leading-snug">
-                      {ach.title}
-                    </h4>
-
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      {ach.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-slate-200/80 text-[11px] text-emerald-800 font-semibold">
-                    Conferred by {ach.organization}
-                  </div>
+        {featuredAchievements.length > 0 && (
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-2xl mx-auto mb-12">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                  Pride of Sabuj Shikshayatan
                 </div>
-              ))}
-            </div>
+                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Alumni Hall of Fame
+                </h2>
+                <p className="text-sm text-slate-500 mt-2">
+                  Honoring exceptional accomplishments in medicine, civil engineering, entrepreneurship, research, and governance.
+                </p>
+              </div>
 
-            <div className="mt-10 text-center">
-              <Link
-                href="/achievements"
-                className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-sm"
-              >
-                <span>Explore Full Hall of Fame by Profession</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredAchievements.map((ach) => (
+                  <div
+                    key={ach.id}
+                    className="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                          {ach.category}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-400">
+                          Year {ach.yearAwarded}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-2">
+                        <img
+                          src={ach.photoUrl}
+                          alt={ach.recipientName}
+                          className="w-12 h-12 rounded-xl object-cover border border-emerald-300"
+                        />
+                        <div>
+                          <div className="font-bold text-sm text-slate-900">{ach.recipientName}</div>
+                          <div className="text-xs text-slate-500">SSC Batch &apos;{ach.batchYear}</div>
+                        </div>
+                      </div>
+
+                      <h4 className="font-bold text-base text-slate-800 leading-snug">
+                        {ach.title}
+                      </h4>
+
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {ach.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-200/80 text-[11px] text-emerald-800 font-semibold">
+                      Conferred by {ach.organization}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 text-center">
+                <Link
+                  href="/achievements"
+                  className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-sm"
+                >
+                  <span>Explore Full Hall of Fame by Profession</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             9. GIVING BACK / DONATION HIGHLIGHT
         ========================================================= */}
-        <section className="py-20 bg-emerald-950 text-white relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-7 space-y-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-400/30">
-                  <Heart className="w-3.5 h-3.5 fill-amber-300" />
-                  <span>Give Back to Alma Mater</span>
-                </div>
-
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                  {featuredDonation.title}
-                </h2>
-
-                <p className="text-sm text-emerald-100/90 leading-relaxed max-w-xl">
-                  {featuredDonation.description}
-                </p>
-
-                {/* Progress bar */}
-                <div className="space-y-2 max-w-lg">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-amber-300">
-                      Raised: ৳{featuredDonation.raisedAmount.toLocaleString()}
-                    </span>
-                    <span className="text-emerald-300">
-                      Goal: ৳{featuredDonation.goalAmount.toLocaleString()}
-                    </span>
+        {featuredDonation && (
+          <section className="py-20 bg-emerald-950 text-white relative overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                <div className="lg:col-span-7 space-y-5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-400/30">
+                    <Heart className="w-3.5 h-3.5 fill-amber-300" />
+                    <span>Give Back to Alma Mater</span>
                   </div>
 
-                  <div className="w-full h-3 bg-emerald-900 rounded-full overflow-hidden p-0.5 border border-emerald-700">
-                    <div
-                      className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full"
-                      style={{
-                        width: `${Math.min(
-                          (featuredDonation.raisedAmount / featuredDonation.goalAmount) * 100,
-                          100
-                        )}%`,
-                      }}
-                    />
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                    {featuredDonation.title}
+                  </h2>
+
+                  <p className="text-sm text-emerald-100/90 leading-relaxed max-w-xl">
+                    {featuredDonation.description}
+                  </p>
+
+                  {/* Progress bar */}
+                  <div className="space-y-2 max-w-lg">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-amber-300">
+                        Raised: ৳{featuredDonation.raisedAmount.toLocaleString()}
+                      </span>
+                      <span className="text-emerald-300">
+                        Goal: ৳{featuredDonation.goalAmount.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="w-full h-3 bg-emerald-900 rounded-full overflow-hidden p-0.5 border border-emerald-700">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full"
+                        style={{
+                          width: `${Math.min(
+                            (featuredDonation.raisedAmount / featuredDonation.goalAmount) * 100,
+                            100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-emerald-300">
+                      <span>{featuredDonation.donorCount} Generous Donors</span>
+                      <span>{featuredDonation.daysLeft} days remaining</span>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-emerald-300">
-                    <span>{featuredDonation.donorCount} Generous Donors</span>
-                    <span>{featuredDonation.daysLeft} days remaining</span>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex flex-wrap gap-3">
-                  <Link
-                    href="/donate"
-                    className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-lg transition-colors"
-                  >
-                    Contribute to Scholarship Fund
-                  </Link>
-                  <Link
-                    href="/donate"
-                    className="px-6 py-3 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 font-semibold text-xs border border-emerald-700 transition-colors"
-                  >
-                    View All 4 Campaigns
-                  </Link>
-                </div>
-              </div>
-
-              {/* Donation Card */}
-              <div className="lg:col-span-5 bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-emerald-800">
-                <h3 className="font-extrabold text-lg text-slate-900">Make an Impact Today</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-5">
-                  Select a pledge amount. 100% of contributions are audited by the Alumni Executive Board.
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  {["৳500", "৳1,000", "৳5,000", "৳10,000"].map((amt, idx) => (
-                    <button
-                      key={amt}
-                      className={`py-3 rounded-xl text-xs font-bold border transition-colors ${
-                        idx === 2
-                          ? "bg-emerald-800 text-white border-emerald-800 shadow-sm"
-                          : "bg-slate-50 text-slate-800 border-slate-200 hover:border-emerald-600"
-                      }`}
+                  <div className="pt-2 flex flex-wrap gap-3">
+                    <Link
+                      href="/donate"
+                      className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-lg transition-colors"
                     >
-                      {amt}
-                    </button>
-                  ))}
+                      Contribute to Scholarship Fund
+                    </Link>
+                    <Link
+                      href="/donate"
+                      className="px-6 py-3 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 font-semibold text-xs border border-emerald-700 transition-colors"
+                    >
+                      View All 4 Campaigns
+                    </Link>
+                  </div>
                 </div>
 
-                <Link
-                  href="/donate"
-                  className="w-full py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md"
-                >
-                  <Heart className="w-4 h-4 fill-white" />
-                  <span>Proceed to Donation Gateway</span>
-                </Link>
+                {/* Donation Card */}
+                <div className="lg:col-span-5 bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-emerald-800">
+                  <h3 className="font-extrabold text-lg text-slate-900">Make an Impact Today</h3>
+                  <p className="text-xs text-slate-500 mt-1 mb-5">
+                    Select a pledge amount. 100% of contributions are audited by the Alumni Executive Board.
+                  </p>
 
-                <p className="text-[10px] text-slate-400 text-center mt-3">
-                  Direct support via bKash, Nagad, Visa, Mastercard, and Bank Transfer
-                </p>
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {["৳500", "৳1,000", "৳5,000", "৳10,000"].map((amt, idx) => (
+                      <button
+                        key={amt}
+                        className={`py-3 rounded-xl text-xs font-bold border transition-colors ${
+                          idx === 2
+                            ? "bg-emerald-800 text-white border-emerald-800 shadow-sm"
+                            : "bg-slate-50 text-slate-800 border-slate-200 hover:border-emerald-600"
+                        }`}
+                      >
+                        {amt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <Link
+                    href="/donate"
+                    className="w-full py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    <Heart className="w-4 h-4 fill-white" />
+                    <span>Proceed to Donation Gateway</span>
+                  </Link>
+
+                  <p className="text-[10px] text-slate-400 text-center mt-3">
+                    Direct support via bKash, Nagad, Visa, Mastercard, and Bank Transfer
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             10. NOSTALGIC PHOTO MEMORIES PREVIEW
         ========================================================= */}
-        <section className="py-20 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                  School Archives
+        {galleryPreview.length > 0 && (
+          <section className="py-20 bg-slate-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                    School Archives
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Treasured Moments in Time
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
+                    Step back into the verandas, green fields, and reunion celebrations that define Sabuj Shikshayatan.
+                  </p>
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Treasured Moments in Time
-                </h2>
-                <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                  Step back into the verandas, green fields, and reunion celebrations that define Sabuj Shikshayatan.
-                </p>
+
+                <Link
+                  href="/gallery"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
+                >
+                  <span>Open Full Photo Gallery</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
 
-              <Link
-                href="/gallery"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-              >
-                <span>Open Full Photo Gallery</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {galleryPreview.map((item) => (
-                <div
-                  key={item.id}
-                  className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-64 bg-slate-900"
-                >
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-90"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <span className="text-[10px] uppercase font-bold text-amber-300 block mb-1">
-                      {item.albumCategory}
-                    </span>
-                    <h4 className="font-bold text-xs sm:text-sm line-clamp-1">{item.title}</h4>
-                    <p className="text-[11px] text-slate-300 line-clamp-1 mt-0.5">{item.caption}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {galleryPreview.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-64 bg-slate-900"
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3 text-white">
+                      <span className="text-[10px] uppercase font-bold text-amber-300 block mb-1">
+                        {item.albumCategory}
+                      </span>
+                      <h4 className="font-bold text-xs sm:text-sm line-clamp-1">{item.title}</h4>
+                      <p className="text-[11px] text-slate-300 line-clamp-1 mt-0.5">{item.caption}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =========================================================
             11. JOIN ALUMNI CALL TO ACTION

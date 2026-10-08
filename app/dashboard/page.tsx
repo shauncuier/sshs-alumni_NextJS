@@ -72,19 +72,64 @@ export default function DashboardPage() {
       .then((body: { events: EventItem[] }) => setUpcomingEvent(body.events.find((e) => e.date >= today) ?? null))
       .catch(() => setUpcomingError(true));
   }, []);
-  const myBatch = sampleBatches.find((b) => b.year === userBatch) || {
+  const [dynamicBatch, setDynamicBatch] = useState<{ totalAlumni: number; classRepresentative?: string } | null>(null);
+  const [donationCampaign, setDonationCampaign] = useState<{ title: string; raisedAmount: number; goalAmount: number } | null>(null);
+  const [realClassmates, setRealClassmates] = useState<typeof sampleAlumni>([]);
+
+  useEffect(() => {
+    // 1. Load batch info
+    fetch("/api/batches", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.batches && Array.isArray(data.batches)) {
+          const found = data.batches.find((b: { year: number }) => b.year === userBatch);
+          if (found) setDynamicBatch(found);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Load donation campaign
+    fetch("/api/donations", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.campaigns && Array.isArray(data.campaigns) && data.campaigns.length > 0) {
+          setDonationCampaign(data.campaigns[0]);
+        }
+      })
+      .catch(() => {});
+
+    // 3. Load classmates from directory
+    fetch(`/api/alumni?batch=${userBatch}&limit=6`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.alumni && Array.isArray(data.alumni)) {
+          const list = data.alumni.filter((a: { fullName: string }) => a.fullName !== userName);
+          if (list.length > 0) setRealClassmates(list);
+        }
+      })
+      .catch(() => {});
+  }, [userBatch, userName]);
+
+  const myBatch = {
     year: userBatch,
     name: `SSC Batch ${userBatch}`,
-    totalAlumni: 0,
-    classRepresentative: "Batch Committee",
+    totalAlumni: dynamicBatch?.totalAlumni ?? 0,
+    classRepresentative: dynamicBatch?.classRepresentative || "Batch Committee",
     tagline: `Pride of Class of ${userBatch}`,
     representativePhone: "+880 1819-000000",
     coverImage: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
     description: `The proud alumni of SSC Batch ${userBatch}.`,
   };
-  const donationCampaign = sampleDonations[0];
-  const suggestedClassmates = sampleAlumni.filter((a) => a.sscBatch === userBatch && a.fullName !== userName).slice(0, 3);
-  const displayClassmates = suggestedClassmates.length > 0 ? suggestedClassmates : sampleAlumni.slice(1, 4);
+
+  const activeDonation = donationCampaign || {
+    title: "Student Merit & STEM Fund",
+    raisedAmount: 0,
+    goalAmount: 500000,
+  };
+
+  const displayClassmates = realClassmates.length > 0
+    ? realClassmates.slice(0, 3)
+    : sampleAlumni.filter((a) => a.fullName !== userName).slice(0, 3);
 
   const handlePostCreated = (content: string, batchTag?: number) => {
     const newPost: PostItem = {
@@ -323,20 +368,20 @@ export default function DashboardPage() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
                   <Heart className="w-3.5 h-3.5 fill-amber-300" /> Featured Campaign
                 </span>
-                <h4 className="font-bold text-sm leading-snug">{donationCampaign.title}</h4>
+                <h4 className="font-bold text-sm leading-snug">{activeDonation.title}</h4>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-[11px] text-emerald-200">
-                    <span>Raised: ৳{donationCampaign.raisedAmount.toLocaleString()}</span>
-                    <span>Goal: ৳{donationCampaign.goalAmount.toLocaleString()}</span>
+                    <span>Raised: ৳{activeDonation.raisedAmount.toLocaleString()}</span>
+                    <span>Goal: ৳{activeDonation.goalAmount.toLocaleString()}</span>
                   </div>
                   <div className="w-full h-2 bg-emerald-950 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-amber-400 rounded-full"
                       style={{
-                        width: `${Math.min(
-                          (donationCampaign.raisedAmount / donationCampaign.goalAmount) * 100,
+                        width: `${activeDonation.goalAmount > 0 ? Math.min(
+                          (activeDonation.raisedAmount / activeDonation.goalAmount) * 100,
                           100
-                        )}%`,
+                        ) : 0}%`,
                       }}
                     />
                   </div>

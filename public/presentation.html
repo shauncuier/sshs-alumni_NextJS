@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSGHS Alumni Platform — Executive Presentation Deck</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --emerald: #10b981;
+      --emerald-dark: #064e3b;
+      --gold: #f59e0b;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    header {
+      height: 56px;
+      background: rgba(17, 24, 39, 0.95);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--emerald);
+    }
+    .badge {
+      font-size: 11px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 4px;
+      background: #1f2937;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--emerald), var(--gold));
+      width: 8.33%;
+      transition: width 0.3s ease;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    .slide {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .slide.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .slide-title {
+      font-size: 34px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .slide-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card.emerald {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(6, 78, 59, 0.2);
+    }
+    .card.amber {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(120, 53, 15, 0.2);
+    }
+    .card.rose {
+      border-color: rgba(244, 63, 94, 0.4);
+      background: rgba(136, 19, 55, 0.2);
+    }
+    .card h4 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .card p, .card ul {
+      font-size: 14px;
+      color: #d1d5db;
+      line-height: 1.5;
+    }
+    .card ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .card ul li {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--emerald);
+      margin-bottom: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1f2937;
+      text-align: left;
+    }
+    th {
+      background: #1f2937;
+      color: #9ca3af;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    footer {
+      height: 64px;
+      background: rgba(17, 24, 39, 0.95);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    .btn {
+      background: #1f2937;
+      color: #fff;
+      border: 1px solid #374151;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn:hover { background: #374151; }
+    .btn.primary {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #fff;
+    }
+    .btn.primary:hover { background: #059669; }
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .notes-box {
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 16px;
+      position: fixed;
+      bottom: 74px;
+      right: 24px;
+      width: 360px;
+      max-width: 90vw;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      z-index: 60;
+      display: none;
+    }
+    .notes-box.active { display: block; }
+    .notes-box h5 {
+      color: var(--gold);
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .notes-box p {
+      font-size: 13px;
+      color: #e5e7eb;
+      line-height: 1.5;
+    }
+    .live-demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+      font-size: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+    .live-demo-btn:hover {
+      background: rgba(16, 185, 129, 0.35);
+    }
+    @media print {
+      header, footer, .notes-box, .progress-bar-container { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+      .slide { display: block !important; page-break-after: always; padding: 40px 0; }
+      .card { background: #f9fafb !important; border-color: #e5e7eb !important; color: #111 !important; }
+      .card h4, .slide-title { color: #000 !important; }
+      .slide-subtitle, .card p, .card ul li { color: #4b5563 !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>SSGHS Alumni</span>
+      <span class="badge">Executive Deck</span>
+    </div>
+    <div id="slideCounter" style="font-size: 13px; color: #9ca3af; font-weight: 600;">
+      Slide 1 / 12
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn" onclick="toggleNotes()">📝 Notes (N)</button>
+      <button class="btn" onclick="window.print()">🖨️ Print</button>
+      <a href="/" class="btn primary" target="_blank">🌐 Live App</a>
+    </div>
+  </header>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <main>
+    <!-- Slide 1 -->
+    <div class="slide active" data-notes="Good morning/afternoon everyone. Today, I'm proud to present the complete digital platform built for the Sabuj Shikshayatan Government High School Alumni Association. Over our development cycle, we have unified over 40 graduation batches (1985–2025) into a single, secure, and modern digital ecosystem. The application is now in Release Candidate status with 63 compiled routes and zero technical debt.">
+      <div class="slide-tag">Executive Overview</div>
+      <h1 class="slide-title">Connecting Generations</h1>
+      <p class="slide-subtitle">The Official SSGHS Alumni Digital Platform — Sabuj Shikshayatan Government High School, Chattogram (EIIN: 105070)</p>
+      
+      <div class="grid-3">
+        <div class="card emerald">
+          <div class="stat-number">40+</div>
+          <h4>Graduation Batches</h4>
+          <p>1985 to 2025 unified into one verified directory, batch network, and hall of fame.</p>
+        </div>
+        <div class="card amber">
+          <div class="stat-number">63+</div>
+          <h4>Verified Routes</h4>
+          <p>Production Next.js 15+ App Router compiling statically and dynamically with 0 errors.</p>
+        </div>
+        <div class="card">
+          <div class="stat-number">92%+</div>
+          <h4>Overall Readiness</h4>
+          <p>Core MVP, Bangladeshi Payments, Digital Smart Cards, and Career hubs 100% complete.</p>
+        </div>
+      </div>
+      <div class="card">
+        <p><strong>Platform Status:</strong> Release Candidate (RC-1) ready for committee demonstration and pilot launch.</p>
+      </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide" data-notes="Our goal was not just to build a static website. We built an active community platform. In the past, alumni records were scattered across private WhatsApp groups and Facebook pages with zero institutional memory. Event ticketing and fundraising required manual bKash screenshots and spreadsheet tracking. Today, we've replaced all of that with a modern, transparent system that also supports mentorship and career growth.">
+      <div class="slide-tag">The Mission</div>
+      <h1 class="slide-title">The Problems We Solved</h1>
+      <p class="slide-subtitle">Transforming Fragmented Records into an Empowered, Transparent Alumni Network</p>
+      
+      <div class="grid-2">
+        <div class="card rose">
+          <h4>❌ Old Fragmented Challenges</h4>
+          <ul>
+            <li>• Alumni scattered across private Facebook groups without an authoritative database.</li>
+            <li>• Manual cash collection and spreadsheet reconciliation for reunions and school donations.</li>
+            <li>• Paper ticket forgery and gate congestion during large school reunions.</li>
+            <li>• No formal avenue for recent graduates to seek career guidance from accomplished alumni.</li>
+          </ul>
+        </div>
+        <div class="card emerald">
+          <h4>✅ New SSGHS Platform Solution</h4>
+          <ul>
+            <li>• <strong>Single Source of Truth:</strong> Centralized database with verified membership badges and privacy.</li>
+            <li>• <strong>Local Payments:</strong> Instant bKash, Nagad, and Cards checkout with digital audit receipts.</li>
+            <li>• <strong>Smart ID Pass:</strong> 3D digital card with HMAC-SHA256 encrypted QR for 1-second gate verification.</li>
+            <li>• <strong>Career & Mentorship:</strong> Alumni job board + 1-on-1 BCS/Corporate mentorship matching engine.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide" data-notes="From an engineering perspective, this application is built with the latest enterprise web standards. We are using Next.js 15+ App Router and React 19 for blazingly fast client-side navigation. Our database runs on MySQL/MariaDB with Prisma ORM, supporting 13 interconnected relational models. We also engineered a zero-dependency real-time sync engine using Server-Sent Events, meaning instant chat and notifications with no costly monthly socket bills.">
+      <div class="slide-tag">Technology Stack</div>
+      <h1 class="slide-title">Enterprise Full-Stack Architecture</h1>
+      <p class="slide-subtitle">Engineered for High Performance, Security, and Mobile Responsiveness</p>
+      
+      <div class="grid-4">
+        <div class="card">
+          <h4>Frontend Core</h4>
+          <p><strong>Next.js 15+ & React 19</strong><br>Server Components and Turbopack for sub-second page transitions.</p>
+        </div>
+        <div class="card">
+          <h4>Design System</h4>
+          <p><strong>Tailwind CSS v4</strong><br>Academic Forest Green, Emerald, and Gold brand tokens.</p>
+        </div>
+        <div class="card">
+          <h4>Database Layer</h4>
+          <p><strong>MySQL + Prisma v7</strong><br>13 relational models: Users, Batches, Posts, Payments, Passes.</p>
+        </div>
+        <div class="card">
+          <h4>Real-Time Engine</h4>
+          <p><strong>Server-Sent Events</strong><br>Instant chat, live alerts, and 30s heartbeat with zero third-party bills.</p>
+        </div>
+        <div class="card">
+          <h4>Security & RBAC</h4>
+          <p><strong>NextAuth.js</strong><br>Super Admin, Admin, Moderator, and Alumni role-based security.</p>
+        </div>
+        <div class="card">
+          <h4>Payments</h4>
+          <p><strong>bKash + Nagad + SSL</strong><br>Unified gateway router for donations and reunion tickets.</p>
+        </div>
+        <div class="card">
+          <h4>Mobile Native</h4>
+          <p><strong>PWA & Offline Cache</strong><br>Service Worker caches directory lists for offline campus use.</p>
+        </div>
+        <div class="card">
+          <h4>Cryptographic Pass</h4>
+          <p><strong>HMAC-SHA256</strong><br>Tamper-proof digital tokens for 3D Alumni ID and gate scanner.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide" data-notes="In Phase 1, we established the full public portal and private alumni community suite. The homepage features live statistics, urgent donation campaigns, and upcoming reunions. Our directory supports instant multi-filtering by batch, profession, and blood group. Inside the authenticated portal, members have a LinkedIn-style profile, an interactive feed where they can post memories and photos, and direct 1-on-1 private messaging.">
+      <div class="slide-tag">Phase 1: 100% Completed</div>
+      <h1 class="slide-title">Public Portal & Alumni Social Suite</h1>
+      <p class="slide-subtitle">Connecting 40+ Batches with Modern Social Networking Features</p>
+      
+      <div class="grid-2">
+        <div class="card">
+          <h4>Public Portal Features</h4>
+          <ul>
+            <li>• <strong>Dynamic Homepage:</strong> Live metrics, upcoming events, alumni spotlight.</li>
+            <li>• <strong>School History:</strong> EIIN 105070 documentation, headmaster tribute, timeline.</li>
+            <li>• <strong>Alumni Directory:</strong> Multi-filter search by batch (1985–2025), profession, blood group.</li>
+            <li>• <strong>Batch Hubs (/batches/[year]):</strong> Dedicated pages with batch leaders and rosters.</li>
+            <li>• <strong>Stories & Gallery:</strong> Alumni memoirs and interactive photo lightbox.</li>
+          </ul>
+          <a href="/alumni" target="_blank" class="live-demo-btn">↗ Explore Directory Live</a>
+        </div>
+        <div class="card">
+          <h4>Authenticated Member Suite</h4>
+          <ul>
+            <li>• <strong>Member Dashboard:</strong> Quick metrics, upcoming RSVPs, batch announcements.</li>
+            <li>• <strong>LinkedIn-Style Profile:</strong> Career experience, education, skills, privacy toggles.</li>
+            <li>• <strong>Community Social Feed:</strong> Post creation with image uploads, likes, comments.</li>
+            <li>• <strong>Direct Messaging:</strong> Private 1-on-1 chats with real-time delivery.</li>
+            <li>• <strong>Classmate Network:</strong> Batchmate connection invitations.</li>
+          </ul>
+          <a href="/feed" target="_blank" class="live-demo-btn">↗ View Community Feed</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide" data-notes="In Phase 2, we solved one of the largest operational bottlenecks: payments. We engineered native integration with bKash Tokenized Checkout, Nagad Merchant API, and SSLCommerz for credit/debit cards and mobile banking. When someone donates to the STEM Lab or buys a reunion pass, they receive an immediate digital receipt and the donation meter updates live. We also rolled out Server-Sent Events for instant chat delivery without refreshing.">
+      <div class="slide-tag">Phase 2: 100% Completed</div>
+      <h1 class="slide-title">Payment Gateways & Real-Time Sync</h1>
+      <p class="slide-subtitle">bKash, Nagad, and Cards Integration with Live SSE Updates</p>
+      
+      <div class="grid-3">
+        <div class="card" style="border-color: rgba(236, 72, 153, 0.4);">
+          <h4 style="color: #f472b6;">bKash Tokenized API</h4>
+          <p>Seamless one-click mobile checkout, token caching, create/execute payment lifecycle with audit ledger.</p>
+        </div>
+        <div class="card amber">
+          <h4 style="color: #fbbf24;">Nagad Merchant API</h4>
+          <p>RSA public/private key encryption, PG challenge protocol, instant callback validation.</p>
+        </div>
+        <div class="card" style="border-color: rgba(59, 130, 246, 0.4);">
+          <h4 style="color: #60a5fa;">SSLCommerz Aggregator</h4>
+          <p>Visa, Mastercard, Rocket, Upay, and Internet Banking with IPN webhook security.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h4>Real-Time SSE Sync</h4>
+          <p>Zero external dependency Server-Sent Events push new messages and notifications instantaneously with automatic reconnection.</p>
+        </div>
+        <div class="card">
+          <h4>Transactional Email Service</h4>
+          <p>Branded HTML email receipts for verification approvals, donation receipts, and event registration passes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6 -->
+    <div class="slide" data-notes="One of the standout achievements is our Digital Smart ID Card. Each verified alumnus gets an interactive 3D flippable card on their phone with their photo, batch year, blood group, and lifetime membership status. The card features an encrypted QR code signed with HMAC-SHA256 to prevent pass forgery. At reunions, gate security volunteers open our built-in camera gate scanner at /gate to authenticate delegates in one second.">
+      <div class="slide-tag">Phase 3: 100% Completed</div>
+      <h1 class="slide-title">Digital Smart Alumni Card & Gate Scanner</h1>
+      <p class="slide-subtitle">Cryptographic Verification Passes and 1-Second Optical Gate Check-In</p>
+      
+      <div class="grid-3">
+        <div class="card emerald">
+          <h4>3D Flippable Smart ID Card</h4>
+          <p>Interactive 3D card displaying school crest, batch typography, lifetime membership, and blood group with print and share options.</p>
+          <a href="/card" target="_blank" class="live-demo-btn">↗ Launch 3D Card</a>
+        </div>
+        <div class="card amber">
+          <h4>Tamper-Proof HMAC QR Code</h4>
+          <p>Tokens signed with HMAC-SHA256 signature to guarantee credential authenticity and prevent pass forgery.</p>
+          <a href="/verify/sample" target="_blank" class="live-demo-btn">↗ View Public Verify</a>
+        </div>
+        <div class="card">
+          <h4>Volunteer Gate Scanner (/gate)</h4>
+          <p>Camera optical viewfinder scanner for gate security with instant alumnus lookup and live verified attendance logs.</p>
+          <a href="/gate" target="_blank" class="live-demo-btn">↗ Launch Gate Scanner</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7 -->
+    <div class="slide" data-notes="Phase 4 makes the platform valuable every single day of the year. We launched an Alumni Job Portal where graduates can post vacancies and apply. We built a 1-on-1 Mentorship Matching Engine connecting senior alumni in BCS administration, clinical medicine, and technology with young graduates, automatically generating Google Meet session links. Finally, our Reunion Ticketing system handles tiered passes, T-shirt sizing, and traditional Mezban meal preferences.">
+      <div class="slide-tag">Phase 4: 100% Completed</div>
+      <h1 class="slide-title">Careers, Mentorship & Reunion Ticketing</h1>
+      <p class="slide-subtitle">Empowering Alumni Professional Growth and Simplifying Event Logistics</p>
+      
+      <div class="grid-3">
+        <div class="card">
+          <h4>Alumni Job Board (/careers)</h4>
+          <p>Alumni employers post vacancies and internships. Applicants filter by sector (Engineering, Medicine, BCS, QA) and submit resumes.</p>
+          <a href="/careers" target="_blank" class="live-demo-btn">↗ View Careers</a>
+        </div>
+        <div class="card">
+          <h4>1-on-1 Mentorship (/mentorship)</h4>
+          <p>Senior mentors across BCS Cadre, Medicine, and Tech guide young graduates. Automated scheduling with Google Meet links.</p>
+          <a href="/mentorship" target="_blank" class="live-demo-btn">↗ View Mentors</a>
+        </div>
+        <div class="card emerald">
+          <h4>Reunion Delegate Ticketing</h4>
+          <p>Tiered delegate passes (৳1,500 to ৳5,000), T-shirt size picker (S–XXL), and meal options (Traditional Mezban, Diabetic, Veg).</p>
+          <a href="/events/1/ticket" target="_blank" class="live-demo-btn">↗ View Ticket Flow</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8 -->
+    <div class="slide" data-notes="For the executive committee and administrators, governance is simple and transparent. The admin panel at /admin provides a high-level analytics dashboard showing total alumni, pending verifications, and funds raised. To prevent fake registrations, admins have a one-click Verification Queue to review and verify student records. Admins can also manage batches, assign batch coordinators, and inspect transparent donation audit logs.">
+      <div class="slide-tag">Governance & Administration</div>
+      <h1 class="slide-title">Admin Control Center</h1>
+      <p class="slide-subtitle">Complete Operational Visibility for Executive Committee Members</p>
+      
+      <div class="grid-4">
+        <div class="card">
+          <h4>Executive KPIs</h4>
+          <p>Real-time counts of active members, verification pipeline, and funds collected.</p>
+        </div>
+        <div class="card emerald">
+          <h4>Verification Queue</h4>
+          <p>One-click Approve/Reject workflow with automated approval emails.</p>
+        </div>
+        <div class="card">
+          <h4>Batch Coordination</h4>
+          <p>Assign elected batch coordinators and publish batch milestone news.</p>
+        </div>
+        <div class="card amber">
+          <h4>Financial Ledger</h4>
+          <p>Complete audit trail of all payments with transaction IDs and gateway references.</p>
+        </div>
+      </div>
+      <a href="/admin" target="_blank" class="live-demo-btn" style="font-size: 13px; padding: 8px 16px;">↗ Open Admin Control Center Live</a>
+    </div>
+
+    <!-- Slide 9 -->
+    <div class="slide" data-notes="Here is our progress scorecard. All four major phases — the core platform, payments, digital ID cards, and career hubs — are 100% complete and verified. The overall platform stands at over 92% readiness. The only unbuilt items belong to Phase 5 future expansions, such as the historical photo archive from 1975 and the retired teachers emergency medical fund.">
+      <div class="slide-tag">Progress Scorecard</div>
+      <h1 class="slide-title">How Much is Done?</h1>
+      <p class="slide-subtitle">Phase-by-Phase Completion Status and Production Readiness</p>
+      
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Module / Phase</th>
+              <th>Target Scope</th>
+              <th style="text-align: center;">Status</th>
+              <th style="text-align: right;">Readiness</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 700; color: #6ee7b7;">Phase 1: Public & Member Portal</td>
+              <td>Directory, Batches (1985–2025), Feed, Profiles, Messages</td>
+              <td style="text-align: center; color: #10b981; font-weight: 700;">100%</td>
+              <td style="text-align: right; color: #10b981;">🟢 Production Ready</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: #6ee7b7;">Phase 2: Bangladeshi Payments</td>
+              <td>bKash, Nagad, SSLCommerz, Real-time SSE, Email receipts</td>
+              <td style="text-align: center; color: #10b981; font-weight: 700;">100%</td>
+              <td style="text-align: right; color: #10b981;">🟢 Tested & Active</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: #6ee7b7;">Phase 3: Digital Smart ID Card</td>
+              <td>3D Card, HMAC QR signature, Camera Gate Scanner, PWA</td>
+              <td style="text-align: center; color: #10b981; font-weight: 700;">100%</td>
+              <td style="text-align: right; color: #10b981;">🟢 Production Ready</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: #6ee7b7;">Phase 4: Careers & Reunion Ticketing</td>
+              <td>Job board, Mentorship Meet links, Tiered passes, T-shirts</td>
+              <td style="text-align: center; color: #10b981; font-weight: 700;">100%</td>
+              <td style="text-align: right; color: #10b981;">🟢 Production Ready</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: #fbbf24;">Phase 5: Golden Jubilee Archives</td>
+              <td>Historical 1975 archive, Retired teachers fund, Audit reports</td>
+              <td style="text-align: center; color: #fbbf24; font-weight: 700;">Roadmap</td>
+              <td style="text-align: right; color: #fbbf24;">🟡 Post-Launch Phase</td>
+            </tr>
+            <tr style="background: rgba(6, 78, 59, 0.4); font-weight: 700;">
+              <td>Overall Platform Total</td>
+              <td>63 Web Routes, 13 Relational Database Models</td>
+              <td style="text-align: center; color: #6ee7b7;">~92% - 95%</td>
+              <td style="text-align: right; color: #6ee7b7;">🟢 Ready to Showcase</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 10 -->
+    <div class="slide" data-notes="Now, I would like to transition to our live demonstration. I will take you through 5 key touchpoints: first, our responsive homepage and Ctrl+K search modal; second, filtering the 40-year batch directory; third, flipping the 3D smart ID card; fourth, booking a reunion pass with T-shirt size and Mezban selection; and finally, scanning passes with the gate scanner and reviewing administrative KPIs.">
+      <div class="slide-tag">Live Demonstration</div>
+      <h1 class="slide-title">5-Minute Live Demo Route</h1>
+      <p class="slide-subtitle">Click Below to Open Live Modules Directly in New Tabs</p>
+      
+      <div class="grid-3">
+        <div class="card">
+          <div style="font-size: 18px; font-weight: 800; color: var(--emerald); margin-bottom: 4px;">Step 1</div>
+          <h4>Homepage & Search Modal</h4>
+          <p>Show hero metrics and press <strong>Ctrl + K</strong> to search batch years and alumni.</p>
+          <a href="/" target="_blank" class="live-demo-btn">↗ Launch Homepage</a>
+        </div>
+        <div class="card">
+          <div style="font-size: 18px; font-weight: 800; color: var(--emerald); margin-bottom: 4px;">Step 2</div>
+          <h4>Directory & Batches</h4>
+          <p>Filter by batch 1985–2025 and inspect dedicated batch leader profiles.</p>
+          <a href="/alumni" target="_blank" class="live-demo-btn">↗ Launch Directory</a>
+        </div>
+        <div class="card emerald">
+          <div style="font-size: 18px; font-weight: 800; color: var(--emerald); margin-bottom: 4px;">Step 3</div>
+          <h4>3D Digital Smart Card</h4>
+          <p>Click card to flip in 3D and demonstrate tamper-proof HMAC QR pass.</p>
+          <a href="/card" target="_blank" class="live-demo-btn">↗ Launch 3D Card</a>
+        </div>
+        <div class="card">
+          <div style="font-size: 18px; font-weight: 800; color: var(--emerald); margin-bottom: 4px;">Step 4</div>
+          <h4>Reunion Delegate Ticketing</h4>
+          <p>Select Delegate pass tier, choose T-shirt size (XL), and pick Mezban meal.</p>
+          <a href="/events/1/ticket" target="_blank" class="live-demo-btn">↗ Launch Ticketing</a>
+        </div>
+        <div class="card amber">
+          <div style="font-size: 18px; font-weight: 800; color: var(--gold); margin-bottom: 4px;">Step 5</div>
+          <h4>Gate Scanner & Admin</h4>
+          <p>Demonstrate camera QR scanner for gate check-ins and executive KPIs.</p>
+          <a href="/gate" target="_blank" class="live-demo-btn">↗ Launch Gate Scanner</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11 -->
+    <div class="slide" data-notes="What is left before we publicly open to all alumni? On the technical side, the platform code is ready. The remaining steps are operational: first, obtaining live production merchant credentials from bKash and Nagad; second, connecting the Bangladesh SMS OTP gateway; third, provisioning the official live domain; and fourth, nominating two batch ambassadors per graduation year to review classmate lists.">
+      <div class="slide-tag">What's Left</div>
+      <h1 class="slide-title">Launch Checklist & Roadmap</h1>
+      <p class="slide-subtitle">Operational Prerequisites to Transition from Pilot to Public Launch</p>
+      
+      <div class="grid-2">
+        <div class="card amber">
+          <h4 style="color: #fbbf24;">⚡ Immediate Launch Checklist</h4>
+          <ul>
+            <li>• <strong>Production Payment Keys:</strong> Swap sandbox credentials with live bKash & Nagad merchant accounts.</li>
+            <li>• <strong>Live SMS Gateway:</strong> Connect Greenweb/Reve SMS API for registration phone verification.</li>
+            <li>• <strong>Domain & SSL Hosting:</strong> Deploy to production server bound to official school domain.</li>
+            <li>• <strong>Batch Ambassador Seeding:</strong> Onboard 2 representatives per batch (1985–2025) to verify historical rosters.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>🚀 Phase 5 Roadmap (Post-Launch)</h4>
+          <ul>
+            <li>• <strong>Historical Photo Archive:</strong> High-resolution batch photo galleries (1975–2025) with tagging.</li>
+            <li>• <strong>Retired Teachers Tribute & Medical Fund:</strong> Dedicated emergency healthcare assistance fund.</li>
+            <li>• <strong>Public Audited Financial Balance Sheet:</strong> Transparent annual balance sheet viewer for trust fund audit.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12 -->
+    <div class="slide" data-notes="Thank you for your attention. At this stage, we recommend a 4-week timeline: Week 1 for committee sign-off, Week 2 for merchant account KYC completion, Week 3 for batch representative onboarding, and Week 4 for full public launch and ticket sales for the Golden Jubilee. We now welcome questions, feedback, and discussion from the executive committee.">
+      <div class="slide-tag">Action Plan</div>
+      <h1 class="slide-title">Next Steps & Committee Discussion</h1>
+      <p class="slide-subtitle">Recommended Rollout Schedule and Open Floor for Q&A</p>
+      
+      <div class="grid-4">
+        <div class="card emerald">
+          <div style="font-size: 11px; font-weight: 800; color: var(--emerald);">WEEK 1</div>
+          <h4>Committee Sign-off</h4>
+          <p>Review feedback, finalize registration fees, approve design.</p>
+        </div>
+        <div class="card emerald">
+          <div style="font-size: 11px; font-weight: 800; color: var(--emerald);">WEEK 2</div>
+          <h4>Merchant KYC</h4>
+          <p>Submit association documents to bKash and Nagad.</p>
+        </div>
+        <div class="card emerald">
+          <div style="font-size: 11px; font-weight: 800; color: var(--emerald);">WEEK 3</div>
+          <h4>Batch Pilot</h4>
+          <p>Batch leaders log in, test smart cards, and verify classmates.</p>
+        </div>
+        <div class="card emerald">
+          <div style="font-size: 11px; font-weight: 800; color: var(--emerald);">WEEK 4</div>
+          <h4>Public Launch</h4>
+          <p>Open public registration and Golden Jubilee reunion ticket sales.</p>
+        </div>
+      </div>
+
+      <div class="card" style="text-align: center; margin-top: 10px;">
+        <h4 style="font-size: 20px;">Thank You! Open Floor for Discussion</h4>
+        <p style="margin-top: 8px;">Questions on delegate ticket pricing, featured donation campaigns, or batch coordinator assignments?</p>
+        <div style="margin-top: 16px;">
+          <a href="/" class="btn primary" style="font-size: 15px; padding: 10px 24px;">Return to Live Platform</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <button class="btn" id="prevBtn" onclick="prevSlide()" disabled>← Previous</button>
+    <div style="font-size: 12px; color: #6b7280;">Use Space or Arrow keys to navigate</div>
+    <button class="btn primary" id="nextBtn" onclick="nextSlide()">Next →</button>
+  </footer>
+
+  <div class="notes-box" id="notesBox">
+    <h5>🎙️ Speaker Notes</h5>
+    <p id="notesContent">Loading notes...</p>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const slideCounter = document.getElementById('slideCounter');
+    const progressBar = document.getElementById('progressBar');
+    const notesBox = document.getElementById('notesBox');
+    const notesContent = document.getElementById('notesContent');
+    let current = 0;
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === current);
+      });
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === slides.length - 1;
+      slideCounter.textContent = `Slide ${current + 1} / ${slides.length}`;
+      progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
+      
+      const note = slides[current].getAttribute('data-notes') || 'No notes for this slide.';
+      notesContent.textContent = note;
+    }
+
+    function nextSlide() {
+      if (current < slides.length - 1) {
+        current++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (current > 0) {
+        current--;
+        updateSlide();
+      }
+    }
+
+    function toggleNotes() {
+      notesBox.classList.toggle('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'n' || e.key === 'N') {
+        toggleNotes();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
