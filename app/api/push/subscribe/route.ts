@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session-user";
+import { AppError } from "@/lib/app-error";
+import { readJsonBody } from "@/lib/request-security";
 
 // In-memory or Redis/DB store of push subscriptions
 interface PushSubscriptionRecord {
@@ -25,7 +27,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSessionUser();
     if (!session) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { subscription } = body;
 
     if (!subscription || typeof subscription.endpoint !== "string" || !subscription.keys || typeof subscription.keys.p256dh !== "string" || typeof subscription.keys.auth !== "string") {
@@ -66,9 +68,12 @@ export async function POST(req: NextRequest) {
       totalSubscriptions: pushSubscriptions.length,
     });
   } catch (error: unknown) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Push Subscribe API Error]", error);
     return NextResponse.json(
-      { error: "Failed to save push subscription", details: (error as Error).message },
+      { error: "Failed to save push subscription" },
       { status: 500 }
     );
   }

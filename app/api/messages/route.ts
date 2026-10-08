@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS, isUserOnline } from "@/lib/realtime";
 import { getSessionUser } from "@/lib/session-user";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 /**
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     }
     const senderId = me.id;
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { receiverId, content } = body;
 
     if (!receiverId || typeof content !== "string" || !content.trim()) {
@@ -216,7 +216,7 @@ export async function PATCH(req: NextRequest) {
     }
     const userId = me.id;
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { senderId } = body;
 
     if (!senderId) {

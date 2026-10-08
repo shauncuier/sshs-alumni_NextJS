@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import { sampleJobs, JobListing } from "@/lib/career-data";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 // In-memory collection of dynamic jobs augmenting seed jobs (bounded to prevent memory exhaustion)
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
 
     const {
       title,
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
     }
     console.error("[Jobs API Error]", error);
     return NextResponse.json(
-      { error: "Failed to publish job", details: (error as Error).message },
+      { error: "Failed to publish job" },
       { status: 500 }
     );
   }

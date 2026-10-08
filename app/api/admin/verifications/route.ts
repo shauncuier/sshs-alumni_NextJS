@@ -3,6 +3,8 @@ import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
 import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { AppError } from "@/lib/app-error";
+import { readJsonBody } from "@/lib/request-security";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
 type RequestStatus = (typeof REQUEST_STATUSES)[number];
@@ -93,6 +95,9 @@ export async function GET(req: Request) {
       );
     }
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("Admin verification fetch error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -105,7 +110,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { requestId, status } = body;
 
     if (!requestId || !["VERIFIED", "REJECTED"].includes(status)) {
@@ -190,6 +195,9 @@ export async function PATCH(req: Request) {
       );
     }
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("Admin verification PATCH error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { AppError } from "@/lib/app-error";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 
 export async function POST(req: Request) {
   try {
     requireRateLimit(req, "contact", { limit: 5, windowMs: 60 * 60_000 });
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { name, email, subject, message } = body;
 
     if (!name || !email || !message) {

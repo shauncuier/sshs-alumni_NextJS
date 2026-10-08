@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     let body: { currentPassword?: unknown; newPassword?: unknown };
     try {
-      body = await req.json();
+      body = await readJsonBody(req);
     } catch {
       return NextResponse.json({ error: "Invalid request." }, { status: 400 });
     }

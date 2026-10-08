@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sampleMentors, MentorProfile } from "@/lib/career-data";
 import { AppError } from "@/lib/app-error";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 
 export async function GET(req: NextRequest) {
   const domain = req.nextUrl.searchParams.get("domain");
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     requireRateLimit(req, "mentorship", { limit: 5, windowMs: 60 * 60_000 });
-    const body = await req.json();
+    const body = await readJsonBody(req);
 
     const {
       mentorId,
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
     console.error("[Mentorship Booking Error]", error);
     return NextResponse.json(
-      { error: "Failed to book mentorship session", details: (error as Error).message },
+      { error: "Failed to book mentorship session" },
       { status: 500 }
     );
   }

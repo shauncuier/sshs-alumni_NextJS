@@ -69,6 +69,21 @@ export function requireSameOrigin(req: Request): void {
   }
 }
 
+// Every JSON route expects an object body. A malformed or non-object body is the
+// client's mistake, so it must surface as a 400, not crash a destructure into a 500.
+export async function readJsonBody(req: Request): ReturnType<Request["json"]> {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    throw new AppError("INVALID_REQUEST", 400, "Invalid request.");
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    throw new AppError("INVALID_REQUEST", 400, "Invalid request.");
+  }
+  return body;
+}
+
 export async function readLimitedFormData(req: Request, maxBytes: number): Promise<FormData> {
   const declared = Number(req.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > maxBytes) {

@@ -11,13 +11,13 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { initiatePayment, resolveGateway } from "@/lib/payments";
 import { getSessionUser } from "@/lib/session-user";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 export async function POST(req: Request) {
   try {
     requireRateLimit(req, "payment-initiation", { limit: 10, windowMs: 60 * 60_000 });
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const {
       campaignId,
       amount,

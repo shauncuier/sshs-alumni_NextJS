@@ -12,6 +12,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS } from "@/lib/realtime";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { AppError } from "@/lib/app-error";
+import { readJsonBody } from "@/lib/request-security";
 
 /**
  * GET: Fetch notifications for a user
@@ -36,6 +38,9 @@ export async function GET() {
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Notifications API] GET error:", error);
     return NextResponse.json(
       { error: "Failed to fetch notifications" },
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Only administrators can send notifications." }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { userId, title, message, link, type } = body;
 
     if (!userId || !title || !message) {
@@ -97,6 +102,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ notification }, { status: 201 });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Notifications API] POST error:", error);
     return NextResponse.json(
       { error: "Failed to create notification" },
@@ -116,7 +124,7 @@ export async function PATCH(req: NextRequest) {
     }
     const userId = me.id;
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { notificationIds } = body;
 
     if (notificationIds && Array.isArray(notificationIds)) {
@@ -152,6 +160,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Notifications API] PATCH error:", error);
     return NextResponse.json(
       { error: "Failed to mark notifications as read" },

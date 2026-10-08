@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
-import { requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 export async function GET() {
@@ -44,7 +44,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const {
       fullName,
       profession,

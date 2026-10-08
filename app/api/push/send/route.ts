@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { AppError } from "@/lib/app-error";
+import { readJsonBody } from "@/lib/request-security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { title, body: messageBody, url, category } = body;
 
     if (!title || !messageBody) {
@@ -38,9 +40,12 @@ export async function POST(req: NextRequest) {
       deliveredAt: new Date().toISOString(),
     });
   } catch (error: unknown) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Push Send API Error]", error);
     return NextResponse.json(
-      { error: "Failed to dispatch push notification", details: (error as Error).message },
+      { error: "Failed to dispatch push notification" },
       { status: 500 }
     );
   }

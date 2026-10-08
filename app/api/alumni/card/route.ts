@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
   } catch (error: unknown) {
     console.error("[Card API Error]", error);
     return NextResponse.json(
-      { error: "Failed to generate alumni digital card", details: (error as Error).message },
+      { error: "Failed to generate alumni digital card" },
       { status: 500 }
     );
   }

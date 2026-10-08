@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
 import { samplePosts, PostItem } from "@/lib/data";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 export async function GET(req: Request) {
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonBody(req);
     const { content, batchTag } = body;
 
     if (!content || typeof content !== "string" || !content.trim()) {

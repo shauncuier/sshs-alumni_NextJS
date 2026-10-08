@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
-import { requireRateLimit } from "@/lib/request-security";
+import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 
 export async function POST(
   req: NextRequest,
@@ -16,7 +16,7 @@ export async function POST(
     requireRateLimit(req, "job-application", { limit: 5, windowMs: 60 * 60_000 });
     const { id } = await params;
     const session = await getMemberSession();
-    const body = await req.json();
+    const body = await readJsonBody(req);
 
     const {
       applicantName,
@@ -62,7 +62,7 @@ export async function POST(
     if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
     console.error("[Job Apply Error]", error);
     return NextResponse.json(
-      { error: "Failed to submit job application", details: (error as Error).message },
+      { error: "Failed to submit job application" },
       { status: 500 }
     );
   }
