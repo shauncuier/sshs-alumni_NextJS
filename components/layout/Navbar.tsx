@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { usePathname } from "next/navigation";
@@ -38,7 +38,9 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [drawerTop, setDrawerTop] = useState(64);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
 
   // Handle scroll effect
@@ -74,10 +76,12 @@ export default function Navbar() {
   }, []);
 
   // Close mobile menu and dropdown on route change
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileMenuOpen(false);
     setMoreDropdownOpen(false);
-  }, [pathname]);
+  }
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -89,6 +93,18 @@ export default function Navbar() {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [mobileMenuOpen]);
+
+  // Pin the mobile drawer to the header's real bottom edge (the utility ribbon
+  // shows from sm up, so the header height changes across breakpoints)
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!mobileMenuOpen || !header) return;
+    const update = () => setDrawerTop(header.getBoundingClientRect().bottom);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
   }, [mobileMenuOpen]);
 
   // Primary navigation links with clean single-line naming
@@ -162,7 +178,8 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+        ref={headerRef}
+        className={`sticky top-0 z-40 w-full transition-shadow duration-300 ${
           scrolled ? "shadow-2xl shadow-black/25" : "shadow-md"
         }`}
       >
@@ -413,150 +430,156 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Navigation Drawer Backdrop */}
-        {mobileMenuOpen && (
-          <div
-            className="lg:hidden fixed inset-0 top-16 sm:top-[72px] z-40 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-        )}
+      {/* Mobile Navigation Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs transition-opacity"
+          style={{ top: drawerTop }}
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-x-0 top-16 sm:top-[72px] z-50 bg-[#052118] border-t border-emerald-800/80 px-4 py-5 space-y-4 max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain shadow-2xl animate-in slide-in-from-top-2 duration-200">
-            {/* Search Trigger for Mobile */}
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setSearchOpen(true);
-              }}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-950 border border-emerald-800 text-slate-300 text-xs"
-            >
-              <span className="flex items-center gap-2">
-                <Search className="w-4 h-4 text-emerald-400" />
-                <span>Search alumni, batches, events...</span>
-              </span>
-              <kbd className="px-1.5 py-0.5 bg-[#03150f] text-[10px] text-amber-300 rounded font-mono">
-                ⌘K
-              </kbd>
-            </button>
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-x-0 z-50 bg-[#052118] border-t border-emerald-800/80 px-4 py-5 space-y-4 overflow-y-auto overscroll-contain shadow-2xl animate-in slide-in-from-top-2 duration-200"
+          style={{ top: drawerTop, maxHeight: `calc(100dvh - ${drawerTop}px)` }}
+        >
+          {/* Search Trigger for Mobile */}
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setSearchOpen(true);
+            }}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-950 border border-emerald-800 text-slate-300 text-xs"
+          >
+            <span className="flex items-center gap-2">
+              <Search className="w-4 h-4 text-emerald-400" />
+              <span>Search alumni, batches, events...</span>
+            </span>
+            <kbd className="px-1.5 py-0.5 bg-[#03150f] text-[10px] text-amber-300 rounded font-mono">
+              ⌘K
+            </kbd>
+          </button>
 
-            {/* Primary Navigation Links */}
-            <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-              {primaryLinks.map((link) => {
+          {/* Primary Navigation Links */}
+          <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+            {primaryLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${
+                    isActive
+                      ? "bg-emerald-800 text-white border border-emerald-600"
+                      : "bg-emerald-950/60 text-slate-200 hover:bg-emerald-900"
+                  }`}
+                >
+                  <span>{link.name}</span>
+                  {link.highlight && (
+                    <HeartHandshake className="w-3.5 h-3.5 text-amber-400" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Institutional Sub-links */}
+          <div className="pt-3 border-t border-emerald-900/80">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400/80 px-1 mb-2">
+              Explore Association
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {moreLinks.map((link) => {
+                const Icon = link.icon;
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${
+                    className={`flex items-center gap-2 p-2 rounded-xl transition-colors ${
                       isActive
-                        ? "bg-emerald-800 text-white border border-emerald-600"
-                        : "bg-emerald-950/60 text-slate-200 hover:bg-emerald-900"
+                        ? "bg-emerald-800 text-white"
+                        : "text-slate-300 hover:bg-emerald-900/60 hover:text-white"
                     }`}
                   >
-                    <span>{link.name}</span>
-                    {link.highlight && (
-                      <HeartHandshake className="w-3.5 h-3.5 text-amber-400" />
-                    )}
+                    <Icon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="truncate">{link.name}</span>
                   </Link>
                 );
               })}
             </div>
+          </div>
 
-            {/* Institutional Sub-links */}
-            <div className="pt-3 border-t border-emerald-900/80">
-              <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400/80 px-1 mb-2">
-                Explore Association
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {moreLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 p-2 rounded-xl transition-colors ${
-                        isActive
-                          ? "bg-emerald-800 text-white"
-                          : "text-slate-300 hover:bg-emerald-900/60 hover:text-white"
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="truncate">{link.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Auth Action Button */}
-            <div className="pt-3 border-t border-emerald-900/80">
-              {isAuthenticated ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-2 text-xs text-slate-300">
-                    <span className="truncate">
-                      Signed in as <strong className="text-white">{session?.user?.name}</strong>
-                    </span>
-                    <span className="text-[10px] text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 uppercase font-bold shrink-0">
-                      {(session?.user as unknown as { role?: string })?.role || "Member"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="py-2.5 text-center bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md"
-                    >
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="py-2.5 text-center bg-emerald-950 hover:bg-red-950 text-slate-300 hover:text-red-300 rounded-xl text-xs font-semibold border border-emerald-800"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
+          {/* Auth Action Button */}
+          <div className="pt-3 border-t border-emerald-900/80">
+            {isAuthenticated ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-2 text-xs text-slate-300">
+                  <span className="truncate">
+                    Signed in as <strong className="text-white">{session?.user?.name}</strong>
+                  </span>
+                  <span className="text-[10px] text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 uppercase font-bold shrink-0">
+                    {(session?.user as unknown as { role?: string })?.role || "Member"}
+                  </span>
                 </div>
-              ) : (
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In to Alumni Portal</span>
-                </Link>
-              )}
-
-              {/* Quick Portal & Admin Links in Mobile Drawer */}
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-emerald-900/60">
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white font-semibold"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Member Portal</span>
-                </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Admin Console</span>
-                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 text-center bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="py-2.5 text-center bg-emerald-950 hover:bg-red-950 text-slate-300 hover:text-red-300 rounded-xl text-xs font-semibold border border-emerald-800"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign In to Alumni Portal</span>
+              </Link>
+            )}
+
+            {/* Quick Portal & Admin Links in Mobile Drawer */}
+            <div className="pt-2 flex items-center justify-between text-xs border-t border-emerald-900/60">
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white font-semibold"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Member Portal</span>
+              </Link>
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Admin Console</span>
+              </Link>
             </div>
           </div>
-        )}
-      </header>
+        </div>
+      )}
 
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

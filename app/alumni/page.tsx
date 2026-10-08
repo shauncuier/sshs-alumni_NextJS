@@ -79,14 +79,14 @@ function DirectoryContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Keep query params in sync if URL updates
-  useEffect(() => {
+  const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
+  if (searchParams !== prevSearchParams) {
+    setPrevSearchParams(searchParams);
     const q = searchParams.get("q");
-    if (q !== null && q !== undefined) {
-      setSearchQuery(q);
-    }
+    if (q !== null) setSearchQuery(q);
     const b = searchParams.get("batch");
     if (b) setSelectedBatch(b);
-  }, [searchParams]);
+  }
 
   // Real members only: start empty and show a loading state, never sample people.
   const [alumniList, setAlumniList] = useState<AlumniMember[]>([]);

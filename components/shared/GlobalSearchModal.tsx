@@ -91,8 +91,19 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
     filteredStories.length;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[80vh]">
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+      onMouseDown={(e) => {
+        // Only a press that starts on the backdrop itself closes; a drag-select out of the input must not.
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search the alumni community"
+        className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[80vh]"
+      >
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3.5 border-b border-slate-100 bg-slate-50/50">
           <Search className="w-5 h-5 text-emerald-700 mr-3 shrink-0" />
@@ -105,7 +116,9 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
             autoFocus
           />
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close search"
             className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
           >
             <X className="w-5 h-5" />

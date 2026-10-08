@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     "*.ngrok-free.dev",
     "*.ngrok.app",
     "localhost:3000",
+    // Phones on the local network open the dev server by LAN IP (next dev -H 0.0.0.0);
+    // without this the HMR socket is rejected and the page never hydrates.
+    "192.168.*.*",
   ],
   experimental: {
     // Enables forbidden()/unauthorized() with app/forbidden.tsx and app/unauthorized.tsx.

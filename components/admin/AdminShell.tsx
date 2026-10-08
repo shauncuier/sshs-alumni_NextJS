@@ -48,9 +48,11 @@ export default function AdminShell({ children, user }: AdminShellProps) {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Close mobile drawer on route change
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
   const effectiveRole = user?.role || session?.user?.role;
   const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : "Administrator";
