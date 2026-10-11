@@ -1,4 +1,5 @@
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 
 type RateLimitOptions = {
   limit: number;
@@ -41,6 +42,15 @@ export function resetRateLimit(key: string): void {
 export function requireRateLimit(req: Request, scope: string, options: RateLimitOptions): void {
   if (process.env.NODE_ENV === "test" || process.env.VITEST) return;
   if (!consumeRateLimit(`${scope}:${clientAddress(req)}`, options)) {
+    // Not awaited: this check is synchronous, and logging never throws.
+    void logActivity({
+      category: "SECURITY",
+      action: "rate_limited",
+      status: "FAILURE",
+      summary: `Rate limit hit on ${scope} (${options.limit} per ${Math.round(options.windowMs / 60_000)} min)`,
+      metadata: { scope, path: new URL(req.url).pathname },
+      req,
+    });
     throw new AppError("RATE_LIMITED", 429, "Too many requests. Please try again later.");
   }
 }

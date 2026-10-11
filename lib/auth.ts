@@ -5,8 +5,40 @@ import prisma from "@/lib/prisma";
 import { accountAccessBlock, LEGACY_PENDING_MESSAGE } from "@/lib/account-access";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { consumeRateLimit, resetRateLimit } from "@/lib/request-security";
+import { logActivity } from "@/lib/activity-log";
 
-export async function authorizeCredentials(credentials: Record<"email" | "password", string> | undefined) {
+type AuthorizeRequest = { headers?: Record<string, string | string[] | undefined> } | undefined;
+const header = (req: AuthorizeRequest, name: string) => {
+  const v = req?.headers?.[name];
+  return (Array.isArray(v) ? v[0] : v) ?? null;
+};
+
+/** Signs a member in and records the attempt, successful or not, in the activity log. */
+export async function authorizeCredentials(credentials: Record<"email" | "password", string> | undefined, req?: AuthorizeRequest) {
+  const email = credentials?.email?.trim().toLowerCase() || null;
+  const context = {
+    ip: header(req, "x-real-ip") ?? header(req, "x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    userAgent: header(req, "user-agent"),
+  };
+  try {
+    const user = await checkCredentials(credentials);
+    await logActivity({ category: "AUTH", action: "auth.sign_in", summary: `${user.email} signed in`, actor: user, targetType: "User", targetId: user.id, ...context });
+    return user;
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "Sign-in failed";
+    await logActivity({
+      category: "AUTH",
+      action: "auth.sign_in_failed",
+      status: "FAILURE",
+      summary: `Failed sign-in${email ? ` for ${email}` : ""}: ${reason}`,
+      actor: email ? { email } : null,
+      ...context,
+    });
+    throw err;
+  }
+}
+
+async function checkCredentials(credentials: Record<"email" | "password", string> | undefined) {
   if (!credentials?.email || !credentials?.password) {
     throw new Error("Please enter your email and password.");
   }
@@ -85,6 +117,16 @@ export const authOptions: NextAuthOptions = {
       authorize: authorizeCredentials,
     }),
   ],
+  events: {
+    async signOut({ token }) {
+      await logActivity({
+        category: "AUTH",
+        action: "auth.sign_out",
+        summary: `${token?.email ?? "A member"} signed out`,
+        actor: { id: (token?.id as string | undefined) ?? token?.sub, email: token?.email, role: token?.role as string | undefined },
+      });
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {

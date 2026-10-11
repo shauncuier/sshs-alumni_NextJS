@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { logActivity, logFailure } from "@/lib/activity-log";
 import { verifyPhoneOtp } from "@/lib/phone-otp";
 import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 
@@ -9,8 +10,11 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     requireRateLimit(req, "phone-otp-verify", { limit: 30, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
-    return NextResponse.json(verifyPhoneOtp(body.challenge, body.code));
+    const result = verifyPhoneOtp(body.challenge, body.code);
+    await logActivity({ category: "VERIFY", action: "phone.verified", summary: `Phone ${result.phone} verified`, targetType: "phone", targetId: result.phone, req });
+    return NextResponse.json(result);
   } catch (err) {
+    await logFailure(err, { category: "VERIFY", action: "phone.verify_failed", req });
     return errorResponse(err, "POST /api/auth/phone-otp/verify");
   }
 }

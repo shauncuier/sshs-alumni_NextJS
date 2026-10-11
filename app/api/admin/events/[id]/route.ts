@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 import { getAdminEvent } from "@/lib/events/admin";
 import { deleteEvent, updateEvent } from "@/lib/events/service";
 import { discardDecidedProofs } from "@/lib/members/proof-retention";
@@ -26,7 +27,10 @@ export async function PUT(req: Request, { params }: Params) {
   if (!me || !isAdminRole(me.role)) return forbidden();
   try {
     requireSameOrigin(req);
-    return NextResponse.json({ event: await updateEvent((await params).id, await readJsonBody(req)) });
+    const body = await readJsonBody(req);
+    const event = await updateEvent((await params).id, body);
+    await logActivity({ category: "EVENT", action: "event.updated", summary: `Updated event "${event.title}"`, actor: me, targetType: "Event", targetId: event.id, metadata: { fields: Object.keys(body) }, req });
+    return NextResponse.json({ event });
   } catch (err) {
     return errorResponse(err, "PUT /api/admin/events/[id]");
   }
@@ -37,7 +41,9 @@ export async function DELETE(req: Request, { params }: Params) {
   if (!me || !isAdminRole(me.role)) return forbidden();
   try {
     requireSameOrigin(req);
-    await deleteEvent((await params).id);
+    const { id } = await params;
+    await deleteEvent(id);
+    await logActivity({ category: "EVENT", action: "event.deleted", summary: `Deleted event ${id}`, actor: me, targetType: "Event", targetId: id, req });
     return NextResponse.json({ success: true });
   } catch (err) {
     return errorResponse(err, "DELETE /api/admin/events/[id]");

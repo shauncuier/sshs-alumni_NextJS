@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
+import { logActivity } from "@/lib/activity-log";
 import { AVATAR_LIMITS, processAvatar, saveAvatar } from "@/lib/media/avatars";
 import { AppError } from "@/lib/app-error";
 import { readLimitedFormData, requireRateLimit } from "@/lib/request-security";
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
       },
     });
 
+    await logActivity({ category: "ACCOUNT", action: "photo.updated", summary: `${session.user.email} changed their profile photo`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, req });
     return NextResponse.json({
       success: true,
       avatarUrl: updated.avatarUrl,
@@ -77,7 +79,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   try {
     const session = await getMemberSession();
     if (!session?.user?.email) {
@@ -100,6 +102,7 @@ export async function DELETE() {
       },
     });
 
+    await logActivity({ category: "ACCOUNT", action: "photo.removed", summary: `${session.user.email} removed their profile photo`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, req });
     return NextResponse.json({ success: true, avatarUrl: null });
   } catch (error) {
     console.error("[Profile Avatar DELETE Error]:", error);

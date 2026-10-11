@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sampleMentors, MentorProfile } from "@/lib/career-data";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 
 export async function GET(req: NextRequest) {
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    console.log(`[Mentorship] Booked session with ${mentorName} for mentee ${menteeName}`);
+    await logActivity({ category: "CONTENT", action: "mentorship.booked", summary: `${menteeName} booked mentorship with ${mentorName}`, actor: { email: menteeEmail }, targetType: "Mentor", targetId: mentorId, metadata: { bookingId: mentorshipBooking.bookingId, topic: mentorshipBooking.selectedTopic }, req });
 
     return NextResponse.json({
       success: true,

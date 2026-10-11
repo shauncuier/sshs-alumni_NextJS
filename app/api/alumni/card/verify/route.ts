@@ -10,6 +10,7 @@ import { verifyCardToken } from "@/lib/id-card";
 import { checkCardMembership } from "@/lib/card-membership";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
     const result = verifyCardToken(token);
 
     if (!result.valid || !result.payload) {
+      await logActivity({ category: "SECURITY", action: "card.verify_failed", status: "FAILURE", summary: `Invalid or forged ID card scanned: ${result.error ?? "bad signature"}`, req });
       return NextResponse.json(
         {
           valid: false,
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
 
     const membership = await checkCardMembership(payload);
     if (!membership.ok) {
+      await logActivity({ category: "SECURITY", action: "card.verify_refused", status: "FAILURE", summary: `ID card of ${payload.fullName} refused: ${membership.error}`, targetType: "AlumniCard", targetId: payload.alumniId, metadata: { securityStatus: membership.securityStatus }, req });
       return NextResponse.json(
         {
           valid: false,
@@ -67,6 +70,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    await logActivity({ category: "EVENT", action: "card.verified", summary: `ID card verified: ${payload.fullName} (SSC ${payload.sscBatch})`, targetType: "AlumniCard", targetId: payload.alumniId, metadata: { gateId: gateId || "MAIN_CAMPUS_GATE_1" }, req });
     return NextResponse.json({
       valid: true,
       securityStatus: "AUTHORIZED_ALUMNUS",

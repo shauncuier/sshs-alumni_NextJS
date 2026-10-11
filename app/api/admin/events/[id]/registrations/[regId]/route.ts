@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 import { decideRegistration } from "@/lib/events/admin";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
@@ -16,7 +17,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { action } = await readJsonBody(req);
     if (!ACTIONS.includes(action)) return NextResponse.json({ error: "Unknown action." }, { status: 400 });
     const { id, regId } = await params;
-    return NextResponse.json({ registration: await decideRegistration({ eventId: id, registrationId: regId, action, adminEmail: me.email }) });
+    const registration = await decideRegistration({ eventId: id, registrationId: regId, action, adminEmail: me.email });
+    await logActivity({
+      category: "ADMIN",
+      action: `registration.${String(action).toLowerCase()}`,
+      summary: `${action} registration ${regId}`,
+      actor: me,
+      targetType: "EventRegistration",
+      targetId: regId,
+      metadata: { eventId: id, newStatus: (registration as { status?: string }).status },
+      req,
+    });
+    return NextResponse.json({ registration });
   } catch (err) {
     return errorResponse(err, "PATCH /api/admin/events/[id]/registrations/[regId]");
   }

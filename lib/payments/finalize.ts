@@ -1,5 +1,6 @@
 import { PaymentGateway } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { logActivity } from "@/lib/activity-log";
 
 type FinalizePaymentInput = {
   donationId: string;
@@ -13,7 +14,20 @@ type FinalizePaymentInput = {
 
 const sameAmount = (left: number, right: number) => Math.abs(left - right) < 0.0001;
 
+/** Marks a donation paid after a gateway confirmed it, and records the outcome in the activity log. */
 export async function finalizeDonationPayment(input: FinalizePaymentInput): Promise<{ ok: boolean; alreadyCompleted?: boolean }> {
+  const result = await applyPayment(input);
+  const details = { gateway: input.gateway, amount: input.amount, gatewayTrxId: input.gatewayTrxId ?? null, merchantInvoice: input.merchantInvoice ?? null };
+  if (!result.ok) {
+    // A confirmation that does not match the stored payment (amount, gateway, invoice) may be tampering.
+    await logActivity({ category: "SECURITY", action: "payment.mismatch", status: "FAILURE", summary: `Rejected ${input.gateway} confirmation for donation ${input.donationId}: details do not match`, targetType: "Donation", targetId: input.donationId, metadata: details });
+  } else if (!result.alreadyCompleted) {
+    await logActivity({ category: "PAYMENT", action: "payment.completed", summary: `Donation ${input.donationId} paid: ৳${input.amount} via ${input.gateway}`, targetType: "Donation", targetId: input.donationId, metadata: details });
+  }
+  return result;
+}
+
+async function applyPayment(input: FinalizePaymentInput): Promise<{ ok: boolean; alreadyCompleted?: boolean }> {
   if (!Number.isFinite(input.amount) || input.amount <= 0) return { ok: false };
 
   return prisma.$transaction(async (tx) => {

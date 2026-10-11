@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { isEnvSuperAdmin } from "@/lib/admin/super-admin";
@@ -52,12 +53,14 @@ export async function POST(req: Request) {
       });
       // Require the current password, so an unattended signed-in browser cannot take over the account.
       if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+        await logActivity({ category: "SECURITY", action: "password.change_failed", status: "FAILURE", summary: `Wrong current password when changing password for ${session.user.email}`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, req });
         return NextResponse.json({ error: "Your current password is incorrect." }, { status: 403 });
       }
       await prisma.user.update({
         where: { id: user.id },
         data: { passwordHash: await bcrypt.hash(newPassword, 12), sessionVersion: { increment: 1 } },
       });
+      await logActivity({ category: "ACCOUNT", action: "password.changed", summary: `${session.user.email} changed their password`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, targetType: "User", targetId: user.id, req });
       return NextResponse.json({ message: "Password changed." });
     } catch (dbErr) {
       console.error("Password change failed:", dbErr);

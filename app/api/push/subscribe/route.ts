@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { readJsonBody } from "@/lib/request-security";
 
 // In-memory or Redis/DB store of push subscriptions
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       pushSubscriptions.push(record);
     }
 
+    await logActivity({ category: "ACCOUNT", action: "push.subscribed", summary: `${session.email} turned on push notifications`, actor: session, req });
     return NextResponse.json({
       success: true,
       message: "Push notification subscription registered successfully.",

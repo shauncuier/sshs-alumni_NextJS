@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 
 export async function POST(req: Request) {
@@ -24,6 +25,15 @@ export async function POST(req: Request) {
       timestamp: new Date().toISOString(),
     });
 
+    // Until the form emails the committee, the log is where these messages are kept.
+    await logActivity({
+      category: "CONTENT",
+      action: "contact.message",
+      summary: `Contact form from ${name} <${email}>: ${String(subject || "(no subject)").slice(0, 120)}`,
+      actor: { email: String(email) },
+      metadata: { name, email, subject, message },
+      req,
+    });
     return NextResponse.json(
       {
         message: "Your message has been received by the SSGHS Alumni Association executive office. We will get back to you shortly.",

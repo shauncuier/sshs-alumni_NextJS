@@ -9,6 +9,7 @@ import { getMemberSession } from "@/lib/session-user";
 import { sampleJobs, JobListing } from "@/lib/career-data";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 
 // In-memory collection of dynamic jobs augmenting seed jobs (bounded to prevent memory exhaustion)
 let jobsStore: JobListing[] = [...sampleJobs];
@@ -119,6 +120,7 @@ export async function POST(req: NextRequest) {
 
     // Keep bounded in memory to prevent memory exhaustion
     jobsStore = [newJob, ...jobsStore.slice(0, 99)];
+    await logActivity({ category: "CONTENT", action: "job.posted", summary: `${session.user.email} posted job "${newJob.title}" at ${newJob.company}`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, targetType: "Job", targetId: newJob.id, req });
 
     return NextResponse.json({
       success: true,

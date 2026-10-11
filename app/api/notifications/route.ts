@@ -13,6 +13,7 @@ import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS } from "@/lib/realtime";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
 /**
@@ -101,6 +102,7 @@ export async function POST(req: NextRequest) {
       createdAt: notification.createdAt,
     });
 
+    await logActivity({ category: "ADMIN", action: "notification.sent", summary: `Sent notification "${String(title).slice(0, 80)}" to user ${userId}`, actor: me, targetType: "User", targetId: userId, metadata: { type }, req });
     return NextResponse.json({ notification }, { status: 201 });
   } catch (error) {
     if (error instanceof AppError) {

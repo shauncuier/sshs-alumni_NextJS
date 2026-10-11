@@ -4,6 +4,7 @@ import path from "node:path";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { uploadsRoot } from "@/lib/media/avatars";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 import {
   sendBulkSms,
@@ -129,6 +130,15 @@ export async function POST(req: Request) {
     });
 
     if (!result.success) {
+      await logActivity({
+        category: "SMS",
+        action: "sms.broadcast_failed",
+        status: "FAILURE",
+        summary: `SMS broadcast failed: ${result.error ?? "gateway error"}`,
+        actor: user,
+        metadata: { recipients: result.validNumbers.length, gatewayCode: result.responseCode },
+        req,
+      });
       return NextResponse.json(
         {
           success: false,
@@ -163,6 +173,16 @@ export async function POST(req: Request) {
     };
 
     await appendHistory(historyItem);
+    await logActivity({
+      category: "SMS",
+      action: "sms.broadcast",
+      summary: `Sent SMS to ${result.validNumbers.length} numbers (${historyItem.totalCreditsUsed} credits)${result.isSimulated ? " [sandbox]" : ""}`,
+      actor: user,
+      targetType: "SmsBroadcast",
+      targetId: historyItem.id,
+      metadata: { recipients: result.validNumbers.length, invalid: result.invalidNumbers.length, parts: metrics.partsCount, senderId: effectiveSenderId, preview: message.trim().slice(0, 80), gatewayCode: result.responseCode },
+      req,
+    });
 
     return NextResponse.json({
       success: true,

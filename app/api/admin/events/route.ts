@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 import { createEvent, listPublicEvents } from "@/lib/events/service";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
@@ -21,7 +22,9 @@ export async function POST(req: Request) {
   if (!me || !isAdminRole(me.role)) return forbidden();
   try {
     requireSameOrigin(req);
-    return NextResponse.json({ event: await createEvent(await readJsonBody(req)) }, { status: 201 });
+    const event = await createEvent(await readJsonBody(req));
+    await logActivity({ category: "EVENT", action: "event.created", summary: `Created event "${event.title}"`, actor: me, targetType: "Event", targetId: event.id, metadata: { slug: event.slug }, req });
+    return NextResponse.json({ event }, { status: 201 });
   } catch (err) {
     return errorResponse(err, "POST /api/admin/events");
   }

@@ -1,4 +1,5 @@
 import { after, NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity-log";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
 import prisma from "@/lib/prisma";
@@ -184,6 +185,16 @@ export async function PATCH(req: Request) {
       const updated =
         (await prisma.verificationRequest.findUnique({ where: { id: requestId } }).catch(() => null)) ?? result.updated;
 
+      await logActivity({
+        category: "ADMIN",
+        action: decision === "VERIFIED" ? "membership.approved" : "membership.rejected",
+        summary: `${decision === "VERIFIED" ? "Approved" : "Rejected"} membership of user ${result.updated.userId}`,
+        actor: me,
+        targetType: "User",
+        targetId: result.updated.userId,
+        metadata: { verificationRequestId: requestId },
+        req,
+      });
       return NextResponse.json({
         message: `Verification request ${status.toLowerCase()} successfully`,
         request: updated,

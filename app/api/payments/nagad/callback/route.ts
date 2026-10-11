@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity-log";
 import prisma from "@/lib/prisma";
 import { verifyPayment } from "@/lib/payments/nagad";
 import { finalizeDonationPayment } from "@/lib/payments/finalize";
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (status === "Aborted" || status === "Cancel") {
+    await logActivity({ category: "PAYMENT", action: "payment.cancelled", status: "FAILURE", summary: "Nagad payment cancelled", targetType: "PaymentTransaction", targetId: paymentRefId, metadata: { gateway: "NAGAD" }, req });
     return NextResponse.redirect(`${appUrl}/donate?payment=failed&reason=cancelled`);
   }
 

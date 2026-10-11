@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { logActivity, logFailure } from "@/lib/activity-log";
 import { getMemberRegistration, registerForEvent } from "@/lib/events/registrations";
 import { AppError } from "@/lib/app-error";
 import type { AccountInput, RsvpInput } from "@/lib/events/types";
@@ -103,8 +104,9 @@ export async function POST(req: Request, { params }: Params) {
     } else {
       body = parsePayload(await req.text().catch(() => ""));
     }
+    const slug = (await params).slug;
     const result = await registerForEvent({
-      slug: (await params).slug,
+      slug,
       sessionUserId: me?.id ?? null,
       // Account details, the photo and the proof only count for signed-out visitors.
       account: me ? undefined : body.account,
@@ -112,8 +114,31 @@ export async function POST(req: Request, { params }: Params) {
       proof: me ? undefined : { type: body.proof?.type, note: body.proof?.note, file: proofFile },
       rsvp: body.rsvp ?? {},
     });
+    const reg = result.registration;
+    await logActivity({
+      category: "EVENT",
+      action: result.createdAccount ? "member.joined" : "event.registered",
+      summary: result.createdAccount
+        ? `${result.createdAccount.email} applied to join (${reg.eventTitle}), payment ${reg.paymentMethod ?? "none"}`
+        : `${me?.email ?? "Member"} registered for ${reg.eventTitle}`,
+      actor: me ?? { email: result.createdAccount?.email },
+      targetType: "EventRegistration",
+      targetId: reg.id,
+      metadata: {
+        event: reg.eventSlug,
+        status: reg.status,
+        headCount: reg.headCount,
+        totalFee: reg.totalFee,
+        donation: reg.donationAmount,
+        paymentMethod: reg.paymentMethod,
+        transactionRef: reg.transactionId,
+        contactVerifiedBy: body.account?.phoneVerificationToken ? "sms" : body.account?.emailVerificationToken ? "email" : null,
+      },
+      req,
+    });
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
+    await logFailure(err, { category: "EVENT", action: "event.register_refused", actor: me, req });
     return errorResponse(err, "POST /api/events/[slug]/rsvp");
   }
 }

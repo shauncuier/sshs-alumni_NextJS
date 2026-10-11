@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import {
   createVolunteer,
   getVolunteers,
@@ -74,6 +75,7 @@ export async function POST(req: Request) {
       source: source === "EVENT_REGISTRATION" ? "EVENT_REGISTRATION" : "PUBLIC_APPLICATION",
     });
 
+    await logActivity({ category: "CONTENT", action: "volunteer.applied", summary: `${created.fullName} applied to volunteer (${created.subcommitteeLabel})`, actor: { email: created.email }, targetType: "Volunteer", targetId: created.id, metadata: { batch: created.sscBatch, subcommittee: created.subcommittee, source: created.source }, req });
     return NextResponse.json({ success: true, volunteer: created }, { status: 201 });
   } catch (error) {
     if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
@@ -104,6 +106,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Volunteer record not found" }, { status: 404 });
     }
 
+    await logActivity({ category: "ADMIN", action: `volunteer.${String(status).toLowerCase()}`, summary: `Set volunteer ${updated.fullName} to ${status}`, actor: me, targetType: "Volunteer", targetId: id, metadata: { subcommittee: updated.subcommittee }, req });
     return NextResponse.json({ success: true, volunteer: updated });
   } catch (error) {
     console.error("[Volunteers API PATCH Error]:", error);

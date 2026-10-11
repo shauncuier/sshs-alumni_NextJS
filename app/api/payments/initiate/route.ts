@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { initiatePayment, resolveGateway } from "@/lib/payments";
 import { getSessionUser } from "@/lib/session-user";
+import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
@@ -120,6 +121,17 @@ export async function POST(req: Request) {
         // Ignore DB update failure in fallback mode
       }
 
+      await logActivity({
+        category: "PAYMENT",
+        action: "payment.initiate_failed",
+        status: "FAILURE",
+        summary: `Could not start ${gateway} payment of ৳${amount}: ${result.error ?? "gateway error"}`,
+        actor: { id: userId, email: donorEmail },
+        targetType: "Donation",
+        targetId: donation.id,
+        metadata: { gateway, amount, campaignId, errorCode: result.errorCode },
+        req,
+      });
       return NextResponse.json(
         {
           error: result.error || "Payment initiation failed",
@@ -160,6 +172,16 @@ export async function POST(req: Request) {
       // Ignore in fallback mode
     }
 
+    await logActivity({
+      category: "PAYMENT",
+      action: "payment.initiated",
+      summary: `${isAnonymous ? "Anonymous donor" : donorName || donorEmail || "Donor"} started a ${gateway} donation of ৳${amount}`,
+      actor: { id: userId, email: donorEmail },
+      targetType: "Donation",
+      targetId: donation.id,
+      metadata: { gateway, amount, campaignId, receiptId, transactionRef: result.transactionRef },
+      req,
+    });
     return NextResponse.json(
       {
         success: true,

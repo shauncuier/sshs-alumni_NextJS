@@ -15,6 +15,7 @@ import { sendToUser, SSE_EVENTS, isUserOnline } from "@/lib/realtime";
 import { getSessionUser } from "@/lib/session-user";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 
 /**
  * GET: Fetch conversations or specific thread
@@ -161,6 +162,8 @@ export async function POST(req: NextRequest) {
     // ── Push real-time notification to receiver ──────────────────────
     const isOnline = isUserOnline(receiverId);
 
+    // Who wrote to whom, never what was written.
+    await logActivity({ category: "CONTENT", action: "message.sent", summary: `${me.email} sent a direct message`, actor: me, targetType: "User", targetId: receiverId, req });
     sendToUser(receiverId, SSE_EVENTS.NEW_MESSAGE, {
       messageId: message.id,
       senderId,

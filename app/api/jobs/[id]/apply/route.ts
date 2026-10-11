@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 
 export async function POST(
@@ -51,7 +52,16 @@ export async function POST(
       status: "SUBMITTED",
     };
 
-    console.log(`[Job Application] New candidate for Job ${id}: ${applicantName}`);
+    await logActivity({
+      category: "CONTENT",
+      action: "job.applied",
+      summary: `${email} applied for job ${id}`,
+      actor: session?.user ? { id: session.user.id, email: session.user.email, role: session.user.role } : { email },
+      targetType: "Job",
+      targetId: id,
+      metadata: { applicationId: applicationRecord.applicationId, applicantName: name },
+      req,
+    });
 
     return NextResponse.json({
       success: true,

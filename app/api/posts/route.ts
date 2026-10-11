@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { samplePosts, PostItem } from "@/lib/data";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(req: Request) {
   try {
@@ -144,6 +145,7 @@ export async function POST(req: Request) {
           },
         });
 
+        await logActivity({ category: "CONTENT", action: "post.created", summary: `${session.user.email} posted in the feed`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, targetType: "Post", targetId: createdPost.id, metadata: { preview: createdPost.content.slice(0, 80), batchTag: createdPost.batchTag }, req });
         return NextResponse.json(
           { message: "Post created successfully", post: createdPost, source: "database" },
           { status: 201 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
+import { logActivity } from "@/lib/activity-log";
 import { AppError } from "@/lib/app-error";
 import { createUser, listUsers } from "@/lib/admin/users";
 import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
@@ -30,7 +31,9 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     const me = await requireAdmin();
     requireRateLimit(req, "admin-user-create", { limit: 30, windowMs: 60 * 60_000 });
-    return NextResponse.json({ user: await createUser(me, await readJsonBody(req)) }, { status: 201 });
+    const user = await createUser(me, await readJsonBody(req));
+    await logActivity({ category: "ADMIN", action: "user.created", summary: `Created ${user.role} account ${user.email}`, actor: me, targetType: "User", targetId: user.id, metadata: { role: user.role }, req });
+    return NextResponse.json({ user }, { status: 201 });
   } catch (err) {
     return errorResponse(err, "POST /api/admin/users");
   }

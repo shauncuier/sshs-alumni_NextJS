@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
 export async function POST(req: NextRequest) {
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     // In a production server, this invokes web-push with VAPID credentials
     // payload: { title, body, url: url || '/events', icon: '/logo.png' }
     console.log(`[Push Broadcast] Dispatched: "${title}" to subscribed devices.`);
+    await logActivity({ category: "ADMIN", action: "push.broadcast", summary: `Push broadcast "${String(title).slice(0, 80)}"`, actor: me, metadata: { url: url || "/events", category }, req });
 
     return NextResponse.json({
       success: true,

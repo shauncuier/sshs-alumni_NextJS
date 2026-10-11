@@ -420,3 +420,26 @@ model VerificationRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/// Audit trail: who did what, when and from where. No foreign key to User, so
+/// entries outlive deleted accounts. Written by lib/activity-log.ts only.
+model ActivityLog {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  createdAt  DateTime @default(now())
+  category   String   @db.VarChar(20)
+  action     String   @db.VarChar(60)
+  status     String   @default("SUCCESS") @db.VarChar(10)
+  actorId    String?  @db.VarChar(36)
+  actorEmail String?  @db.VarChar(255)
+  actorRole  String?  @db.VarChar(20)
+  targetType String?  @db.VarChar(40)
+  targetId   String?  @db.VarChar(191)
+  summary    String   @db.VarChar(500)
+  metadata   Json?
+  ip         String?  @db.VarChar(64)
+  userAgent  String?  @db.VarChar(255)
+
+  @@index([createdAt])
+  @@index([category, createdAt])
+  @@index([actorId, createdAt])
+}

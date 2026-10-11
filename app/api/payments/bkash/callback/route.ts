@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity-log";
 import prisma from "@/lib/prisma";
 import { executePayment, queryPayment } from "@/lib/payments/bkash";
 import { finalizeDonationPayment } from "@/lib/payments/finalize";
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
 
   // If user cancelled
   if (status === "cancel" || status === "failure") {
+    await logActivity({ category: "PAYMENT", action: status === "cancel" ? "payment.cancelled" : "payment.failed", status: "FAILURE", summary: `bKash payment ${status === "cancel" ? "cancelled" : "failed"}`, targetType: "PaymentTransaction", targetId: paymentID, metadata: { gateway: "BKASH" }, req });
     return NextResponse.redirect(
       `${appUrl}/donate?payment=failed&reason=${status}`
     );

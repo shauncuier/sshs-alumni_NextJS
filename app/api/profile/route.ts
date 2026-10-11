@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMemberSession } from "@/lib/session-user";
 import prisma from "@/lib/prisma";
+import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
@@ -151,6 +152,16 @@ export async function PUT(req: Request) {
         },
       });
 
+      await logActivity({
+        category: "ACCOUNT",
+        action: "profile.updated",
+        summary: `${session.user.email} updated their profile`,
+        actor: { id: session.user.id, email: session.user.email, role: session.user.role },
+        targetType: "AlumniProfile",
+        targetId: updated.id,
+        metadata: { fields: Object.keys(body).filter((k) => body[k] !== undefined) },
+        req,
+      });
       return NextResponse.json({ message: "Profile updated successfully", profile: updated });
     } catch (dbErr) {
       console.error("Profile update failed:", dbErr);

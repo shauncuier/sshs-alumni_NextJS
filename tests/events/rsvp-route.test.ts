@@ -109,6 +109,11 @@ describe("POST /api/events/[slug]/rsvp proof of study", () => {
     const request = await prisma.verificationRequest.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
     expect(request).toMatchObject({ proofType: "SSC_MARKSHEET", proofNote: "Board copy", proofMime: "application/pdf" });
     expect(request.proofFileUrl).toMatch(/^\/api\/media\/proofs\/[a-f0-9]{32}\/document\.pdf$/);
+    // The join is in the activity log, with the payment reference but no verification token.
+    const entry = await prisma.activityLog.findFirstOrThrow({ where: { action: "member.joined" } });
+    expect(entry).toMatchObject({ category: "EVENT", status: "SUCCESS", actorEmail: "new@example.test", targetType: "EventRegistration" });
+    expect(entry.metadata).toMatchObject({ transactionRef: "TRX123456", contactVerifiedBy: "sms", paymentMethod: "bKash" });
+    expect(JSON.stringify(entry.metadata)).not.toMatch(/phoneVerificationToken/);
   });
 
   it("refuses a join without the proof file or its type", async () => {
