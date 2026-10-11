@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { calculateSmsMetrics, normalizeBdPhoneNumber, isValidBdMobile } from "@/lib/bulksmsbd";
 import type { SmsContactItem } from "@/app/api/admin/sms/contacts/route";
-import type { SmsBroadcastRecord } from "@/app/api/admin/sms/send/route";
+import type { SmsBroadcastRecord } from "@/lib/sms-history";
 
 export interface SmsTemplateItem {
   id: string;
@@ -1299,13 +1299,18 @@ export default function AdminBulkSmsPage() {
                       {item.message}
                     </td>
                     <td className="py-3 px-3">
-                      {item.isSimulated ? (
+                      {item.status === "FAILED" ? (
+                        <span title={item.error} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                          Failed{item.gatewayResponseCode ? ` (${item.gatewayResponseCode})` : ""}
+                        </span>
+                      ) : item.isSimulated ? (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
                           Sandbox Simulated
                         </span>
                       ) : (
+                        // 202 means the gateway accepted the batch; delivery to each phone is not reported.
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          Delivered (202)
+                          Accepted by gateway
                         </span>
                       )}
                     </td>

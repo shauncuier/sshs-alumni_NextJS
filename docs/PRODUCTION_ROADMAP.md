@@ -23,7 +23,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ✅ Code done 2026-10-11 (inbox test in step 17) |
 | 7 | Volunteers into the database | 2 · Real data | M | ✅ Done 2026-10-11 |
-| 8 | Bulk SMS history into the database | 2 · Real data | S | ⬜ |
+| 8 | Bulk SMS history into the database | 2 · Real data | S | ✅ Done 2026-10-11 |
 | 9a | News from the database, managed in admin | 2 · Real data | M | ⬜ |
 | 9b | Gallery from the database, managed in admin | 2 · Real data | M | ⬜ |
 | 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ⬜ |
@@ -129,7 +129,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Tasks:** `Volunteer` table; move the API and admin page to it; import any real entries from the JSON file; drop the sample list.
 **Done when:** applications survive restarts and concurrent submissions; no sample volunteers anywhere.
 
-### 8. Bulk SMS history into the database · S
+### 8. Bulk SMS history into the database · S · ✅ Done 2026-10-11
+**Result:** `SmsBroadcast` table via `lib/sms-history.ts`; every send is stored with sender, full recipient list, credits and gateway reply; failed sends that reached the gateway are stored too (status FAILED, shown in red); history badge now says "Accepted by gateway" instead of the misleading "Delivered"; `npm run db:import-sms-history` moves the old file (run once on the server in step 29); 3 tests.
 **Tasks:** store each broadcast (sender, count, credits, gateway reply) in a table or as activity-log entries; the SMS page reads from there.
 **Done when:** `uploads/sms-history.json` is no longer written.
 
@@ -242,7 +243,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Done when:** the site loads over HTTPS on the real domain, and `/api/media/...` files are not reachable directly.
 
 ### 29. Production database · M
-**Tasks:** full backup of the current remote database; restore it into a copy and run `npm run db:push` there first (rehearsal); then the real `db:push`, `npm run db:import-volunteers` (if the server has an `uploads/volunteers.json`) and the production seed (step 11); confirm the super admin can sign in.
+**Tasks:** full backup of the current remote database; restore it into a copy and run `npm run db:push` there first (rehearsal); then the real `db:push`, `npm run db:import-volunteers` and `npm run db:import-sms-history` (if the server has the old JSON files) and the production seed (step 11); confirm the super admin can sign in.
 **Done when:** production schema matches, existing data is intact, super admin signs in.
 
 ### 30. Backups · S

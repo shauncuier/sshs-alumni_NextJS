@@ -468,3 +468,29 @@ model Volunteer {
   @@index([status, appliedAt])
   @@index([email])
 }
+
+/// One bulk SMS send from /admin/sms (lib/sms-history.ts). Replaces the old
+/// uploads/sms-history.json file.
+model SmsBroadcast {
+  id                  String   @id @default(uuid()) @db.VarChar(64)
+  createdAt           DateTime @default(now())
+  status              String   @default("SENT") @db.VarChar(10)
+  sentBy              String   @db.VarChar(254)
+  senderId            String   @db.VarChar(40)
+  message             String   @db.Text
+  charCount           Int
+  isUnicode           Boolean
+  partsCount          Int
+  totalRecipients     Int
+  validRecipients     Int
+  invalidRecipients   Int
+  totalCreditsUsed    Int
+  isSimulated         Boolean
+  gatewayResponseCode Int?
+  messageId           String?  @db.VarChar(100)
+  error               String?  @db.Text
+  /// Every number the message went to (normalized 8801XXXXXXXXX).
+  recipients          Json
+
+  @@index([createdAt])
+}

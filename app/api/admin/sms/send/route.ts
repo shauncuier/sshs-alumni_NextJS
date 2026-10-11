@@ -1,62 +1,18 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
-import { uploadsRoot } from "@/lib/media/avatars";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { listBroadcasts, recordBroadcast } from "@/lib/sms-history";
 import {
   sendBulkSms,
   calculateSmsMetrics,
   getBulkSmsConfig,
 } from "@/lib/bulksmsbd";
 
-// Kept with the other private uploads (UPLOADS_DIR), never under public/.
-const smsHistoryPath = () => path.join(uploadsRoot(), "sms-history.json");
 // One broadcast costs credits per number; a cap stops a mistaken or hijacked
 // admin session from draining the balance in one request.
 const MAX_RECIPIENTS = 5000;
-
-export interface SmsBroadcastRecord {
-  id: string;
-  timestamp: string;
-  sentBy: string;
-  senderId: string;
-  totalRecipients: number;
-  validRecipients: number;
-  invalidRecipients: number;
-  message: string;
-  charCount: number;
-  isUnicode: boolean;
-  partsCount: number;
-  totalCreditsUsed: number;
-  isSimulated: boolean;
-  gatewayResponseCode?: number;
-  messageId?: string | number;
-  sampleRecipients: string[];
-}
-
-async function appendHistory(record: SmsBroadcastRecord) {
-  try {
-    await fs.mkdir(path.dirname(smsHistoryPath()), { recursive: true });
-    let existing: SmsBroadcastRecord[] = [];
-    try {
-      const raw = await fs.readFile(smsHistoryPath(), "utf8");
-      existing = JSON.parse(raw);
-    } catch {
-      existing = [];
-    }
-    existing.unshift(record);
-    // Keep last 50 broadcasts
-    if (existing.length > 50) {
-      existing = existing.slice(0, 50);
-    }
-    await fs.writeFile(smsHistoryPath(), JSON.stringify(existing, null, 2), "utf8");
-  } catch (err) {
-    console.warn("[SMS History] Could not persist history:", err);
-  }
-}
 
 export async function GET() {
   try {
@@ -64,17 +20,10 @@ export async function GET() {
     if (!user || !isAdminRole(user.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
-
-    try {
-      const raw = await fs.readFile(smsHistoryPath(), "utf8");
-      const records = JSON.parse(raw);
-      return NextResponse.json({ history: records });
-    } catch {
-      return NextResponse.json({ history: [] });
-    }
+    return NextResponse.json({ history: await listBroadcasts() });
   } catch (error) {
     console.error("[API/Admin/SMS/Send] Failed to load history:", error);
-    return NextResponse.json({ history: [] });
+    return NextResponse.json({ error: "Could not load the SMS history." }, { status: 503 });
   }
 }
 
@@ -114,28 +63,50 @@ export async function POST(req: Request) {
     const rawNumbers: string[] = recipients.map((r: unknown) => {
       if (typeof r === "string") return r;
       if (typeof r === "object" && r !== null && "phone" in r) {
-        return (r as { phone: string }).phone;
+        return String((r as { phone: unknown }).phone ?? "");
       }
       return "";
     }).filter(Boolean);
 
-    const metrics = calculateSmsMetrics(message.trim());
+    const text = message.trim();
+    const metrics = calculateSmsMetrics(text);
     const config = getBulkSmsConfig();
     const effectiveSenderId = (typeof senderId === "string" && senderId.trim()) || config.senderId;
 
     const result = await sendBulkSms({
       numbers: rawNumbers,
-      message: message.trim(),
+      message: text,
       senderIdOverride: effectiveSenderId,
     });
 
+    const base = {
+      sentBy: user.email || "Admin",
+      senderId: effectiveSenderId,
+      message: text,
+      charCount: metrics.charCount,
+      isUnicode: metrics.isUnicode,
+      partsCount: metrics.partsCount,
+      totalRecipients: rawNumbers.length,
+      validRecipients: result.validNumbers.length,
+      invalidRecipients: result.invalidNumbers.length,
+      totalCreditsUsed: result.validNumbers.length * metrics.partsCount,
+      isSimulated: result.isSimulated,
+      gatewayResponseCode: result.responseCode,
+      messageId: result.messageId,
+      recipients: result.validNumbers,
+    };
+
     if (!result.success) {
+      // Record attempts that reached the gateway: some batches may already have been sent and charged.
+      const failed = result.validNumbers.length > 0 ? await recordBroadcast({ ...base, status: "FAILED", error: result.error }) : null;
       await logActivity({
         category: "SMS",
         action: "sms.broadcast_failed",
         status: "FAILURE",
         summary: `SMS broadcast failed: ${result.error ?? "gateway error"}`,
         actor: user,
+        targetType: failed ? "SmsBroadcast" : null,
+        targetId: failed?.id ?? null,
         metadata: { recipients: result.validNumbers.length, gatewayCode: result.responseCode },
         req,
       });
@@ -152,27 +123,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Save to history audit log
-    const historyItem: SmsBroadcastRecord = {
-      id: `sms-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: new Date().toISOString(),
-      sentBy: user.email || "Admin",
-      senderId: effectiveSenderId,
-      totalRecipients: rawNumbers.length,
-      validRecipients: result.validNumbers.length,
-      invalidRecipients: result.invalidNumbers.length,
-      message: message.trim(),
-      charCount: metrics.charCount,
-      isUnicode: metrics.isUnicode,
-      partsCount: metrics.partsCount,
-      totalCreditsUsed: result.validNumbers.length * metrics.partsCount,
-      isSimulated: result.isSimulated,
-      gatewayResponseCode: result.responseCode,
-      messageId: result.messageId,
-      sampleRecipients: result.validNumbers.slice(0, 5),
-    };
-
-    await appendHistory(historyItem);
+    const historyItem = await recordBroadcast({ ...base, status: "SENT" });
     await logActivity({
       category: "SMS",
       action: "sms.broadcast",
@@ -180,7 +131,7 @@ export async function POST(req: Request) {
       actor: user,
       targetType: "SmsBroadcast",
       targetId: historyItem.id,
-      metadata: { recipients: result.validNumbers.length, invalid: result.invalidNumbers.length, parts: metrics.partsCount, senderId: effectiveSenderId, preview: message.trim().slice(0, 80), gatewayCode: result.responseCode },
+      metadata: { recipients: result.validNumbers.length, invalid: result.invalidNumbers.length, parts: metrics.partsCount, senderId: effectiveSenderId, preview: text.slice(0, 80), gatewayCode: result.responseCode },
       req,
     });
 
@@ -193,7 +144,7 @@ export async function POST(req: Request) {
       invalidCount: result.invalidNumbers.length,
       invalidNumbers: result.invalidNumbers,
       metrics,
-      totalCreditsUsed: result.validNumbers.length * metrics.partsCount,
+      totalCreditsUsed: historyItem.totalCreditsUsed,
       isSimulated: result.isSimulated,
       historyItem,
     });

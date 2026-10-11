@@ -14,6 +14,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:super-admin": "tsx scripts/ensure-super-admin.ts",
     "db:import-volunteers": "tsx scripts/import-volunteers.ts",
+    "db:import-sms-history": "tsx scripts/import-sms-history.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "docker run -d --rm --name sshs-test-db -e MARIADB_ROOT_PASSWORD=test -p 127.0.0.1:3307:3306 mariadb:11",
