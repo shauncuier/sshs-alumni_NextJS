@@ -22,7 +22,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 6 | Hide or remove the sections not launching | 2 · Real data | M | ⏭️ Nothing to hide (step 4) |
 | 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ✅ Code done 2026-10-11 (inbox test in step 17) |
-| 7 | Volunteers into the database | 2 · Real data | M | ⬜ |
+| 7 | Volunteers into the database | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ⬜ |
 | 9a | News from the database, managed in admin | 2 · Real data | M | ⬜ |
 | 9b | Gallery from the database, managed in admin | 2 · Real data | M | ⬜ |
@@ -123,7 +123,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Tasks:** send each contact message to the committee email (after step 17), keep the activity-log entry.
 **Done when:** a test message arrives in the committee inbox.
 
-### 7. Volunteers into the database · M
+### 7. Volunteers into the database · M · ✅ Done 2026-10-11
+**Result:** `Volunteer` table; `lib/volunteers.ts` reads and writes it (same API for the pages); the 5 made-up volunteers are gone; one open application per person and subcommittee (a declined person may apply again); subcommittee validated; applications linked to the signed-in member; who approved/declined and when is stored; the API answers bad input with 400 instead of crashing and checks same-origin; `npm run db:import-volunteers` moves real entries from the old JSON file (run once on the server in step 29); 7 tests.
 **Why:** volunteers live in `uploads/volunteers.json`, start with 5 made-up people, and two writes at once can lose data.
 **Tasks:** `Volunteer` table; move the API and admin page to it; import any real entries from the JSON file; drop the sample list.
 **Done when:** applications survive restarts and concurrent submissions; no sample volunteers anywhere.
@@ -241,7 +242,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Done when:** the site loads over HTTPS on the real domain, and `/api/media/...` files are not reachable directly.
 
 ### 29. Production database · M
-**Tasks:** full backup of the current remote database; restore it into a copy and run `npm run db:push` there first (rehearsal); then the real `db:push` and the production seed (step 11); confirm the super admin can sign in.
+**Tasks:** full backup of the current remote database; restore it into a copy and run `npm run db:push` there first (rehearsal); then the real `db:push`, `npm run db:import-volunteers` (if the server has an `uploads/volunteers.json`) and the production seed (step 11); confirm the super admin can sign in.
 **Done when:** production schema matches, existing data is intact, super admin signs in.
 
 ### 30. Backups · S

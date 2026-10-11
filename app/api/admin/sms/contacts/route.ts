@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { normalizeBdPhoneNumber, isValidBdMobile } from "@/lib/bulksmsbd";
 import prisma from "@/lib/prisma";
-import { getVolunteers, isSampleVolunteer } from "@/lib/volunteers";
+import { getVolunteers } from "@/lib/volunteers";
 
 export interface SmsContactItem {
   id: string;
@@ -122,7 +122,7 @@ export async function GET() {
     try {
       const volunteers = await getVolunteers();
       for (const vol of volunteers) {
-        if (vol.phone && !isSampleVolunteer(vol.id)) {
+        if (vol.phone) {
           addContact({
             id: vol.id,
             name: vol.fullName,

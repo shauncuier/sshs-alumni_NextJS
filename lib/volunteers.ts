@@ -1,127 +1,54 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import type { Volunteer } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { AppError } from "@/lib/app-error";
 import type { VolunteerItem } from "./volunteers-types";
 import { SUBCOMMITTEES, SUBCOMMITTEE_LABELS } from "./volunteers-types";
 
 export type { VolunteerItem };
 export { SUBCOMMITTEES, SUBCOMMITTEE_LABELS };
 
-const INITIAL_VOLUNTEERS: VolunteerItem[] = [
-  {
-    id: "vol-1",
-    fullName: "Dr. Nusrat Jahan",
-    email: "nusrat.jahan@cmch.gov.bd",
-    phone: "+880 1711-234567",
-    sscBatch: 2005,
-    subcommittee: "MEDICAL_FIRSTAID",
-    subcommitteeLabel: "Alumni Medical Wing & First Aid",
-    skills: "MBBS, FCPS Cardiology, Emergency First Aid & CPR Trainer",
-    availability: "Dec 30 - 31 (All Days)",
-    experience: "Led medical response tent during Batch 2005 10-year reunion",
-    notes: "Can bring a team of 4 alumni trainee doctors and emergency kits",
-    source: "PUBLIC_APPLICATION",
-    status: "APPROVED",
-    appliedAt: "2026-09-28T14:20:00.000Z",
-  },
-  {
-    id: "vol-2",
-    fullName: "Tanvir Ahmed",
-    email: "tanvir.ahmed@mofa.gov.bd",
-    phone: "+880 1819-345678",
-    sscBatch: 2008,
-    subcommittee: "RECEPTION_VIP",
-    subcommitteeLabel: "Reception & VIP Protocol",
-    skills: "BCS Foreign Affairs, Diplomatic Protocol & Stage Moderation",
-    availability: "Dec 30 (Full Day)",
-    experience: "Chief Coordinator for Inter-College Debate Festival 2012",
-    notes: "Will coordinate VIP lounge and protocol for cabinet guests",
-    source: "PUBLIC_APPLICATION",
-    status: "APPROVED",
-    appliedAt: "2026-09-29T10:15:00.000Z",
-  },
-  {
-    id: "vol-3",
-    fullName: "Farhana Chowdhury",
-    email: "farhana.cse@gmail.com",
-    phone: "+880 1912-456789",
-    sscBatch: 2018,
-    subcommittee: "GATE_SECURITY",
-    subcommitteeLabel: "Gate Entry & Security QR Scanning",
-    skills: "Mobile App Testing, QR Code Scanning Systems, Fast Typist",
-    availability: "Dec 30 - 31 (Morning Shifts)",
-    experience: "Campus volunteer for Sitakunda Youth Festival 2024",
-    notes: "Experienced using the SSGHS gate scanner app on Android",
-    source: "EVENT_REGISTRATION",
-    status: "PENDING",
-    appliedAt: "2026-09-30T16:45:00.000Z",
-  },
-  {
-    id: "vol-4",
-    fullName: "Mahmudul Hasan",
-    email: "mahmud.buet@gmail.com",
-    phone: "+880 1715-678901",
-    sscBatch: 2014,
-    subcommittee: "MEZBAN_FOOD",
-    subcommitteeLabel: "Mezban Feast & Food Distribution",
-    skills: "Logistics Management, Supply Chain Coordination",
-    availability: "Dec 31 (Mezban Day, 10 AM - 5 PM)",
-    experience: "Managed community relief kitchen and batch iftar feasts",
-    notes: "Ready to coordinate dining lines for Batches 2010 through 2020",
-    source: "PUBLIC_APPLICATION",
-    status: "PENDING",
-    appliedAt: "2026-10-01T08:30:00.000Z",
-  },
-  {
-    id: "vol-5",
-    fullName: "Saiful Islam Rony",
-    email: "saiful.rony22@gmail.com",
-    phone: "+880 1823-789012",
-    sscBatch: 2022,
-    subcommittee: "CULTURAL_STAGE",
-    subcommitteeLabel: "Cultural Program & Stage Logistics",
-    skills: "Sound Engineering, Audio Mixer Setup, Guitarist",
-    availability: "Dec 31 (Evening & Concert)",
-    experience: "Student Council Cultural Secretary 2021-2022",
-    notes: "Willing to assist bands (Warfaze & Shironamhin) with backstage equipment",
-    source: "EVENT_REGISTRATION",
-    status: "PENDING",
-    appliedAt: "2026-10-01T19:10:00.000Z",
-  },
-];
+/**
+ * Volunteer applications for event subcommittees, stored in the Volunteer table.
+ * Applications come from /volunteer and from the event registration form; the
+ * committee approves or declines them in /admin/volunteers.
+ */
 
-/** The made-up volunteers the store starts with; their numbers must never receive SMS. */
-export function isSampleVolunteer(id: string): boolean {
-  return INITIAL_VOLUNTEERS.some((v) => v.id === id);
+export const VOLUNTEER_STATUSES = ["PENDING", "APPROVED", "DECLINED"] as const;
+export type VolunteerStatus = (typeof VOLUNTEER_STATUSES)[number];
+
+export function isSubcommittee(value: unknown): value is string {
+  return typeof value === "string" && SUBCOMMITTEES.some((s) => s.id === value);
 }
 
-const STORE_PATH = path.join(process.cwd(), "uploads", "volunteers.json");
-
-async function loadStore(): Promise<VolunteerItem[]> {
-  try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    const data = JSON.parse(raw);
-    if (Array.isArray(data) && data.length > 0) return data;
-  } catch {
-    // If not on disk yet, initialize with defaults
-    await saveStore(INITIAL_VOLUNTEERS).catch(() => {});
-  }
-  return INITIAL_VOLUNTEERS;
-}
-
-async function saveStore(items: VolunteerItem[]): Promise<void> {
-  try {
-    await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
-    await fs.writeFile(STORE_PATH, JSON.stringify(items, null, 2), "utf8");
-  } catch (err) {
-    console.warn("[Volunteers Store] Could not write to disk:", err);
-  }
+function toItem(v: Volunteer): VolunteerItem {
+  return {
+    id: v.id,
+    fullName: v.fullName,
+    email: v.email,
+    phone: v.phone,
+    sscBatch: v.sscBatch,
+    subcommittee: v.subcommittee,
+    subcommitteeLabel: SUBCOMMITTEE_LABELS[v.subcommittee] || v.subcommittee,
+    skills: v.skills ?? undefined,
+    availability: v.availability ?? undefined,
+    experience: v.experience ?? undefined,
+    notes: v.notes ?? undefined,
+    source: v.source === "EVENT_REGISTRATION" ? "EVENT_REGISTRATION" : "PUBLIC_APPLICATION",
+    status: (VOLUNTEER_STATUSES as readonly string[]).includes(v.status) ? (v.status as VolunteerStatus) : "PENDING",
+    appliedAt: v.appliedAt.toISOString(),
+  };
 }
 
 export async function getVolunteers(filterStatus?: string): Promise<VolunteerItem[]> {
-  const all = await loadStore();
-  if (!filterStatus || filterStatus === "ALL") return all;
-  return all.filter((v) => v.status === filterStatus);
+  const where = filterStatus && (VOLUNTEER_STATUSES as readonly string[]).includes(filterStatus) ? { status: filterStatus } : {};
+  const rows = await prisma.volunteer.findMany({ where, orderBy: { appliedAt: "desc" } });
+  return rows.map(toItem);
 }
+
+const cut = (value: string | undefined, max: number) => {
+  const v = value?.trim();
+  return v ? v.slice(0, max) : null;
+};
 
 export async function createVolunteer(input: {
   fullName: string;
@@ -134,50 +61,57 @@ export async function createVolunteer(input: {
   experience?: string;
   notes?: string;
   source?: "PUBLIC_APPLICATION" | "EVENT_REGISTRATION";
+  userId?: string | null;
 }): Promise<VolunteerItem> {
-  const all = await loadStore();
-  const label =
-    SUBCOMMITTEE_LABELS[input.subcommittee] ||
-    SUBCOMMITTEES.find((s) => s.name === input.subcommittee)?.name ||
-    input.subcommittee;
-
-  const item: VolunteerItem = {
-    id: `vol-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    fullName: input.fullName.trim(),
-    email: input.email.trim().toLowerCase(),
-    phone: input.phone.trim(),
-    sscBatch: input.sscBatch,
-    subcommittee: input.subcommittee,
-    subcommitteeLabel: label,
-    skills: input.skills?.trim(),
-    availability: input.availability?.trim() || "Anytime needed",
-    experience: input.experience?.trim(),
-    notes: input.notes?.trim(),
-    source: input.source || "PUBLIC_APPLICATION",
-    status: "PENDING",
-    appliedAt: new Date().toISOString(),
-  };
-
-  all.unshift(item);
-  await saveStore(all);
-  return item;
+  if (!isSubcommittee(input.subcommittee)) throw new AppError("INVALID_SUBCOMMITTEE", 400, "Please select a subcommittee.");
+  const email = input.email.trim().toLowerCase().slice(0, 254);
+  // One open application per person and subcommittee; a declined one may apply again.
+  const existing = await prisma.volunteer.findFirst({
+    where: { email, subcommittee: input.subcommittee, status: { in: ["PENDING", "APPROVED"] } },
+    select: { status: true },
+  });
+  if (existing) {
+    throw new AppError(
+      "ALREADY_APPLIED",
+      409,
+      existing.status === "APPROVED" ? "You are already a volunteer in this subcommittee." : "You have already applied to this subcommittee; the committee will contact you."
+    );
+  }
+  const row = await prisma.volunteer.create({
+    data: {
+      fullName: input.fullName.trim().slice(0, 120),
+      email,
+      phone: input.phone.trim().slice(0, 30),
+      sscBatch: input.sscBatch,
+      subcommittee: input.subcommittee,
+      skills: cut(input.skills, 2000),
+      availability: cut(input.availability, 200) ?? "Anytime needed",
+      experience: cut(input.experience, 2000),
+      notes: cut(input.notes, 2000),
+      source: input.source || "PUBLIC_APPLICATION",
+      userId: input.userId ?? null,
+    },
+  });
+  return toItem(row);
 }
 
 export async function updateVolunteerStatus(
   id: string,
-  status: "APPROVED" | "DECLINED" | "PENDING",
-  subcommittee?: string
+  status: VolunteerStatus,
+  subcommittee?: string,
+  decidedBy?: string
 ): Promise<VolunteerItem | null> {
-  const all = await loadStore();
-  const target = all.find((v) => v.id === id);
-  if (!target) return null;
-
-  target.status = status;
-  if (subcommittee) {
-    target.subcommittee = subcommittee;
-    target.subcommitteeLabel = SUBCOMMITTEE_LABELS[subcommittee] || subcommittee;
-  }
-
-  await saveStore(all);
-  return target;
+  if (subcommittee && !isSubcommittee(subcommittee)) throw new AppError("INVALID_SUBCOMMITTEE", 400, "Unknown subcommittee.");
+  const found = await prisma.volunteer.findUnique({ where: { id }, select: { id: true } });
+  if (!found) return null;
+  const row = await prisma.volunteer.update({
+    where: { id },
+    data: {
+      status,
+      ...(subcommittee ? { subcommittee } : {}),
+      decidedBy: decidedBy ?? null,
+      decidedAt: status === "PENDING" ? null : new Date(),
+    },
+  });
+  return toItem(row);
 }

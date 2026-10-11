@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 185 / 185 passing (29 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 195 / 195 passing (31 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -67,7 +67,7 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Online payments (bKash, Nagad, SSLCommerz APIs) | Off | Decision 2026-10-11: manual payment only. Checkout returns 410 unless `ONLINE_PAYMENTS_ENABLED=true`; code kept for later |
 | Activity log (`/admin/logs`) | Live | Every write action, sign-in and security event: who, what, outcome, IP, browser; secrets never stored; kept `LOG_RETENTION_DAYS` (365) |
 | Messages, notifications, realtime (SSE), web push | Partial | DB-backed, with sample-data fallbacks in some pages |
-| Committee volunteers | Partial | Stored in `uploads/volunteers.json`, pre-filled with 5 made-up volunteers |
+| Committee volunteers | Live | `Volunteer` table; admins approve/decline in `/admin/volunteers`; old JSON entries imported with `npm run db:import-volunteers` |
 | Feed / posts | Partial | API reads the DB, falls back to sample posts |
 | News, stories, achievements, gallery | Mock | DB models exist (`NewsArticle`, `AlumniStory`, `Achievement`, `Gallery*`) but pages render sample data |
 | Careers / jobs, mentorship | Mock | In-memory sample lists; posted jobs and bookings vanish on restart |
