@@ -16,6 +16,7 @@ import { getSessionUser } from "@/lib/session-user";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
+import { canReceiveMessages, memberBasics } from "@/lib/network";
 
 /**
  * GET: Fetch conversations or specific thread
@@ -42,7 +43,9 @@ export async function GET(req: NextRequest) {
         take: 100,
       });
 
-      return NextResponse.json({ messages });
+      // The other member's name and photo, for the thread header.
+      const partner = (await memberBasics([withUserId])).get(withUserId) ?? null;
+      return NextResponse.json({ messages, partner });
     }
 
     // Fetch conversations (bounded to latest 200 messages per direction to prevent query exhaustion)
@@ -92,7 +95,10 @@ export async function GET(req: NextRequest) {
       (a, b) => b.lastTime.getTime() - a.lastTime.getTime()
     );
 
-    return NextResponse.json({ conversations });
+    const people = await memberBasics(conversations.map((c) => c.partnerId));
+    return NextResponse.json({
+      conversations: conversations.map((c) => ({ ...c, partner: people.get(c.partnerId) ?? null })),
+    });
   } catch (error) {
     console.error("[Messages API] GET error:", error);
     return NextResponse.json(
@@ -142,8 +148,8 @@ export async function POST(req: NextRequest) {
     // Save to database; never report a message as sent unless it was stored.
     let message;
     try {
-      const receiver = await prisma.user.findUnique({ where: { id: receiverId }, select: { id: true } });
-      if (!receiver) {
+      // Only active members (verified or staff, not disabled) can be messaged.
+      if (typeof receiverId !== "string" || !(await canReceiveMessages(receiverId))) {
         return NextResponse.json({ error: "That member could not be found." }, { status: 404 });
       }
       message = await prisma.message.create({
@@ -179,7 +185,7 @@ export async function POST(req: NextRequest) {
             userId: receiverId,
             title: "New Message",
             message: `You have a new message`,
-            link: `/messages`,
+            link: `/messages?to=${senderId}`,
             type: "CONNECTION",
             isRead: false,
           },

@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 229 / 229 passing (37 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 234 / 234 passing (38 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -66,7 +66,8 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Donations | Live | Manual: donor pays by bKash / Nagad / Bangla QR / bank / cash and submits the transaction ID; admins verify or reject in `/admin/donations`; verified ones count and get an emailed receipt |
 | Online payments (bKash, Nagad, SSLCommerz APIs) | Off | Decision 2026-10-11: manual payment only. Checkout returns 410 unless `ONLINE_PAYMENTS_ENABLED=true`; code kept for later |
 | Activity log (`/admin/logs`) | Live | Every write action, sign-in and security event: who, what, outcome, IP, browser; secrets never stored; kept `LOG_RETENTION_DAYS` (365) |
-| Messages, notifications, realtime (SSE), web push | Partial | DB-backed, with sample-data fallbacks in some pages |
+| Messages | Live | Real conversations, `/messages?to=<member>`, live updates, unread counts; only active members can be messaged |
+| Notifications, realtime (SSE), web push | Partial | DB-backed; web push sending is a stub |
 | Committee volunteers | Live | `Volunteer` table; admins approve/decline in `/admin/volunteers`; old JSON entries imported with `npm run db:import-volunteers` |
 | Feed / posts | Partial | API reads the DB, falls back to sample posts |
 | News | Live | `/admin/news` (write, publish, feature, delete, image upload); `/news` and `/news/[id]` show published articles only |
@@ -74,7 +75,8 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Stories, achievements | Live | `/admin/stories` (two tabs); `/stories`, `/stories/[id]`, `/achievements`, homepage and sitemap show published entries only |
 | Careers / job board | Live | Verified members post, admins approve in `/admin/jobs`; applications stored and emailed to the poster; `/careers/mine` for posters |
 | Mentorship | Live | Members apply as mentors, admins approve in `/admin/mentors`; requests stored and emailed; mentors accept with real meeting details in `/mentorship/mine` |
-| Network, dashboard widgets | Mock / mixed | Built from sample alumni, batches, donations |
+| Network | Live | Directory of verified members with search, batch filter, profile and message buttons |
+| Dashboard widgets | Mock / mixed | Built partly from sample alumni, batches, donations (roadmap 10) |
 
 ## 5. Security review — 2026-10-11
 
