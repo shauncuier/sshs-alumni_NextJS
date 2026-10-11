@@ -14,9 +14,13 @@ export default withAuth(
       url.searchParams.set("blocked", block.code === "PENDING_APPROVAL" ? "pending" : "rejected");
       return NextResponse.redirect(url);
     }
-    // Admin role checks live in app/admin/layout.tsx, which shows a 403 page
-    // (app/forbidden.tsx) instead of silently redirecting members elsewhere.
-    return NextResponse.next();
+    // Admin role checks live in app/admin/layout.tsx and template.tsx, which show
+    // a 403 page (app/forbidden.tsx) instead of silently redirecting members
+    // elsewhere. They need the path, which server layouts cannot read, so pass
+    // it on; any x-pathname header sent by the browser is overwritten here.
+    const headers = new Headers(req.headers);
+    headers.set("x-pathname", req.nextUrl.pathname);
+    return NextResponse.next({ request: { headers } });
   },
   {
     callbacks: {

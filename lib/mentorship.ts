@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import type { MentorProfile } from "@/lib/career-data";
 import { sendEmail } from "@/lib/email";
+import { can } from "@/lib/permissions";
 
 /**
  * Alumni mentorship. Verified members apply to mentor; an admin approves them
@@ -24,7 +25,8 @@ export const MENTOR_STATUSES = ["PENDING", "APPROVED", "REJECTED", "PAUSED"] as 
 export const REQUEST_STATUSES = ["PENDING", "ACCEPTED", "DECLINED", "CANCELLED"] as const;
 
 type Actor = { id: string; email: string; role: string };
-const isStaff = (role: string) => role === "ADMIN" || role === "SUPER_ADMIN";
+// Whoever may review mentors (admins and moderators, see lib/permissions.ts).
+const isStaff = (role: string) => can(role, "mentors");
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 const bad = (message: string) => new AppError("INVALID_MENTORSHIP", 400, message);
 const jsonList = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
@@ -147,7 +149,7 @@ export async function setMentorStatus(actor: Actor, mentorId: string, action: un
     if (action === "RESUME" && mentor.status !== "PAUSED") throw new AppError("INVALID_STATE", 409, "This profile is not paused.");
     return prisma.mentor.update({ where: { id: mentorId }, data: { status: action === "PAUSE" ? "PAUSED" : "APPROVED" } });
   }
-  if (!staff) throw new AppError("FORBIDDEN", 403, "Only administrators can review mentors.");
+  if (!staff) throw new AppError("FORBIDDEN", 403, "Only the committee can review mentors.");
   if (action === "APPROVE") {
     if (mentor.status === "APPROVED") throw new AppError("INVALID_STATE", 409, "This mentor is already approved.");
     return prisma.mentor.update({ where: { id: mentorId }, data: { status: "APPROVED", reviewedBy: actor.email, reviewedAt: now, rejectReason: null } });

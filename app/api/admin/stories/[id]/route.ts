@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
-import { requireAdmin } from "@/lib/admin/require-admin";
+import { requireArea } from "@/lib/admin/require-admin";
 import { deleteStory, updateStory } from "@/lib/stories";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
@@ -12,7 +12,7 @@ const DENIED = "Only administrators can manage stories.";
 export async function PATCH(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
-    const me = await requireAdmin(DENIED);
+    const me = await requireArea("stories", DENIED);
     const body = await readJsonBody(req);
     const { item, published } = await updateStory((await params).id, body, me.email);
     const action = published ? "story.published" : body.isPublished === false ? "story.unpublished" : "story.updated";
@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: Params) {
 export async function DELETE(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
-    const me = await requireAdmin(DENIED);
+    const me = await requireArea("stories", DENIED);
     const removed = await deleteStory((await params).id);
     await logActivity({ category: "CONTENT", action: "story.deleted", summary: `Deleted story "${removed.title}"`, actor: me, targetType: "AlumniStory", targetId: removed.id, req });
     return NextResponse.json({ success: true });

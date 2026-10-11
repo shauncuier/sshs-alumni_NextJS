@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   title: "Access Restricted",
 };
 
-// Rendered with a 403 status when a page calls forbidden(), e.g. a member opening /admin.
+// Rendered with a 403 status when a page calls forbidden(), e.g. a member opening
+// /admin, or a moderator opening an admin-only section (lib/permissions.ts).
 export default function Forbidden() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -19,9 +20,9 @@ export default function Forbidden() {
         <ErrorScreen
           code="403"
           tone="amber"
-          title="Administrators Only"
+          title="Not Available for Your Account"
           icon={<ShieldAlert className="w-12 h-12" />}
-          message="You're signed in, but this area is reserved for the alumni association's administrators. If you should have access, ask the executive committee to grant your account an administrator role."
+          message="You're signed in, but your account's role does not include this page. Committee members see only the parts of the admin panel their role covers. If you need access, ask the executive committee."
         >
           <Link href="/dashboard" className={errorActionPrimary}>
             <LayoutDashboard className="w-4 h-4" /> My Dashboard

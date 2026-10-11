@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
-import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 import { createNews, listAllNews, NEWS_CATEGORIES } from "@/lib/news";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
-import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { requireArea } from "@/lib/admin/require-admin";
 
-async function requireAdmin() {
-  const me = await getSessionUser();
-  if (!me || !isAdminRole(me.role)) throw new AppError("FORBIDDEN", 403, "Only administrators can manage news.");
-  return me;
-}
+const requireAdmin = () => requireArea("news", "You cannot manage news.");
 
 // GET /api/admin/news — every article, drafts first.
 export async function GET() {

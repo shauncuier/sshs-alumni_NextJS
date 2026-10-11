@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 234 / 234 passing (38 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 239 / 239 passing (39 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -44,7 +44,7 @@ After any change to `prisma/schema.prisma`: `npm run db:push`, then **restart `n
 | --- | --- | --- | --- |
 | Super Admin (one) | Everything, including managing admins | `SUPER_ADMIN_EMAIL` | `SUPER_ADMIN_PASSWORD` |
 | Admin | Admin console; manage alumni and moderators | `SEED_ADMIN_EMAIL` | `SEED_ADMIN_PASSWORD` |
-| Moderator | Gate scanner, content moderation; no member, money or settings access | `SEED_MODERATOR_EMAIL` | `SEED_MODERATOR_PASSWORD` |
+| Moderator | News, gallery, stories & achievements, jobs, mentors, gate scanner (`lib/permissions.ts`); no members, money, SMS, events or logs | `SEED_MODERATOR_EMAIL` | `SEED_MODERATOR_PASSWORD` |
 | Alumni | Member features once verified | `SEED_ALUMNI_EMAIL` | `SEED_ALUMNI_PASSWORD` |
 
 The super admin is defined only by env. It is created or restored (role, status, password) at every server start (`instrumentation.ts`). The console cannot grant `SUPER_ADMIN` or edit that account, and its password cannot be changed from Settings.
@@ -114,7 +114,6 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 
 - **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
 - Admin pages are only partly responsive on phones (users page is responsive; others are not yet).
-- 403 page says "Administrators Only" even on `/gate`, which moderators may use.
 - Gate scanner has no camera; `Permissions-Policy: camera=()` in `next.config.ts` would block one.
 - Changing an event's membership flag while joins are pending leaves them unapprovable.
 - Rejected applicants' photos and proofs are kept indefinitely.

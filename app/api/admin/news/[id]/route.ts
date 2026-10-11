@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
-import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 import { deleteNews, updateNews } from "@/lib/news";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
-import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { requireArea } from "@/lib/admin/require-admin";
 
 type Params = { params: Promise<{ id: string }> };
 
-async function requireAdmin() {
-  const me = await getSessionUser();
-  if (!me || !isAdminRole(me.role)) throw new AppError("FORBIDDEN", 403, "Only administrators can manage news.");
-  return me;
-}
+const requireAdmin = () => requireArea("news", "You cannot manage news.");
 
 // PATCH /api/admin/news/[id] — edit, publish/unpublish or feature an article.
 export async function PATCH(req: Request, { params }: Params) {

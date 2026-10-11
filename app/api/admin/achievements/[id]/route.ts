@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
-import { requireAdmin } from "@/lib/admin/require-admin";
+import { requireArea } from "@/lib/admin/require-admin";
 import { deleteAchievement, updateAchievement } from "@/lib/achievements";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
@@ -12,7 +12,7 @@ const DENIED = "Only administrators can manage achievements.";
 export async function PATCH(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
-    const me = await requireAdmin(DENIED);
+    const me = await requireArea("stories", DENIED);
     const body = await readJsonBody(req);
     const { item, published } = await updateAchievement((await params).id, body, me.email);
     const action = published ? "achievement.published" : body.isPublished === false ? "achievement.unpublished" : "achievement.updated";
@@ -28,7 +28,7 @@ export async function PATCH(req: Request, { params }: Params) {
 export async function DELETE(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
-    const me = await requireAdmin(DENIED);
+    const me = await requireArea("stories", DENIED);
     const removed = await deleteAchievement((await params).id);
     await logActivity({ category: "CONTENT", action: "achievement.deleted", summary: `Deleted achievement "${removed.recipientName}: ${removed.title}"`, actor: me, targetType: "Achievement", targetId: removed.id, req });
     return NextResponse.json({ success: true });

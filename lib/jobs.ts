@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import type { JobListing } from "@/lib/career-data";
 import { sendEmail } from "@/lib/email";
+import { can } from "@/lib/permissions";
 
 /**
  * The alumni job board. Verified members post jobs; an admin approves each one
@@ -18,7 +19,8 @@ export const JOB_STATUSES = ["PENDING", "APPROVED", "REJECTED", "CLOSED"] as con
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
 type Actor = { id: string; email: string; role: string };
-const isStaff = (role: string) => role === "ADMIN" || role === "SUPER_ADMIN";
+// Whoever may review jobs (admins and moderators, see lib/permissions.ts).
+const isStaff = (role: string) => can(role, "jobs");
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 const bad = (message: string) => new AppError("INVALID_JOB", 400, message);
 const DAY_MS = 24 * 60 * 60_000;
@@ -259,7 +261,7 @@ export async function decideJob(actor: Actor, jobId: string, action: unknown, re
     if (job.status === "CLOSED" || job.status === "REJECTED") throw new AppError("ALREADY_DECIDED", 409, "This job is already closed.");
     return prisma.job.update({ where: { id: jobId }, data: { status: "CLOSED" } });
   }
-  if (!staff) throw new AppError("FORBIDDEN", 403, "Only administrators can review jobs.");
+  if (!staff) throw new AppError("FORBIDDEN", 403, "Only the committee can review jobs.");
   if (action === "APPROVE") {
     if (job.status !== "PENDING") throw new AppError("ALREADY_DECIDED", 409, `This job is already ${job.status.toLowerCase()}.`);
     return prisma.job.update({ where: { id: jobId }, data: { status: "APPROVED", reviewedBy: actor.email, reviewedAt: now, rejectReason: null } });
@@ -274,7 +276,7 @@ export async function decideJob(actor: Actor, jobId: string, action: unknown, re
 }
 
 export async function deleteJob(actor: Actor, jobId: string): Promise<Job> {
-  if (!isStaff(actor.role)) throw new AppError("FORBIDDEN", 403, "Only administrators can delete jobs.");
+  if (!isStaff(actor.role)) throw new AppError("FORBIDDEN", 403, "Only the committee can delete jobs.");
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new AppError("JOB_NOT_FOUND", 404, "Job not found.");
   await prisma.job.delete({ where: { id: jobId } });

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { can, type AdminArea } from "@/lib/permissions";
 import {
   LayoutDashboard,
   UserCheck,
@@ -38,23 +39,23 @@ export interface AdminShellProps {
 }
 
 const ADMIN_NAV = [
-  { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck },
-  { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
-  { name: "Bulk SMS Broadcast", href: "/admin/sms", icon: MessageSquare },
-  { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake },
-  { name: "Manage Batches", href: "/admin/batches", icon: Layers },
-  { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
-  { name: "Gate Scanner", href: "/gate", icon: QrCode },
-  { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
-  { name: "User Management", href: "/admin/users", icon: Users },
-  { name: "News", href: "/admin/news", icon: Newspaper },
-  { name: "Gallery", href: "/admin/gallery", icon: Images },
-  { name: "Stories & Achievements", href: "/admin/stories", icon: BookOpen },
-  { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
-  { name: "Mentors", href: "/admin/mentors", icon: GraduationCap },
-  { name: "Activity Log", href: "/admin/logs", icon: ScrollText },
-] as const;
+  { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard, area: "dashboard" },
+  { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck, area: "verifications" },
+  { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck, area: "alumni" },
+  { name: "Bulk SMS Broadcast", href: "/admin/sms", icon: MessageSquare, area: "sms" },
+  { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake, area: "volunteers" },
+  { name: "Manage Batches", href: "/admin/batches", icon: Layers, area: "batches" },
+  { name: "Events & Reunions", href: "/admin/events", icon: Calendar, area: "events" },
+  { name: "Gate Scanner", href: "/gate", icon: QrCode, area: "gate" },
+  { name: "Donations & Funds", href: "/admin/donations", icon: Heart, area: "donations" },
+  { name: "User Management", href: "/admin/users", icon: Users, area: "users" },
+  { name: "News", href: "/admin/news", icon: Newspaper, area: "news" },
+  { name: "Gallery", href: "/admin/gallery", icon: Images, area: "gallery" },
+  { name: "Stories & Achievements", href: "/admin/stories", icon: BookOpen, area: "stories" },
+  { name: "Jobs", href: "/admin/jobs", icon: Briefcase, area: "jobs" },
+  { name: "Mentors", href: "/admin/mentors", icon: GraduationCap, area: "mentors" },
+  { name: "Activity Log", href: "/admin/logs", icon: ScrollText, area: "logs" },
+] as const satisfies readonly { name: string; href: string; icon: unknown; area: AdminArea }[];
 
 export default function AdminShell({ children, user }: AdminShellProps) {
   const pathname = usePathname();
@@ -69,10 +70,12 @@ export default function AdminShell({ children, user }: AdminShellProps) {
   }
 
   const effectiveRole = user?.role || session?.user?.role;
-  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : "Administrator";
+  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : effectiveRole === "MODERATOR" ? "Moderator" : "Administrator";
+  // Only the sections this role may use (lib/permissions.ts); pages and APIs check the same map.
+  const navItems = ADMIN_NAV.filter((item) => can(effectiveRole, item.area));
   const userEmail = user?.email ?? (mounted ? session?.user?.email : null);
 
-  const activeItem = ADMIN_NAV.find((item) => pathname === item.href) || ADMIN_NAV[0];
+  const activeItem = navItems.find((item) => pathname === item.href) || navItems[0] || ADMIN_NAV[0];
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-100">
@@ -152,7 +155,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
 
         {/* Drawer Links */}
         <nav className="flex-1 px-3 py-2 space-y-1.5 overflow-y-auto" suppressHydrationWarning>
-          {ADMIN_NAV.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
@@ -207,7 +210,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
 
         {/* Links */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto" suppressHydrationWarning>
-          {ADMIN_NAV.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (

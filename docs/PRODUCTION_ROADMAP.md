@@ -30,7 +30,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 9d | Careers / job board stored in the database, with moderation | 2 · Real data | L | ✅ Done 2026-10-12 |
 | 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ✅ Done 2026-10-12 |
 | 9f | Network built from real verified members | 2 · Real data | M | ✅ Done 2026-10-12 |
-| 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ⬜ |
+| 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ⬜ |
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ⬜ |
 | 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
@@ -154,7 +154,9 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Decision:** directory-style network (option 1) — no connection requests; connections can be added later.
 **Result:** `/network` lists real verified members (never yourself, pending or disabled accounts), searchable by name, profession, company or city, with a batch filter and paging; phone and email only when the member made them public; "View profile" and "Message" on every card. `/messages` rebuilt on the real messaging API: your conversations with names and photos, `/messages?to=<member>` starts a conversation, live updates, unread counts, failed sends shown as "Not sent", phone layout with list/thread switch; fake contacts, connections and call buttons removed. Only active members can receive messages; message notifications open the conversation. 5 tests.
 
-### 9g. Moderators manage content · M
+### 9g. Moderators manage content · M · ✅ Done 2026-10-12
+**Result:** one permission map (`lib/permissions.ts`): admins and the super admin use every area; moderators use News, Gallery, Stories & Achievements, Jobs, Mentors and the gate scanner only. The admin sidebar shows only allowed sections; `app/admin/template.tsx` checks every page on every navigation (the proxy passes the path), moderators opening `/admin` land on News, and refused pages are logged; the content APIs use `requireArea`, everything else stays admin-only; the member sidebar/header show the admin link to moderators too; the 403 page no longer says "Administrators Only". Test reset made sturdier (60 s transaction). 5 tests.
+
 **Why:** the agreed roles say moderators handle content and gallery, but the admin panel admits admins only.
 **Tasks:** a small permission map (`can(role, area)`) used by the admin layout, sidebar and APIs; moderators see News, Gallery, Stories and the gate scanner only.
 **Done when:** a moderator can publish news but cannot open users, donations, SMS or logs.
@@ -199,7 +201,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Done when:** a scheduled clean-up runs and is logged.
 
 ### 16. Known edge cases · S
-**Tasks:** block changing an event's membership flag while joins are pending (or migrate them); 403 page wording for moderators on `/gate`; update the outdated parts of `PRODUCTION_DEPLOYMENT.md`.
+**Tasks:** block changing an event's membership flag while joins are pending (or migrate them); ~~403 page wording for moderators~~ (done in 9g); update the outdated parts of `PRODUCTION_DEPLOYMENT.md`.
 **Done when:** each has a test or a manual check written down.
 
 ---

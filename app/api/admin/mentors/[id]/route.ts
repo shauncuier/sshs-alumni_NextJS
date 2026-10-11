@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity, logFailure } from "@/lib/activity-log";
-import { requireAdmin } from "@/lib/admin/require-admin";
+import { requireArea } from "@/lib/admin/require-admin";
 import { setMentorStatus } from "@/lib/mentorship";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
@@ -11,10 +11,10 @@ const PAST: Record<string, string> = { APPROVE: "approved", REJECT: "rejected", 
 // PATCH /api/admin/mentors/[id] — { action: "APPROVE" | "REJECT" | "PAUSE" | "RESUME", reason? }
 export async function PATCH(req: Request, { params }: Params) {
   const { id } = await params;
-  let me: Awaited<ReturnType<typeof requireAdmin>> | null = null;
+  let me: Awaited<ReturnType<typeof requireArea>> | null = null;
   try {
     requireSameOrigin(req);
-    me = await requireAdmin("Only administrators can review mentors.");
+    me = await requireArea("mentors", "You cannot review mentors.");
     const { action, reason } = await readJsonBody(req);
     const mentor = await setMentorStatus(me, id, action, reason);
     await logActivity({

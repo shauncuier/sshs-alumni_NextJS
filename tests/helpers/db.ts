@@ -9,11 +9,16 @@ export async function resetDatabase(): Promise<void> {
   // FOREIGN_KEY_CHECKS=0 actually applies to the TRUNCATEs that follow it —
   // separate $executeRawUnsafe calls can otherwise land on different
   // connections and fail with MySQL error 1701.
-  await prisma.$transaction([
-    prisma.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 0"),
-    ...tables.map(({ t }) => prisma.$executeRawUnsafe(`TRUNCATE TABLE \`${t}\``)),
-    prisma.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 1"),
-  ]);
+  // An interactive transaction with a generous timeout: with 25+ tables the
+  // TRUNCATEs can take longer than Prisma's 5-second default on a busy machine.
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 0");
+      for (const { t } of tables) await tx.$executeRawUnsafe(`TRUNCATE TABLE \`${t}\``);
+      await tx.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 1");
+    },
+    { timeout: 60_000, maxWait: 30_000 }
+  );
 }
 
 let counter = 0;

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
-import { requireAdmin } from "@/lib/admin/require-admin";
+import { requireArea } from "@/lib/admin/require-admin";
 import { listJobsForAdmin } from "@/lib/jobs";
 
 // GET /api/admin/jobs?status= — every job for review, pending first.
 export async function GET(req: Request) {
   try {
-    await requireAdmin("Only administrators can review jobs.");
+    await requireArea("jobs", "You cannot review jobs.");
     const rows = await listJobsForAdmin(new URL(req.url).searchParams.get("status"));
     return NextResponse.json({
       jobs: rows.map((j) => ({

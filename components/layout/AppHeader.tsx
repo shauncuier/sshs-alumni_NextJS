@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 import { useSession, signOut } from "next-auth/react";
 import {
   Bell,
@@ -163,9 +164,9 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
                   <Settings className="w-3.5 h-3.5 text-emerald-700" /> Account Settings
                 </Link>
 
-                {isAdmin && (
+                {canUseAdminPanel(userRole) && (
                   <Link
-                    href="/admin"
+                    href={homeForRole(userRole)}
                     onClick={() => setProfileOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 text-amber-700 font-semibold"
                   >
