@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 223 / 223 passing (36 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 229 / 229 passing (37 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -73,7 +73,7 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Gallery | Live | `/admin/gallery` (albums, multi-photo upload, captions, cover, publish); `/gallery` and the homepage show published albums only |
 | Stories, achievements | Live | `/admin/stories` (two tabs); `/stories`, `/stories/[id]`, `/achievements`, homepage and sitemap show published entries only |
 | Careers / job board | Live | Verified members post, admins approve in `/admin/jobs`; applications stored and emailed to the poster; `/careers/mine` for posters |
-| Mentorship | Mock | In-memory sample mentors; bookings vanish on restart (roadmap 9e) |
+| Mentorship | Live | Members apply as mentors, admins approve in `/admin/mentors`; requests stored and emailed; mentors accept with real meeting details in `/mentorship/mine` |
 | Network, dashboard widgets | Mock / mixed | Built from sample alumni, batches, donations |
 
 ## 5. Security review — 2026-10-11

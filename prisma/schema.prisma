@@ -593,3 +593,58 @@ model JobApplication {
 
   @@unique([jobId, email])
 }
+
+/// A member who offers mentorship (lib/mentorship.ts). New profiles wait for an
+/// admin to approve them; only APPROVED mentors are listed on /mentorship.
+model Mentor {
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  userId            String    @unique @db.VarChar(36)
+  email             String    @db.VarChar(254)
+  name              String    @db.VarChar(120)
+  sscBatch          Int?
+  designation       String    @db.VarChar(120)
+  organization      String    @db.VarChar(200)
+  domain            String    @db.VarChar(60)
+  locationCity      String    @db.VarChar(120)
+  avatarUrl         String?   @db.VarChar(500)
+  bio               String    @db.Text
+  yearsOfExperience Int       @default(0)
+  availableDays     Json
+  skills            Json
+  topicsOffered     Json
+  /// PENDING (awaiting review), APPROVED (listed), REJECTED, PAUSED (hidden by the mentor or an admin).
+  status            String    @default("PENDING") @db.VarChar(20)
+  reviewedBy        String?   @db.VarChar(254)
+  reviewedAt        DateTime?
+  rejectReason      String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  requests MentorshipRequest[]
+
+  @@index([status])
+}
+
+/// A member's request for a mentorship session; the mentor accepts (sharing how
+/// to meet) or declines it in /mentorship/mine.
+model MentorshipRequest {
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  mentorId       String    @db.VarChar(36)
+  mentor         Mentor    @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  menteeUserId   String    @db.VarChar(36)
+  menteeName     String    @db.VarChar(120)
+  menteeEmail    String    @db.VarChar(254)
+  menteeBatch    Int?
+  topic          String    @db.VarChar(200)
+  preferredTime  String?   @db.VarChar(120)
+  message        String?   @db.Text
+  /// PENDING, ACCEPTED, DECLINED, CANCELLED.
+  status         String    @default("PENDING") @db.VarChar(20)
+  meetingDetails String?   @db.VarChar(500)
+  mentorReply    String?   @db.Text
+  respondedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([mentorId, status])
+  @@index([menteeUserId])
+}

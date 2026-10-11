@@ -24,6 +24,7 @@ import {
   Images,
   BookOpen,
   Briefcase,
+  GraduationCap,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -51,6 +52,7 @@ const ADMIN_NAV = [
   { name: "Gallery", href: "/admin/gallery", icon: Images },
   { name: "Stories & Achievements", href: "/admin/stories", icon: BookOpen },
   { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
+  { name: "Mentors", href: "/admin/mentors", icon: GraduationCap },
   { name: "Activity Log", href: "/admin/logs", icon: ScrollText },
 ] as const;
 

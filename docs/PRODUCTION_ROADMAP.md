@@ -28,7 +28,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 9b | Gallery from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9d | Careers / job board stored in the database, with moderation | 2 · Real data | L | ✅ Done 2026-10-12 |
-| 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ⬜ |
+| 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ✅ Done 2026-10-12 |
 | 9f | Network built from real verified members | 2 · Real data | M | ⬜ |
 | 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ⬜ |
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ⬜ |
@@ -146,6 +146,9 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 
 ### 9d. Careers / job board · ✅ Done 2026-10-12
 **Result:** `Job` and `JobApplication` tables (`lib/jobs.ts`); only verified members can post, their jobs wait in `/admin/jobs` for approval (admins' own posts go live); admins approve, reject with a reason the poster sees, close or delete; `/careers` and `/careers/[id]` show approved jobs from the database (pending/rejected ones are 404), applications stop after the deadline; applying stores the application (one per email per job, CV must be an https link) and emails the poster with Reply-To the applicant; posters see status and applications in `/careers/mine` and can close their jobs; the sample jobs are gone; all actions in the activity log; 6 tests.
+
+### 9e. Mentorship · ✅ Done 2026-10-12
+**Result:** `Mentor` and `MentorshipRequest` tables (`lib/mentorship.ts`); verified members apply at `/mentorship/become` and admins approve, reject (with a reason), hide or relist them at `/admin/mentors`; mentors can pause their own listing; `/mentorship` lists approved mentors only (no fake ratings; "mentees helped" counts accepted requests); signed-in verified members send requests (one open request per mentor, never to themselves), the mentor is emailed and accepts with real meeting details or declines at `/mentorship/mine`, and the mentee is emailed and can cancel; the fake Google Meet links and sample mentors are gone; all actions in the activity log; 6 tests.
 
 ### 9g. Moderators manage content · M
 **Why:** the agreed roles say moderators handle content and gallery, but the admin panel admits admins only.
