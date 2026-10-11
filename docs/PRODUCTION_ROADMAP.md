@@ -1,0 +1,261 @@
+# Production Roadmap — SSGHS Alumni Platform
+
+**Created:** 2026-10-11 · **Goal:** take the platform from "works locally" to a safe public launch.
+**How we use it:** one step at a time, in order. A step is finished only when every line under **Done when** is true. Tick it in the tracker, commit, then start the next step.
+
+Current state and the security review behind this list: [PROJECT_STATUS.md](PROJECT_STATUS.md).
+
+Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ several days.
+**You** = needs a decision, an account or access only the committee has.
+
+---
+
+## Tracker
+
+| # | Step | Phase | Size | Status |
+| --- | --- | --- | --- | --- |
+| 1 | Finish the activity log | 0 · In-flight | M | ✅ Done 2026-10-11 |
+| 2 | Commit the volunteer page header/footer fix | 0 · In-flight | S | ✅ Done 2026-10-11 |
+| 3 | Choose hosting, domain and backup location (**You**) | 1 · Decisions | S | ⬜ |
+| 4 | Decide which sections launch, which are hidden (**You**) | 1 · Decisions | S | ⬜ |
+| 5 | Decide payments at launch: manual only or online gateways (**You**) | 1 · Decisions | S | ✅ Manual only |
+| 6 | Hide or remove the sections not launching | 2 · Real data | M | ⬜ |
+| 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ⬜ |
+| 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ⬜ |
+| 7 | Volunteers into the database | 2 · Real data | M | ⬜ |
+| 8 | Bulk SMS history into the database | 2 · Real data | S | ⬜ |
+| 9 | News, stories, achievements, gallery from the database (if launching) | 2 · Real data | L | ⬜ |
+| 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ⬜ |
+| 11 | Production-safe seed (no sample content) | 2 · Real data | S | ⬜ |
+| 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
+| 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ⬜ |
+| 14 | Dependency audit and security headers | 3 · Security | S | ⬜ |
+| 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ⬜ |
+| 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ⬜ |
+| 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | ⬜ |
+| 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | ⬜ |
+| 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | ⬜ |
+| 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
+| 21 | Admin pages usable on phones | 5 · UX | M | ⬜ |
+| 22 | Gate scanner with the phone camera | 5 · UX | M | ⬜ |
+| 23 | Join flow tested end to end on real phones | 5 · UX | S | ⬜ |
+| 24 | Production build passes, warnings cleaned | 6 · Quality | M | ⬜ |
+| 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ⬜ |
+| 26 | Manual QA walkthrough for every role | 6 · Quality | S | ⬜ |
+| 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | ⬜ |
+| 28 | Server set up (Node, Nginx, PM2, SSL, uploads folder) | 7 · Deploy | M | ⬜ |
+| 29 | Production database: back up, rehearse, migrate, seed | 7 · Deploy | M | ⬜ |
+| 30 | Backups running and a restore tested | 7 · Deploy | S | ⬜ |
+| 31 | Monitoring and alerts | 7 · Deploy | S | ⬜ |
+| 32 | Soft launch with the committee | 8 · Launch | S | ⬜ |
+| 33 | Public launch | 8 · Launch | S | ⬜ |
+| 34 | First-week watch and clean-up | 8 · Launch | S | ⬜ |
+
+---
+
+## Phase 0 — Finish what is in progress
+
+### 1. Finish the activity log · M · ✅ Done 2026-10-11
+**Result:** `ActivityLog` table; `lib/activity-log.ts`; every write route logged (sign-in/out and failed sign-ins, joins and registrations with how the contact was verified, SMS and email codes, user management, membership and registration decisions, event changes, bulk SMS, profile/password/photo, payment start/complete/fail/mismatch, gate check-ins, ID card scans, posts, jobs, applications, volunteers, contact messages, direct messages without content, notifications, push); rate-limit hits, refused admin-panel access and super admin sync logged as SECURITY/SYSTEM; `/admin/logs` with category, outcome and text filters; pruning after `LOG_RETENTION_DAYS`; 10 tests. Not logged: the feed "like" button (it saves nothing yet).
+**Why:** you asked to track everything; half-done logging gives a false sense of coverage.
+**Already done:** `ActivityLog` table, `lib/activity-log.ts` (secret redaction, never breaks a request), sign-in / failed sign-in / sign-out, admin event create/update/delete, registration decisions.
+**Tasks:**
+- Log the remaining write routes: verifications, user management, bulk SMS, phone/email codes, joining and event registration, profile / password / photo, payments and callbacks, gate check-in, card verify, posts, likes, jobs, applications, volunteers, contact form, messages (without content), notifications, push.
+- Log rate-limit hits and refused admin access as SECURITY events; super admin sync and log pruning as SYSTEM events.
+- `/admin/logs` page: filter by category and status, search, paging, details panel; link in the admin sidebar.
+- Prune entries older than `LOG_RETENTION_DAYS` (default 365) at startup.
+- Tests: redaction of secrets, one entry per logged action, failures logged, page access admin-only.
+- `npm run db:push` locally; restart `next dev`.
+
+**Done when:** every write route produces an entry; no password, code or token appears in any entry; `/admin/logs` filters work; tests pass.
+
+### 2. Commit the volunteer page fix · S
+**Done when:** `/volunteer` shows the header and footer, and the change is committed.
+
+---
+
+## Phase 1 — Decisions (only the committee can make these)
+
+### 3. Hosting, domain and backups · S · **You**
+**Why:** member photos and proof documents are stored on the server's disk, so serverless hosting (e.g. Vercel) cannot be used as is.
+**Decide:**
+- Host: Ubuntu VPS with Nginx + PM2 (recommended) or a cPanel Node.js app. Needs Node 22+, a persistent disk, SSH access.
+- Domain, e.g. `alumni.sabujsghs.edu.bd`, and who controls DNS.
+- Where backups go (second server, cloud storage, or Google Drive), and who holds the keys.
+- If cPanel: confirm it runs a single Node process (rate limits are kept in memory per process).
+
+**Done when:** host, domain and backup location are written into this file.
+
+### 4. Which sections launch · S · **You**
+**Why:** news, stories, achievements, gallery, careers, mentorship and network currently show made-up sample content.
+**Decide per section:** launch with real data (more work, step 9) or hide until later (step 6).
+**Recommendation:** launch with joining, events/tickets, directory, profiles, ID card, donations info, contact, volunteer; hide careers, mentorship and network; launch news and gallery only if the committee will maintain them.
+
+**Done when:** a launch / hide decision is written here for each section.
+
+### 5. Payments at launch · S · **You** · ✅ Decided 2026-10-11: manual payment and committee verification only; no gateway accounts. Step 20 dropped; step 6a added.
+**Options:** (a) manual only — member pays by bKash / Nagad / Bangla QR / bank and enters the transaction ID, committee approves (works today); (b) also online checkout through bKash / Nagad / SSLCommerz merchant APIs (needs merchant accounts and step 20).
+**Recommendation:** (a) for launch; add (b) later.
+
+**Done when:** the choice is written here.
+
+---
+
+## Phase 2 — Real data only
+
+### 6. Hide or remove sections not launching · M
+**Tasks:** remove hidden sections from the navbar, footer, homepage, sitemap and search; their routes return 404 (or "coming soon"); keep the code for later.
+**Done when:** no page a visitor can reach shows sample people, jobs, mentors or stories.
+
+### 6a. Donations page: manual payment · M
+**Why:** `/donate` currently starts online checkout through bKash / Nagad / SSLCommerz APIs, which the association does not have.
+**Tasks:** donation form records the donor, amount, method (bKash, Nagad, Bangla QR, bank, cash) and transaction ID as PENDING; admin donations page gets Verify / Reject (like joining); campaign totals count only verified donations; receipts after verification; hide the online gateway buttons and callback routes (keep the code for later).
+**Done when:** a test donation by bKash transaction ID shows as pending, an admin verifies it, and the campaign total updates; no gateway screen is reachable.
+
+### 6b. Contact form reaches the committee · S
+**Tasks:** send each contact message to the committee email (after step 17), keep the activity-log entry.
+**Done when:** a test message arrives in the committee inbox.
+
+### 7. Volunteers into the database · M
+**Why:** volunteers live in `uploads/volunteers.json`, start with 5 made-up people, and two writes at once can lose data.
+**Tasks:** `Volunteer` table; move the API and admin page to it; import any real entries from the JSON file; drop the sample list.
+**Done when:** applications survive restarts and concurrent submissions; no sample volunteers anywhere.
+
+### 8. Bulk SMS history into the database · S
+**Tasks:** store each broadcast (sender, count, credits, gateway reply) in a table or as activity-log entries; the SMS page reads from there.
+**Done when:** `uploads/sms-history.json` is no longer written.
+
+### 9. News, stories, achievements, gallery from the database · L (skip if hidden in step 4)
+**Tasks:** admin create / edit / publish / delete for each (tables already exist); public pages read published rows; image upload through the existing media pipeline; empty states.
+**Done when:** the committee can publish an item from the admin panel and it appears publicly; no sample items remain.
+
+### 10. Remove sample fallbacks · M
+**Tasks:** feed, dashboard widgets, network, messages and `sitemap.ts` stop mixing in `lib/data.ts` samples; show empty states instead.
+**Done when:** a fresh database shows empty states, never invented people.
+
+### 11. Production-safe seed · S
+**Why:** `npm run db:seed` creates sample events, posts, news and test accounts — wrong for production.
+**Tasks:** `npm run db:seed:prod` that creates only batches, the super admin (from env) and the real membership event; refuses to create test accounts when `NODE_ENV=production`.
+**Done when:** running it on an empty database gives a clean, real-only site.
+
+---
+
+## Phase 3 — Security
+
+### 12. Secrets and environment · S
+**Tasks:**
+- Generate a new `NEXTAUTH_SECRET` (`openssl rand -base64 32`) for production; replace the fixed example value in `.env.example` with a placeholder.
+- Production `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` (12+ characters, password manager).
+- `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` set to the real domain.
+- No seed passwords or test accounts in production env.
+
+**Done when:** production env reviewed line by line against `.env.example`; nothing secret in git.
+
+### 13. Same-origin checks and body limits on all write routes · M
+**Tasks:** add `requireSameOrigin` to the remaining write routes (profile photo, password, posts, likes, jobs, messages, volunteers, RSVP JSON branch, payments initiate); cap JSON bodies (e.g. 64 KB); malformed bodies return 400, not 500.
+**Done when:** every POST/PUT/PATCH/DELETE route (except gateway callbacks) refuses cross-site requests; tests cover a few.
+
+### 14. Dependency audit and security headers · S
+**Tasks:** `npm audit` and update vulnerable packages; review headers in `next.config.ts` (CSP, HSTS, frame-ancestors, referrer policy; allow camera for `/gate` if step 22).
+**Done when:** no high or critical advisories; headers verified on a production build.
+
+### 15. Privacy clean-up · S
+**Tasks:** delete photos and proof documents of rejected applicants after a set period (e.g. 30 days); document what personal data is kept and for how long.
+**Done when:** a scheduled clean-up runs and is logged.
+
+### 16. Known edge cases · S
+**Tasks:** block changing an event's membership flag while joins are pending (or migrate them); 403 page wording for moderators on `/gate`; update the outdated parts of `PRODUCTION_DEPLOYMENT.md`.
+**Done when:** each has a test or a manual check written down.
+
+---
+
+## Phase 4 — Integrations
+
+### 17. Email provider · S · **You**
+**Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY` and `RESEND_FROM_EMAIL`; send a test approval email and a test email code.
+**Done when:** emails arrive in Gmail's inbox (not spam) from the association's domain.
+
+### 18. SMS gateway · S · **You**
+**Tasks:** confirm with BulkSMSBD that the OTP template `Your {Brand} OTP is XXXX` and the sender ID are approved; set `OTP_BRAND_NAME` to match; send a code to a Grameenphone, Robi and Banglalink number; one small broadcast; note the balance and how it is topped up.
+**Done when:** codes arrive within a minute on all three operators.
+
+### 19. Bangla QR and payment instructions · S · **You**
+**Tasks:** get the bank-issued Bangla QR image; put it in `public/`; set `NEXT_PUBLIC_BANGLA_QR_IMAGE` and `NEXT_PUBLIC_BANGLA_QR_MERCHANT`; write the payment instructions on the membership event (bKash / Nagad numbers, bank account).
+**Done when:** a committee member pays a small amount by scanning the QR from the form.
+
+### 20. Online payment gateways · L (only if chosen in step 5)
+**Tasks:** merchant credentials; sandbox tests for success, failure, cancel and IPN; switch off sandbox; reconcile with the admin donations page.
+**Done when:** a real small payment completes and is recorded automatically.
+
+---
+
+## Phase 5 — Admin and member experience
+
+### 21. Admin pages on phones · M
+**Tasks:** make verifications, events, registrations, donations, SMS and logs usable at 375 px wide (the users page already is).
+**Done when:** a committee member can approve a join from a phone.
+
+### 22. Gate scanner with the camera · M
+**Why:** on event day volunteers must scan tickets quickly; today the ticket code is typed or pasted.
+**Tasks:** camera QR scanning on `/gate`; allow camera in `Permissions-Policy` for that page only; check-in tied to the event being scanned.
+**Done when:** 20 tickets are checked in from a phone in under 5 minutes.
+
+### 23. Join flow on real phones · S
+**Tasks:** complete a join on Android Chrome and iPhone Safari over mobile data: photo, proof, SMS code (and email fallback), Bangla QR / bKash, transaction ID.
+**Done when:** both phones finish without help, and the committee approves both.
+
+---
+
+## Phase 6 — Quality gates
+
+### 24. Production build · M
+**Tasks:** `npm run build` passes; fix type, lint and build warnings that matter; `npm start` serves the build locally.
+**Done when:** a clean build and a smoke check of the main pages on `npm start`.
+
+### 25. Test gaps · M
+**Tasks:** route-handler tests for media admin gate, verification 409, logging entries per action, email fallback through the form API.
+**Done when:** `npm test` passes and the listed gaps have tests.
+
+### 26. Manual QA by role · S
+**Tasks:** written checklist, run once per role: visitor, alumni (pending → verified), moderator (gate), admin (approve, events, SMS), super admin (users, logs).
+**Done when:** every line passes; issues found become their own steps.
+
+### 27. Performance · M
+**Tasks:** `next/image` for large images; check bundle size; mobile Lighthouse on home, join and directory.
+**Done when:** mobile Lighthouse performance ≥ 80 on those pages.
+
+---
+
+## Phase 7 — Deploy
+
+### 28. Server set-up · M
+**Tasks:** Node 22+, Nginx, PM2 (with log rotation), Certbot SSL; `npm ci` on the server (never copy `node_modules`); `UPLOADS_DIR` outside the web root, owned by the app user, `chmod 700`; `.env.local` with production values; firewall (SSH, HTTP, HTTPS only).
+**Done when:** the site loads over HTTPS on the real domain, and `/api/media/...` files are not reachable directly.
+
+### 29. Production database · M
+**Tasks:** full backup of the current remote database; restore it into a copy and run `npm run db:push` there first (rehearsal); then the real `db:push` and the production seed (step 11); confirm the super admin can sign in.
+**Done when:** production schema matches, existing data is intact, super admin signs in.
+
+### 30. Backups · S
+**Tasks:** daily database dump and `UPLOADS_DIR` copy to the location chosen in step 3; keep 30 days; restore one backup onto a test database.
+**Done when:** a restore has actually been done once.
+
+### 31. Monitoring · S
+**Tasks:** uptime check (e.g. UptimeRobot) on the home page; PM2 restarts on crash; weekly look at `/admin/logs` for failures; SMS balance check.
+**Done when:** a stopped server triggers an alert to a committee phone or email.
+
+---
+
+## Phase 8 — Launch
+
+### 32. Soft launch · S
+**Tasks:** 5–10 committee members join for real, pay, get approved, receive tickets; collect problems.
+**Done when:** all problems found are fixed or scheduled.
+
+### 33. Public launch · S
+**Tasks:** announcement by bulk SMS and email; link on the school website and social media.
+**Done when:** announcement sent; first public joins approved.
+
+### 34. First-week watch · S
+**Tasks:** check `/admin/logs` daily for failed sign-ins, rate limits and errors; check SMS balance; disable any test or seed accounts left in production; rotate the super admin password after launch.
+**Done when:** a week with no unresolved incidents.

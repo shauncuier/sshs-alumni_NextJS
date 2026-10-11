@@ -1,7 +1,9 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 170 / 170 passing (27 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 179 / 179 passing (28 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+
+**Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
 This replaces `docs/PROJECT_MILESTONES_AND_STATUS.md` (last updated 2026-09-26, describes the pre-MySQL setup) as the current picture of the project.
 
@@ -61,7 +63,8 @@ The super admin is defined only by env. It is created or restored (role, status,
 | User management (`/admin/users`) | Live | Search, add, role change, reset password, disable/enable; every change signs the user out |
 | Bulk SMS broadcast (`/admin/sms`) | Partial | Works; history kept in a JSON file (`UPLOADS_DIR/sms-history.json`), not the database |
 | Alumni directory, profiles, ID card, wallet passes | Live | Phone/email shown only when the member made them public |
-| Online payments (bKash, Nagad, SSLCommerz APIs) | Partial | Code present with sandbox defaults and IPN hash + validation checks; not exercised end to end here |
+| Online payments (bKash, Nagad, SSLCommerz APIs) | Not used | Decision 2026-10-11: manual payment + committee verification only. Gateway code stays but the donate page must move to manual (roadmap step 6a) |
+| Activity log (`/admin/logs`) | Live | Every write action, sign-in and security event: who, what, outcome, IP, browser; secrets never stored; kept `LOG_RETENTION_DAYS` (365) |
 | Messages, notifications, realtime (SSE), web push | Partial | DB-backed, with sample-data fallbacks in some pages |
 | Committee volunteers | Partial | Stored in `uploads/volunteers.json`, pre-filled with 5 made-up volunteers |
 | Feed / posts | Partial | API reads the DB, falls back to sample posts |
@@ -97,7 +100,6 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 ### Remaining risks (not fixed)
 
 - **Rate limits are in memory, per server process.** With several instances or after a restart the counters reset. Fine for one VPS; use a shared store (Redis) if the app is scaled out.
-- **No audit log table.** User-management and SMS actions are logged to the server console only.
 - `NEXTAUTH_SECRET` in `.env.example` is a fixed, readable value. Production must set its own (`openssl rand -base64 32`), or anyone can forge tickets, card tokens and OTP tokens.
 - **No email provider configured.** `RESEND_API_KEY` / `SMTP_HOST` are empty and `nodemailer` is not installed, so every email (including the OTP fallback) only prints to the server console. In production, email OTP refuses with 503 until a provider is set; Resend needs no extra package.
 - Some public JSON routes have no body-size cap; several older routes still lack a same-origin check (NextAuth's `SameSite=Lax` cookie limits cross-site requests meanwhile).
