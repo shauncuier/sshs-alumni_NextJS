@@ -348,17 +348,28 @@ model Achievement {
   yearAwarded   Int
 }
 
+/// Photo albums on /gallery, managed in /admin/gallery (lib/gallery.ts). Only
+/// published albums are public; rows that existed before isPublished (seeded
+/// samples) become unpublished.
 model GalleryAlbum {
-  id          String  @id @default(uuid()) @db.VarChar(36)
+  id          String   @id @default(uuid()) @db.VarChar(36)
   title       String
-  category    String // "Campus", "Old Days", "Reunions", "Sports"
-  description String? @db.Text
-  coverUrl    String  @db.VarChar(500)
-  photosCount Int     @default(0)
+  category    String // one of GALLERY_CATEGORIES in lib/gallery.ts
+  description String?  @db.Text
+  /// Cover photo; defaults to the first photo when empty.
+  coverUrl    String?  @db.VarChar(500)
+  photosCount Int      @default(0)
+  year        Int?
+  isPublished Boolean  @default(false)
+  createdBy   String?  @db.VarChar(254)
+  updatedBy   String?  @db.VarChar(254)
 
   photos GalleryPhoto[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([isPublished, createdAt])
 }
 
 model GalleryPhoto {
@@ -369,8 +380,11 @@ model GalleryPhoto {
   caption    String?      @db.VarChar(500)
   uploadedBy String?
   batchYear  Int?
+  sortOrder  Int          @default(0)
 
   createdAt DateTime @default(now())
+
+  @@index([albumId, sortOrder])
 }
 
 model Message {

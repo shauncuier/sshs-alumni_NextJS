@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 206 / 206 passing (33 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 211 / 211 passing (34 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -70,7 +70,8 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Committee volunteers | Live | `Volunteer` table; admins approve/decline in `/admin/volunteers`; old JSON entries imported with `npm run db:import-volunteers` |
 | Feed / posts | Partial | API reads the DB, falls back to sample posts |
 | News | Live | `/admin/news` (write, publish, feature, delete, image upload); `/news` and `/news/[id]` show published articles only |
-| Stories, achievements, gallery | Mock | DB models exist (`AlumniStory`, `Achievement`, `Gallery*`) but pages render sample data (roadmap 9b, 9c) |
+| Gallery | Live | `/admin/gallery` (albums, multi-photo upload, captions, cover, publish); `/gallery` and the homepage show published albums only |
+| Stories, achievements | Mock / mixed | DB models exist (`AlumniStory`, `Achievement`); `/stories` and `/achievements` render sample data, homepage reads the tables unfiltered (roadmap 9c) |
 | Careers / jobs, mentorship | Mock | In-memory sample lists; posted jobs and bookings vanish on restart |
 | Network, dashboard widgets | Mock / mixed | Built from sample alumni, batches, donations |
 

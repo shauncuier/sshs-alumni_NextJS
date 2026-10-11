@@ -21,6 +21,7 @@ import {
   MessageSquare,
   ScrollText,
   Newspaper,
+  Images,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -45,6 +46,7 @@ const ADMIN_NAV = [
   { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "News", href: "/admin/news", icon: Newspaper },
+  { name: "Gallery", href: "/admin/gallery", icon: Images },
   { name: "Activity Log", href: "/admin/logs", icon: ScrollText },
 ] as const;
 

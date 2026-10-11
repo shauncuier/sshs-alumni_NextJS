@@ -8,6 +8,7 @@ import BatchCard from "@/components/batches/BatchCard";
 import EventCard from "@/components/events/EventCard";
 import StoryCard from "@/components/stories/StoryCard";
 import { listPublicEvents } from "@/lib/events/service";
+import { latestPublishedPhotos } from "@/lib/gallery";
 import prisma from "@/lib/prisma";
 import type {
   AlumniMember,
@@ -94,13 +95,8 @@ export default async function HomePage() {
         orderBy: { yearAwarded: "desc" },
       })
       .catch(() => []),
-    prisma.galleryPhoto
-      .findMany({
-        take: 4,
-        include: { album: true },
-        orderBy: { createdAt: "desc" },
-      })
-      .catch(() => []),
+    // Only photos from published albums.
+    latestPublishedPhotos(4).catch(() => []),
     listPublicEvents().catch(() => []),
   ]);
 
@@ -216,16 +212,7 @@ export default async function HomePage() {
   const featuredAchievements = dynamicAchievements;
 
   // Dynamic Gallery Photos
-  const dynamicGallery: GalleryPhotoItem[] = dbPhotos.map((p) => ({
-    id: p.id,
-    albumCategory: (p.album?.category as GalleryPhotoItem["albumCategory"]) || "Reunions",
-    title: p.caption || "School Memory",
-    imageUrl: p.imageUrl,
-    year: p.batchYear || undefined,
-    caption: p.caption || "",
-    submittedBy: p.uploadedBy || "Alumnus",
-  }));
-  const galleryPreview = dynamicGallery;
+  const galleryPreview: GalleryPhotoItem[] = dbPhotos;
 
   const upcomingEvents = allEvents.filter((e) => e.date >= today).slice(0, 3);
   const jubileeEvent = allEvents.find((e) => e.isMegaEvent);
@@ -852,8 +839,8 @@ export default async function HomePage() {
                     className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-64 bg-slate-900"
                   >
                     <img
-                      src={item.imageUrl}
-                      alt={item.title}
+                      src={item.thumbUrl ?? item.imageUrl}
+                      alt={item.caption || item.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-90"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

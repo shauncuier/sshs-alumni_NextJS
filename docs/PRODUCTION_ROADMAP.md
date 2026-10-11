@@ -25,7 +25,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 7 | Volunteers into the database | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ✅ Done 2026-10-11 |
 | 9a | News from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
-| 9b | Gallery from the database, managed in admin | 2 · Real data | M | ⬜ |
+| 9b | Gallery from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ⬜ |
 | 9d | Careers / job board stored in the database, with moderation | 2 · Real data | L | ⬜ |
 | 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ⬜ |
@@ -138,6 +138,9 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 ### 9a. News · ✅ Done 2026-10-12
 **Result:** `/admin/news` to write, edit, publish/unpublish, feature and delete articles; image upload through a shared content-image pipeline (`lib/media/content-images.ts`: WebP large + thumbnail, camera/GPS data removed, served at `/api/media/content/...`, reused by 9b and 9c); `/news` shows only published articles (featured first) with an empty state, and each article has its own page `/news/[id]`; article text is plain paragraphs, never HTML; only uploaded images are accepted (no hotlinks); replaced or deleted images are removed from disk; existing rows (seeded samples) became drafts; all actions in the activity log; 8 tests.
 
+### 9b. Gallery · ✅ Done 2026-10-12
+**Result:** `/admin/gallery`: create albums (name, category, year, description), add many photos at once with upload progress, captions, choose the cover, publish/unpublish, delete photos or whole albums (files removed from disk); an album needs a photo before it can be published and is unpublished again when emptied; `/gallery` and the homepage show photos from published albums only, with thumbnails in grids and the full image in the lightbox, plus an empty state; existing (seeded) albums became unpublished; actions in the activity log; 5 tests.
+
 ### 9g. Moderators manage content · M
 **Why:** the agreed roles say moderators handle content and gallery, but the admin panel admits admins only.
 **Tasks:** a small permission map (`can(role, area)`) used by the admin layout, sidebar and APIs; moderators see News, Gallery, Stories and the gate scanner only.
@@ -232,7 +235,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Done when:** a clean build and a smoke check of the main pages on `npm start`.
 
 ### 25. Test gaps · M
-**Tasks:** route-handler tests for media admin gate, verification 409, logging entries per action, email fallback through the form API.
+**Tasks:** route-handler tests for media admin gate, verification 409, logging entries per action, email fallback through the form API. Make the timing-sensitive tests robust: under heavy machine load (2026-10-12) the concurrent APPROVE/CANCEL race test and the joining tests timed out once, then passed on re-run.
 **Done when:** `npm test` passes and the listed gaps have tests.
 
 ### 26. Manual QA by role · S

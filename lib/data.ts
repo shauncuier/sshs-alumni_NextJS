@@ -102,6 +102,8 @@ export interface GalleryPhotoItem {
   albumCategory: "School Memories" | "Old Campus" | "Reunions" | "Sports" | "Cultural Events" | "Teachers";
   title: string;
   imageUrl: string;
+  /** Smaller image for grids; imageUrl is the full-size one for the lightbox. */
+  thumbUrl?: string;
   year?: number;
   caption: string;
   submittedBy: string;
