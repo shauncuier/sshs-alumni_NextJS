@@ -30,9 +30,18 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const userBatch = (session?.user as unknown as { batchYear?: number })?.batchYear || 2008;
-  const userRole = (session?.user as unknown as { role?: string })?.role;
+  const user = session?.user;
+  const userBatch = user?.batchYear;
+  const userRole = user?.role;
   const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const userStatus = user?.status;
+  const statusLabel = isAdmin
+    ? "Administrator"
+    : userStatus === "VERIFIED"
+      ? "Verified Member"
+      : userStatus === "REJECTED"
+        ? "Not approved"
+        : "Verification pending";
   const isGateStaff = isAdmin || userRole === "MODERATOR";
 
   const links = [
@@ -44,7 +53,7 @@ export default function AppSidebar() {
     { name: "Career Hub", href: "/careers", icon: Briefcase },
     { name: "1-on-1 Mentorship", href: "/mentorship", icon: GraduationCap },
     { name: "Alumni Directory", href: "/alumni", icon: GraduationCap },
-    { name: "My Batch", href: `/batches/${userBatch}`, icon: Layers },
+    { name: "My Batch", href: userBatch ? `/batches/${userBatch}` : "/batches", icon: Layers },
     { name: "Events", href: "/events", icon: Calendar },
     { name: "Messages", href: "/messages", icon: MessageSquare },
     { name: "Notifications", href: "/notifications", icon: Bell },
@@ -89,10 +98,10 @@ export default function AppSidebar() {
         </div>
         <div className="overflow-hidden min-w-0">
           <div className="text-xs font-bold text-white truncate">
-            {session?.user?.name || "Verified Member"}
+            {session?.user?.name || "Member"}
           </div>
           <div className="text-[10px] text-emerald-300 font-medium truncate">
-            {isAdmin ? "Executive Council • Admin" : `SSC Batch ${userBatch} • Verified`}
+            {userBatch ? `SSC Batch ${userBatch} • ` : ""}{statusLabel}
           </div>
         </div>
       </div>

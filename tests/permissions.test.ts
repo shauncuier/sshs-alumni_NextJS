@@ -33,7 +33,7 @@ describe("permission map", () => {
       expect(can("ALUMNI", area)).toBe(false);
     }
     const moderatorAreas = ADMIN_AREAS.filter((a) => can("MODERATOR", a));
-    expect(moderatorAreas.sort()).toEqual(["gallery", "gate", "jobs", "mentors", "news", "stories"]);
+    expect(moderatorAreas.sort()).toEqual(["feed", "gallery", "gate", "jobs", "mentors", "news", "stories"]);
     expect(canUseAdminPanel("MODERATOR")).toBe(true);
     expect(canUseAdminPanel("ALUMNI")).toBe(false);
     expect(canUseAdminPanel(undefined)).toBe(false);

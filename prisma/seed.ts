@@ -3,7 +3,7 @@ import { Role, VerificationStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
-import { sampleEvents } from "../lib/data";
+import { demoEvents } from "./demo-events";
 import { normalizePackages, parseTaka } from "../lib/events/pricing";
 import { backfillEventJsonColumns } from "./backfill-events";
 import { ensureSuperAdmin, envSuperAdminEmail } from "../lib/admin/super-admin";
@@ -202,10 +202,10 @@ async function main() {
     "Family (Alumnus + Spouse + 1 Child < 12yr)": { adults: 2, children: 1 },
     "Golden Patron & Sponsor": { adults: 1, children: 0, guestsFree: true },
   };
-  const slugFor = (e: (typeof sampleEvents)[number]) =>
+  const slugFor = (e: (typeof demoEvents)[number]) =>
     e.title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 
-  for (const e of sampleEvents) {
+  for (const e of demoEvents) {
     const isJubilee = e.id === JUBILEE_ID;
     await prisma.event.upsert({
       where: { slug: slugFor(e) },

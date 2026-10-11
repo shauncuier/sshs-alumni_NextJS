@@ -1,47 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
-import { samplePosts, PostItem } from "@/lib/data";
+import type { PostItem } from "@/lib/data";
 import { Plus, Radio, Layers, Sparkles, Filter } from "lucide-react";
 
 export default function FeedPage() {
   const { data: session } = useSession();
-  const [posts, setPosts] = useState<PostItem[]>(samplePosts);
+  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    fetch("/api/posts", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { posts: [] }))
+      .then((data) => setPosts(data.posts ?? []))
+      .catch(() => setPosts([]))
+      .finally(() => setLoaded(true));
+  }, []);
   const [filter, setFilter] = useState<"all" | "my-batch" | "official">("all");
   const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const user = session?.user;
-  const userName = user?.name || "Md. Jashedul Islam";
+  const userName = user?.name || "Member";
   const userFirst = userName.split(" ")[0] || "Alumnus";
-  const userBatch = user?.batchYear || 2008;
-  const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+  const userBatch = user?.batchYear || 0;
   const userRole = user?.role || "ALUMNI";
   const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
-  const handlePostCreated = (content: string, batchTag?: number) => {
-    const newPost: PostItem = {
-      id: `post-${Date.now()}`,
-      author: {
-        name: userName,
-        avatar: userAvatar,
-        batch: userBatch,
-        profession: isAdmin ? "System Administrator" : "Active Alumnus",
-        isVerified: true,
-      },
-      timestamp: "Just now",
-      content,
-      likesCount: 0,
-      commentsCount: 0,
-      batchTag: batchTag || userBatch,
-      isLiked: false,
-    };
-    setPosts([newPost, ...posts]);
+  const handlePostCreated = async (content: string, batchTag?: number) => {
+    const res = await fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content, batchTag }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Your post was not saved.");
+    setPosts((list) => [data.post, ...list]);
   };
 
   const filteredPosts = posts.filter((post) => {
@@ -111,8 +105,11 @@ export default function FeedPage() {
 
           {/* Posts List */}
           <div className="space-y-4">
+            {loaded && filteredPosts.length === 0 && (
+              <p className="text-center text-xs text-slate-500 bg-white rounded-3xl border border-slate-200 p-10">No posts yet. Be the first to share something.</p>
+            )}
             {filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} onDeleted={(id) => setPosts((list) => list.filter((p) => p.id !== id))} />
             ))}
           </div>
         </main>

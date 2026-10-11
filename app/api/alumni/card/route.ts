@@ -53,7 +53,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Member account not found." }, { status: 404 });
     }
 
-    const sscBatch = user.profile?.sscBatch || 2008;
+    if (!user.profile) {
+      return NextResponse.json({ error: "Complete your alumni profile before getting a digital card." }, { status: 409 });
+    }
+    const sscBatch = user.profile.sscBatch;
     const alumnusData: AlumnusCardData = {
       id: user.id,
       alumniId: generateAlumniId(sscBatch, user.id),

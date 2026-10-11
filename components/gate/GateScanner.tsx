@@ -53,35 +53,7 @@ export default function GateScanner() {
   const [qrInput, setQrInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [latestResult, setLatestResult] = useState<GateScanResult | null>(null);
-  const [scanHistory, setScanHistory] = useState<ScanLog[]>([
-    {
-      id: "scan-1",
-      name: "Dr. Nusrat Jahan",
-      batch: 2005,
-      alumniId: "SSGHS-ALM-2005-B9F4C",
-      status: "AUTHORIZED",
-      time: "10:14 AM",
-      gate: "Main Gate 1",
-    },
-    {
-      id: "scan-2",
-      name: "Tanvir Ahmed",
-      batch: 2012,
-      alumniId: "SSGHS-ALM-2012-7A12E",
-      status: "AUTHORIZED",
-      time: "10:18 AM",
-      gate: "Main Gate 1",
-    },
-    {
-      id: "scan-3",
-      name: "Farhana Chowdhury",
-      batch: 2018,
-      alumniId: "SSGHS-ALM-2018-9128D",
-      status: "AUTHORIZED",
-      time: "10:22 AM",
-      gate: "Main Gate 2",
-    },
-  ]);
+  const [scanHistory, setScanHistory] = useState<ScanLog[]>([]);
 
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

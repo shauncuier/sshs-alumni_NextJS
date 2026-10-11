@@ -147,6 +147,7 @@ model Post {
   isPinned      Boolean @default(false)
 
   comments Comment[]
+  likes    PostLike[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -647,4 +648,16 @@ model MentorshipRequest {
 
   @@index([mentorId, status])
   @@index([menteeUserId])
+}
+
+/// One member's like on a post (lib/feed.ts keeps Post.likesCount in step).
+model PostLike {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  postId    String   @db.VarChar(36)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String   @db.VarChar(36)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId])
 }

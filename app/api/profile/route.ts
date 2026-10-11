@@ -102,7 +102,13 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Account not found" }, { status: 404 });
       }
 
-      const batchYear = (session.user as unknown as { batchYear?: number })?.batchYear || 2008;
+      const batchYear = (session.user as unknown as { batchYear?: number })?.batchYear;
+      if (!batchYear) {
+        const existing = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
+        if (!existing) {
+          return NextResponse.json({ error: "Your SSC batch is not on record yet. Please contact the alumni committee." }, { status: 409 });
+        }
+      }
       const updated = await prisma.alumniProfile.upsert({
         where: { userId: user.id },
         update: {
@@ -129,8 +135,8 @@ export async function PUT(req: Request) {
         create: {
           userId: user.id,
           fullName: required(fullName) || session.user.name || "Alumnus",
-          sscBatch: batchYear,
-          graduationYear: batchYear,
+          sscBatch: batchYear ?? 0,
+          graduationYear: batchYear ?? 0,
           profession: required(profession) || "Alumnus",
           locationCity: required(locationCity) || "Chattogram",
           locationCountry: optional(locationCountry) || "Bangladesh",

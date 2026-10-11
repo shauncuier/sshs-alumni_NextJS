@@ -48,7 +48,7 @@ export default function JobDetailClient({ job, open }: { job: JobListing; open: 
           applicantName,
           applicantEmail,
           applicantPhone,
-          applicantBatch: parseInt(applicantBatch) || 2008,
+          applicantBatch: parseInt(applicantBatch) || null,
           resumeUrl,
           coverNote,
         }),

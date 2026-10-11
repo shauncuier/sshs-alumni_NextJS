@@ -20,7 +20,6 @@ import type {
   GalleryPhotoItem,
   DonationCampaignItem,
 } from "@/lib/data";
-import { schoolInfo } from "@/lib/data";
 import {
   GraduationCap,
   Users,

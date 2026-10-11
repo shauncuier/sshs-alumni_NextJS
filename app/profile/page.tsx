@@ -176,7 +176,7 @@ export default function ProfilePage() {
       .catch((err: Error) => setLoadError(err.message));
   }, []);
 
-  const userBatch = profile?.sscBatch ?? user?.batchYear ?? 2008;
+  const userBatch = profile?.sscBatch ?? user?.batchYear ?? 0;
 
   // Real verified batchmates from the directory, excluding the member themself.
   useEffect(() => {

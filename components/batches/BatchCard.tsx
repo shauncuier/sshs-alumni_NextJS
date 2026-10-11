@@ -46,7 +46,7 @@ export default function BatchCard({ batch }: BatchCardProps) {
               <span className="flex items-center gap-1.5 text-slate-700 font-medium">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Class Rep:
               </span>
-              <span className="font-semibold text-slate-800">{batch.classRepresentative}</span>
+              <span className={batch.classRepresentative ? "font-semibold text-slate-800" : "text-slate-400"}>{batch.classRepresentative || "Not assigned yet"}</span>
             </div>
             {batch.reunionDate && (
               <div className="flex items-center justify-between">

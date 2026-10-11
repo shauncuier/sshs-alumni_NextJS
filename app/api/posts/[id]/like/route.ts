@@ -1,34 +1,22 @@
 import { NextResponse } from "next/server";
-import { getMemberSession } from "@/lib/session-user";
-import { requireRateLimit } from "@/lib/request-security";
+import { errorResponse } from "@/lib/api-response";
 import { AppError } from "@/lib/app-error";
+import { toggleLike } from "@/lib/feed";
+import { requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { getSessionUser } from "@/lib/session-user";
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: Promise<{ id: string }> };
+
+// POST /api/posts/[id]/like — like the post, or remove the like. Likes are not
+// written to the activity log (too frequent to be useful there).
+export async function POST(req: Request, { params }: Params) {
   try {
-    requireRateLimit(req, "like-post", { limit: 60, windowMs: 60_000 });
-
-    const session = await getMemberSession();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id } = await params;
-
-    // Return successful toggle response
-    return NextResponse.json({
-      message: "Post like status toggled",
-      postId: id,
-      success: true,
-    });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
-    }
-    console.error("Like toggle error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    requireSameOrigin(req);
+    requireRateLimit(req, "like-post", { limit: 120, windowMs: 60_000 });
+    const me = await getSessionUser();
+    if (!me) throw new AppError("SIGN_IN_REQUIRED", 401, "Please sign in to like posts.");
+    return NextResponse.json(await toggleLike(me, (await params).id));
+  } catch (err) {
+    return errorResponse(err, "POST /api/posts/[id]/like");
   }
 }
-

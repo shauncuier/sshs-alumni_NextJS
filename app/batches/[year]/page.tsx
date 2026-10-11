@@ -6,7 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AlumniCard from "@/components/alumni/AlumniCard";
-import type { AlumniMember } from "@/lib/data";
+import type { AlumniMember, BatchInfo } from "@/lib/data";
 import {
   Users,
   Calendar,
@@ -77,6 +77,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
   const [alumni, setAlumni] = useState<AlumniMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [nextEvent, setNextEvent] = useState<{ title: string; date: string } | null>(null);
+  const [info, setInfo] = useState<BatchInfo | null>(null);
 
   useEffect(() => {
     // Fetch alumni for this specific batch
@@ -92,6 +93,11 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
       })
       .finally(() => setLoading(false));
 
+    fetch("/api/batches")
+      .then((res) => (res.ok ? res.json() : { batches: [] }))
+      .then((data: { batches?: BatchInfo[] }) => setInfo((data.batches || []).find((b) => b.year === yearNum) ?? null))
+      .catch(() => {});
+
     // Fetch upcoming events to display real next gathering
     fetch("/api/events")
       .then((res) => (res.ok ? res.json() : { events: [] }))
@@ -106,31 +112,23 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
       .catch(() => {});
   }, [yearNum]);
 
-  // Determine coordinator from registered batch members or committee
-  const coordinator = alumni.find((a) => a.isVerified) || alumni[0];
-  const representativeName = coordinator
-    ? `${coordinator.fullName} (Batch Coordinator)`
-    : "Central Executive Committee";
-  const representativePhone = coordinator?.phone || "+880 1745-950025";
-
-  const nextGatheringTitle = nextEvent ? nextEvent.title : "Golden Jubilee Grand Celebration (2026)";
+  // Representative, contact and description as set by admins; nothing is invented.
+  const nextGatheringTitle = nextEvent ? nextEvent.title : "No event scheduled";
   const nextGatheringDate = nextEvent
-    ? new Date(nextEvent.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "Dec 30, 2026";
+    ? new Date(nextEvent.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : info?.reunionDate
+      ? `Batch reunion: ${info.reunionDate}`
+      : "Watch the events page";
 
   const batch = {
     year: yearNum,
-    name: `SSC Batch ${yearNum}`,
-    tagline: `Pride of Class of ${yearNum}`,
+    name: info?.name ?? `SSC Batch ${yearNum}`,
+    tagline: info?.tagline ?? `Class of ${yearNum}`,
     totalAlumni: alumni.length,
-    classRepresentative: representativeName,
-    representativePhone: representativePhone,
-    coverImage: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
-    description: `The proud alumni of SSC Batch ${yearNum} from Sabuj Shikshayatan Government High School.`,
+    classRepresentative: info?.classRepresentative || "",
+    representativePhone: info?.representativePhone || "",
+    coverImage: info?.coverImage ?? "/golden-jubilee.jpg",
+    description: info?.description ?? `Sabuj Shikshayatan Government High School graduates of ${yearNum}.`,
   };
 
   return (
@@ -190,12 +188,16 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-black text-slate-900 truncate">
-                  {batch.classRepresentative}
+                  {batch.classRepresentative || "No batch representative yet"}
                 </div>
-                <div className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                  <Phone className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{batch.representativePhone}</span>
-                </div>
+                {batch.representativePhone ? (
+                  <a href={`tel:${batch.representativePhone}`} className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                    <Phone className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{batch.representativePhone}</span>
+                  </a>
+                ) : (
+                  <Link href="/contact" className="text-xs text-emerald-800 font-semibold mt-0.5 block">Contact the committee</Link>
+                )}
               </div>
             </div>
 
@@ -252,7 +254,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
                   No registered alumni yet for SSC Batch {batch.year}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Be the first graduate from the Class of {batch.year} to create a profile and claim the batch representative badge.
+                  Be the first graduate from the Class of {batch.year} to join the alumni association.
                 </p>
               </div>
               <Link

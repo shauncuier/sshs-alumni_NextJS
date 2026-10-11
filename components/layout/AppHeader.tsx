@@ -15,6 +15,8 @@ import {
   CheckCircle2
 } from "lucide-react";
 import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
+import { useNotifications } from "@/components/notifications/useNotifications";
+import { relativeTime } from "@/lib/utils";
 
 interface AppHeaderProps {
   title?: string;
@@ -29,16 +31,18 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
   const user = session?.user;
   const userName = user?.name || "Alumnus";
   const userFirst = userName.split(" ")[0] || "User";
-  const userBatch = user?.batchYear || 2008;
+  const userBatch = user?.batchYear;
   const userRole = user?.role || "ALUMNI";
   const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
-
-  const notifications = [
-    { id: 1, text: "Dr. Nusrat Jahan accepted your connection request.", time: "10m ago", read: false },
-    { id: 2, text: "Annual Alumni Reunion 2026 registration is now open!", time: "1h ago", read: false },
-    { id: 3, text: "Farhana Rahman commented on your post.", time: "3h ago", read: true },
-    { id: 4, text: `Batch ${userBatch} informal meetup scheduled for this Friday.`, time: "1d ago", read: true },
-  ];
+  const userStatus = user?.status;
+  const statusLabel = isAdmin
+    ? "Administrator"
+    : userStatus === "VERIFIED"
+      ? "Verified Member"
+      : userStatus === "REJECTED"
+        ? "Not approved"
+        : "Verification pending";
+  const { items: notifications, unread, refresh } = useNotifications(Boolean(user));
 
   return (
     <>
@@ -76,18 +80,21 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
             title="Messages"
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-600 rounded-full ring-2 ring-white" />
           </Link>
 
           {/* Notifications Dropdown */}
           <div className="relative">
             <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              onClick={() => {
+                if (!notificationsOpen) void refresh();
+                setNotificationsOpen(!notificationsOpen);
+              }}
+              aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
               className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-emerald-800 transition-colors relative"
               title="Notifications"
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white" />
+              {unread > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white" />}
             </button>
 
             {notificationsOpen && (
@@ -99,15 +106,18 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
                   </Link>
                 </div>
                 <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                  {notifications.map((n) => (
+                  {notifications.length === 0 && (
+                    <p className="p-3 text-xs text-slate-500">No notifications yet.</p>
+                  )}
+                  {notifications.slice(0, 6).map((n) => (
                     <div
                       key={n.id}
                       className={`p-3 text-xs hover:bg-slate-50 transition-colors ${
-                        !n.read ? "bg-emerald-50/50" : ""
+                        !n.isRead ? "bg-emerald-50/50" : ""
                       }`}
                     >
-                      <p className="text-slate-800 leading-snug">{n.text}</p>
-                      <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
+                      <p className="text-slate-800 leading-snug"><span className="font-bold">{n.title}</span> · {n.message}</p>
+                      <span className="text-[10px] text-slate-400 mt-1 block">{relativeTime(new Date(n.createdAt))}</span>
                     </div>
                   ))}
                 </div>
@@ -144,7 +154,7 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
                 <div className="px-4 py-2 border-b border-slate-100">
                   <div className="font-bold text-slate-900 truncate">{userName}</div>
                   <div className="text-[10px] text-slate-500">
-                    SSC Batch {userBatch} • {isAdmin ? "Administrator" : "Verified Member"}
+                    {userBatch ? `SSC Batch ${userBatch} • ` : ""}{statusLabel}
                   </div>
                 </div>
 

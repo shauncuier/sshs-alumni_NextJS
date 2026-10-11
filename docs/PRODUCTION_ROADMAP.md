@@ -31,7 +31,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ✅ Done 2026-10-12 |
 | 9f | Network built from real verified members | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ✅ Done 2026-10-12 |
-| 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ⬜ |
+| 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ⬜ |
 | 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
 | 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ⬜ |
@@ -166,7 +166,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** admin create / edit / publish / delete for each (tables already exist); public pages read published rows; image upload through the existing media pipeline; empty states.
 **Done when:** the committee can publish an item from the admin panel and it appears publicly; no sample items remain.
 
-### 10. Remove sample fallbacks · M
+### 10. Remove sample fallbacks · M · ✅ Done 2026-10-12
+**Result:** the sample arrays in `lib/data.ts` and `lib/career-data.ts` are gone (types and school details stay); the demo events used by `npm run db:seed` moved to `prisma/demo-events.ts` (step 11 decides what production seeds). **Feed rebuilt** (`lib/feed.ts`): posts, likes (new `PostLike` table, one per member) and comments are stored; authors delete their own, admins and moderators (new "feed" area) delete anyone's; comments notify the post's author; members only. **Batches** (`lib/batches.ts`): every year 1985 to now with real verified-member counts; representative, phone, tagline, description and reunion date set by admins in `/admin/batches` (fake phone numbers and "Golden Jubilee" fallbacks removed). **Dashboard:** real feed, classmates (link to profile and Message), batch rep or "Not assigned yet", donation widget only when a campaign exists; fake name, batch 2008, avatar, "90% profile strength" and "Connect" button removed. **Notifications:** header bell and `/notifications` show the member's real notifications (mark read, links), fake "Dr. Nusrat Jahan" entries removed. No invented batch anywhere: header, sidebar, post composer, job applications, ID card and profile creation no longer default to 2008; gate scanner starts with an empty history. 15 tests.
+
 **Tasks:** feed, dashboard widgets, network, messages and `sitemap.ts` stop mixing in `lib/data.ts` samples; show empty states instead.
 **Done when:** a fresh database shows empty states, never invented people.
 

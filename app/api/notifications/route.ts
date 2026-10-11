@@ -121,6 +121,7 @@ export async function POST(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
+    requireSameOrigin(req);
     const me = await getSessionUser();
     if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

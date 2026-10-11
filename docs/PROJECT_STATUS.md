@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
-**Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 239 / 239 passing (39 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–10 done)
+**Tests:** 254 / 254 passing (41 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -51,7 +51,7 @@ The super admin is defined only by env. It is created or restored (role, status,
 
 ## 4. Feature status
 
-**Live** = backed by the database and tested. **Partial** = works, with gaps noted. **Mock** = UI on sample data from `lib/data.ts` / `lib/career-data.ts`, not persisted.
+**Live** = backed by the database and tested. **Partial** = works, with gaps noted. No section runs on sample data any more (roadmap step 10).
 
 | Area | Status | Notes |
 | --- | --- | --- |
@@ -67,16 +67,17 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Online payments (bKash, Nagad, SSLCommerz APIs) | Off | Decision 2026-10-11: manual payment only. Checkout returns 410 unless `ONLINE_PAYMENTS_ENABLED=true`; code kept for later |
 | Activity log (`/admin/logs`) | Live | Every write action, sign-in and security event: who, what, outcome, IP, browser; secrets never stored; kept `LOG_RETENTION_DAYS` (365) |
 | Messages | Live | Real conversations, `/messages?to=<member>`, live updates, unread counts; only active members can be messaged |
-| Notifications, realtime (SSE), web push | Partial | DB-backed; web push sending is a stub |
+| Notifications, realtime (SSE), web push | Partial | Header bell and `/notifications` show the member's real notifications (messages, comments on their posts, committee notices), mark as read; web push sending is a stub |
 | Committee volunteers | Live | `Volunteer` table; admins approve/decline in `/admin/volunteers`; old JSON entries imported with `npm run db:import-volunteers` |
-| Feed / posts | Partial | API reads the DB, falls back to sample posts |
+| Feed / posts | Live | Members only; posts, likes and comments stored; authors delete their own, admins and moderators delete any |
+| Batches | Live | Every SSC year from 1985; member counts from verified profiles; representative, contact, reunion date set in `/admin/batches` |
 | News | Live | `/admin/news` (write, publish, feature, delete, image upload); `/news` and `/news/[id]` show published articles only |
 | Gallery | Live | `/admin/gallery` (albums, multi-photo upload, captions, cover, publish); `/gallery` and the homepage show published albums only |
 | Stories, achievements | Live | `/admin/stories` (two tabs); `/stories`, `/stories/[id]`, `/achievements`, homepage and sitemap show published entries only |
 | Careers / job board | Live | Verified members post, admins approve in `/admin/jobs`; applications stored and emailed to the poster; `/careers/mine` for posters |
 | Mentorship | Live | Members apply as mentors, admins approve in `/admin/mentors`; requests stored and emailed; mentors accept with real meeting details in `/mentorship/mine` |
 | Network | Live | Directory of verified members with search, batch filter, profile and message buttons |
-| Dashboard widgets | Mock / mixed | Built partly from sample alumni, batches, donations (roadmap 10) |
+| Dashboard widgets | Live | Real feed, batch, classmates, events and campaign; empty states when there is nothing yet |
 
 ## 5. Security review — 2026-10-11
 
@@ -119,7 +120,6 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Rejected applicants' photos and proofs are kept indefinitely.
 - `sitemap.ts` is generated at build time; `docs/PRODUCTION_DEPLOYMENT.md` is partly outdated.
 - `sshs_dev` contains test accounts and test events from earlier sessions.
-- Mock areas in section 4 need real storage before launch.
 
 ## 7. Before going live
 
@@ -127,7 +127,6 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 2. Back up and migrate the production database (section 6).
 3. Production env: own `NEXTAUTH_SECRET`; `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (verified sending domain); `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD`; BulkSMSBD key and sender ID; `OTP_BRAND_NAME` matching the approved OTP template; `NEXT_PUBLIC_BANGLA_QR_IMAGE` and `NEXT_PUBLIC_BANGLA_QR_MERCHANT` with the bank-issued QR.
 4. Send one real OTP and one small broadcast to a committee phone to confirm the gateway accepts the template and sender ID.
-5. Decide which mock areas (news, gallery, careers, mentorship) launch hidden or get wired to the database first.
 
 ## 8. Recent work (this branch)
 
@@ -138,4 +137,5 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Single `.env.local`; scripts load it through `lib/load-env.ts`.
 - Bangla QR payment option.
 - Security fixes in section 5.
+- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data).
 - Dev fix: a leftover PWA service worker served old JavaScript in `next dev` (hydration mismatch); dev now removes it.

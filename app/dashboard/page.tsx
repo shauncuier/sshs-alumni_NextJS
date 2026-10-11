@@ -9,37 +9,22 @@ import MobileNav from "@/components/layout/MobileNav";
 import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
 import MyEvents from "@/components/events/MyEvents";
-import {
-  samplePosts,
-  sampleAlumni,
-  sampleBatches,
-  sampleDonations,
-  PostItem,
-  type EventItem
-} from "@/lib/data";
-import {
-  Sparkles,
-  Calendar,
-  Users,
-  Heart,
-  BadgeCheck,
-  Plus,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Layers,
-  Radio
-} from "lucide-react";
+import type { AlumniMember, EventItem, PostItem } from "@/lib/data";
+import { Calendar, Users, Heart, BadgeCheck, Plus, ShieldCheck, Radio, MessageSquare } from "lucide-react";
+
+type Classmate = Pick<AlumniMember, "id" | "fullName" | "sscBatch" | "locationCity" | "avatarUrl"> & { userId: string };
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const [posts, setPosts] = useState<PostItem[]>(samplePosts);
+  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [postsLoaded, setPostsLoaded] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const user = session?.user;
-  const userName = user?.name || "Md. Jashedul Islam";
+  const userId = user?.id;
+  const userName = user?.name || "Member";
   const userFirst = userName.split(" ")[0] || "Alumnus";
-  const userBatch = user?.batchYear || 2008;
+  const userBatch = user?.batchYear || 0;
   const userRole = user?.role || "ALUMNI";
   const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
   // Membership status comes from the session; never label a pending or rejected
@@ -58,7 +43,15 @@ export default function DashboardPage() {
     : userStatus === "REJECTED"
       ? "Contact the committee about your verification"
       : "Awaiting committee verification";
-  const userAvatar = user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+
+  // Latest posts from the community feed.
+  useEffect(() => {
+    fetch("/api/posts?limit=5", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { posts: [] }))
+      .then((data) => setPosts(data.posts ?? []))
+      .catch(() => setPosts([]))
+      .finally(() => setPostsLoaded(true));
+  }, []);
 
   const [upcomingEvent, setUpcomingEvent] = useState<EventItem | null>(null);
   const [upcomingError, setUpcomingError] = useState(false);
@@ -74,9 +67,10 @@ export default function DashboardPage() {
   }, []);
   const [dynamicBatch, setDynamicBatch] = useState<{ totalAlumni: number; classRepresentative?: string } | null>(null);
   const [donationCampaign, setDonationCampaign] = useState<{ title: string; raisedAmount: number; goalAmount: number } | null>(null);
-  const [realClassmates, setRealClassmates] = useState<typeof sampleAlumni>([]);
+  const [classmates, setClassmates] = useState<Classmate[]>([]);
 
   useEffect(() => {
+    if (!userBatch) return;
     // 1. Load batch info
     fetch("/api/batches", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
@@ -103,52 +97,26 @@ export default function DashboardPage() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.alumni && Array.isArray(data.alumni)) {
-          const list = data.alumni.filter((a: { fullName: string }) => a.fullName !== userName);
-          if (list.length > 0) setRealClassmates(list);
+          setClassmates(data.alumni.filter((a: Classmate) => a.userId !== userId));
         }
       })
       .catch(() => {});
-  }, [userBatch, userName]);
+  }, [userBatch, userId]);
 
-  const myBatch = {
-    year: userBatch,
-    name: `SSC Batch ${userBatch}`,
-    totalAlumni: dynamicBatch?.totalAlumni ?? 0,
-    classRepresentative: dynamicBatch?.classRepresentative || "Batch Committee",
-    tagline: `Pride of Class of ${userBatch}`,
-    representativePhone: "+880 1819-000000",
-    coverImage: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
-    description: `The proud alumni of SSC Batch ${userBatch}.`,
-  };
+  const batchMembers = dynamicBatch?.totalAlumni ?? 0;
+  const batchRep = dynamicBatch?.classRepresentative || "Not assigned yet";
+  const displayClassmates = classmates.slice(0, 3);
 
-  const activeDonation = donationCampaign || {
-    title: "Student Merit & STEM Fund",
-    raisedAmount: 0,
-    goalAmount: 500000,
-  };
-
-  const displayClassmates = realClassmates.length > 0
-    ? realClassmates.slice(0, 3)
-    : sampleAlumni.filter((a) => a.fullName !== userName).slice(0, 3);
-
-  const handlePostCreated = (content: string, batchTag?: number) => {
-    const newPost: PostItem = {
-      id: `post-${Date.now()}`,
-      author: {
-        name: userName,
-        avatar: userAvatar,
-        batch: userBatch,
-        profession: isAdmin ? "System Administrator" : "Active Alumnus",
-        isVerified: true,
-      },
-      timestamp: "Just now",
-      content,
-      likesCount: 0,
-      commentsCount: 0,
-      batchTag: batchTag || userBatch,
-      isLiked: false,
-    };
-    setPosts([newPost, ...posts]);
+  // Saved through the API; the modal shows the error and stays open if it fails.
+  const handlePostCreated = async (content: string, batchTag?: number) => {
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, batchTag }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Could not publish your post.");
+    setPosts((list) => [data.post, ...list]);
   };
 
   return (
@@ -171,27 +139,24 @@ export default function DashboardPage() {
                   ) : (
                     <ShieldCheck className="w-4 h-4 text-amber-300" />
                   )}
-                  <span>{memberLabel} • SSC Batch {userBatch}</span>
+                  <span>{memberLabel}{userBatch ? ` • SSC Batch ${userBatch}` : ""}</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   Welcome back, {userFirst}!
                 </h2>
                 <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl leading-relaxed">
-                  {myBatch.totalAlumni > 0
-                    ? `Your batch has ${myBatch.totalAlumni} connected alumni. `
+                  {batchMembers > 0
+                    ? `Your batch has ${batchMembers} verified member${batchMembers === 1 ? "" : "s"} here. `
                     : ""}
                   Stay updated with batchmates, participate in reunion votes, and discover mutual contacts.
                 </p>
               </div>
 
-              {/* Profile Completion Widget (90%) */}
+              {/* Membership status */}
               <div className="md:col-span-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Profile Strength</span>
-                  <span className="text-amber-300">90% Complete</span>
-                </div>
-                <div className="w-full h-2.5 bg-black/40 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full w-[90%]" />
+                  <span>Your profile</span>
+                  <span className="text-amber-300">{memberLabel}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-emerald-200">
                   <span>{credentialsNote}</span>
@@ -236,6 +201,7 @@ export default function DashboardPage() {
             {/* Left 8 cols: Community Feed & Batch updates */}
             <div className="lg:col-span-8 space-y-6">
               {/* Batch Highlight Card */}
+              {userBatch > 0 && (
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-emerald-900 text-amber-300 font-bold rounded-2xl flex items-center justify-center shrink-0">
@@ -246,7 +212,7 @@ export default function DashboardPage() {
                       SSC Batch {userBatch} Official Hub
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {myBatch.totalAlumni > 0 ? `${myBatch.totalAlumni} Members • ` : ""}Rep: {myBatch.classRepresentative}
+                      {batchMembers > 0 ? `${batchMembers} Members • ` : ""}Rep: {batchRep}
                     </p>
                   </div>
                 </div>
@@ -257,6 +223,7 @@ export default function DashboardPage() {
                   Open Batch Page
                 </Link>
               </div>
+              )}
 
               {/* Feed Heading */}
               <div className="flex items-center justify-between pt-2">
@@ -271,9 +238,18 @@ export default function DashboardPage() {
 
               {/* Posts */}
               <div className="space-y-4">
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
+                {!postsLoaded ? (
+                  <p className="text-xs text-slate-400 text-center py-8">Loading posts…</p>
+                ) : posts.length === 0 ? (
+                  <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-1">
+                    <p className="text-sm font-bold text-slate-700">No posts yet</p>
+                    <p className="text-xs text-slate-500">Be the first to share something with the community.</p>
+                  </div>
+                ) : (
+                  posts.map((post) => (
+                    <PostCard key={post.id} post={post} onDeleted={(id) => setPosts((list) => list.filter((p) => p.id !== id))} />
+                  ))
+                )}
               </div>
             </div>
 
@@ -340,6 +316,12 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="space-y-3">
+                  {displayClassmates.length === 0 && (
+                    <p className="text-xs text-slate-500">
+                      No other verified members from your batch yet.{" "}
+                      <Link href="/network" className="font-bold text-emerald-800 hover:underline">Browse the network</Link>
+                    </p>
+                  )}
                   {displayClassmates.map((alumnus) => (
                     <div key={alumnus.id} className="flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 overflow-hidden">
@@ -349,37 +331,41 @@ export default function DashboardPage() {
                           className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
                         />
                         <div className="truncate">
-                          <Link href={`/profile?id=${alumnus.id}`} className="font-bold text-slate-900 hover:underline truncate block">
+                          <Link href={`/alumni/${alumnus.id}`} className="font-bold text-slate-900 hover:underline truncate block">
                             {alumnus.fullName}
                           </Link>
                           <span className="text-slate-400 text-[11px]">SSC &apos;{alumnus.sscBatch} • {alumnus.locationCity}</span>
                         </div>
                       </div>
-                      <button className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-bold shrink-0 transition-colors">
-                        Connect
-                      </button>
+                      <Link
+                        href={`/messages?to=${alumnus.userId}`}
+                        className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-bold shrink-0 transition-colors flex items-center gap-1"
+                      >
+                        <MessageSquare className="w-3 h-3" /> Message
+                      </Link>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Giving Back Spotlight */}
+              {donationCampaign && (
               <div className="bg-[#06281e] text-white p-5 rounded-2xl border border-emerald-800 space-y-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
                   <Heart className="w-3.5 h-3.5 fill-amber-300" /> Featured Campaign
                 </span>
-                <h4 className="font-bold text-sm leading-snug">{activeDonation.title}</h4>
+                <h4 className="font-bold text-sm leading-snug">{donationCampaign.title}</h4>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-[11px] text-emerald-200">
-                    <span>Raised: ৳{activeDonation.raisedAmount.toLocaleString()}</span>
-                    <span>Goal: ৳{activeDonation.goalAmount.toLocaleString()}</span>
+                    <span>Raised: ৳{donationCampaign.raisedAmount.toLocaleString()}</span>
+                    <span>Goal: ৳{donationCampaign.goalAmount.toLocaleString()}</span>
                   </div>
                   <div className="w-full h-2 bg-emerald-950 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-amber-400 rounded-full"
                       style={{
-                        width: `${activeDonation.goalAmount > 0 ? Math.min(
-                          (activeDonation.raisedAmount / activeDonation.goalAmount) * 100,
+                        width: `${donationCampaign.goalAmount > 0 ? Math.min(
+                          (donationCampaign.raisedAmount / donationCampaign.goalAmount) * 100,
                           100
                         ) : 0}%`,
                       }}
@@ -393,6 +379,7 @@ export default function DashboardPage() {
                   Give Back
                 </Link>
               </div>
+              )}
             </div>
           </div>
         </main>

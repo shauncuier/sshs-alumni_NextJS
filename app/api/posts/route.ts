@@ -1,188 +1,38 @@
 import { NextResponse } from "next/server";
-import { getMemberSession } from "@/lib/session-user";
-import prisma from "@/lib/prisma";
-import { samplePosts, PostItem } from "@/lib/data";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { errorResponse } from "@/lib/api-response";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
+import { createPost, listFeed } from "@/lib/feed";
+import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { getSessionUser } from "@/lib/session-user";
 
+// GET /api/posts?batch=&limit= — the community feed, newest first (pinned posts on
+// top). Members only, like the /feed page.
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const batch = searchParams.get("batch");
-
-    try {
-      const whereClause: Record<string, unknown> = {};
-      if (batch && batch !== "all") {
-        whereClause.batchTag = parseInt(batch, 10);
-      }
-
-      // Explicitly select safe public fields only; never leak passwordHash or sessionVersion.
-      const posts = await prisma.post.findMany({
-        where: whereClause,
-        select: {
-          id: true,
-          content: true,
-          batchTag: true,
-          createdAt: true,
-          updatedAt: true,
-          author: {
-            select: {
-              id: true,
-              role: true,
-              status: true,
-              profile: {
-                select: {
-                  fullName: true,
-                  avatarUrl: true,
-                  sscBatch: true,
-                  profession: true,
-                  verificationStatus: true,
-                },
-              },
-            },
-          },
-          comments: {
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              author: {
-                select: {
-                  id: true,
-                  role: true,
-                  profile: {
-                    select: {
-                      fullName: true,
-                      avatarUrl: true,
-                      sscBatch: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      });
-
-      if (posts && posts.length > 0) {
-        return NextResponse.json({ posts, source: "database" });
-      }
-    } catch (dbErr) {
-      console.warn("Database posts fallback:", dbErr);
-    }
-
-    let results: PostItem[] = [...samplePosts];
-    if (batch && batch !== "all") {
-      const bYear = parseInt(batch, 10);
-      results = results.filter((p) => p.batchTag === bYear);
-    }
-
-    return NextResponse.json({ posts: results, source: "fallback-dataset" });
-  } catch (error) {
-    console.error("Posts GET error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const me = await getSessionUser();
+    if (!me) throw new AppError("SIGN_IN_REQUIRED", 401, "Please sign in to see the community feed.");
+    const params = new URL(req.url).searchParams;
+    const batch = Number(params.get("batch"));
+    const limit = Number(params.get("limit"));
+    const posts = await listFeed(me, { batch: Number.isInteger(batch) && batch > 0 ? batch : null, limit: limit > 0 ? limit : undefined });
+    return NextResponse.json({ posts });
+  } catch (err) {
+    return errorResponse(err, "GET /api/posts");
   }
 }
 
+// POST /api/posts — a signed-in member posts to the feed. Never reports success unless it was stored.
 export async function POST(req: Request) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "create-post", { limit: 10, windowMs: 10 * 60_000 });
-
-    const session = await getMemberSession();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
-    }
-
-    const body = await readJsonBody(req);
-    const { content, batchTag } = body;
-
-    if (!content || typeof content !== "string" || !content.trim()) {
-      return NextResponse.json({ error: "Post content cannot be empty." }, { status: 400 });
-    }
-
-    if (content.length > 5000) {
-      return NextResponse.json({ error: "Post content cannot exceed 5000 characters." }, { status: 400 });
-    }
-
-    const userName = session.user.name || "Alumnus";
-    const userBatch = (session.user as unknown as { batchYear?: number })?.batchYear || 2008;
-
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { id: true },
-      });
-
-      if (user) {
-        const createdPost = await prisma.post.create({
-          data: {
-            authorId: user.id,
-            content: content.trim(),
-            batchTag: batchTag ? parseInt(batchTag, 10) : userBatch,
-          },
-          select: {
-            id: true,
-            content: true,
-            batchTag: true,
-            createdAt: true,
-            author: {
-              select: {
-                id: true,
-                role: true,
-                profile: {
-                  select: {
-                    fullName: true,
-                    avatarUrl: true,
-                    sscBatch: true,
-                    profession: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        await logActivity({ category: "CONTENT", action: "post.created", summary: `${session.user.email} posted in the feed`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, targetType: "Post", targetId: createdPost.id, metadata: { preview: createdPost.content.slice(0, 80), batchTag: createdPost.batchTag }, req });
-        return NextResponse.json(
-          { message: "Post created successfully", post: createdPost, source: "database" },
-          { status: 201 }
-        );
-      }
-    } catch (dbErr) {
-      console.warn("Database post creation fallback:", dbErr);
-    }
-
-    // Dynamic simulated response
-    const newPost: PostItem = {
-      id: `post-${Date.now()}`,
-      author: {
-        name: userName,
-        avatar: session.user.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-        batch: userBatch,
-        profession: "Active Alumnus",
-        isVerified: true,
-      },
-      timestamp: "Just now",
-      content: content.trim(),
-      likesCount: 0,
-      commentsCount: 0,
-      batchTag: batchTag ? parseInt(batchTag, 10) : userBatch,
-      isLiked: false,
-    };
-
-    return NextResponse.json(
-      { message: "Post created successfully", post: newPost, source: "fallback" },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
-    }
-    console.error("Posts POST error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const me = await getSessionUser();
+    if (!me) throw new AppError("SIGN_IN_REQUIRED", 401, "Unauthorized. Please sign in.");
+    const post = await createPost(me, await readJsonBody(req));
+    await logActivity({ category: "CONTENT", action: "post.created", summary: `${me.email} posted in the feed`, actor: me, targetType: "Post", targetId: post.id, metadata: { preview: post.content.slice(0, 80), batchTag: post.batchTag }, req });
+    return NextResponse.json({ post }, { status: 201 });
+  } catch (err) {
+    return errorResponse(err, "POST /api/posts");
   }
 }
-

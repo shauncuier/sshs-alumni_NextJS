@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { sampleBatches } from "@/lib/data";
+import { FIRST_BATCH } from "@/lib/batches";
 import { publishedStoryIds } from "@/lib/stories";
 import { listPublicEvents } from "@/lib/events/service";
 
@@ -31,8 +31,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Dynamic Batch pages
-  const batchPages = sampleBatches.map((b) => ({
-    url: `${baseUrl}/batches/${b.year}`,
+  // Every SSC batch year has a page.
+  const years = Array.from({ length: new Date().getFullYear() - FIRST_BATCH + 1 }, (_, i) => FIRST_BATCH + i);
+  const batchPages = years.map((year) => ({
+    url: `${baseUrl}/batches/${year}`,
     lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.7,

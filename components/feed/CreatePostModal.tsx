@@ -7,33 +7,39 @@ import { X, Image as ImageIcon, Send } from "lucide-react";
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPostCreated: (content: string, batchTag: number | undefined) => void;
+  /** Saves the post; throws with a message if it was not saved. */
+  onPostCreated: (content: string, batchTag: number | undefined) => Promise<void> | void;
 }
 
 export default function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostModalProps) {
   const { data: session } = useSession();
-  const userName = session?.user?.name || "Verified Alumnus";
-  const userBatch = session?.user?.batchYear || 2008;
+  const userName = session?.user?.name || "Member";
+  const userBatch = session?.user?.batchYear;
   const userImage = session?.user?.image;
 
   const [content, setContent] = useState("");
   const [batchTag, setBatchTag] = useState<string | null>(null);
-  const effectiveBatchTag = batchTag ?? userBatch.toString();
+  const effectiveBatchTag = batchTag ?? (userBatch ? String(userBatch) : "all");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
     setSubmitting(true);
-    setTimeout(() => {
-      onPostCreated(content.trim(), effectiveBatchTag && effectiveBatchTag !== "all" ? parseInt(effectiveBatchTag, 10) : undefined);
+    setError(null);
+    try {
+      await onPostCreated(content.trim(), effectiveBatchTag && effectiveBatchTag !== "all" ? parseInt(effectiveBatchTag, 10) : undefined);
       setContent("");
       setBatchTag(null);
-      setSubmitting(false);
       onClose();
-    }, 600);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -52,6 +58,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && <p role="alert" className="text-xs font-bold text-rose-700">{error}</p>}
           <div className="flex items-center gap-3">
             {userImage ? (
               <img
@@ -73,7 +80,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
                   onChange={(e) => setBatchTag(e.target.value)}
                   className="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]"
                 >
-                  <option value={userBatch.toString()}>Batch {userBatch}</option>
+                  {userBatch && <option value={String(userBatch)}>Batch {userBatch}</option>}
                   <option value="all">Public All Batches</option>
                 </select>
               </div>

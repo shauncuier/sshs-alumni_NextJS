@@ -4,7 +4,7 @@
  * allowed), so the three can never disagree. Safe to import in the browser.
  *
  * Admins and the super admin use everything. Moderators run public content and
- * the event gate: news, gallery, stories, jobs, mentors and the gate scanner,
+ * the event gate: news, gallery, stories, jobs, mentors, feed moderation and the gate scanner,
  * but never members, money, messages to members, settings or the activity log.
  */
 
@@ -23,12 +23,13 @@ export const ADMIN_AREAS = [
   "stories",
   "jobs",
   "mentors",
+  "feed",
   "logs",
   "gate",
 ] as const;
 export type AdminArea = (typeof ADMIN_AREAS)[number];
 
-const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "gate"];
+const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate"];
 
 const AREAS_BY_ROLE: Record<string, readonly AdminArea[]> = {
   SUPER_ADMIN: ADMIN_AREAS,
