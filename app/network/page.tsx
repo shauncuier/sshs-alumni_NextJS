@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Form from "next/form";
 import { redirect } from "next/navigation";
 import { BadgeCheck, ChevronLeft, ChevronRight, Mail, MessageSquare, Phone, Search, Users } from "lucide-react";
 import AppSidebar from "@/components/layout/AppSidebar";
@@ -35,7 +36,7 @@ export default async function NetworkPage({ searchParams }: Props) {
       <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-0">
         <AppHeader title="Alumni Network" />
         <main className="max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-5">
-          <form method="get" className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-2">
+          <Form action="/network" className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-2">
             <div className="flex-1 flex items-center gap-2 px-2">
               <Search className="w-4 h-4 text-slate-400 shrink-0" />
               <input
@@ -52,7 +53,7 @@ export default async function NetworkPage({ searchParams }: Props) {
               {batches.map((b) => <option key={b} value={b}>SSC {b}</option>)}
             </select>
             <button type="submit" className="px-5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold">Search</button>
-          </form>
+          </Form>
 
           <p className="text-xs text-slate-500 flex items-center gap-1.5">
             <Users className="w-4 h-4" /> {total} verified member{total === 1 ? "" : "s"}

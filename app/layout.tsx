@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
 import PwaProvider from "@/components/pwa/PwaProvider";
+import NavigationProgress from "@/components/shared/NavigationProgress";
+import { Suspense } from "react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -72,6 +74,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <AuthProvider>
           <PwaProvider>{children}</PwaProvider>
         </AuthProvider>

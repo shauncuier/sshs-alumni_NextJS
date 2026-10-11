@@ -43,6 +43,8 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
   const [registration, setRegistration] = useState<MemberRegistration | null>(null);
   const [missing, setMissing] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  // Bumped by "Try again" to fetch again without reloading the page.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     fetch(`/api/events/${slug}`, { cache: "no-store" })
@@ -57,7 +59,7 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
       .then((body) => setRegistration(body.registration))
       // Not knowing the member's own registration only hides their status; the event still shows.
       .catch(() => setRegistration(null));
-  }, [slug]);
+  }, [slug, attempt]);
 
   if (missing) notFound();
   if (loadError) {
@@ -65,7 +67,10 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
       <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-3 px-4 text-center">
         <p className="text-sm font-bold text-rose-700">We couldn&apos;t load this event. Please check your connection and try again.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            setLoadError(false);
+            setAttempt((n) => n + 1);
+          }}
           className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white"
         >
           Try again
