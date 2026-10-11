@@ -24,12 +24,13 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ✅ Code done 2026-10-11 (inbox test in step 17) |
 | 7 | Volunteers into the database | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ✅ Done 2026-10-11 |
-| 9a | News from the database, managed in admin | 2 · Real data | M | ⬜ |
+| 9a | News from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9b | Gallery from the database, managed in admin | 2 · Real data | M | ⬜ |
 | 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ⬜ |
 | 9d | Careers / job board stored in the database, with moderation | 2 · Real data | L | ⬜ |
 | 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ⬜ |
 | 9f | Network built from real verified members | 2 · Real data | M | ⬜ |
+| 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ⬜ |
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ⬜ |
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ⬜ |
 | 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
@@ -133,6 +134,14 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Result:** `SmsBroadcast` table via `lib/sms-history.ts`; every send is stored with sender, full recipient list, credits and gateway reply; failed sends that reached the gateway are stored too (status FAILED, shown in red); history badge now says "Accepted by gateway" instead of the misleading "Delivered"; `npm run db:import-sms-history` moves the old file (run once on the server in step 29); 3 tests.
 **Tasks:** store each broadcast (sender, count, credits, gateway reply) in a table or as activity-log entries; the SMS page reads from there.
 **Done when:** `uploads/sms-history.json` is no longer written.
+
+### 9a. News · ✅ Done 2026-10-12
+**Result:** `/admin/news` to write, edit, publish/unpublish, feature and delete articles; image upload through a shared content-image pipeline (`lib/media/content-images.ts`: WebP large + thumbnail, camera/GPS data removed, served at `/api/media/content/...`, reused by 9b and 9c); `/news` shows only published articles (featured first) with an empty state, and each article has its own page `/news/[id]`; article text is plain paragraphs, never HTML; only uploaded images are accepted (no hotlinks); replaced or deleted images are removed from disk; existing rows (seeded samples) became drafts; all actions in the activity log; 8 tests.
+
+### 9g. Moderators manage content · M
+**Why:** the agreed roles say moderators handle content and gallery, but the admin panel admits admins only.
+**Tasks:** a small permission map (`can(role, area)`) used by the admin layout, sidebar and APIs; moderators see News, Gallery, Stories and the gate scanner only.
+**Done when:** a moderator can publish news but cannot open users, donations, SMS or logs.
 
 ### 9a–9f. Every section from the database · L in total (all launch, step 4)
 One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d careers (jobs and applications stored, posts moderated by admins), 9e mentorship (members opt in as mentors; requests stored and emailed, no fake Meet links), 9f network (verified members only, privacy settings respected).

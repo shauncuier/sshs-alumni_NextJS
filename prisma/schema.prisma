@@ -300,16 +300,27 @@ model PaymentTransaction {
   updatedAt DateTime @updatedAt
 }
 
+/// News on /news, managed in /admin/news (lib/news.ts). Only published rows are public.
 model NewsArticle {
   id            String   @id @default(uuid()) @db.VarChar(36)
   title         String
-  category      String // "School News", "Alumni News", "Events"
+  category      String // "School News", "Alumni News", "Events", "Announcements"
   excerpt       String   @db.Text
+  /// Plain text; blank lines separate paragraphs. Never rendered as HTML.
   content       String   @db.LongText
   featuredImage String?  @db.VarChar(500)
   author        String
+  /// Drafts are visible only in the admin panel. Rows that existed before this
+  /// column (seeded samples) become drafts.
+  isPublished   Boolean  @default(false)
   publishedAt   DateTime @default(now())
   isFeatured    Boolean  @default(false)
+  createdBy     String?  @db.VarChar(254)
+  updatedBy     String?  @db.VarChar(254)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([isPublished, publishedAt])
 }
 
 model AlumniStory {

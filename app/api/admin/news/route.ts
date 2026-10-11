@@ -1,0 +1,45 @@
+import { NextResponse } from "next/server";
+import { errorResponse } from "@/lib/api-response";
+import { AppError } from "@/lib/app-error";
+import { logActivity } from "@/lib/activity-log";
+import { createNews, listAllNews, NEWS_CATEGORIES } from "@/lib/news";
+import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { getSessionUser, isAdminRole } from "@/lib/session-user";
+
+async function requireAdmin() {
+  const me = await getSessionUser();
+  if (!me || !isAdminRole(me.role)) throw new AppError("FORBIDDEN", 403, "Only administrators can manage news.");
+  return me;
+}
+
+// GET /api/admin/news — every article, drafts first.
+export async function GET() {
+  try {
+    await requireAdmin();
+    return NextResponse.json({ articles: await listAllNews(), categories: NEWS_CATEGORIES });
+  } catch (err) {
+    return errorResponse(err, "GET /api/admin/news");
+  }
+}
+
+// POST /api/admin/news — write a new article (a draft unless isPublished is true).
+export async function POST(req: Request) {
+  try {
+    requireSameOrigin(req);
+    const me = await requireAdmin();
+    const article = await createNews(await readJsonBody(req), me.email);
+    await logActivity({
+      category: "CONTENT",
+      action: article.isPublished ? "news.published" : "news.drafted",
+      summary: `${article.isPublished ? "Published" : "Drafted"} news "${article.title}"`,
+      actor: me,
+      targetType: "NewsArticle",
+      targetId: article.id,
+      metadata: { category: article.category },
+      req,
+    });
+    return NextResponse.json({ article }, { status: 201 });
+  } catch (err) {
+    return errorResponse(err, "POST /api/admin/news");
+  }
+}

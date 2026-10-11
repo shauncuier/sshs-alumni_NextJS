@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Calendar, User, ArrowRight, Tag } from "lucide-react";
+import { Calendar, User, ArrowRight } from "lucide-react";
 import { NewsItem } from "@/lib/data";
 
 interface NewsCardProps {
@@ -48,7 +48,7 @@ export default function NewsCard({ news }: NewsCardProps) {
 
         <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
           <Link
-            href={`/news`}
+            href={`/news/${news.id}`}
             className="text-xs font-bold text-emerald-800 hover:text-emerald-700 flex items-center gap-1 group-hover:translate-x-1 transition-transform"
           >
             <span>Read Article</span>

@@ -2,10 +2,14 @@ import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import NewsCard from "@/components/news/NewsCard";
-import { sampleNews } from "@/lib/data";
+import { listPublishedNews } from "@/lib/news";
 import { Newspaper } from "lucide-react";
 
-export default function NewsPage() {
+// Published articles from the database; drafts never appear here.
+export const dynamic = "force-dynamic";
+
+export default async function NewsPage() {
+  const news = await listPublishedNews();
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />
@@ -31,11 +35,19 @@ export default function NewsPage() {
 
         {/* News Grid */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {sampleNews.map((news) => (
-              <NewsCard key={news.id} news={news} />
-            ))}
-          </div>
+          {news.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200">
+              <Newspaper className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-bold text-slate-700">No news yet</p>
+              <p className="text-xs text-slate-500 mt-1">Announcements from the alumni committee will appear here.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {news.map((item) => (
+                <NewsCard key={item.id} news={item} />
+              ))}
+            </div>
+          )}
         </section>
       </main>
 
