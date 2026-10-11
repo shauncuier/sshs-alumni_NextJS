@@ -42,6 +42,8 @@ export interface AccountInput {
   fullName: string;
   email: string;
   phone?: string | null;
+  /** From POST /api/auth/phone-otp/verify; proves the member received an SMS code on `phone`. */
+  phoneVerificationToken?: string | null;
   password: string;
   sscBatch: number | string;
   rollNumber?: string | null;

@@ -4,6 +4,7 @@ import path from "node:path";
 import prisma from "@/lib/prisma";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
+import { verifiedPhoneToken } from "../helpers/phone";
 
 const session = vi.hoisted(() => ({ user: null as { id: string; email: string; role: string } | null }));
 vi.mock("@/lib/session-user", () => ({ getSessionUser: async () => session.user, isAdminRole: () => false }));
@@ -34,7 +35,7 @@ const multipart = (payload: string, file?: Buffer, proof?: Buffer) => {
 const TOO_LARGE = { code: "UPLOAD_TOO_LARGE", error: "The upload is too large. The photo must be 5 MB or smaller and the proof document 10 MB or smaller." };
 const joinPayload = (proof: unknown = { type: "SSC_MARKSHEET" }) =>
   JSON.stringify({
-    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001 },
+    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, phoneVerificationToken: verifiedPhoneToken() },
     rsvp: { packageName: "General", paymentMethod: "bKash", transactionId: "TRX123456" },
     proof,
   });

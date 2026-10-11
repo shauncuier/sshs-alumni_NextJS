@@ -5,6 +5,7 @@ import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-me
 import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
 import { processProof, removeProofDir, saveProof } from "@/lib/media/proofs";
 import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
+import { readVerifiedPhone } from "@/lib/phone-otp";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee } from "./pricing";
 import { eventFeeRules } from "./service";
@@ -95,6 +96,8 @@ export async function registerForEvent(args: {
   if (!args.sessionUserId && account) {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
     if (event?.isMembershipEvent) {
+      // The phone number is the one proven by SMS code, never the typed-in value.
+      account = { ...account, phone: readVerifiedPhone(account.phoneVerificationToken) };
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
       const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);

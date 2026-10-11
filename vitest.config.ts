@@ -42,6 +42,9 @@ export default defineConfig({
       TEST_DATABASE_URL,
       UPLOADS_DIR: path.join(os.tmpdir(), `sshs-test-uploads-${process.pid}`),
       NEXTAUTH_SECRET: "test-secret-for-vitest-0123456789abcdef",
+      // .env.local holds the real SMS gateway key; tests must never text real phones.
+      BULKSMSBD_API_KEY: "",
+      SMS_API_KEY: "",
     },
   },
 });

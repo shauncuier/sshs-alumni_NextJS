@@ -7,6 +7,7 @@ import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing"
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_NOTE_MAX, PROOF_TYPES } from "@/lib/members/proof-types";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
+import PhoneVerifyField from "./PhoneVerifyField";
 
 const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
@@ -71,6 +72,8 @@ export default function RegistrationForm({
   const showRegistration = !needsAccount || step === 2;
 
   const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "2010", rollNumber: "", section: "" });
+  const [phoneToken, setPhoneToken] = useState<string | null>(null);
+  const [phoneRequired, setPhoneRequired] = useState(false);
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
   const [extraAdults, setExtraAdults] = useState(0);
   const [extraChildren, setExtraChildren] = useState(0);
@@ -231,7 +234,7 @@ export default function RegistrationForm({
         : null;
 
       const payload = JSON.stringify({
-          account: needsAccount ? { ...account, sscBatch: Number(account.sscBatch) } : undefined,
+          account: needsAccount ? { ...account, sscBatch: Number(account.sscBatch), phoneVerificationToken: phoneToken } : undefined,
           proof: needsAccount ? { type: proofType, note: proofType === "OTHER" ? proofNote.trim() : null } : undefined,
           rsvp: {
             packageName: event.packages.length ? packageName : null,
@@ -268,6 +271,12 @@ export default function RegistrationForm({
       const body = await res.json();
       if (!res.ok) {
         if (body.code === "EMAIL_EXISTS") setExistingAccount(true);
+        // The 30-minute verification ran out while filling in the form: verify again on step 1.
+        if (body.code === "PHONE_NOT_VERIFIED") {
+          setPhoneToken(null);
+          setPhoneRequired(true);
+          setStep(1);
+        }
         throw new Error(body.error || "Registration failed. Please try again.");
       }
       // A new member is not signed in: the committee must approve the membership first.
@@ -336,13 +345,16 @@ export default function RegistrationForm({
             <input id="reg-email" type="email" required className={input} value={account.email} onChange={(e) => setAccount({ ...account, email: e.target.value })} />
           </div>
           <div>
-            <label htmlFor="reg-phone" className={label}>Phone *</label>
-            <input id="reg-phone" required className={input} value={account.phone} onChange={(e) => setAccount({ ...account, phone: e.target.value })} />
-          </div>
-          <div>
             <label htmlFor="reg-password" className={label}>Password (8+ characters) *</label>
             <input id="reg-password" type="password" minLength={8} required autoComplete="new-password" className={input} value={account.password} onChange={(e) => setAccount({ ...account, password: e.target.value })} />
           </div>
+          <PhoneVerifyField
+            phone={account.phone}
+            onPhoneChange={(phone) => setAccount((a) => ({ ...a, phone }))}
+            verified={Boolean(phoneToken)}
+            onVerified={setPhoneToken}
+            showRequired={phoneRequired}
+          />
           <div>
             <label htmlFor="reg-batch" className={label}>SSC batch *</label>
             <select id="reg-batch" className={input} value={account.sscBatch} onChange={(e) => setAccount({ ...account, sscBatch: e.target.value })}>
@@ -423,7 +435,8 @@ export default function RegistrationForm({
               if (!photo && !photoError) setPhotoError("Please add a profile photo.");
               // The type and note are required fields (reportValidity shows those); the file is checked here.
               if (!proof && !proofError) setProofError(PROOF_MISSING);
-              if (form.reportValidity() && photo && !proofProblem()) setStep(2);
+              setPhoneRequired(!phoneToken);
+              if (form.reportValidity() && photo && !proofProblem() && phoneToken) setStep(2);
             }}
           >
             Continue to registration &amp; payment →

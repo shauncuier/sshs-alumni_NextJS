@@ -7,6 +7,7 @@ import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { registerForEvent } from "@/lib/events/registrations";
 import { discardDecidedProofs } from "@/lib/members/proof-retention";
 import { makeImage, makePdf } from "../helpers/images";
+import { verifiedPhoneToken } from "../helpers/phone";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 
 beforeEach(async () => {
@@ -27,7 +28,7 @@ const join = async () => {
     sessionUserId: null,
     photo: await makeImage(800, 800),
     proof: { type: "SSC_CERTIFICATE", file: makePdf() },
-    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001 },
+    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, phoneVerificationToken: verifiedPhoneToken() },
     rsvp: { packageName: "General", paymentMethod: "bKash", transactionId: "TRX123456", donationAmount: 250 },
   });
   return { event, registration };

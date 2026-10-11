@@ -6,6 +6,7 @@ import { getMemberRegistration, registerForEvent } from "@/lib/events/registrati
 import { readTicketToken, TICKET_QR_PREFIX } from "@/lib/events/tickets";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
+import { verifiedPhoneToken } from "../helpers/phone";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -30,7 +31,7 @@ const packages = [
 ];
 const membershipEvent = () =>
   makeEvent({ slug: "jubilee", isMembershipEvent: true, packages, extraAdultFee: 500, childFee: 300, paymentInstructions: "bKash 01XXXXXXXXX", maxAttendees: 10 });
-const account = { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, rollNumber: "12", section: "A" };
+const account = { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, rollNumber: "12", section: "A", phoneVerificationToken: verifiedPhoneToken() };
 const paidRsvp = { packageName: "General", extraAdults: 1, paymentMethod: "bKash", transactionId: " 9ab3xk1 ", donationAmount: 500 };
 
 describe("joining through the membership event", () => {
@@ -42,6 +43,25 @@ describe("joining through the membership event", () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { email: "new@example.test" }, include: { verificationRequests: true } });
     expect(user.status).toBe("PENDING");
     expect(user.verificationRequests).toHaveLength(1);
+  });
+
+  it("saves the SMS-verified phone number, not the one typed in", async () => {
+    await membershipEvent();
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, phone: "01999999999" }, photo, proof, rsvp: paidRsvp });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.phone).toBe("01711000111");
+  });
+
+  it("refuses a new member without a valid phone verification, before saving any upload", async () => {
+    await membershipEvent();
+    for (const phoneVerificationToken of [undefined, "forged-token", verifiedPhoneToken("8801711000111", Date.now() - 1)]) {
+      await expect(
+        registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, phoneVerificationToken }, photo, proof, rsvp: paidRsvp })
+      ).rejects.toMatchObject({ status: 400, code: "PHONE_NOT_VERIFIED" });
+    }
+    expect(await prisma.user.count()).toBe(0);
+    expect(await avatarFolders()).toEqual([]);
+    expect(await proofFolders()).toEqual([]);
   });
 
   it("leaves nothing behind when the registration fails", async () => {
