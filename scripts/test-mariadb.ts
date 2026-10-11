@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../lib/load-env";
 import mariadb from "mariadb";
 
 async function testConnection() {

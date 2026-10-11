@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Outdated (last updated 2026-09-26).** For the current state, security review and backlog see **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. This file is kept for its history and error log.
+
 # SSGHS Alumni Platform — Milestones, Live State & AI Error Log
 
 > **Sabuj Shikshayatan Government High School (SSGHS) Alumni Association**  

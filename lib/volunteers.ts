@@ -89,6 +89,11 @@ const INITIAL_VOLUNTEERS: VolunteerItem[] = [
   },
 ];
 
+/** The made-up volunteers the store starts with; their numbers must never receive SMS. */
+export function isSampleVolunteer(id: string): boolean {
+  return INITIAL_VOLUNTEERS.some((v) => v.id === id);
+}
+
 const STORE_PATH = path.join(process.cwd(), "uploads", "volunteers.json");
 
 async function loadStore(): Promise<VolunteerItem[]> {

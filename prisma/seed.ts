@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../lib/load-env";
 import { Role, VerificationStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma";
 import { sampleEvents } from "../lib/data";
 import { normalizePackages, parseTaka } from "../lib/events/pricing";
 import { backfillEventJsonColumns } from "./backfill-events";
+import { ensureSuperAdmin, envSuperAdminEmail } from "../lib/admin/super-admin";
 
 // Earlier seeds created these accounts with published passwords; replace them on sight.
 const LEGACY_ADMIN = { email: "admin@sabujsghs.edu.bd", password: "admin123" };
@@ -27,7 +28,7 @@ function emailFromEnv(envVar: string, fallback: string): string {
 function passwordFromEnv(envVar: string, legacyPassword: string): string {
   const password = process.env[envVar];
   if (!password) {
-    throw new Error(`${envVar} is not set. Set it in .env before running the seed.`);
+    throw new Error(`${envVar} is not set. Set it in .env.local before running the seed.`);
   }
   if (password.length < MIN_SEED_PASSWORD_LENGTH || password === legacyPassword) {
     throw new Error(
@@ -59,11 +60,14 @@ async function main() {
   // Read all settings before touching the database, so a bad value writes nothing.
   const adminEmail = emailFromEnv("SEED_ADMIN_EMAIL", LEGACY_ADMIN.email);
   const alumniEmail = emailFromEnv("SEED_ALUMNI_EMAIL", LEGACY_ALUMNI.email);
-  if (adminEmail === alumniEmail) {
-    throw new Error("SEED_ADMIN_EMAIL and SEED_ALUMNI_EMAIL must be different addresses.");
+  const moderatorEmail = emailFromEnv("SEED_MODERATOR_EMAIL", "moderator@sabujsghs.edu.bd");
+  const seedEmails = [adminEmail, alumniEmail, moderatorEmail, envSuperAdminEmail()].filter(Boolean);
+  if (new Set(seedEmails).size !== seedEmails.length) {
+    throw new Error("SUPER_ADMIN_EMAIL, SEED_ADMIN_EMAIL, SEED_MODERATOR_EMAIL and SEED_ALUMNI_EMAIL must all be different addresses.");
   }
   const adminPassword = passwordFromEnv("SEED_ADMIN_PASSWORD", LEGACY_ADMIN.password);
   const alumniPassword = passwordFromEnv("SEED_ALUMNI_PASSWORD", LEGACY_ALUMNI.password);
+  const moderatorPassword = passwordFromEnv("SEED_MODERATOR_PASSWORD", "");
   const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   const userPasswordHash = await bcrypt.hash(alumniPassword, 10);
 
@@ -98,6 +102,36 @@ async function main() {
   // earlier seed would otherwise keep the published password.
   await replaceLegacyPassword(adminEmail, LEGACY_ADMIN.password, adminPasswordHash, "SEED_ADMIN_PASSWORD");
   await replaceLegacyPassword(LEGACY_ADMIN.email, LEGACY_ADMIN.password, adminPasswordHash, "SEED_ADMIN_PASSWORD");
+
+  // 2b. Super admin (from SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD) and a moderator,
+  // so every role has an account to sign in with.
+  const superAdmin = await ensureSuperAdmin();
+  console.log(superAdmin === "skipped" ? "SUPER_ADMIN_EMAIL not set: no super admin seeded." : `Super admin ${envSuperAdminEmail()}: ${superAdmin}`);
+
+  console.log(`Creating Moderator user: ${moderatorEmail} ...`);
+  await prisma.user.upsert({
+    where: { email: moderatorEmail },
+    update: {},
+    create: {
+      email: moderatorEmail,
+      passwordHash: await bcrypt.hash(moderatorPassword, 10),
+      role: Role.MODERATOR,
+      status: VerificationStatus.VERIFIED,
+      profile: {
+        create: {
+          fullName: "Event & Gate Moderator",
+          sscBatch: 2012,
+          graduationYear: 2012,
+          profession: "Volunteer Coordinator",
+          locationCity: "Chattogram",
+          locationCountry: "Bangladesh",
+          bio: "Moderates community content and runs the event gate scanner.",
+          avatarUrl: "/logo.png",
+          verificationStatus: VerificationStatus.VERIFIED,
+        },
+      },
+    },
+  });
 
   // 3. Seed Verified Alumni User
   console.log(`Creating Verified Alumni user: ${alumniEmail} ...`);
@@ -403,7 +437,9 @@ async function main() {
 
   console.log("✅ SSGHS Alumni database seeded successfully!");
   console.log("--------------------------------------------------");
+  if (superAdmin !== "skipped") console.log(`Super Admin: ${envSuperAdminEmail()} (password from SUPER_ADMIN_PASSWORD)`);
   console.log(`Pre-seeded Admin User: ${adminEmail} (password from SEED_ADMIN_PASSWORD)`);
+  console.log(`Pre-seeded Moderator User: ${moderatorEmail} (password from SEED_MODERATOR_PASSWORD)`);
   console.log(`Pre-seeded Alumni User: ${alumniEmail} (password from SEED_ALUMNI_PASSWORD)`);
   console.log("--------------------------------------------------");
 }

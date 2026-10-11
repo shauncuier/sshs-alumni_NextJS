@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../lib/load-env";
 import { prisma } from "../lib/prisma";
 
 // Databases created by the old hand-written DDL (scripts/migrate.js) carry

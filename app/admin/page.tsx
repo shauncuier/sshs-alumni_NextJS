@@ -17,6 +17,7 @@ import {
   Plus,
   Copy,
   Check,
+  MessageSquare,
 } from "lucide-react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
@@ -141,6 +142,12 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin/sms"
+            className="px-4 py-2 bg-emerald-950 hover:bg-emerald-900 text-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs border border-emerald-800"
+          >
+            <MessageSquare className="w-4 h-4 text-amber-400" /> Bulk SMS Broadcast
+          </Link>
           <Link
             href="/admin/events"
             className="px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"

@@ -2,7 +2,8 @@ import type { EventItem } from "@/lib/data";
 import type { ProofSummary } from "@/lib/members/proof-types";
 import type { ClosedReason } from "./availability";
 
-export const PAYMENT_METHODS = ["bKash", "Nagad", "Bank", "Cash"] as const;
+// "Bangla QR" is Bangladesh Bank's interoperable QR: any bank or MFS app can pay it.
+export const PAYMENT_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type RegistrationStatusValue = "PENDING_PAYMENT" | "CONFIRMED" | "CHECKED_IN" | "CANCELLED";
@@ -42,6 +43,10 @@ export interface AccountInput {
   fullName: string;
   email: string;
   phone?: string | null;
+  /** From POST /api/auth/phone-otp/verify; proves the member received an SMS code on `phone`. */
+  phoneVerificationToken?: string | null;
+  /** From POST /api/auth/email-otp/verify; the fallback when the SMS code fails. Proves the member owns `email`. */
+  emailVerificationToken?: string | null;
   password: string;
   sscBatch: number | string;
   rollNumber?: string | null;

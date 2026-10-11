@@ -66,6 +66,16 @@ export default function PwaProvider({ children }: { children: React.ReactNode })
         .catch((err) => {
           console.warn("[PWA] Service Worker registration failed:", err);
         });
+    } else if ("serviceWorker" in navigator) {
+      // A worker left over from a production run on this origin serves /_next/static
+      // cache-first, and dev chunk URLs do not change between edits, so it would keep
+      // running old code (hydration mismatches). Remove it and its caches in dev.
+      void navigator.serviceWorker.getRegistrations().then(async (registrations) => {
+        if (registrations.length === 0) return;
+        await Promise.all(registrations.map((r) => r.unregister()));
+        if ("caches" in window) await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+        console.info("[PWA] Removed a stale service worker in development; reload to get fresh code.");
+      });
     }
 
     // Capture PWA install prompt

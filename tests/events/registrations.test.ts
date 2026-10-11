@@ -6,6 +6,7 @@ import { getMemberRegistration, registerForEvent } from "@/lib/events/registrati
 import { readTicketToken, TICKET_QR_PREFIX } from "@/lib/events/tickets";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
+import { verifiedEmailToken, verifiedPhoneToken } from "../helpers/phone";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -30,7 +31,7 @@ const packages = [
 ];
 const membershipEvent = () =>
   makeEvent({ slug: "jubilee", isMembershipEvent: true, packages, extraAdultFee: 500, childFee: 300, paymentInstructions: "bKash 01XXXXXXXXX", maxAttendees: 10 });
-const account = { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, rollNumber: "12", section: "A" };
+const account = { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, rollNumber: "12", section: "A", phoneVerificationToken: verifiedPhoneToken() };
 const paidRsvp = { packageName: "General", extraAdults: 1, paymentMethod: "bKash", transactionId: " 9ab3xk1 ", donationAmount: 500 };
 
 describe("joining through the membership event", () => {
@@ -42,6 +43,42 @@ describe("joining through the membership event", () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { email: "new@example.test" }, include: { verificationRequests: true } });
     expect(user.status).toBe("PENDING");
     expect(user.verificationRequests).toHaveLength(1);
+  });
+
+  it("saves the SMS-verified phone number, not the one typed in", async () => {
+    await membershipEvent();
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, phone: "01999999999" }, photo, proof, rsvp: paidRsvp });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.phone).toBe("01711000111");
+  });
+
+  it("refuses a new member without a valid contact verification, before saving any upload", async () => {
+    await membershipEvent();
+    const cases: [Record<string, unknown>, string][] = [
+      [{ phoneVerificationToken: undefined }, "CONTACT_NOT_VERIFIED"],
+      [{ phoneVerificationToken: "forged-token" }, "PHONE_NOT_VERIFIED"],
+      [{ phoneVerificationToken: verifiedPhoneToken("8801711000111", Date.now() - 1) }, "PHONE_NOT_VERIFIED"],
+      [{ phoneVerificationToken: undefined, emailVerificationToken: "forged-token" }, "EMAIL_NOT_VERIFIED"],
+      // An email token only counts for the address it was issued for.
+      [{ phoneVerificationToken: undefined, emailVerificationToken: verifiedEmailToken("someone.else@example.test") }, "EMAIL_NOT_VERIFIED"],
+    ];
+    for (const [tokens, code] of cases) {
+      await expect(
+        registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, ...tokens }, photo, proof, rsvp: paidRsvp })
+      ).rejects.toMatchObject({ status: 400, code });
+    }
+    expect(await prisma.user.count()).toBe(0);
+    expect(await avatarFolders()).toEqual([]);
+    expect(await proofFolders()).toEqual([]);
+  });
+
+  it("accepts an email verification when the SMS could not be used, keeping the typed phone", async () => {
+    await membershipEvent();
+    const emailVerified = { ...account, phone: "01811000333", phoneVerificationToken: undefined, emailVerificationToken: verifiedEmailToken("new@example.test") };
+    const { createdAccount } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...emailVerified, email: " New@Example.test " }, photo, proof, rsvp: paidRsvp });
+    expect(createdAccount).toEqual({ email: "new@example.test" });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.phone).toBe("01811000333");
   });
 
   it("leaves nothing behind when the registration fails", async () => {
@@ -60,6 +97,16 @@ describe("joining through the membership event", () => {
   it("refuses a zero-fee membership registration", async () => {
     await makeEvent({ slug: "jubilee", isMembershipEvent: true, packages: [{ name: "Free", price: 0 }], paymentInstructions: "x" });
     await expect(registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { packageName: "Free" } })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it("accepts Bangla QR as a payment method and refuses unknown ones", async () => {
+    await membershipEvent();
+    const { registration } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, paymentMethod: "Bangla QR" } });
+    expect(registration.paymentMethod).toBe("Bangla QR");
+    const member = await makeMember();
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { ...paidRsvp, transactionId: "OTHER123", paymentMethod: "PayPal" } })
+    ).rejects.toMatchObject({ status: 400, code: "PAYMENT_REQUIRED" });
   });
 
   it("uses the server price even if the form sends another fee", async () => {

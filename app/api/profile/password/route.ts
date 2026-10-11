@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { isEnvSuperAdmin } from "@/lib/admin/super-admin";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -15,6 +16,13 @@ export async function POST(req: Request) {
     const session = await getMemberSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (isEnvSuperAdmin(session.user.email)) {
+      // SUPER_ADMIN_PASSWORD would overwrite a new password at the next restart.
+      return NextResponse.json(
+        { error: "The super admin password is set by SUPER_ADMIN_PASSWORD in the server environment." },
+        { status: 403 }
+      );
     }
 
     let body: { currentPassword?: unknown; newPassword?: unknown };

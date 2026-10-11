@@ -4,7 +4,7 @@ import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-
 import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
-import { readJsonBody } from "@/lib/request-security";
+import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
 type RequestStatus = (typeof REQUEST_STATUSES)[number];
@@ -105,6 +105,7 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
+    requireSameOrigin(req);
     const me = await getSessionUser();
     if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });

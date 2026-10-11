@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -34,12 +35,13 @@ const ADMIN_NAV = [
   { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck },
   { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck },
+  { name: "Bulk SMS Broadcast", href: "/admin/sms", icon: MessageSquare },
   { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake },
   { name: "Manage Batches", href: "/admin/batches", icon: Layers },
   { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
   { name: "Gate Scanner", href: "/gate", icon: QrCode },
   { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
-  { name: "System Roles", href: "/admin/users", icon: Users },
+  { name: "User Management", href: "/admin/users", icon: Users },
 ] as const;
 
 export default function AdminShell({ children, user }: AdminShellProps) {
