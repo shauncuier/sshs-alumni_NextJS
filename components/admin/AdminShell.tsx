@@ -41,7 +41,7 @@ const ADMIN_NAV = [
   { name: "Events & Reunions", href: "/admin/events", icon: Calendar },
   { name: "Gate Scanner", href: "/gate", icon: QrCode },
   { name: "Donations & Funds", href: "/admin/donations", icon: Heart },
-  { name: "System Roles", href: "/admin/users", icon: Users },
+  { name: "User Management", href: "/admin/users", icon: Users },
 ] as const;
 
 export default function AdminShell({ children, user }: AdminShellProps) {

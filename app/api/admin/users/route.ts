@@ -1,71 +1,37 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { errorResponse } from "@/lib/api-response";
+import { AppError } from "@/lib/app-error";
+import { createUser, listUsers } from "@/lib/admin/users";
+import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
-export async function GET() {
+async function requireAdmin() {
+  const me = await getSessionUser();
+  if (!me || !isAdminRole(me.role)) throw new AppError("FORBIDDEN", 403, "Unauthorized access");
+  return me;
+}
+
+// GET /api/admin/users?q=&role=&status=&page= — search and page through accounts.
+export async function GET(req: Request) {
   try {
-    const me = await getSessionUser();
-    if (!me || !isAdminRole(me.role)) {
-      return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
-    }
+    const me = await requireAdmin();
+    const params = new URL(req.url).searchParams;
+    const result = await listUsers({ q: params.get("q"), role: params.get("role"), status: params.get("status"), page: Number(params.get("page")) || 1 });
+    // The page uses the viewer to show only the actions the server will allow.
+    return NextResponse.json({ ...result, viewer: { id: me.id, role: me.role } });
+  } catch (err) {
+    return errorResponse(err, "GET /api/admin/users");
+  }
+}
 
-    const [users, roleCounts, totalVerified] = await Promise.all([
-      prisma.user.findMany({
-        take: 100,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          profile: {
-            select: {
-              fullName: true,
-              sscBatch: true,
-              phone: true,
-            },
-          },
-        },
-      }),
-      prisma.user.groupBy({
-        by: ["role"],
-        _count: { id: true },
-      }),
-      prisma.user.count({
-        where: { status: "VERIFIED" },
-      }),
-    ]);
-
-    const countByRole = new Map<string, number>();
-    for (const r of roleCounts) {
-      countByRole.set(r.role, r._count.id);
-    }
-
-    const formattedUsers = users.map((u) => ({
-      id: u.id,
-      name: u.profile?.fullName || u.email.split("@")[0],
-      email: u.email,
-      role: u.role,
-      status: u.status,
-      batch: u.profile?.sscBatch || null,
-      phone: u.profile?.phone || null,
-      createdAt: u.createdAt.toISOString(),
-    }));
-
-    return NextResponse.json({
-      stats: {
-        totalUsers: users.length,
-        superAdmins: countByRole.get("SUPER_ADMIN") || 0,
-        admins: countByRole.get("ADMIN") || 0,
-        moderators: countByRole.get("MODERATOR") || 0,
-        alumni: countByRole.get("ALUMNI") || 0,
-        verifiedAlumni: totalVerified,
-      },
-      users: formattedUsers,
-    });
-  } catch (error) {
-    console.error("Failed to load admin users report:", error);
-    return NextResponse.json({ error: "Failed to load users report" }, { status: 500 });
+// POST /api/admin/users — add a verified account.
+export async function POST(req: Request) {
+  try {
+    requireSameOrigin(req);
+    const me = await requireAdmin();
+    requireRateLimit(req, "admin-user-create", { limit: 30, windowMs: 60 * 60_000 });
+    return NextResponse.json({ user: await createUser(me, await readJsonBody(req)) }, { status: 201 });
+  } catch (err) {
+    return errorResponse(err, "POST /api/admin/users");
   }
 }

@@ -24,12 +24,12 @@ export async function getMemberSession() {
   const current = userId
     ? await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, role: true, status: true, sessionVersion: true },
+        select: { id: true, role: true, status: true, sessionVersion: true, disabledAt: true },
       })
     : userEmail
     ? await prisma.user.findUnique({
         where: { email: userEmail },
-        select: { id: true, role: true, status: true, sessionVersion: true },
+        select: { id: true, role: true, status: true, sessionVersion: true, disabledAt: true },
       })
     : null;
   const dbVersion = (current as { sessionVersion?: number })?.sessionVersion ?? 0;
