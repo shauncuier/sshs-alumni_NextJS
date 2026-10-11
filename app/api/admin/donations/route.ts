@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
-    const [campaigns, donations, completedAgg] = await Promise.all([
+    const [campaigns, donations, completedAgg, pending] = await Promise.all([
       prisma.donationCampaign.findMany({
         orderBy: { createdAt: "desc" },
       }),
@@ -26,6 +26,13 @@ export async function GET() {
         where: { paymentStatus: "COMPLETED" },
         _sum: { amount: true },
         _count: { id: true },
+      }),
+      // Manual donations waiting for the committee to check the payment, oldest first.
+      prisma.donation.findMany({
+        where: { paymentGateway: "MANUAL", paymentStatus: "PENDING" },
+        orderBy: { createdAt: "asc" },
+        take: 200,
+        include: { campaign: { select: { title: true } } },
       }),
     ]);
 
@@ -68,7 +75,23 @@ export async function GET() {
       transactionRef: d.transactionRef || d.gatewayTrxId || null,
     }));
 
+    const formattedPending = pending.map((d) => ({
+      id: d.id,
+      donorName: d.donorName,
+      isAnonymous: d.isAnonymous,
+      donorEmail: d.donorEmail,
+      donorPhone: d.donorPhone,
+      donorBatch: d.donorBatch,
+      amount: d.amount,
+      paymentMethod: d.paymentMethod,
+      transactionRef: d.transactionRef,
+      receiptId: d.receiptId,
+      campaignTitle: d.campaign?.title || "General Fund",
+      createdAt: d.createdAt.toISOString(),
+    }));
+
     return NextResponse.json({
+      pending: formattedPending,
       stats: {
         totalRaised,
         totalGoal,

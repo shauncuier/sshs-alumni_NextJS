@@ -5,16 +5,13 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import type { DonationCampaignItem } from "@/lib/data";
 import { useSession } from "next-auth/react";
-import {
-  Heart,
-  ShieldCheck,
-  CheckCircle2,
-  Users,
-  Target,
-  Sparkles,
-  CreditCard,
-  Building
-} from "lucide-react";
+import { Heart, ShieldCheck, CheckCircle2 } from "lucide-react";
+
+const DONATION_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
+// Where to send money (numbers, bank account), one line each, separated by "|"; set by the committee.
+const DONATION_INSTRUCTIONS = (process.env.NEXT_PUBLIC_DONATION_INSTRUCTIONS || "").split("|").map((l) => l.trim()).filter(Boolean);
+const BANGLA_QR_IMAGE = process.env.NEXT_PUBLIC_BANGLA_QR_IMAGE || "";
+const BANGLA_QR_MERCHANT = process.env.NEXT_PUBLIC_BANGLA_QR_MERCHANT || "";
 
 export default function DonatePage() {
   // Real campaigns: a donation must reference a campaign that exists in the database.
@@ -46,16 +43,17 @@ export default function DonatePage() {
   const donorEmail = donorEmailEdit ?? (session?.user?.email ?? "");
   const [donorPhoneEdit, setDonorPhone] = useState<string | null>(null);
   const donorPhone = donorPhoneEdit ?? ("");
-  const [paymentMethod, setPaymentMethod] = useState("bKash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("bKash");
+  const [transactionId, setTransactionId] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [receiptData, setReceiptData] = useState<{
     receiptId: string;
-    gateway: string;
+    method: string;
     amount: number;
-    redirectUrl?: string;
-    instructions?: string[];
+    transactionRef: string;
+    campaignTitle: string;
   } | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -74,7 +72,7 @@ export default function DonatePage() {
     }
 
     try {
-      const res = await fetch("/api/payments/initiate", {
+      const res = await fetch("/api/donations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,30 +83,25 @@ export default function DonatePage() {
           donorPhone,
           donorBatch,
           paymentMethod,
+          transactionId,
           isAnonymous,
         }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Payment initiation failed");
+        throw new Error(data.error || "Could not record your donation. Please try again.");
       }
 
       setReceiptData({
-        receiptId: data.receiptId,
-        gateway: data.gateway || paymentMethod,
-        amount: donationAmt,
-        redirectUrl: data.gatewayUrl,
-        instructions: data.message ? [data.message] : undefined,
+        receiptId: data.donation.receiptId,
+        method: data.donation.paymentMethod,
+        amount: data.donation.amount,
+        transactionRef: data.donation.transactionRef,
+        campaignTitle: data.donation.campaignTitle,
       });
-
       setSubmitted(true);
-
-      // Send the donor to the gateway: the donation is not paid until they complete it there.
-      if (data.gatewayUrl) {
-        window.location.href = data.gatewayUrl;
-      }
+      setTransactionId("");
     } catch (err) {
       console.error("[Donation Error]", err);
       setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred. Please try again.");
@@ -246,50 +239,38 @@ export default function DonatePage() {
                       <CheckCircle2 className="w-8 h-8" />
                     </div>
                     <div className="text-center">
-                      <h4 className="text-lg font-bold text-slate-800">
-                        {receiptData.redirectUrl ? "Continue to Payment" : "Donation Recorded — Payment Pending"}
-                      </h4>
+                      <h4 className="text-lg font-bold text-slate-800">Thank you — donation received</h4>
                       <p className="text-xs text-slate-600 mt-1">
-                        Your donation is not complete until the payment is confirmed
-                        {receiptData.redirectUrl ? ` on ${receiptData.gateway}` : ""}. Keep this reference.
+                        The committee will check your {receiptData.method} payment and verify it. You get a receipt by email once it is verified. Keep this reference.
                       </p>
                     </div>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Receipt ID:</span>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-slate-500">Reference:</span>
                         <span className="font-mono font-bold text-slate-800">{receiptData.receiptId}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between gap-3">
+                        <span className="text-slate-500">Campaign:</span>
+                        <span className="font-bold text-slate-800 text-right">{receiptData.campaignTitle}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
                         <span className="text-slate-500">Amount:</span>
                         <span className="font-bold text-emerald-700">৳{receiptData.amount.toLocaleString()} BDT</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Selected Gateway:</span>
-                        <span className="font-bold text-slate-800 uppercase">{receiptData.gateway}</span>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-slate-500">Paid by:</span>
+                        <span className="font-bold text-slate-800">{receiptData.method}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-slate-500">Transaction ID:</span>
+                        <span className="font-mono font-bold text-slate-800">{receiptData.transactionRef}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-slate-500">Status:</span>
+                        <span className="font-bold text-amber-700">Awaiting verification</span>
                       </div>
                     </div>
-
-                    {receiptData.instructions && receiptData.instructions.length > 0 && (
-                      <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 text-xs space-y-1.5">
-                        <span className="font-bold text-amber-900 block">Transfer Instructions:</span>
-                        {receiptData.instructions.map((ins, idx) => (
-                          <p key={idx} className="text-amber-800 text-[11px] leading-relaxed">
-                            {ins}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-
-                    {receiptData.redirectUrl && (
-                      <a
-                        href={receiptData.redirectUrl}
-                        className="w-full py-3 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
-                      >
-                        <span>Complete Payment at Gateway</span>
-                        <CreditCard className="w-4 h-4" />
-                      </a>
-                    )}
 
                     <button
                       onClick={() => {
@@ -400,20 +381,50 @@ export default function DonatePage() {
                         </div>
 
                         <div>
-                          <label className="block font-semibold text-slate-700 mb-1">
-                            Payment Gateway
+                          <label htmlFor="don-method" className="block font-semibold text-slate-700 mb-1">
+                            Paid by
                           </label>
                           <select
+                            id="don-method"
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
                             className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           >
-                            <option value="bKash">bKash (Merchant / PGW)</option>
-                            <option value="Nagad">Nagad (Direct API)</option>
-                            <option value="SSLCommerz">SSLCommerz (Cards/MFS)</option>
-                            <option value="Bank">Bank Deposit / Cheque</option>
+                            {DONATION_METHODS.map((m) => (
+                              <option key={m} value={m}>{m === "Bank" ? "Bank transfer / deposit" : m === "Cash" ? "Cash to the committee" : m}</option>
+                            ))}
                           </select>
                         </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 space-y-1.5">
+                        <p className="font-bold">How to pay</p>
+                        {DONATION_INSTRUCTIONS.length > 0 ? (
+                          DONATION_INSTRUCTIONS.map((line) => <p key={line}>{line}</p>)
+                        ) : (
+                          <p>Send the amount by {paymentMethod} to the association&apos;s account (ask the committee for the number), then enter the transaction ID below.</p>
+                        )}
+                        {paymentMethod === "Bangla QR" && BANGLA_QR_IMAGE && (
+                          <div className="flex items-center gap-3 pt-1">
+                            <img src={BANGLA_QR_IMAGE} alt="Bangla QR code for donations" className="w-36 h-36 bg-white rounded-xl border object-contain p-1.5" />
+                            <span>Scan with any bank or mobile banking app{BANGLA_QR_MERCHANT ? ` (${BANGLA_QR_MERCHANT})` : ""}.</span>
+                          </div>
+                        )}
+                        <p>The committee checks every payment before it is added to the campaign total.</p>
+                      </div>
+
+                      <div>
+                        <label htmlFor="don-trx" className="block font-semibold text-slate-700 mb-1">
+                          {paymentMethod === "Cash" ? "Cash receipt number" : `${paymentMethod} transaction ID`} *
+                        </label>
+                        <input
+                          id="don-trx"
+                          required
+                          value={transactionId}
+                          onChange={(e) => setTransactionId(e.target.value)}
+                          placeholder={paymentMethod === "Cash" ? "e.g. CASH-2026-0042" : "e.g. 9AB3XK1LQ"}
+                          className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                        />
                       </div>
 
                       <div className="flex items-center gap-2 pt-1">
@@ -436,7 +447,7 @@ export default function DonatePage() {
                       className="w-full py-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                     >
                       <Heart className="w-4 h-4 fill-white" />
-                      <span>{isLoading ? "Processing with Gateway..." : "Proceed to Confirm Contribution"}</span>
+                      <span>{isLoading ? "Submitting…" : "Submit donation for verification"}</span>
                     </button>
 
                     <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 pt-1">

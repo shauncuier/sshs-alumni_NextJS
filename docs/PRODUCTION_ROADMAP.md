@@ -16,15 +16,20 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | --- | --- | --- | --- | --- |
 | 1 | Finish the activity log | 0 · In-flight | M | ✅ Done 2026-10-11 |
 | 2 | Commit the volunteer page header/footer fix | 0 · In-flight | S | ✅ Done 2026-10-11 |
-| 3 | Choose hosting, domain and backup location (**You**) | 1 · Decisions | S | ⬜ |
-| 4 | Decide which sections launch, which are hidden (**You**) | 1 · Decisions | S | ⬜ |
+| 3 | Choose hosting, domain and backup location (**You**) | 1 · Decisions | S | ⏸️ Deferred — no domain/hosting yet; must be done before step 28 |
+| 4 | Decide which sections launch, which are hidden (**You**) | 1 · Decisions | S | ✅ All sections launch |
 | 5 | Decide payments at launch: manual only or online gateways (**You**) | 1 · Decisions | S | ✅ Manual only |
-| 6 | Hide or remove the sections not launching | 2 · Real data | M | ⬜ |
-| 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ⬜ |
+| 6 | Hide or remove the sections not launching | 2 · Real data | M | ⏭️ Nothing to hide (step 4) |
+| 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ⬜ |
 | 7 | Volunteers into the database | 2 · Real data | M | ⬜ |
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ⬜ |
-| 9 | News, stories, achievements, gallery from the database (if launching) | 2 · Real data | L | ⬜ |
+| 9a | News from the database, managed in admin | 2 · Real data | M | ⬜ |
+| 9b | Gallery from the database, managed in admin | 2 · Real data | M | ⬜ |
+| 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ⬜ |
+| 9d | Careers / job board stored in the database, with moderation | 2 · Real data | L | ⬜ |
+| 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ⬜ |
+| 9f | Network built from real verified members | 2 · Real data | M | ⬜ |
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ⬜ |
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ⬜ |
 | 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
@@ -76,7 +81,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 
 ## Phase 1 — Decisions (only the committee can make these)
 
-### 3. Hosting, domain and backups · S · **You**
+### 3. Hosting, domain and backups · S · **You** · ⏸️ Deferred 2026-10-11 (no domain or hosting yet). Blocks steps 17 (email domain), 28–31 (deploy); everything else can go ahead.
 **Why:** member photos and proof documents are stored on the server's disk, so serverless hosting (e.g. Vercel) cannot be used as is.
 **Decide:**
 - Host: Ubuntu VPS with Nginx + PM2 (recommended) or a cPanel Node.js app. Needs Node 22+, a persistent disk, SSH access.
@@ -86,7 +91,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 
 **Done when:** host, domain and backup location are written into this file.
 
-### 4. Which sections launch · S · **You**
+### 4. Which sections launch · S · **You** · ✅ Decided 2026-10-11: all sections launch — news, gallery, stories & achievements, careers, mentorship and network. Each needs real data (steps 9a–9f).
 **Why:** news, stories, achievements, gallery, careers, mentorship and network currently show made-up sample content.
 **Decide per section:** launch with real data (more work, step 9) or hide until later (step 6).
 **Recommendation:** launch with joining, events/tickets, directory, profiles, ID card, donations info, contact, volunteer; hide careers, mentorship and network; launch news and gallery only if the committee will maintain them.
@@ -107,7 +112,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Tasks:** remove hidden sections from the navbar, footer, homepage, sitemap and search; their routes return 404 (or "coming soon"); keep the code for later.
 **Done when:** no page a visitor can reach shows sample people, jobs, mentors or stories.
 
-### 6a. Donations page: manual payment · M
+### 6a. Donations page: manual payment · M · ✅ Done 2026-10-11
+**Result:** `/donate` records amount, method (bKash, Nagad, Bangla QR, bank, cash) and transaction ID as PENDING, with "How to pay" from `NEXT_PUBLIC_DONATION_INSTRUCTIONS` and the Bangla QR; `/admin/donations` has a "Waiting for verification" queue with Verify / Reject (reason required); only verified donations raise the campaign total, exactly once, and the donor gets a receipt email; a transaction ID cannot be reused across donations and registrations; online checkout returns 410 unless `ONLINE_PAYMENTS_ENABLED=true`; everything is in the activity log; 7 tests.
 **Why:** `/donate` currently starts online checkout through bKash / Nagad / SSLCommerz APIs, which the association does not have.
 **Tasks:** donation form records the donor, amount, method (bKash, Nagad, Bangla QR, bank, cash) and transaction ID as PENDING; admin donations page gets Verify / Reject (like joining); campaign totals count only verified donations; receipts after verification; hide the online gateway buttons and callback routes (keep the code for later).
 **Done when:** a test donation by bKash transaction ID shows as pending, an admin verifies it, and the campaign total updates; no gateway screen is reachable.
@@ -125,7 +131,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Tasks:** store each broadcast (sender, count, credits, gateway reply) in a table or as activity-log entries; the SMS page reads from there.
 **Done when:** `uploads/sms-history.json` is no longer written.
 
-### 9. News, stories, achievements, gallery from the database · L (skip if hidden in step 4)
+### 9a–9f. Every section from the database · L in total (all launch, step 4)
+One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d careers (jobs and applications stored, posts moderated by admins), 9e mentorship (members opt in as mentors; requests stored and emailed, no fake Meet links), 9f network (verified members only, privacy settings respected).
 **Tasks:** admin create / edit / publish / delete for each (tables already exist); public pages read published rows; image upload through the existing media pipeline; empty states.
 **Done when:** the committee can publish an item from the admin panel and it appears publicly; no sample items remain.
 

@@ -16,6 +16,15 @@ import { requireRateLimit, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 export async function POST(req: Request) {
+  // The association has no payment-gateway accounts: donations are paid manually and
+  // verified by the committee (POST /api/donations). Set ONLINE_PAYMENTS_ENABLED=true
+  // once bKash / Nagad / SSLCommerz merchant accounts exist.
+  if (process.env.ONLINE_PAYMENTS_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: "Online payment is not available. Please pay by bKash, Nagad, Bangla QR or bank and submit the transaction ID.", code: "ONLINE_PAYMENTS_DISABLED" },
+      { status: 410 }
+    );
+  }
   try {
     requireRateLimit(req, "payment-initiation", { limit: 10, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);

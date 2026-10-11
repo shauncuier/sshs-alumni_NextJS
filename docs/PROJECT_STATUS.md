@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-11 · **Branch:** `feat/sms-otp-registration` (2 commits ahead of `main`, plus uncommitted work listed below)
-**Tests:** 179 / 179 passing (28 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 185 / 185 passing (29 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -63,7 +63,8 @@ The super admin is defined only by env. It is created or restored (role, status,
 | User management (`/admin/users`) | Live | Search, add, role change, reset password, disable/enable; every change signs the user out |
 | Bulk SMS broadcast (`/admin/sms`) | Partial | Works; history kept in a JSON file (`UPLOADS_DIR/sms-history.json`), not the database |
 | Alumni directory, profiles, ID card, wallet passes | Live | Phone/email shown only when the member made them public |
-| Online payments (bKash, Nagad, SSLCommerz APIs) | Not used | Decision 2026-10-11: manual payment + committee verification only. Gateway code stays but the donate page must move to manual (roadmap step 6a) |
+| Donations | Live | Manual: donor pays by bKash / Nagad / Bangla QR / bank / cash and submits the transaction ID; admins verify or reject in `/admin/donations`; verified ones count and get an emailed receipt |
+| Online payments (bKash, Nagad, SSLCommerz APIs) | Off | Decision 2026-10-11: manual payment only. Checkout returns 410 unless `ONLINE_PAYMENTS_ENABLED=true`; code kept for later |
 | Activity log (`/admin/logs`) | Live | Every write action, sign-in and security event: who, what, outcome, IP, browser; secrets never stored; kept `LOG_RETENTION_DAYS` (365) |
 | Messages, notifications, realtime (SSE), web push | Partial | DB-backed, with sample-data fallbacks in some pages |
 | Committee volunteers | Partial | Stored in `uploads/volunteers.json`, pre-filled with 5 made-up volunteers |

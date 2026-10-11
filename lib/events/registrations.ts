@@ -206,7 +206,8 @@ export async function registerForEvent(args: {
         if (!/^[A-Z0-9-]{6,40}$/.test(transactionId)) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");
         }
-        if (await tx.eventRegistration.findUnique({ where: { transactionId }, select: { id: true } })) {
+        const usedByDonation = await tx.donation.findFirst({ where: { transactionRef: transactionId, paymentStatus: { not: "FAILED" } }, select: { id: true } });
+        if (usedByDonation || (await tx.eventRegistration.findUnique({ where: { transactionId }, select: { id: true } }))) {
           throw new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been used for a registration.");
         }
       }
