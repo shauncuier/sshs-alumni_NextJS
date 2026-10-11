@@ -21,7 +21,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 5 | Decide payments at launch: manual only or online gateways (**You**) | 1 · Decisions | S | ✅ Manual only |
 | 6 | Hide or remove the sections not launching | 2 · Real data | M | ⏭️ Nothing to hide (step 4) |
 | 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ✅ Done 2026-10-11 |
-| 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ⬜ |
+| 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ✅ Code done 2026-10-11 (inbox test in step 17) |
 | 7 | Volunteers into the database | 2 · Real data | M | ⬜ |
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ⬜ |
 | 9a | News from the database, managed in admin | 2 · Real data | M | ⬜ |
@@ -118,7 +118,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Tasks:** donation form records the donor, amount, method (bKash, Nagad, Bangla QR, bank, cash) and transaction ID as PENDING; admin donations page gets Verify / Reject (like joining); campaign totals count only verified donations; receipts after verification; hide the online gateway buttons and callback routes (keep the code for later).
 **Done when:** a test donation by bKash transaction ID shows as pending, an admin verifies it, and the campaign total updates; no gateway screen is reachable.
 
-### 6b. Contact form reaches the committee · S
+### 6b. Contact form reaches the committee · S · ✅ Code done 2026-10-11
+**Result:** messages are emailed to `CONTACT_INBOX_EMAIL` with Reply-To the sender (sender text HTML-escaped), and kept in the activity log; same-origin check and field limits; 3 tests. The real-inbox check moves to step 17, when an email provider exists.
 **Tasks:** send each contact message to the committee email (after step 17), keep the activity-log entry.
 **Done when:** a test message arrives in the committee inbox.
 
@@ -179,7 +180,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 ## Phase 4 — Integrations
 
 ### 17. Email provider · S · **You**
-**Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY` and `RESEND_FROM_EMAIL`; send a test approval email and a test email code.
+**Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY`, `RESEND_FROM_EMAIL` and `CONTACT_INBOX_EMAIL`; send a test approval email, a test email code, a test donation receipt and a test contact-form message.
 **Done when:** emails arrive in Gmail's inbox (not spam) from the association's domain.
 
 ### 18. SMS gateway · S · **You**

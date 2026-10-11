@@ -1,43 +1,75 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { sendEmail } from "@/lib/email";
+import { requireRateLimit, readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
+const LIMITS = { name: 120, email: 254, subject: 200, message: 5000 };
+
+const field = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+
+/** The sender's words go into the committee's inbox as text, never as markup. */
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+// POST /api/contact — a visitor's message to the committee. It is emailed to
+// CONTACT_INBOX_EMAIL (Reply-To: the sender) and kept in the activity log.
 export async function POST(req: Request) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "contact", { limit: 5, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
-    const { name, email, subject, message } = body;
+    const name = field(body.name, LIMITS.name);
+    const email = field(body.email, LIMITS.email).toLowerCase();
+    const subject = field(body.subject, LIMITS.subject) || "(no subject)";
+    const message = field(body.message, LIMITS.message);
 
     if (!name || !email || !message) {
-      return NextResponse.json(
-        { error: "Name, email, and message are required fields." },
-        { status: 400 }
-      );
+      throw new AppError("INVALID_REQUEST", 400, "Name, email, and message are required fields.");
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new AppError("INVALID_REQUEST", 400, "Please enter a valid email address.");
     }
 
-    // In production, forward to official school email or notification channel
-    console.log("SSGHS Alumni Contact Message Received:", {
-      name,
-      email,
-      subject,
-      message,
-      timestamp: new Date().toISOString(),
-    });
+    const ticketId = `TICK-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+    const inbox = process.env.CONTACT_INBOX_EMAIL?.trim();
+    let emailed = false;
+    if (inbox) {
+      const sent = await sendEmail({
+        to: inbox,
+        replyTo: email,
+        subject: `[Contact ${ticketId}] ${subject}`,
+        text: `From: ${name} <${email}>\nReference: ${ticketId}\n\n${message}`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:640px;color:#0f172a">
+  <p style="color:#475569;font-size:13px">Contact form · ${ticketId}</p>
+  <p><strong>${escapeHtml(name)}</strong> &lt;${escapeHtml(email)}&gt;</p>
+  <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+  <div style="white-space:pre-wrap;border-left:3px solid #059669;padding-left:12px">${escapeHtml(message)}</div>
+  <p style="color:#94a3b8;font-size:12px">Reply to this email to answer ${escapeHtml(name)} directly.</p>
+</div>`,
+      });
+      emailed = sent.success;
+      if (!sent.success) console.error("[contact] Could not email the committee:", sent.error);
+    } else {
+      console.warn("[contact] CONTACT_INBOX_EMAIL is not set; the message is only in the activity log.");
+    }
 
-    // Until the form emails the committee, the log is where these messages are kept.
     await logActivity({
       category: "CONTENT",
       action: "contact.message",
-      summary: `Contact form from ${name} <${email}>: ${String(subject || "(no subject)").slice(0, 120)}`,
-      actor: { email: String(email) },
-      metadata: { name, email, subject, message },
+      summary: `Contact form from ${name} <${email}>: ${subject.slice(0, 120)}${emailed ? "" : " (not emailed)"}`,
+      actor: { email },
+      targetType: "ContactMessage",
+      targetId: ticketId,
+      metadata: { name, email, subject, message, emailedTo: emailed ? inbox : null },
       req,
     });
     return NextResponse.json(
       {
         message: "Your message has been received by the SSGHS Alumni Association executive office. We will get back to you shortly.",
-        ticketId: `TICK-${Date.now().toString().slice(-5)}`,
+        ticketId,
       },
       { status: 200 }
     );
