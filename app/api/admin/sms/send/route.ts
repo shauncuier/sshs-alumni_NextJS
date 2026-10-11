@@ -2,13 +2,20 @@ import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { uploadsRoot } from "@/lib/media/avatars";
+import { AppError } from "@/lib/app-error";
+import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 import {
   sendBulkSms,
   calculateSmsMetrics,
   getBulkSmsConfig,
 } from "@/lib/bulksmsbd";
 
-const SMS_HISTORY_PATH = path.join(process.cwd(), "uploads", "sms-history.json");
+// Kept with the other private uploads (UPLOADS_DIR), never under public/.
+const smsHistoryPath = () => path.join(uploadsRoot(), "sms-history.json");
+// One broadcast costs credits per number; a cap stops a mistaken or hijacked
+// admin session from draining the balance in one request.
+const MAX_RECIPIENTS = 5000;
 
 export interface SmsBroadcastRecord {
   id: string;
@@ -31,10 +38,10 @@ export interface SmsBroadcastRecord {
 
 async function appendHistory(record: SmsBroadcastRecord) {
   try {
-    await fs.mkdir(path.dirname(SMS_HISTORY_PATH), { recursive: true });
+    await fs.mkdir(path.dirname(smsHistoryPath()), { recursive: true });
     let existing: SmsBroadcastRecord[] = [];
     try {
-      const raw = await fs.readFile(SMS_HISTORY_PATH, "utf8");
+      const raw = await fs.readFile(smsHistoryPath(), "utf8");
       existing = JSON.parse(raw);
     } catch {
       existing = [];
@@ -44,7 +51,7 @@ async function appendHistory(record: SmsBroadcastRecord) {
     if (existing.length > 50) {
       existing = existing.slice(0, 50);
     }
-    await fs.writeFile(SMS_HISTORY_PATH, JSON.stringify(existing, null, 2), "utf8");
+    await fs.writeFile(smsHistoryPath(), JSON.stringify(existing, null, 2), "utf8");
   } catch (err) {
     console.warn("[SMS History] Could not persist history:", err);
   }
@@ -58,7 +65,7 @@ export async function GET() {
     }
 
     try {
-      const raw = await fs.readFile(SMS_HISTORY_PATH, "utf8");
+      const raw = await fs.readFile(smsHistoryPath(), "utf8");
       const records = JSON.parse(raw);
       return NextResponse.json({ history: records });
     } catch {
@@ -77,8 +84,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { recipients, message, senderId } = body;
+    requireSameOrigin(req);
+    requireRateLimit(req, "admin-sms-send", { limit: 30, windowMs: 60 * 60_000 });
+    const { recipients, message, senderId } = await readJsonBody(req);
 
     if (!message || typeof message !== "string" || message.trim() === "") {
       return NextResponse.json(
@@ -94,6 +102,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (recipients.length > MAX_RECIPIENTS) {
+      return NextResponse.json(
+        { error: `Send to at most ${MAX_RECIPIENTS} numbers at a time.` },
+        { status: 400 }
+      );
+    }
+
     // Extract numbers if passed as objects or strings
     const rawNumbers: string[] = recipients.map((r: unknown) => {
       if (typeof r === "string") return r;
@@ -105,7 +120,7 @@ export async function POST(req: Request) {
 
     const metrics = calculateSmsMetrics(message.trim());
     const config = getBulkSmsConfig();
-    const effectiveSenderId = senderId?.trim() || config.senderId;
+    const effectiveSenderId = (typeof senderId === "string" && senderId.trim()) || config.senderId;
 
     const result = await sendBulkSms({
       numbers: rawNumbers,
@@ -163,10 +178,10 @@ export async function POST(req: Request) {
       historyItem,
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[API/Admin/SMS/Send] Error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to send bulk SMS" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to send bulk SMS" }, { status: 500 });
   }
 }

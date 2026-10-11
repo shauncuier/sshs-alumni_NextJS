@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { normalizeBdPhoneNumber, isValidBdMobile } from "@/lib/bulksmsbd";
 import prisma from "@/lib/prisma";
-import { sampleAlumni, sampleBatches } from "@/lib/data";
-import { getVolunteers } from "@/lib/volunteers";
+import { getVolunteers, isSampleVolunteer } from "@/lib/volunteers";
 
 export interface SmsContactItem {
   id: string;
@@ -116,46 +115,14 @@ export async function GET() {
       // Database not ready or offline; proceed to fallback sources
     }
 
-    // 2. Add Sample Alumni directory (if not already added)
-    for (const alm of sampleAlumni) {
-      if (alm.phone) {
-        addContact({
-          id: alm.id,
-          name: alm.fullName,
-          phone: alm.phone,
-          normalizedPhone: "",
-          email: alm.email,
-          batch: alm.sscBatch,
-          category: "ALUMNI",
-          categoryLabel: alm.isVerified ? "Verified Alumni" : "Alumni Member",
-          status: alm.isVerified ? "VERIFIED" : "PENDING",
-          detail: alm.profession,
-        });
-      }
-    }
+    // Only real members and volunteers: the sample directory in lib/data has
+    // made-up people whose numbers may belong to strangers.
 
-    // 3. Add Sample Batches (Class Representatives)
-    for (const b of sampleBatches) {
-      if (b.representativePhone && b.classRepresentative) {
-        addContact({
-          id: `rep-${b.year}`,
-          name: b.classRepresentative,
-          phone: b.representativePhone,
-          normalizedPhone: "",
-          batch: b.year,
-          category: "BATCH_REP",
-          categoryLabel: "Batch Representative",
-          status: "VERIFIED",
-          detail: `SSC Batch ${b.year} Representative`,
-        });
-      }
-    }
-
-    // 4. Add Committee Volunteers
+    // 2. Add Committee Volunteers
     try {
       const volunteers = await getVolunteers();
       for (const vol of volunteers) {
-        if (vol.phone) {
+        if (vol.phone && !isSampleVolunteer(vol.id)) {
           addContact({
             id: vol.id,
             name: vol.fullName,

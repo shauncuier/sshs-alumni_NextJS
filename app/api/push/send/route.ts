@@ -8,10 +8,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
-import { readJsonBody } from "@/lib/request-security";
+import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
 export async function POST(req: NextRequest) {
   try {
+    requireSameOrigin(req);
     const me = await getSessionUser();
     if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
