@@ -26,7 +26,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ✅ Done 2026-10-11 |
 | 9a | News from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9b | Gallery from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
-| 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ⬜ |
+| 9c | Stories and achievements from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9d | Careers / job board stored in the database, with moderation | 2 · Real data | L | ⬜ |
 | 9e | Mentorship: real mentor profiles and booking requests | 2 · Real data | L | ⬜ |
 | 9f | Network built from real verified members | 2 · Real data | M | ⬜ |
@@ -140,6 +140,9 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 
 ### 9b. Gallery · ✅ Done 2026-10-12
 **Result:** `/admin/gallery`: create albums (name, category, year, description), add many photos at once with upload progress, captions, choose the cover, publish/unpublish, delete photos or whole albums (files removed from disk); an album needs a photo before it can be published and is unpublished again when emptied; `/gallery` and the homepage show photos from published albums only, with thumbnails in grids and the full image in the lightbox, plus an empty state; existing (seeded) albums became unpublished; actions in the activity log; 5 tests.
+
+### 9c. Stories and achievements · ✅ Done 2026-10-12
+**Result:** `/admin/stories` with Stories and Achievements tabs: write, edit, publish/unpublish, feature (stories), delete, with cover/photo upload through the content-image pipeline; `/stories`, `/stories/[id]` (now a server page), `/achievements`, the homepage and the sitemap use published database rows only, with empty states; story text is plain paragraphs, reading time is calculated; fixed achievement categories; existing (seeded) rows became drafts; actions in the activity log; 6 tests.
 
 ### 9g. Moderators manage content · M
 **Why:** the agreed roles say moderators handle content and gallery, but the admin panel admits admins only.

@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { BookOpen, Clock, ArrowRight, Quote } from "lucide-react";
+import { Clock, ArrowRight, Quote } from "lucide-react";
 import { AlumniStoryItem } from "@/lib/data";
 
 interface StoryCardProps {

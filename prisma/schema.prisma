@@ -323,29 +323,52 @@ model NewsArticle {
   @@index([isPublished, publishedAt])
 }
 
+/// Alumni stories on /stories, managed in /admin/stories (lib/stories.ts). Only
+/// published rows are public; rows that existed before isPublished (seeded
+/// samples) become drafts.
 model AlumniStory {
-  id          String   @id @default(uuid()) @db.VarChar(36)
-  title       String
-  authorName  String
-  batchYear   Int
-  profession  String
-  coverImage  String?  @db.VarChar(500)
-  summary     String   @db.Text
-  fullStory   String   @db.LongText
-  quote       String?  @db.Text
-  publishedAt DateTime @default(now())
+  id                  String   @id @default(uuid()) @db.VarChar(36)
+  title               String
+  authorName          String
+  batchYear           Int
+  profession          String
+  currentOrganization String?  @db.VarChar(200)
+  coverImage          String?  @db.VarChar(500)
+  summary             String   @db.Text
+  /// Plain text; blank lines separate paragraphs. Never rendered as HTML.
+  fullStory           String   @db.LongText
+  quote               String?  @db.Text
+  isPublished         Boolean  @default(false)
+  isFeatured          Boolean  @default(false)
+  publishedAt         DateTime @default(now())
+  createdBy           String?  @db.VarChar(254)
+  updatedBy           String?  @db.VarChar(254)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now()) @updatedAt
+
+  @@index([isPublished, publishedAt])
 }
 
+/// Alumni achievements on /achievements, managed in /admin/stories
+/// (lib/achievements.ts). Only published rows are public; rows that existed
+/// before isPublished (seeded samples) become drafts.
 model Achievement {
-  id            String  @id @default(uuid()) @db.VarChar(36)
+  id            String   @id @default(uuid()) @db.VarChar(36)
   recipientName String
   batchYear     Int
-  category      String // "Doctor", "Engineer", "Entrepreneur", etc.
+  category      String // one of ACHIEVEMENT_CATEGORIES in lib/achievements.ts
   title         String
   organization  String
-  description   String  @db.Text
-  photoUrl      String? @db.VarChar(500)
+  description   String   @db.Text
+  photoUrl      String?  @db.VarChar(500)
   yearAwarded   Int
+  isPublished   Boolean  @default(false)
+  createdBy     String?  @db.VarChar(254)
+  updatedBy     String?  @db.VarChar(254)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([isPublished, yearAwarded])
 }
 
 /// Photo albums on /gallery, managed in /admin/gallery (lib/gallery.ts). Only

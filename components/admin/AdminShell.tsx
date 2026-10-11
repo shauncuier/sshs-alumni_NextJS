@@ -22,6 +22,7 @@ import {
   ScrollText,
   Newspaper,
   Images,
+  BookOpen,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -47,6 +48,7 @@ const ADMIN_NAV = [
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "News", href: "/admin/news", icon: Newspaper },
   { name: "Gallery", href: "/admin/gallery", icon: Images },
+  { name: "Stories & Achievements", href: "/admin/stories", icon: BookOpen },
   { name: "Activity Log", href: "/admin/logs", icon: ScrollText },
 ] as const;
 

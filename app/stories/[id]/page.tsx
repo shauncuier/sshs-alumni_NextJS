@@ -1,20 +1,25 @@
-"use client";
-
-import React, { use } from "react";
+import React from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { sampleStories } from "@/lib/data";
-import { ArrowLeft, Clock, Calendar, Quote, Share2, User } from "lucide-react";
+import { getPublishedStory } from "@/lib/stories";
+import { ArrowLeft, Clock, Calendar, Quote, User } from "lucide-react";
 
 interface StoryDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function StoryDetailPage({ params }: StoryDetailPageProps) {
-  const resolvedParams = use(params);
-  const story = sampleStories.find((s) => s.id === resolvedParams.id);
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: StoryDetailPageProps): Promise<Metadata> {
+  const story = await getPublishedStory((await params).id);
+  return story ? { title: `${story.title} | SSGHS Alumni Stories`, description: story.summary } : { title: "Story not found" };
+}
+
+export default async function StoryDetailPage({ params }: StoryDetailPageProps) {
+  const story = await getPublishedStory((await params).id);
   // An unknown id shows the 404 page, never a different story.
   if (!story) notFound();
 
@@ -85,8 +90,14 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
             {/* Body Text */}
             <div className="prose prose-slate max-w-none text-slate-700 text-sm sm:text-base leading-relaxed space-y-4">
-              <p>{story.summary}</p>
-              <p className="whitespace-pre-line">{story.fullStory}</p>
+              <p className="font-medium">{story.summary}</p>
+              {story.fullStory
+                .split(/\n\s*\n/)
+                .map((p) => p.trim())
+                .filter(Boolean)
+                .map((p, i) => (
+                  <p key={i} className="whitespace-pre-line">{p}</p>
+                ))}
             </div>
 
             {/* Author Bio Box */}

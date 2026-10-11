@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
-import { sampleBatches, sampleStories } from "@/lib/data";
+import { sampleBatches } from "@/lib/data";
+import { publishedStoryIds } from "@/lib/stories";
 import { listPublicEvents } from "@/lib/events/service";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -46,9 +47,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Dynamic Story pages
-  const storyPages = sampleStories.map((s) => ({
+  const storyPages = (await publishedStoryIds().catch(() => [])).map((s) => ({
     url: `${baseUrl}/stories/${s.id}`,
-    lastModified: now,
+    lastModified: s.updatedAt,
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));

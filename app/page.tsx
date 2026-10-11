@@ -9,6 +9,8 @@ import EventCard from "@/components/events/EventCard";
 import StoryCard from "@/components/stories/StoryCard";
 import { listPublicEvents } from "@/lib/events/service";
 import { latestPublishedPhotos } from "@/lib/gallery";
+import { listPublishedStories } from "@/lib/stories";
+import { listPublishedAchievements } from "@/lib/achievements";
 import prisma from "@/lib/prisma";
 import type {
   AlumniMember,
@@ -83,18 +85,9 @@ export default async function HomePage() {
         orderBy: { createdAt: "desc" },
       })
       .catch(() => []),
-    prisma.alumniStory
-      .findMany({
-        take: 2,
-        orderBy: { publishedAt: "desc" },
-      })
-      .catch(() => []),
-    prisma.achievement
-      .findMany({
-        take: 3,
-        orderBy: { yearAwarded: "desc" },
-      })
-      .catch(() => []),
+    // Only published stories and achievements.
+    listPublishedStories(2).catch(() => []),
+    listPublishedAchievements(3).catch(() => []),
     // Only photos from published albums.
     latestPublishedPhotos(4).catch(() => []),
     listPublicEvents().catch(() => []),
@@ -177,39 +170,10 @@ export default async function HomePage() {
       : null;
 
   // Dynamic Stories
-  const dynamicStories: AlumniStoryItem[] = dbStories.map((s) => ({
-    id: s.id,
-    title: s.title,
-    authorName: s.authorName,
-    batchYear: s.batchYear,
-    profession: s.profession,
-    currentOrganization: "Alumni Leader",
-    coverImage:
-      s.coverImage ||
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
-    summary: s.summary,
-    fullStory: s.fullStory,
-    quote: s.quote || "",
-    publishedDate: s.publishedAt.toISOString().slice(0, 10),
-    readTime: "4 min read",
-  }));
-  const featuredStories = dynamicStories;
+  const featuredStories: AlumniStoryItem[] = dbStories;
 
   // Dynamic Achievements
-  const dynamicAchievements: AchievementItem[] = dbAchievements.map((a) => ({
-    id: a.id,
-    recipientName: a.recipientName,
-    batchYear: a.batchYear,
-    category: (a.category as AchievementItem["category"]) || "Entrepreneurs",
-    title: a.title,
-    organization: a.organization,
-    description: a.description,
-    photoUrl:
-      a.photoUrl ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(a.recipientName)}&background=06281e&color=fcd34d&bold=true`,
-    yearAwarded: a.yearAwarded,
-  }));
-  const featuredAchievements = dynamicAchievements;
+  const featuredAchievements: AchievementItem[] = dbAchievements;
 
   // Dynamic Gallery Photos
   const galleryPreview: GalleryPhotoItem[] = dbPhotos;
