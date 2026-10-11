@@ -18,6 +18,8 @@ import {
   ChevronRight,
   ArrowRight,
 } from "lucide-react";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 
 const ICONS_MAP: Record<string, React.ElementType> = {
@@ -88,7 +90,10 @@ export default function VolunteerPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+      <Navbar />
+
+      <main className="flex-1">
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#041a13] via-[#06281e] to-[#041a13] text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 border-b border-emerald-900/60">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-600/15 via-transparent to-transparent pointer-events-none" />
@@ -422,6 +427,9 @@ export default function VolunteerPage() {
           </div>
         </div>
       </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
