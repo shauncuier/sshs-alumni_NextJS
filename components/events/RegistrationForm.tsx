@@ -4,14 +4,16 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
-import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
+import { PAYMENT_METHODS, type MemberRegistration, type PublicEvent } from "@/lib/events/types";
 import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_NOTE_MAX, PROOF_TYPES } from "@/lib/members/proof-types";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
-import PhoneVerifyField from "./PhoneVerifyField";
+import ContactVerifyField, { type ContactVerification } from "./ContactVerifyField";
 
 const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
-const PAYMENT_METHODS = ["bKash", "Nagad", "Bank", "Cash"];
+// The association's bank-issued Bangla QR (an image in public/ or a URL), shown when that method is picked.
+const BANGLA_QR_IMAGE = process.env.NEXT_PUBLIC_BANGLA_QR_IMAGE || "";
+const BANGLA_QR_MERCHANT = process.env.NEXT_PUBLIC_BANGLA_QR_MERCHANT || "";
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
@@ -72,7 +74,7 @@ export default function RegistrationForm({
   const showRegistration = !needsAccount || step === 2;
 
   const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "2010", rollNumber: "", section: "" });
-  const [phoneToken, setPhoneToken] = useState<string | null>(null);
+  const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
   const [extraAdults, setExtraAdults] = useState(0);
@@ -83,7 +85,7 @@ export default function RegistrationForm({
   const [volunteerSubcommittee, setVolunteerSubcommittee] = useState<string>(SUBCOMMITTEES[0].id);
   const [volunteerNotes, setVolunteerNotes] = useState("");
   const [donation, setDonation] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("bKash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("bKash");
   const [transactionId, setTransactionId] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -234,7 +236,14 @@ export default function RegistrationForm({
         : null;
 
       const payload = JSON.stringify({
-          account: needsAccount ? { ...account, sscBatch: Number(account.sscBatch), phoneVerificationToken: phoneToken } : undefined,
+          account: needsAccount
+            ? {
+                ...account,
+                sscBatch: Number(account.sscBatch),
+                phoneVerificationToken: contactVerification?.via === "phone" ? contactVerification.token : null,
+                emailVerificationToken: contactVerification?.via === "email" ? contactVerification.token : null,
+              }
+            : undefined,
           proof: needsAccount ? { type: proofType, note: proofType === "OTHER" ? proofNote.trim() : null } : undefined,
           rsvp: {
             packageName: event.packages.length ? packageName : null,
@@ -272,8 +281,8 @@ export default function RegistrationForm({
       if (!res.ok) {
         if (body.code === "EMAIL_EXISTS") setExistingAccount(true);
         // The 30-minute verification ran out while filling in the form: verify again on step 1.
-        if (body.code === "PHONE_NOT_VERIFIED") {
-          setPhoneToken(null);
+        if (["PHONE_NOT_VERIFIED", "EMAIL_NOT_VERIFIED", "CONTACT_NOT_VERIFIED"].includes(body.code)) {
+          setContactVerification(null);
           setPhoneRequired(true);
           setStep(1);
         }
@@ -342,17 +351,29 @@ export default function RegistrationForm({
           </div>
           <div>
             <label htmlFor="reg-email" className={label}>Email *</label>
-            <input id="reg-email" type="email" required className={input} value={account.email} onChange={(e) => setAccount({ ...account, email: e.target.value })} />
+            <input
+              id="reg-email"
+              type="email"
+              required
+              className={input}
+              value={account.email}
+              onChange={(e) => {
+                setAccount({ ...account, email: e.target.value });
+                // An email verification only holds for the address that received the code.
+                if (contactVerification?.via === "email") setContactVerification(null);
+              }}
+            />
           </div>
           <div>
             <label htmlFor="reg-password" className={label}>Password (8+ characters) *</label>
             <input id="reg-password" type="password" minLength={8} required autoComplete="new-password" className={input} value={account.password} onChange={(e) => setAccount({ ...account, password: e.target.value })} />
           </div>
-          <PhoneVerifyField
+          <ContactVerifyField
             phone={account.phone}
             onPhoneChange={(phone) => setAccount((a) => ({ ...a, phone }))}
-            verified={Boolean(phoneToken)}
-            onVerified={setPhoneToken}
+            email={account.email}
+            verification={contactVerification}
+            onVerification={setContactVerification}
             showRequired={phoneRequired}
           />
           <div>
@@ -435,8 +456,8 @@ export default function RegistrationForm({
               if (!photo && !photoError) setPhotoError("Please add a profile photo.");
               // The type and note are required fields (reportValidity shows those); the file is checked here.
               if (!proof && !proofError) setProofError(PROOF_MISSING);
-              setPhoneRequired(!phoneToken);
-              if (form.reportValidity() && photo && !proofProblem() && phoneToken) setStep(2);
+              setPhoneRequired(!contactVerification);
+              if (form.reportValidity() && photo && !proofProblem() && contactVerification) setStep(2);
             }}
           >
             Continue to registration &amp; payment →
@@ -555,7 +576,7 @@ export default function RegistrationForm({
               <p className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 whitespace-pre-line">{event.paymentInstructions}</p>
               <div>
                 <label className={label}>Select Payment Channel *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {PAYMENT_METHODS.map((m) => {
                     const isSelected = paymentMethod === m;
                     return (
@@ -569,7 +590,9 @@ export default function RegistrationForm({
                               ? "bg-[#e2136e] text-white border-[#e2136e] shadow-sm ring-2 ring-[#e2136e]/20"
                               : m === "Nagad"
                                 ? "bg-[#f7941d] text-white border-[#f7941d] shadow-sm ring-2 ring-[#f7941d]/20"
-                                : m === "Bank"
+                                : m === "Bangla QR"
+                                  ? "bg-[#006a4e] text-white border-[#006a4e] shadow-sm ring-2 ring-[#006a4e]/20"
+                                  : m === "Bank"
                                   ? "bg-slate-900 text-white border-slate-900 shadow-sm ring-2 ring-slate-900/20"
                                   : "bg-emerald-800 text-white border-emerald-800 shadow-sm ring-2 ring-emerald-800/20"
                             : "bg-white text-slate-700 border-slate-300 hover:border-slate-400"
@@ -582,6 +605,23 @@ export default function RegistrationForm({
                   })}
                 </div>
               </div>
+
+              {paymentMethod === "Bangla QR" && (
+                <div className="p-3.5 rounded-xl border border-[#006a4e]/30 bg-emerald-50/60 flex flex-col sm:flex-row items-center gap-4">
+                  {BANGLA_QR_IMAGE && (
+                    <img src={BANGLA_QR_IMAGE} alt="Bangla QR code for paying the association" className="w-48 h-48 shrink-0 bg-white rounded-xl border object-contain p-2" />
+                  )}
+                  <div className="text-[11px] text-slate-700 space-y-1.5">
+                    <p className="font-bold text-[#006a4e] text-xs">Pay with Bangla QR</p>
+                    {BANGLA_QR_MERCHANT && <p>Merchant: <strong>{BANGLA_QR_MERCHANT}</strong></p>}
+                    <p>
+                      {BANGLA_QR_IMAGE ? "Scan this code" : "Scan the association's Bangla QR code"} with any bank or mobile banking app
+                      (bKash, Nagad, Rocket, Upay or your bank&apos;s app), pay <strong>{total ? formatTaka(total.total) : "the total"}</strong>,
+                      then enter the transaction ID from the payment receipt below.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="reg-trx" className={label}>

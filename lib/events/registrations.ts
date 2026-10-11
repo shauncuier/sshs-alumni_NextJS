@@ -6,6 +6,7 @@ import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars"
 import { processProof, removeProofDir, saveProof } from "@/lib/media/proofs";
 import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
 import { readVerifiedPhone } from "@/lib/phone-otp";
+import { readVerifiedEmail } from "@/lib/email-otp";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee } from "./pricing";
 import { eventFeeRules } from "./service";
@@ -16,6 +17,25 @@ const ACTIVE_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] as const;
 
 function normalizeTransactionId(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, "").toUpperCase();
+}
+
+/**
+ * A new member must prove a contact: the phone by SMS code, or, when the SMS fails,
+ * the email by emailed code. A verified phone replaces the typed one; an email token
+ * only counts for the exact address on the form.
+ */
+function checkContactVerified(account: AccountInput): AccountInput {
+  if (account.phoneVerificationToken) {
+    return { ...account, phone: readVerifiedPhone(account.phoneVerificationToken) };
+  }
+  if (account.emailVerificationToken) {
+    const verified = readVerifiedEmail(account.emailVerificationToken);
+    if (!verified || verified !== account.email?.trim().toLowerCase()) {
+      throw new AppError("EMAIL_NOT_VERIFIED", 400, "Please verify your email address with the emailed code.");
+    }
+    return account;
+  }
+  throw new AppError("CONTACT_NOT_VERIFIED", 400, "Please verify your phone number with the SMS code (or your email if the SMS does not arrive).");
 }
 
 const proofRequired = () => new AppError("PROOF_REQUIRED", 400, "Please add a document that shows you studied at SSGHS.");
@@ -96,8 +116,7 @@ export async function registerForEvent(args: {
   if (!args.sessionUserId && account) {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
     if (event?.isMembershipEvent) {
-      // The phone number is the one proven by SMS code, never the typed-in value.
-      account = { ...account, phone: readVerifiedPhone(account.phoneVerificationToken) };
+      account = checkContactVerified(account);
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
       const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);

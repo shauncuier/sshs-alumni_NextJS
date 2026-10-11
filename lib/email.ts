@@ -22,7 +22,7 @@ interface EmailPayload {
 }
 
 // ── Email Provider Detection ──────────────────────────────────────────
-function getEmailProvider(): "resend" | "smtp" | "console" {
+export function getEmailProvider(): "resend" | "smtp" | "console" {
   if (process.env.RESEND_API_KEY) return "resend";
   if (process.env.SMTP_HOST) return "smtp";
   return "console"; // Fallback: log to console
