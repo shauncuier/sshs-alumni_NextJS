@@ -1,23 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import {
-  Briefcase,
-  Building,
-  MapPin,
-  Sparkles,
   ArrowLeft,
   CheckCircle2,
-  DollarSign,
-  Calendar
 } from "lucide-react";
 import Link from "next/link";
 
 export default function NewJobPage() {
-  const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
@@ -30,10 +22,11 @@ export default function NewJobPage() {
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [benefits, setBenefits] = useState("");
-  const [deadline, setDeadline] = useState("2026-11-30");
+  // Default deadline: 30 days from today.
+  const [deadline, setDeadline] = useState(() => new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10));
 
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,10 +57,7 @@ export default function NewJobPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to post job");
 
-      setSubmitted(true);
-      setTimeout(() => {
-        router.push("/careers");
-      }, 1500);
+      setSubmitted(data.message || "Your job has been submitted.");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to post job opening.");
     } finally {
@@ -108,12 +98,16 @@ export default function NewJobPage() {
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800">
-                  Opportunity Published!
-                </h3>
-                <p className="text-xs text-slate-600">
-                  Your vacancy is now live on the SSGHS Alumni Career Hub. Redirecting to listings...
-                </p>
+                <h3 className="text-xl font-bold text-slate-800">Job submitted</h3>
+                <p className="text-xs text-slate-600">{submitted}</p>
+                <div className="flex flex-wrap justify-center gap-2 pt-2">
+                  <Link href="/careers/mine" className="px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
+                    My jobs &amp; applications
+                  </Link>
+                  <Link href="/careers" className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                    Back to the Career Hub
+                  </Link>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6 text-xs">

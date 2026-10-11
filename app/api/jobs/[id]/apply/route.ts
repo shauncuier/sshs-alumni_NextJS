@@ -1,79 +1,39 @@
-/**
- * SSGHS Alumni — Job Application API
- * POST /api/jobs/[id]/apply
- */
-
-import { NextRequest, NextResponse } from "next/server";
-import { getMemberSession } from "@/lib/session-user";
-import { AppError } from "@/lib/app-error";
+import { NextResponse } from "next/server";
+import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { applyToJob, notifyPoster } from "@/lib/jobs";
+import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { getSessionUser } from "@/lib/session-user";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: Promise<{ id: string }> };
+
+// POST /api/jobs/[id]/apply — apply to an open job; the poster is emailed.
+export async function POST(req: Request, { params }: Params) {
   try {
-    requireRateLimit(req, "job-application", { limit: 5, windowMs: 60 * 60_000 });
-    const { id } = await params;
-    const session = await getMemberSession();
+    requireSameOrigin(req);
+    requireRateLimit(req, "job-application", { limit: 10, windowMs: 60 * 60_000 });
+    const me = await getSessionUser();
     const body = await readJsonBody(req);
-
-    const {
-      applicantName,
-      applicantEmail,
-      applicantPhone,
-      applicantBatch,
-      resumeUrl,
-      coverNote,
-    } = body;
-
-    // Signed-in members can omit their name and email; fall back to the session.
-    const name = applicantName || session?.user?.name;
-    const email = applicantEmail || session?.user?.email;
-
-    if (!name || !email) {
-      return NextResponse.json(
-        { error: "Applicant name and email are required" },
-        { status: 400 }
-      );
-    }
-
-    const applicationRecord = {
-      applicationId: `APP-${Date.now().toString().slice(-6)}`,
-      jobId: id,
-      applicantName: name,
-      applicantEmail: email,
-      applicantPhone,
-      applicantBatch: applicantBatch || 2008,
-      resumeUrl: resumeUrl || "https://drive.google.com/sample-resume",
-      coverNote,
-      appliedAt: new Date().toISOString(),
-      status: "SUBMITTED",
-    };
-
+    // Signed-in members may leave name and email empty; their account fills them in.
+    if (me && !body.applicantEmail) body.applicantEmail = me.email;
+    const { application, job } = await applyToJob((await params).id, body, me?.id ?? null);
+    const emailed = await notifyPoster(job, application);
     await logActivity({
       category: "CONTENT",
       action: "job.applied",
-      summary: `${email} applied for job ${id}`,
-      actor: session?.user ? { id: session.user.id, email: session.user.email, role: session.user.role } : { email },
+      summary: `${application.email} applied for "${job.title}"${emailed ? "" : " (poster not emailed)"}`,
+      actor: me ?? { email: application.email },
       targetType: "Job",
-      targetId: id,
-      metadata: { applicationId: applicationRecord.applicationId, applicantName: name },
+      targetId: job.id,
+      metadata: { applicationId: application.id, applicantName: application.name },
       req,
     });
-
     return NextResponse.json({
       success: true,
-      message: "Your application has been delivered directly to the alumnus hiring manager.",
-      application: applicationRecord,
+      message: "Your application has been sent to the alumnus who posted this job.",
+      applicationId: application.id,
     });
-  } catch (error: unknown) {
-    if (error instanceof AppError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
-    console.error("[Job Apply Error]", error);
-    return NextResponse.json(
-      { error: "Failed to submit job application" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return errorResponse(err, "POST /api/jobs/[id]/apply");
   }
 }

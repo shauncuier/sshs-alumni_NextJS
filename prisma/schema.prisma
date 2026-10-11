@@ -542,3 +542,54 @@ model SmsBroadcast {
 
   @@index([createdAt])
 }
+
+/// A job posted on /careers by a verified member (lib/jobs.ts). Members' posts
+/// wait for an admin to approve them; only APPROVED jobs are public.
+model Job {
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  title           String    @db.VarChar(200)
+  company         String    @db.VarChar(200)
+  location        String    @db.VarChar(120)
+  workplaceType   String    @db.VarChar(20)
+  jobType         String    @db.VarChar(20)
+  department      String    @db.VarChar(80)
+  salaryRange     String?   @db.VarChar(80)
+  experienceLevel String    @db.VarChar(30)
+  description     String    @db.Text
+  requirements    Json
+  benefits        Json
+  deadline        DateTime
+  /// PENDING (awaiting review), APPROVED (public), REJECTED, CLOSED.
+  status          String    @default("PENDING") @db.VarChar(20)
+  postedById      String    @db.VarChar(36)
+  postedByEmail   String    @db.VarChar(254)
+  postedByName    String    @db.VarChar(120)
+  postedByBatch   Int?
+  reviewedBy      String?   @db.VarChar(254)
+  reviewedAt      DateTime?
+  rejectReason    String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  applications JobApplication[]
+
+  @@index([status, deadline])
+  @@index([postedById])
+}
+
+/// An application to a Job; the poster sees it in /careers/mine and by email.
+model JobApplication {
+  id              String   @id @default(uuid()) @db.VarChar(36)
+  jobId           String   @db.VarChar(36)
+  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicantUserId String?  @db.VarChar(36)
+  name            String   @db.VarChar(120)
+  email           String   @db.VarChar(254)
+  phone           String?  @db.VarChar(30)
+  sscBatch        Int?
+  resumeUrl       String?  @db.VarChar(500)
+  coverNote       String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  @@unique([jobId, email])
+}

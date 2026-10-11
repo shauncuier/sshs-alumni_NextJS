@@ -23,6 +23,7 @@ import {
   Newspaper,
   Images,
   BookOpen,
+  Briefcase,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -49,6 +50,7 @@ const ADMIN_NAV = [
   { name: "News", href: "/admin/news", icon: Newspaper },
   { name: "Gallery", href: "/admin/gallery", icon: Images },
   { name: "Stories & Achievements", href: "/admin/stories", icon: BookOpen },
+  { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
   { name: "Activity Log", href: "/admin/logs", icon: ScrollText },
 ] as const;
 
