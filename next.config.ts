@@ -36,60 +36,41 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    const dev = process.env.NODE_ENV === "development";
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
       "object-src 'none'",
+      // The admin verification page previews uploaded PDFs in a same-origin frame.
       "frame-ancestors 'self'",
       "form-action 'self'",
-      "script-src 'self' 'unsafe-inline'" + (process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""),
+      // Next.js inlines its bootstrap scripts; without nonces 'unsafe-inline' is required.
+      "script-src 'self' 'unsafe-inline'" + (dev ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
       // ui-avatars.com draws the initials fallback for members without a photo.
       "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://ui-avatars.com",
       "font-src 'self' data:",
-      "connect-src 'self' https: wss: ws:",
+      // Live updates use same-origin Server-Sent Events; the dev server also needs its HMR socket.
+      "connect-src 'self'" + (dev ? " ws: wss:" : ""),
       "worker-src 'self' blob:",
       "manifest-src 'self'",
+      ...(dev ? [] : ["upgrade-insecure-requests"]),
     ].join("; ");
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            key: "X-DNS-Prefetch-Control",
-            value: "on",
-          },
-          {
-            key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
-          },
-          {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "SAMEORIGIN",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: contentSecurityPolicy,
-          },
-        ],
-      },
+    const headers = [
+      { key: "Content-Security-Policy", value: contentSecurityPolicy },
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      // camera=(self): the gate scanner may use the phone camera (roadmap step 22).
+      { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      // The old XSS auditor is removed from browsers and could be abused; "0" turns it off.
+      { key: "X-XSS-Protection", value: "0" },
+      { key: "X-DNS-Prefetch-Control", value: "on" },
     ];
+    // HTTPS only in production. No "preload": joining the browsers' preload list is hard to undo.
+    if (!dev) headers.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });
+    return [{ source: "/:path*", headers }];
   },
 };
 

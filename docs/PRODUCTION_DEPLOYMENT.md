@@ -31,17 +31,15 @@ This document outlines the end-to-end production deployment, configuration, secu
 
 ## 2. Environment Variables Checklist
 
-Ensure the following variables are configured in your production hosting dashboard or `.env.production` file:
+Every production variable, what it is for and what must **not** be there is listed in [PRODUCTION_ENV.md](PRODUCTION_ENV.md). On the server they live in **one file, `.env.production`**, in the app folder (never committed). Next.js reads it, and the scripts (`db:push`, `db:seed:prod`, `privacy:cleanup`, `db:super-admin`) read it when run with `NODE_ENV=production`.
 
-| Variable | Required | Description | Example Production Value |
-|---|---|---|---|
-| `DATABASE_URL` | **Yes** | MySQL connection string (URL-encode special characters) | `mysql://app_user:pass@db.example.com:3306/sshs_alumni` |
-| `NEXTAUTH_SECRET` | **Yes** | 32+ character cryptographic secret | Generate via `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | **Yes** | Canonical public domain | `https://alumni.sabujsghs.edu.bd` |
-| `NEXT_PUBLIC_APP_URL` | **Yes** | Public frontend URL | `https://alumni.sabujsghs.edu.bd` |
-| `NEXT_PUBLIC_SCHOOL_NAME` | **Yes** | Official school name | `Sabuj Shikshayatan Government High School` |
-| `UPLOADS_DIR` | No | Absolute path where member photos and proof-of-study documents are stored (must persist, be backed up, and never be served as static files) | `/var/lib/sshs-alumni/uploads` |
-| `NEXT_PUBLIC_SCHOOL_EIIN` | **Yes** | Bangladesh Board EIIN | `105070` |
+Check the file before every deploy; the server runs the same check at start-up and **refuses to start** with a missing or published `NEXTAUTH_SECRET`, a non-https address, no super admin, or online payments switched on:
+
+```bash
+npm run env:check -- .env.production
+```
+
+`NEXT_PUBLIC_*` values are built into the pages: change them, then rebuild (`npm run build`).
 
 ### Member photos (uploads directory)
 
@@ -75,28 +73,38 @@ This needs a server with a persistent disk (a VPS or cPanel Node.js app, Option 
 ## 4. Deployment Option B: Ubuntu VPS (Nginx + PM2 + SSL)
 
 ### Step 1: Install Node.js & PM2
+Node.js 24 LTS (Node 20 reaches end of life; the project is developed on Node 24).
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs nginx certbot python3-certbot-nginx
 sudo npm install -g pm2
 ```
 
-### Step 2: Clone and Build
+### Step 2: Clone, configure and build
 ```bash
 git clone https://github.com/your-org/sshs-alumni.git /var/www/sshs-alumni
 cd /var/www/sshs-alumni
 npm ci
 cp .env.example .env.production
-# Edit .env.production with your real secrets
+# Fill in .env.production (docs/PRODUCTION_ENV.md), then:
+chmod 600 .env.production
+npm run env:check -- .env.production
+sudo mkdir -p /var/lib/sshs-alumni/uploads && sudo chown "$USER" /var/lib/sshs-alumni/uploads && chmod 700 /var/lib/sshs-alumni/uploads
+
+# Database: back up first (docs/DATABASE_SETUP.md), then
+NODE_ENV=production npm run db:push
+NODE_ENV=production npm run db:seed:prod   # batches, super admin, membership event; never db:seed
 npm run build
 ```
 
 ### Step 3: Launch with PM2
 ```bash
-pm2 start npm --name "ssghs-alumni" -- start
+NODE_ENV=production pm2 start npm --name "ssghs-alumni" -- start
 pm2 save
 pm2 startup
+pm2 logs ssghs-alumni --lines 50   # look for [env] warnings and errors
 ```
+Run **one** instance (no PM2 cluster mode): rate limits and live updates are kept in memory per process.
 
 ### Step 4: Configure Nginx
 Create `/etc/nginx/sites-available/ssghs-alumni`:
@@ -113,7 +121,14 @@ server {
         proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Live updates (Server-Sent Events) must not be buffered.
+        proxy_buffering off;
+        proxy_read_timeout 1h;
     }
+
+    # Join form: photo (5 MB) + proof document (10 MB).
+    client_max_body_size 20m;
 }
 ```
 
@@ -131,14 +146,14 @@ sudo certbot --nginx -d alumni.sabujsghs.edu.bd
 
 ### Dockerfile
 ```dockerfile
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/public ./public
@@ -155,15 +170,16 @@ Member photos must survive container rebuilds: mount a persistent, backed-up vol
 
 ## 6. Security Hardening Checklist
 
-- [x] **Strict Transport Security (HSTS)** enabled via `next.config.ts`.
-- [x] **X-Frame-Options: SAMEORIGIN** to prevent UI redressing & clickjacking.
-- [x] **X-Content-Type-Options: nosniff** to enforce MIME type verification.
-- [x] **Bcrypt Salt Rounds**: Set to 10 for password hashing.
-- [x] **Role-Based Access Control**: Middleware protects `/admin/*` requiring `ADMIN` or `SUPER_ADMIN` credentials.
-- [x] **Input Sanitization**: API routes validate and sanitize payloads.
-- [x] **Database Isolation**: Database connection runs with least-privilege credentials.
-
----
+- [x] **Security headers** (`next.config.ts`): Content-Security-Policy (`connect-src 'self'`, `object-src 'none'`, `upgrade-insecure-requests`), HSTS one year (production only, no preload), `X-Frame-Options: SAMEORIGIN`, `nosniff`, strict referrer policy, Permissions-Policy (camera for the gate scanner only), `Cross-Origin-Opener-Policy`. Check on the live site: `curl -sI https://<domain> | grep -iE "content-security|strict-transport|x-frame"`.
+- [x] **Environment check at start-up** (`lib/env-check.ts`, `npm run env:check`).
+- [x] **Cross-site request protection**: every write route checks the request's origin (`tests/write-routes.test.ts` keeps it that way); JSON bodies capped at 64 KB (512 KB for long content).
+- [x] **Passwords**: bcrypt; the super admin is managed from the environment; changing a role or password ends the user's sessions.
+- [x] **Role-based access**: one permission map (`lib/permissions.ts`) for the admin panel and APIs; moderators see content sections only.
+- [x] **Private files**: photos, proofs and payment screenshots served only through checked API routes, never as static files; rejected applicants' files deleted after 30 days (`PRIVACY_REJECTED_DAYS`).
+- [x] **Activity log** of every write, sign-in and security event (`/admin/logs`), secrets never stored.
+- [x] **Dependencies**: `npm audit --omit=dev` clean (re-run before each release).
+- [ ] **Database user** with rights on the app database only (not root), reachable from the app server only.
+- [ ] **Firewall**: only 22, 80 and 443 open; MySQL not exposed to the internet.
 
 ## 7. Disaster Recovery & Backups
 

@@ -33,6 +33,7 @@ It prints variable names only, never values, and exits with an error when the si
 | `CONTACT_INBOX_EMAIL` | Contact-form messages by email | 17 |
 | `UPLOADS_DIR` | Absolute path outside the app folder (e.g. `/var/lib/ssghs/uploads`), included in backups | 28, 30 |
 | `LOG_RETENTION_DAYS` | Activity log retention, default 365 | — |
+| `PRIVACY_REJECTED_DAYS` | Days before rejected applicants' photos and payment screenshots are deleted, default 30 ([DATA_RETENTION.md](DATA_RETENTION.md)) | 15 |
 | `NEXT_PUBLIC_SCHOOL_*` | School name and details shown on the site | — |
 
 ## Must not be in production

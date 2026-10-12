@@ -36,9 +36,9 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 11a | Donation campaigns created and edited in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 12 | Secrets and environment for production | 3 · Security | S | ✅ Code done 2026-10-12 (values set on the server in step 28) |
 | 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ✅ Done 2026-10-12 |
-| 14 | Dependency audit and security headers | 3 · Security | S | ⬜ |
-| 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ⬜ |
-| 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ⬜ |
+| 14 | Dependency audit and security headers | 3 · Security | S | ✅ Done 2026-10-12 |
+| 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ✅ Done 2026-10-12 |
+| 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ✅ Done 2026-10-12 |
 | 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | ⬜ |
 | 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | ⬜ |
 | 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | ⬜ |
@@ -208,15 +208,21 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** add `requireSameOrigin` to the remaining write routes (profile photo, password, posts, likes, jobs, messages, volunteers, RSVP JSON branch, payments initiate); cap JSON bodies (e.g. 64 KB); malformed bodies return 400, not 500.
 **Done when:** every POST/PUT/PATCH/DELETE route (except gateway callbacks) refuses cross-site requests; tests cover a few.
 
-### 14. Dependency audit and security headers · S
+### 14. Dependency audit and security headers · S · ✅ Done 2026-10-12
+**Result:** the database driver actually in use was `mariadb` 3.4.5 (SQL-injection and credential-leak advisories): the old nested override never installed, now forced to 3.5.4 everywhere. Overrides for `source-map-js`, `mysql2` and `deepmerge-ts`; Vitest 3 → 4.1.11 (critical advisories in the test runner). `npm audit --omit=dev`: **0**. Left: `braces` (high, no fixed version published) inside ESLint's file matcher, dev-only, matching our own patterns. Headers: `connect-src 'self'` (was any https/ws), `upgrade-insecure-requests`, HSTS one year in production only without `preload`, `X-XSS-Protection: 0`, `Cross-Origin-Opener-Policy`, Permissions-Policy with `camera=(self)` for the gate scanner; checked on the running server and by tests for production and development.
+
 **Tasks:** `npm audit` and update vulnerable packages; review headers in `next.config.ts` (CSP, HSTS, frame-ancestors, referrer policy; allow camera for `/gate` if step 22).
 **Done when:** no high or critical advisories; headers verified on a production build.
 
-### 15. Privacy clean-up · S
+### 15. Privacy clean-up · S · ✅ Done 2026-10-12
+**Result:** `lib/privacy-cleanup.ts` deletes the photo, any leftover proof file and payment screenshots of applicants still rejected `PRIVACY_REJECTED_DAYS` (default 30) after the decision; the account, decision and transaction ID stay. Runs a minute after server start and daily, or `npm run privacy:cleanup`; each run that deletes something is in the activity log (`privacy.rejected_files_purged`, counts only). `docs/DATA_RETENTION.md` lists what personal data is kept, who sees it and for how long.
+
 **Tasks:** delete photos and proof documents of rejected applicants after a set period (e.g. 30 days); document what personal data is kept and for how long.
 **Done when:** a scheduled clean-up runs and is logged.
 
-### 16. Known edge cases · S
+### 16. Known edge cases · S · ✅ Done 2026-10-12
+**Result:** the membership flag cannot move (unset, or set on another event) while membership applications are waiting for a decision (409 with how many; other edits still save). `PRODUCTION_DEPLOYMENT.md` updated: one `.env.production` read by Next.js and by the scripts with `NODE_ENV=production`, `env:check`, `db:seed:prod`, Node 24, one PM2 instance, nginx upload size and unbuffered live updates, current security checklist. Moderator 403 wording was done in 9g.
+
 **Tasks:** block changing an event's membership flag while joins are pending (or migrate them); ~~403 page wording for moderators~~ (done in 9g); update the outdated parts of `PRODUCTION_DEPLOYMENT.md`.
 **Done when:** each has a test or a manual check written down.
 

@@ -33,4 +33,11 @@ export async function register() {
   } catch (err) {
     console.error("[activity-log] Could not prune old entries:", err instanceof Error ? err.message : err);
   }
+  // Privacy: rejected applicants' photos, proofs and payment screenshots go after
+  // PRIVACY_REJECTED_DAYS. A minute after start (not delaying it), then daily.
+  const { purgeRejectedApplicantFiles } = await import("./lib/privacy-cleanup");
+  const purge = () =>
+    purgeRejectedApplicantFiles().catch((err) => console.error("[privacy] Clean-up failed:", err instanceof Error ? err.message : err));
+  setTimeout(purge, 60_000).unref();
+  setInterval(purge, 24 * 60 * 60_000).unref();
 }

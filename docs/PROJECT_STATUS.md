@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
-**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–13 done)
-**Tests:** 278 / 278 passing (45 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–16 done: Phase 3 security complete)
+**Tests:** 282 / 282 passing (46 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -36,6 +36,7 @@ Size: 19 Prisma models, 44 pages, 55 API route files.
 | `npm run db:seed:prod` | Production: batches, super admin, membership event only; disables accounts with old published passwords; lists leftover test accounts and demo content |
 | `npm run db:remove-demo` | Delete the demo seed's sample posts, news, announcements, events and campaigns |
 | `npm run env:check -- <file>` | Check a production env file (names only); the server runs the same check at start-up in production |
+| `npm run privacy:cleanup` | Delete rejected applicants' photos and payment screenshots now (also runs daily) |
 | `npm run db:super-admin` | Create or sync the super admin from env without a restart |
 | `npm test` | Full Vitest suite |
 
@@ -110,18 +111,15 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 ### Remaining risks (not fixed)
 
 - **Rate limits are in memory, per server process.** With several instances or after a restart the counters reset. Fine for one VPS; use a shared store (Redis) if the app is scaled out.
-- `NEXTAUTH_SECRET` in `.env.example` is a fixed, readable value. Production must set its own (`openssl rand -base64 32`), or anyone can forge tickets, card tokens and OTP tokens.
+- `braces` (high, dev-only, inside ESLint): no fixed version exists yet; it only matches the project's own lint patterns. `npm audit --omit=dev` is clean.
 - **No email provider configured.** `RESEND_API_KEY` / `SMTP_HOST` are empty and `nodemailer` is not installed, so every email (including the OTP fallback) only prints to the server console. In production, email OTP refuses with 503 until a provider is set; Resend needs no extra package.
-- Some public JSON routes have no body-size cap; several older routes still lack a same-origin check (NextAuth's `SameSite=Lax` cookie limits cross-site requests meanwhile).
 
 ## 6. Known issues and backlog
 
 - **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed:prod`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
 - Admin pages are only partly responsive on phones (users page is responsive; others are not yet).
-- Gate scanner has no camera; `Permissions-Policy: camera=()` in `next.config.ts` would block one.
-- Changing an event's membership flag while joins are pending leaves them unapprovable.
-- Rejected applicants' photos and proofs are kept indefinitely.
-- `sitemap.ts` is generated at build time; `docs/PRODUCTION_DEPLOYMENT.md` is partly outdated.
+- Gate scanner has no camera yet (roadmap step 22); the headers already allow the camera on this site.
+- `sitemap.ts` is generated at build time.
 - `sshs_dev` contains test accounts and test events from earlier sessions.
 
 ## 7. Before going live
@@ -140,5 +138,5 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Single `.env.local`; scripts load it through `lib/load-env.ts`.
 - Bangla QR payment option.
 - Security fixes in section 5.
-- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin, production env check (`docs/PRODUCTION_ENV.md`), same-origin check and body caps on every write route.
+- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin, production env check (`docs/PRODUCTION_ENV.md`), same-origin check and body caps on every write route, dependency fixes (real `mariadb` driver was 3.4.5) and stricter security headers, privacy clean-up of rejected applicants (`docs/DATA_RETENTION.md`), membership-flag guard.
 - Dev fix: a leftover PWA service worker served old JavaScript in `next dev` (hydration mismatch); dev now removes it.

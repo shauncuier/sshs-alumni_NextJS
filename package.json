@@ -16,6 +16,7 @@
     "db:remove-demo": "tsx prisma/remove-demo.ts",
     "db:super-admin": "tsx scripts/ensure-super-admin.ts",
     "env:check": "tsx scripts/check-env.ts",
+    "privacy:cleanup": "tsx scripts/privacy-cleanup.ts",
     "db:import-volunteers": "tsx scripts/import-volunteers.ts",
     "db:import-sms-history": "tsx scripts/import-sms-history.ts",
     "test": "vitest run",
@@ -54,11 +55,12 @@
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
     "typescript": "^5",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.11"
   },
   "overrides": {
-    "@prisma/adapter-mariadb": {
-      "mariadb": "3.5.4"
-    }
+    "mariadb": "$mariadb",
+    "source-map-js": "^1.2.2",
+    "mysql2": "^3.24.5",
+    "deepmerge-ts": "^8.0.2"
   }
 }

@@ -214,6 +214,22 @@ function parseEventInput(body: unknown, mode: "create" | "update"): Prisma.Event
   return data;
 }
 
+/**
+ * Joins waiting for a decision are tied to the membership event: moving the flag
+ * would leave them on an event the approval flow no longer treats as membership,
+ * so they could never be approved. Decide them first.
+ */
+async function assertNoPendingJoins(db: Prisma.TransactionClient, eventWhere: Prisma.EventWhereInput): Promise<void> {
+  const pending = await db.eventRegistration.count({ where: { status: "PENDING_PAYMENT", event: { ...eventWhere, isMembershipEvent: true } } });
+  if (pending > 0) {
+    throw new AppError(
+      "MEMBERSHIP_JOINS_PENDING",
+      409,
+      `${pending} membership application${pending === 1 ? " is" : "s are"} still waiting for a decision. Approve or reject ${pending === 1 ? "it" : "them"} in Verifications before changing which event is the membership event.`
+    );
+  }
+}
+
 /** Enforces membership-event rules on the saved row, inside the same transaction. */
 async function applyMembershipRules(db: Prisma.TransactionClient, row: Event): Promise<void> {
   if (!row.isMembershipEvent) return;
@@ -231,6 +247,7 @@ async function toPublicById(id: string): Promise<PublicEvent> {
 export async function createEvent(body: unknown): Promise<PublicEvent> {
   const data = parseEventInput(body, "create");
   const id = await prisma.$transaction(async (tx) => {
+    if (data.isMembershipEvent === true) await assertNoPendingJoins(tx, {});
     const row = await tx.event.create({
       data: { ...(data as Prisma.EventUncheckedCreateInput), slug: await uniqueSlug(tx, String(data.title)) },
     });
@@ -243,8 +260,12 @@ export async function createEvent(body: unknown): Promise<PublicEvent> {
 export async function updateEvent(id: string, body: unknown): Promise<PublicEvent> {
   const data = parseEventInput(body, "update");
   await prisma.$transaction(async (tx) => {
-    const existing = await tx.event.findUnique({ where: { id }, select: { id: true } });
+    const existing = await tx.event.findUnique({ where: { id }, select: { id: true, isMembershipEvent: true } });
     if (!existing) throw new AppError("EVENT_NOT_FOUND", 404, "Event not found.");
+    if (data.isMembershipEvent !== undefined && data.isMembershipEvent !== existing.isMembershipEvent) {
+      // Unsetting: this event's pending joins. Setting: the current membership event's.
+      await assertNoPendingJoins(tx, existing.isMembershipEvent ? { id } : { id: { not: id } });
+    }
     await applyMembershipRules(tx, await tx.event.update({ where: { id }, data }));
   });
   return toPublicById(id);
