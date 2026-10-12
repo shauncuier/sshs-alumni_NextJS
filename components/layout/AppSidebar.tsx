@@ -94,7 +94,6 @@ export default function AppSidebar() {
           <div className="w-10 h-10 rounded-full bg-emerald-700 border-2 border-amber-400/40 flex items-center justify-center text-amber-300 font-bold text-xs shadow">
             {session?.user?.name ? session.user.name[0] : "A"}
           </div>
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#06281e] rounded-full" />
         </div>
         <div className="overflow-hidden min-w-0">
           <div className="text-xs font-bold text-white truncate">

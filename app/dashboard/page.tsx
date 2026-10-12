@@ -148,7 +148,7 @@ export default function DashboardPage() {
                   {batchMembers > 0
                     ? `Your batch has ${batchMembers} verified member${batchMembers === 1 ? "" : "s"} here. `
                     : ""}
-                  Stay updated with batchmates, participate in reunion votes, and discover mutual contacts.
+                  Keep up with your batchmates, events and the community feed.
                 </p>
               </div>
 

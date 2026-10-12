@@ -40,7 +40,8 @@ export default function EventsPage() {
   }, []);
 
   const categories = ["all", "REUNION", "SPORTS", "WEBINAR", "COMMUNITY"];
-  const jubileeEvent = events.find((e) => e.isMegaEvent);
+  // Featured: the membership event, else the next big event (all text comes from the event itself).
+  const jubileeEvent = events.find((e) => e.isMembershipEvent) ?? events.find((e) => e.isMegaEvent);
   const jubileePrice = jubileeEvent ? jubileePriceText(jubileeEvent) : "";
 
   const filteredEvents = events.filter((e) => {
@@ -73,7 +74,7 @@ export default function EventsPage() {
                 Alumni Events &amp; Reunions
               </h1>
               <p className="text-emerald-100 text-sm leading-relaxed">
-                Connect with old friends and teachers. RSVP for upcoming batch get-togethers, the Grand Alumni Reunion 2026, inter-batch cricket festivals, and global career webinars.
+                Reunions, batch get-togethers and other events of the alumni association. Register online and get your ticket.
               </p>
             </div>
           </div>
@@ -113,23 +114,28 @@ export default function EventsPage() {
           </div>
 
           {/* Featured Mega Event Banner: 50 Years Golden Jubilee */}
-          {selectedCategory === "all" && !search.trim() && (
+          {selectedCategory === "all" && !search.trim() && jubileeEvent && (
             <div className="bg-gradient-to-r from-[#041a13] via-[#06281e] to-[#0b3d2c] text-white rounded-3xl border-2 border-amber-400/40 shadow-2xl overflow-hidden relative group">
               <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
                 {/* Left 7 cols: Image & Badges */}
                 <div className="lg:col-span-6 relative h-64 sm:h-80 lg:h-full min-h-[300px] overflow-hidden">
-                  <Image
-                    src="/golden-jubilee.jpg"
-                    alt="50 Years Golden Jubilee Grand Celebration"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    loading="eager"
-                    fetchPriority="high"
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-                  />
+                  {jubileeEvent.bannerImage && !jubileeEvent.bannerImage.startsWith("/golden-jubilee") ? (
+                    // Banners can be any address an admin entered: a plain image, not the optimiser.
+                    <img src={jubileeEvent.bannerImage} alt="" loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-90" />
+                  ) : (
+                    <Image
+                      src="/golden-jubilee.jpg"
+                      alt=""
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      loading="eager"
+                      fetchPriority="high"
+                      className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#06281e]" />
                   <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow">
-                    Historic 50-Year Milestone
+                    {jubileeEvent.isMembershipEvent ? "Join the association" : "Featured"}
                   </div>
                 </div>
 
@@ -138,7 +144,7 @@ export default function EventsPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-900/90 text-amber-300 text-xs font-bold border border-amber-400/30">
                       <Calendar className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Approx. Dec 30, 2026 • Landmark Festival</span>
+                      <span>{new Date(`${jubileeEvent.date}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}{jubileeEvent.locationCity ? ` · ${jubileeEvent.locationCity}` : ""}</span>
                     </div>
                     {jubileePrice && (
                       <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
@@ -148,37 +154,20 @@ export default function EventsPage() {
                   </div>
 
                   <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-                    50 Years Golden Jubilee Grand Celebration (সুবর্ণ জয়ন্তী ৫০ বছর পূর্তি উৎসব)
+                    {jubileeEvent.title}
                   </h2>
 
-                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
-                    Sabuj Shikshayatan Government High School reaches half a century of academic pride. Join 5,000+ alumni across 50 batches for the grandest reunion in our history featuring Gurudakshina honors, traditional Mezban, souvenir kits, and drone fireworks.
-                  </p>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
-                    <div className="bg-white/10 p-2.5 rounded-xl border border-white/15">
-                      <span className="text-[10px] text-amber-300 font-bold block uppercase">Expected</span>
-                      <strong className="text-white font-black text-sm">5,000+ Alumni</strong>
-                    </div>
-                    <div className="bg-white/10 p-2.5 rounded-xl border border-white/15">
-                      <span className="text-[10px] text-amber-300 font-bold block uppercase">Souvenirs</span>
-                      <strong className="text-white font-black text-sm">Book, Polo &amp; Crest</strong>
-                    </div>
-                    <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 col-span-2 sm:col-span-1">
-                      <span className="text-[10px] text-amber-300 font-bold block uppercase">Grand Feast</span>
-                      <strong className="text-white font-black text-sm">Traditional Mezban</strong>
-                    </div>
-                  </div>
+                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed line-clamp-4">{jubileeEvent.subtitle || jubileeEvent.description}</p>
 
                   <div className="pt-3 flex flex-col sm:flex-row items-center gap-3">
                     <Link
-                      href={jubileeEvent ? `/events/${jubileeEvent.slug}` : "/events"}
+                      href={`/events/${jubileeEvent.slug}`}
                       className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                     >
-                      <span>Explore 50-Year Mega Event &amp; Register</span>
+                      <span>{jubileeEvent.isMembershipEvent ? "Details & join" : "Details & register"}</span>
                       <span>&rarr;</span>
                     </Link>
-                    {!loading && jubileeEvent && jubileeEvent.attendeesCount > 0 && (
+                    {jubileeEvent.attendeesCount > 0 && (
                       <span className="text-[11px] text-emerald-200">
                         {jubileeEvent.attendeesCount} already registered
                       </span>
@@ -194,12 +183,22 @@ export default function EventsPage() {
             <h3 className="text-base font-bold text-slate-900">
               {selectedCategory === "all" ? "All Upcoming Gatherings & Tournaments" : `${selectedCategory} Events`}
             </h3>
-            <span className="text-xs text-slate-400">
-              {filteredEvents.length} events scheduled
-            </span>
+            {!loading && (
+              <span className="text-xs text-slate-500">
+                {filteredEvents.length} {filteredEvents.length === 1 ? "event" : "events"}
+              </span>
+            )}
           </div>
 
           {loadError && <p role="alert" className="text-xs text-rose-700">{loadError}</p>}
+
+          {loading && <p className="text-sm text-slate-500">Loading events…</p>}
+          {!loading && !loadError && filteredEvents.length === 0 && (
+            <div className="p-8 text-center bg-white rounded-3xl border border-slate-200">
+              <p className="text-sm font-bold text-slate-700">No events {search.trim() || selectedCategory !== "all" ? "match your search" : "yet"}</p>
+              <p className="text-xs text-slate-500 mt-1">New events appear here as soon as the committee publishes them.</p>
+            </div>
+          )}
 
           {/* Events Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

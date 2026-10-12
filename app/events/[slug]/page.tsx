@@ -19,10 +19,7 @@ import {
   CheckCircle2,
   ListOrdered,
   Sparkles,
-  Award,
-  Utensils,
   BookOpen,
-  Shirt,
   PhoneCall,
   Info,
   ChevronRight,
@@ -99,7 +96,8 @@ function EventDetailView({
 }) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string | undefined>(undefined);
-  const [activeDay, setActiveDay] = useState<number>(1);
+  const [activeDay, setActiveDay] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Countdown State for Golden Jubilee
   const [timeLeft, setTimeLeft] = useState({
@@ -154,19 +152,12 @@ function EventDetailView({
     event.extraAdultFee > 0 ||
     event.childFee > 0;
 
-  // Filter agenda by days if Golden Jubilee
-  const day1Agenda = event.agenda?.filter((a) => a.time.includes("Day 1")) || [];
-  const day2Agenda = event.agenda?.filter((a) => a.time.includes("Day 2")) || [];
-  const day3Agenda = event.agenda?.filter((a) => a.time.includes("Day 3")) || [];
+  // Multi-day agendas label each item "Day N (...) - time"; one tab per day, in order.
+  const dayOf = (time: string) => /^(Day \d+(?: \([^)]*\))?)/i.exec(time)?.[1] ?? null;
+  const agendaDays = Array.from(new Set((event.agenda ?? []).map((a) => dayOf(a.time)).filter((d): d is string => Boolean(d))));
+  const selectedDay = activeDay && agendaDays.includes(activeDay) ? activeDay : agendaDays[0] ?? null;
+  const currentDisplayAgenda = (event.agenda ?? []).filter((a) => !selectedDay || dayOf(a.time) === selectedDay);
 
-  const currentDisplayAgenda =
-    isGoldenJubilee && event.agenda
-      ? activeDay === 1
-        ? day1Agenda
-        : activeDay === 2
-        ? day2Agenda
-        : day3Agenda
-      : event.agenda || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -193,14 +184,20 @@ function EventDetailView({
 
             <button
               onClick={() => {
-                if (navigator.clipboard) {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert("Event link copied to clipboard!");
+                const url = window.location.href;
+                if (navigator.share) {
+                  void navigator.share({ title: event.title, url }).catch(() => {});
+                  return;
                 }
+                void navigator.clipboard?.writeText(url).then(() => {
+                  setLinkCopied(true);
+                  window.setTimeout(() => setLinkCopied(false), 2500);
+                });
               }}
+              aria-live="polite"
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/70 border border-white/20 transition-colors"
             >
-              <Share2 className="w-3.5 h-3.5" /> Share Event
+              <Share2 className="w-3.5 h-3.5" /> {linkCopied ? "Link copied" : "Share event"}
             </button>
           </div>
 
@@ -210,10 +207,10 @@ function EventDetailView({
               <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow">
                 {event.category}
               </span>
-              {isGoldenJubilee && (
+              {event.isMembershipEvent && (
                 <span className="px-3 py-1 rounded-full bg-emerald-900/90 text-amber-300 font-extrabold text-xs border border-amber-400/40 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  1974 — 2024 • 50 Years Milestone
+                  {schoolInfo.established} — {event.date.slice(0, 4)} · {Number(event.date.slice(0, 4)) - schoolInfo.established} years
                 </span>
               )}
             </div>
@@ -257,10 +254,10 @@ function EventDetailView({
                 </div>
                 <div>
                   <div className="font-black text-sm uppercase tracking-wider">
-                    Countdown to the Grand Golden Jubilee
+                    Countdown to {event.title}
                   </div>
                   <div className="text-xs text-slate-900 font-medium">
-                    Gathering 50 batches of alumni across 5 decades in Sitakunda, Chattogram
+                    {event.subtitle || `${event.venue}${event.locationCity ? `, ${event.locationCity}` : ""}`}
                   </div>
                 </div>
               </div>
@@ -297,7 +294,7 @@ function EventDetailView({
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 text-slate-900 font-extrabold text-xl">
                   <Info className="w-5 h-5 text-emerald-700" />
-                  <span>Grand Celebration Overview</span>
+                  <span>About this event</span>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                   {event.description}
@@ -324,63 +321,27 @@ function EventDetailView({
                 )}
               </div>
 
-              {/* Official Registration Fee & Rate Structure Card */}
-              {isGoldenJubilee && (
+              {/* Fees, from the event's own settings */}
+              {isPaid && (event.extraAdultFee > 0 || event.childFee > 0) && (
                 <div className="bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 sm:p-7 rounded-3xl border border-emerald-600/40 shadow-xl space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-700/60 pb-4">
-                    <div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-black uppercase tracking-wider mb-1">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span>Official Fee Policy</span>
+                  <h3 className="text-lg sm:text-xl font-black">Registration fees</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                      <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Member</span>
+                      <div className="text-2xl font-black">{priceLabel}</div>
+                    </div>
+                    {event.extraAdultFee > 0 && (
+                      <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                        <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Each extra adult</span>
+                        <div className="text-2xl font-black text-amber-300">+{formatTaka(event.extraAdultFee)}</div>
                       </div>
-                      <h3 className="text-lg sm:text-xl font-black text-white">
-                        Registration Fee Structure (নিবন্ধন ফি কাঠামো)
-                      </h3>
-                      <p className="text-xs text-emerald-200">
-                        Approximate Date: <strong className="text-amber-300">December 30, 2026</strong> • Sabuj Shikshayatan Campus
-                      </p>
-                    </div>
-                    <div className="text-xs bg-white/10 px-3.5 py-2 rounded-2xl border border-white/15 text-emerald-100 self-start sm:self-auto font-medium">
-                      Traditional Mezban &amp; Souvenirs Included
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                    <div className="bg-white/10 backdrop-blur-xs p-4 rounded-2xl border border-white/15 space-y-1">
-                      <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">
-                        Alumnus Delegate
-                      </span>
-                      <div className="text-2xl font-black text-white">
-                        ৳1,000 <span className="text-xs font-semibold text-emerald-200">/ person</span>
+                    )}
+                    {event.childFee > 0 && (
+                      <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                        <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Each child under 12</span>
+                        <div className="text-2xl font-black text-emerald-300">+{formatTaka(event.childFee)}</div>
                       </div>
-                      <p className="text-[11px] text-emerald-100/90 leading-relaxed pt-1">
-                        Includes 500-page Hardcover Souvenir Book &apos;সবুজ পদাবলি&apos;, Polo Shirt, Lapel Pin, RFID Pass &amp; Mezban feast.
-                      </p>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-xs p-4 rounded-2xl border border-white/15 space-y-1">
-                      <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">
-                        Extra Adult / Spouse
-                      </span>
-                      <div className="text-2xl font-black text-amber-300">
-                        +৳500 <span className="text-xs font-semibold text-emerald-200">each extra</span>
-                      </div>
-                      <p className="text-[11px] text-emerald-100/90 leading-relaxed pt-1">
-                        For accompanying adult guest or spouse. Includes festival access badge, commemorative stole &amp; Mezban grand banquet.
-                      </p>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-xs p-4 rounded-2xl border border-white/15 space-y-1">
-                      <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">
-                        Children (Below 12yr)
-                      </span>
-                      <div className="text-2xl font-black text-emerald-300">
-                        +৳300 <span className="text-xs font-semibold text-emerald-200">below 12 yrs</span>
-                      </div>
-                      <p className="text-[11px] text-emerald-100/90 leading-relaxed pt-1">
-                        For kids under 12. Includes special kids feast meal, commemorative cap, fun zone games &amp; souvenir gift kit.
-                      </p>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -394,7 +355,7 @@ function EventDetailView({
                         Delegate Registration Packages
                       </h2>
                       <p className="text-xs text-slate-500">
-                        Choose your registration tier. Every package includes full festival access and commemorative souvenirs.
+                        Choose a package when you register.
                       </p>
                     </div>
                     {formatDeadline(event.registrationDeadline) && (
@@ -471,32 +432,23 @@ function EventDetailView({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-2 text-slate-900 font-extrabold text-xl">
                       <ListOrdered className="w-5 h-5 text-emerald-700" />
-                      <span>{isGoldenJubilee ? "3-Day Landmark Festival Schedule" : "Event Schedule & Agenda"}</span>
+                      <span>{agendaDays.length > 1 ? `${agendaDays.length}-day schedule` : "Schedule"}</span>
                     </div>
 
-                    {/* Day selector tabs for Mega Event */}
-                    {isGoldenJubilee && (
-                      <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl">
-                        <button
-                          onClick={() => setActiveDay(1)}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                            activeDay === 1
-                              ? "bg-emerald-800 text-white shadow-xs"
-                              : "text-slate-600 hover:text-slate-900"
-                          }`}
-                        >
-                          Day 1 (Dec 30)
-                        </button>
-                        <button
-                          onClick={() => setActiveDay(2)}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                            activeDay === 2
-                              ? "bg-emerald-800 text-white shadow-xs"
-                              : "text-slate-600 hover:text-slate-900"
-                          }`}
-                        >
-                          Day 2 (Dec 31)
-                        </button>
+                    {agendaDays.length > 1 && (
+                      <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl" role="tablist" aria-label="Days">
+                        {agendaDays.map((day) => (
+                          <button
+                            key={day}
+                            type="button"
+                            role="tab"
+                            aria-selected={selectedDay === day}
+                            onClick={() => setActiveDay(day)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors ${selectedDay === day ? "bg-emerald-800 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                          >
+                            {day}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -521,57 +473,21 @@ function EventDetailView({
                 </div>
               )}
 
-              {/* Commemorative Souvenir Kit Box */}
-              {isGoldenJubilee && (
-                <div className="bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 sm:p-8 rounded-3xl border border-emerald-700 shadow-xl space-y-6">
+              {/* Souvenir, as written by the committee */}
+              {event.souvenirDetails && (
+                <div className="bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 sm:p-8 rounded-3xl border border-emerald-700 shadow-xl space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0">
                       <Gift className="w-6 h-6" />
                     </div>
-                    <div>
-                      <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
-                        Official Keepsake
-                      </span>
-                      <h3 className="text-xl font-black">
-                        Golden Jubilee Souvenir Delegate Kit
-                      </h3>
-                    </div>
+                    <h3 className="text-xl font-black">Souvenir</h3>
                   </div>
-
-                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
-                    {event.souvenirDetails}
-                  </p>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className="p-3 bg-white/10 rounded-2xl border border-white/15 text-center space-y-1">
-                      <BookOpen className="w-5 h-5 mx-auto text-amber-300" />
-                      <span className="font-bold block text-white">স্মরণিকা &apos;সবুজ পদাবলি&apos;</span>
-                      <span className="text-[10px] text-emerald-200">500-page Hardcover</span>
-                    </div>
-
-                    <div className="p-3 bg-white/10 rounded-2xl border border-white/15 text-center space-y-1">
-                      <Shirt className="w-5 h-5 mx-auto text-amber-300" />
-                      <span className="font-bold block text-white">Gold-Embroidered Polo</span>
-                      <span className="text-[10px] text-emerald-200">Custom Size S-XXL</span>
-                    </div>
-
-                    <div className="p-3 bg-white/10 rounded-2xl border border-white/15 text-center space-y-1">
-                      <Award className="w-5 h-5 mx-auto text-amber-300" />
-                      <span className="font-bold block text-white">50th Crest &amp; Pin</span>
-                      <span className="text-[10px] text-emerald-200">Laser-Cut Brass</span>
-                    </div>
-
-                    <div className="p-3 bg-white/10 rounded-2xl border border-white/15 text-center space-y-1">
-                      <Utensils className="w-5 h-5 mx-auto text-amber-300" />
-                      <span className="font-bold block text-white">Mezban Feast Pass</span>
-                      <span className="text-[10px] text-emerald-200">Chittagong Traditional</span>
-                    </div>
-                  </div>
+                  <p className="text-sm text-emerald-100/90 leading-relaxed whitespace-pre-line">{event.souvenirDetails}</p>
                 </div>
               )}
 
-              {/* Call for Souvenir Articles (Writing / Photos) */}
-              {isGoldenJubilee && (
+              {/* Call for souvenir articles (membership event) */}
+              {event.isMembershipEvent && (
                 <div className="bg-amber-50 border border-amber-200 p-6 sm:p-8 rounded-3xl space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0">
@@ -582,7 +498,7 @@ function EventDetailView({
                         স্মৃতিচারণ ও লেখা আহবান: সুবর্ণ জয়ন্তী স্মারকগ্রন্থ &apos;সবুজ পদাবলি&apos;
                       </h4>
                       <p className="text-xs text-slate-600">
-                        Call for Articles, Nostalgic Memoirs, Poems &amp; Vintage Photos (1974–2024)
+                        Call for articles, memoirs, poems and old photos ({schoolInfo.established}–{event.date.slice(0, 4)})
                       </p>
                     </div>
                   </div>
@@ -691,8 +607,8 @@ function EventDetailView({
                     <span className="font-bold text-slate-900 text-right line-clamp-1">{event.organizer}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Expected Attendance:</span>
-                    <span className="font-bold text-slate-900">{event.maxAttendees}+ Alumni &amp; Families</span>
+                    <span className="font-medium">Capacity:</span>
+                    <span className="font-bold text-slate-900">{event.maxAttendees} places</span>
                   </div>
                   {formatDeadline(event.registrationDeadline) && (
                     <div className="flex items-center justify-between gap-2">
@@ -700,24 +616,26 @@ function EventDetailView({
                       <span className="font-bold text-amber-700 text-right">{formatDeadline(event.registrationDeadline)}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Chief Guests:</span>
-                    <span className="font-bold text-slate-900">Distinguished Dignitaries</span>
-                  </div>
+                  {event.guestOfHonor && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">Guests of honour:</span>
+                      <span className="font-bold text-slate-900 text-right">{event.guestOfHonor}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Hotline & Helpline */}
+                {/* Questions: the association's real contact */}
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
                   <div className="font-bold text-slate-900 flex items-center gap-1.5">
                     <PhoneCall className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Secretariat Support &amp; Inquiries</span>
+                    <span>Questions about this event?</span>
                   </div>
-                  <p className="text-slate-500 text-[11px] leading-relaxed">
-                    For accommodation assistance, batch stalls, or expatriate registration inquiries:
+                  <a href={`mailto:${schoolInfo.associationEmail}?subject=${encodeURIComponent(event.title)}`} className="font-bold text-emerald-800 break-all hover:underline">
+                    {schoolInfo.associationEmail}
+                  </a>
+                  <p>
+                    or use the <Link href="/contact" className="font-semibold text-emerald-800 underline">contact form</Link>.
                   </p>
-                  <div className="font-bold text-emerald-800 text-xs">
-                    +880 1819-987654 / +880 1711-000000
-                  </div>
                 </div>
               </div>
             </div>

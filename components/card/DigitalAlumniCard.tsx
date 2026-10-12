@@ -96,7 +96,7 @@ export default function DigitalAlumniCard({
             <div className="relative z-10 flex items-center gap-4 my-auto pt-2">
               <div className="relative shrink-0">
                 <img loading="lazy" decoding="async"
-                  src={card.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
+                  src={card.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(card.fullName)}&size=400&background=06281e&color=fcd34d&bold=true`}
                   alt={card.fullName}
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-md ring-4 ring-emerald-900/50"
                 />
@@ -118,7 +118,7 @@ export default function DigitalAlumniCard({
                   {card.fullName}
                 </h2>
                 <div className="text-xs text-emerald-100/90 font-medium truncate">
-                  {card.profession || "Distinguished Alumnus"}
+                  {card.profession}
                 </div>
                 <div className="flex items-center gap-3 pt-0.5 text-[11px]">
                   <span className="px-2 py-0.5 rounded-lg bg-emerald-800/80 border border-emerald-600/50 font-bold text-amber-300">
@@ -215,16 +215,11 @@ export default function DigitalAlumniCard({
             <div className="relative z-10 flex items-end justify-between pt-2 border-t border-emerald-700/40 text-[9px] text-emerald-200/80">
               <div>
                 <span className="block font-semibold">Sabuj Shikshayatan High School</span>
-                <span>Chattogram, Bangladesh • sabujsghs.edu.bd</span>
+                <span>Chattogram, Bangladesh</span>
               </div>
 
-              <div className="text-right">
-                <span className="font-script text-xs text-amber-300 block -mb-0.5">
-                  General Secretary
-                </span>
-                <span className="text-[8px] uppercase tracking-wider text-emerald-300">
-                  Authorized Signatory
-                </span>
+              <div className="text-right text-[8px] uppercase tracking-wider text-emerald-300">
+                Scan the QR to verify
               </div>
             </div>
           </div>

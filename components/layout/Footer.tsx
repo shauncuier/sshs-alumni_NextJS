@@ -15,7 +15,7 @@ export default function Footer() {
               Once an SSGHS Student, Always a Family.
             </h3>
             <p className="text-sm text-emerald-300/90">
-              Join 5,000+ alumni shaping science, industry, technology, and society across 28 countries.
+              Find your batchmates, join our events and help the school that taught us.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 justify-center">

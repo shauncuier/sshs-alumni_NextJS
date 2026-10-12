@@ -177,46 +177,13 @@ export default function VolunteerPage() {
             </div>
 
             {/* Volunteer Recognition / Perks Box */}
-            <div className="p-6 rounded-3xl bg-gradient-to-br from-[#06281e] to-[#041a13] text-white border border-emerald-900/80 shadow-md space-y-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
-                  <Award className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-white">Volunteer Privileges &amp; Recognition</h3>
-                  <p className="text-[11px] text-emerald-300/90">Honoring every alumnus giving back time and dedication</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="flex items-start gap-2 bg-emerald-950/60 p-3 rounded-xl border border-emerald-900/60">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-white block font-semibold">Special Commendation Crest</strong>
-                    <span className="text-slate-300 text-[11px]">Awarded during the grand closing ceremony by executive leaders.</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 bg-emerald-950/60 p-3 rounded-xl border border-emerald-900/60">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-white block font-semibold">All-Access Security Pass</strong>
-                    <span className="text-slate-300 text-[11px]">Volunteer Squad VIP pass granting campus control access.</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 bg-emerald-950/60 p-3 rounded-xl border border-emerald-900/60">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-white block font-semibold">Alumni Leadership Network</strong>
-                    <span className="text-slate-300 text-[11px]">Direct priority consideration for future executive committees.</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 bg-emerald-950/60 p-3 rounded-xl border border-emerald-900/60">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-white block font-semibold">Squad Catering &amp; Kit</strong>
-                    <span className="text-slate-300 text-[11px]">Dedicated volunteer meal pavilion, squad uniform &amp; kit.</span>
-                  </div>
-                </div>
-              </div>
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-[#06281e] to-[#041a13] text-white border border-emerald-900/80 shadow-md space-y-2">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                <Award className="w-4 h-4 text-amber-300" /> What happens next
+              </h3>
+              <p className="text-xs text-emerald-100/90 leading-relaxed">
+                The committee reviews every application and contacts you by phone or email about your wing, the tasks and the schedule.
+              </p>
             </div>
           </div>
 

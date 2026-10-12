@@ -156,7 +156,7 @@ function DirectoryContent() {
                 Alumni Directory &amp; Classmate Finder
               </h1>
               <p className="text-emerald-100 text-sm leading-relaxed">
-                Search over 5,000 former students across 40 batches. Connect with classmates, browse career trajectories, and discover alumni in your city or industry.
+                Find verified members by name, batch, profession or city. Phone and email show only when a member has made them public.
               </p>
             </div>
           </div>

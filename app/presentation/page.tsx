@@ -351,7 +351,7 @@ export default function PresentationPage() {
       subtitle: "Empowering Professional Growth and Seamless Event Logistics",
       speakerNotes:
         "Phase 4 makes the platform valuable every single day of the year. We launched an Alumni Job Portal where graduates can post vacancies and apply. We built a 1-on-1 Mentorship Matching Engine connecting senior alumni in BCS administration, clinical medicine, and technology with young graduates, automatically generating Google Meet session links. Finally, our Reunion Ticketing system handles tiered passes, T-shirt sizing, and traditional Mezban meal preferences.",
-      demoUrl: "/events/1/ticket",
+      demoUrl: "/events",
       demoLabel: "Demo Reunion Ticketing Flow",
       content: (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -547,7 +547,7 @@ export default function PresentationPage() {
           </a>
 
           <a
-            href="/events/1/ticket"
+            href="/events"
             target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:border-emerald-500/80 transition-all flex flex-col justify-between"

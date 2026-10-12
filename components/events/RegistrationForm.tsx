@@ -520,7 +520,7 @@ export default function RegistrationForm({
                   Join the Organizing Committee Volunteer Squad (ঐচ্ছিক স্বেচ্ছাসেবী)
                 </span>
                 <span className="text-[11px] text-slate-600 block mt-0.5">
-                  Contribute your skills during the event. Volunteers receive special commemorative squad badges and certificate of appreciation.
+                  Help during the event; the committee will contact you about tasks.
                 </span>
               </div>
             </label>

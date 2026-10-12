@@ -10,7 +10,7 @@ export const MEMBERSHIP_EVENT_ID = "evt-golden-jubilee-50";
 export const membershipEvent: EventItem = {
   id: "evt-golden-jubilee-50",
   title: "50 Years Golden Jubilee Grand Celebration (সুবর্ণ জয়ন্তী ৫০ বছর পূর্তি উৎসব)",
-  subtitle: "Half a Century of Knowledge, Legacy & Brotherhood (1974 - 2024)",
+  subtitle: "Half a Century of Knowledge, Legacy & Brotherhood (1976 - 2026)",
   category: "REUNION",
   date: "2026-12-30",
   time: "Grand Landmark Festival (Approx. Date: December 30, 2026)",
@@ -34,7 +34,7 @@ export const membershipEvent: EventItem = {
     { time: "Day 1 (Dec 30) - 03:30 PM", activity: "'Gurudakshina' - Emotional Felicitation of Respected Retired & Current Teachers with Gold Medals" },
     { time: "Day 1 (Dec 30) - 06:00 PM", activity: "Memorial Homage to Departed Teachers & Classmates with 500 Memorial Lanterns" },
     { time: "Day 2 (Dec 31) - 09:30 AM", activity: "Golden Jubilee Inter-Batch Cricket & Football Challenge Cup Finals" },
-    { time: "Day 2 (Dec 31) - 11:30 AM", activity: "Launch of 500-page Commemorative Souvenir Book 'সবুজ পদাবলি (1974-2024)'" },
+    { time: "Day 2 (Dec 31) - 11:30 AM", activity: "Launch of 500-page Commemorative Souvenir Book 'সবুজ পদাবলি (1976-2026)'" },
     { time: "Day 2 (Dec 31) - 01:00 PM", activity: "Traditional Chittagong Mezban Grand Feast for 5,000+ Alumni & Families" },
     { time: "Day 2 (Dec 31) - 04:00 PM", activity: "Golden Jubilee Alumni Excellence Awards (Distinguished Public Servants, Scientists, Doctors, Business Leaders)" },
     { time: "Day 2 (Dec 31) - 06:30 PM", activity: "Gala Concert ft. Shironamhin, Warfaze & Alumni Musical Troupe" },
@@ -44,7 +44,7 @@ export const membershipEvent: EventItem = {
     {
       name: "General Alumnus Delegate",
       price: "৳1,000",
-      description: "Official registration for individual alumni member across any batch (1974-2025).",
+      description: "Official registration for individual alumni member across any batch.",
       includes: [
         "Full Festival Access Pass",
         "50-Year Commemorative Souvenir Hardcover Book 'সবুজ পদাবলি'",
@@ -96,7 +96,7 @@ export const membershipEvent: EventItem = {
     }
   ],
   highlights: [
-    "50 Batches Convergence (1974 – 2025)",
+    "Alumni of every batch since 1977",
     "Traditional Chittagong Mezban for 5,000+ Attendees",
     "Gurudakshina Honors for 100+ Beloved Teachers",
     "500-Page Hardbound Souvenir Book 'সবুজ পদাবলি'",

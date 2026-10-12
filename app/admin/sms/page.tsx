@@ -39,61 +39,58 @@ export interface SmsTemplateItem {
   tag: string;
 }
 
-const PRESET_TEMPLATES: SmsTemplateItem[] = [
+// This site's address for links in messages (production: the real domain).
+const SITE = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+
+const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
   // ── ENGLISH (COST SAVER: Strictly <= 160 characters = 1 SMS Credit) ──
   {
     id: "en-reunion",
     lang: "en",
-    title: "Grand Reunion 2026 Registration",
+    title: "Event registration open",
     category: "Reunion",
-    text: "SSGHS Grand Reunion 2026: Dear Alumnus, registration is now open! Get your Digital ID pass & register at https://sabujsghs.edu.bd/events - SSGHS Alumni",
+    text: `SSGHS Alumni: Dear Alumnus, event registration is now open! Get your Digital ID pass & register at ${SITE}/events - SSGHS Alumni`,
     isCostSaver: true,
-    tag: "1 SMS • 151 chars",
   },
   {
     id: "en-idcard",
     lang: "en",
     title: "Digital Smart ID Card Pass Ready",
     category: "ID Card",
-    text: "Dear Alumnus, your Digital Smart ID Card is ready. Login to download your gate pass: https://sabujsghs.edu.bd/profile - SSGHS Alumni Association",
+    text: `Dear Alumnus, your Digital Smart ID Card is ready. Login to download your gate pass: ${SITE}/card - SSGHS Alumni Association`,
     isCostSaver: true,
-    tag: "1 SMS • 144 chars",
   },
   {
     id: "en-verify",
     lang: "en",
     title: "Alumni Profile Verified Welcome",
     category: "Verification",
-    text: "Congratulations! Your SSGHS Alumni profile has been verified. Connect with teachers & batchmates at https://sabujsghs.edu.bd - SSGHS Alumni",
+    text: `Congratulations! Your SSGHS Alumni profile has been verified. Connect with teachers & batchmates at ${SITE} - SSGHS Alumni`,
     isCostSaver: true,
-    tag: "1 SMS • 137 chars",
   },
   {
     id: "en-batchreps",
     lang: "en",
     title: "Batch Reps Coordination Call",
     category: "Batch Reps",
-    text: "Notice: Batch Representatives coordination meeting this Friday 7 PM on Zoom. Please join on time. Details at sabujsghs.edu.bd - SSGHS Committee",
+    text: "Notice: Batch representatives meeting on [DAY] at [TIME], [PLACE]. Please join on time. - SSGHS Committee",
     isCostSaver: true,
-    tag: "1 SMS • 144 chars",
   },
   {
     id: "en-volunteers",
     lang: "en",
     title: "Volunteers Gate Briefing",
     category: "Volunteers",
-    text: "Volunteers Notice: Reunion Gate Scanner & Event briefing this Saturday 10 AM at Campus Auditorium. Please attend on time. - SSGHS",
+    text: "Volunteers: event briefing on [DAY] at [TIME], [PLACE]. Please attend on time. - SSGHS",
     isCostSaver: true,
-    tag: "1 SMS • 131 chars",
   },
   {
     id: "en-notice",
     lang: "en",
     title: "Urgent Campus Notice",
     category: "Notice",
-    text: "Notice: Sabuj Shikshayatan Alumni General Meeting announcement has been published. Read details at https://sabujsghs.edu.bd - Executive Committee",
+    text: `Notice: Sabuj Shikshayatan Alumni General Meeting announcement has been published. Read details at ${SITE} - Executive Committee`,
     isCostSaver: true,
-    tag: "1 SMS • 146 chars",
   },
 
   // ── BANGLISH (COST SAVER: Bengali written in English GSM-7 = 1 SMS Credit) ──
@@ -102,36 +99,32 @@ const PRESET_TEMPLATES: SmsTemplateItem[] = [
     lang: "banglish",
     title: "Reunion Registration (Banglish)",
     category: "Reunion",
-    text: "SSGHS Punormiloni 2026! Priyo Praktan Shikkharthi, registration shuru hoyeche. Digital ID pass pete visit korun: https://sabujsghs.edu.bd/events",
+    text: `SSGHS Punormiloni 2026! Priyo Praktan Shikkharthi, registration shuru hoyeche. Digital ID pass pete visit korun: ${SITE}/events`,
     isCostSaver: true,
-    tag: "1 SMS • 145 chars",
   },
   {
     id: "bg-idcard",
     lang: "banglish",
     title: "Digital ID Card Ready (Banglish)",
     category: "ID Card",
-    text: "Apnar Digital Smart ID Card prostut hoyeche. Digital gate pass download korte login korun: https://sabujsghs.edu.bd/profile - SSGHS Alumni",
+    text: `Apnar Digital Smart ID Card prostut hoyeche. Digital gate pass download korte login korun: ${SITE}/card - SSGHS Alumni`,
     isCostSaver: true,
-    tag: "1 SMS • 138 chars",
   },
   {
     id: "bg-verify",
     lang: "banglish",
     title: "Profile Verified (Banglish)",
     category: "Verification",
-    text: "Abhinandan! SSGHS Alumni Association-e apnar profile verified hoyeche. Shokol shikkhok o bondhuder shathe jukto thakun: sabujsghs.edu.bd",
+    text: `Abhinandan! SSGHS Alumni Association-e apnar profile verified hoyeche. Shokol shikkhok o bondhuder shathe jukto thakun: ${SITE}`,
     isCostSaver: true,
-    tag: "1 SMS • 137 chars",
   },
   {
     id: "bg-batchreps",
     lang: "banglish",
     title: "Batch Reps Shobha (Banglish)",
     category: "Batch Reps",
-    text: "Joruri Notice: Agami Shukrobar shondha 7-tay Zoom platform-e Batch Protinidhider shobha onushthito hobe. Shokolke thakar onurodh roilo. - SSGHS",
+    text: "Joruri Notice: [DIN] [SHOMOY]-e [JAYGA]-y Batch Protinidhider shobha hobe. Shokolke thakar onurodh roilo. - SSGHS",
     isCostSaver: true,
-    tag: "1 SMS • 143 chars",
   },
 
   // ── BANGLA UNICODE (70 chars per SMS segment - Uses 2x to 3x more credits) ──
@@ -140,29 +133,31 @@ const PRESET_TEMPLATES: SmsTemplateItem[] = [
     lang: "bn",
     title: "পুনর্মিলনী রেজিস্ট্রেশন (বাংলা)",
     category: "Reunion",
-    text: "শুভ পুনর্মিলনী ২০২৬! প্রিয় প্রাক্তন শিক্ষার্থী, সবুজের আঙিনায় ঐতিহাসিক পুনর্মিলনীর রেজিস্ট্রেশন শুরু হয়েছে। বিস্তারিত: https://sabujsghs.edu.bd/events",
+    text: `শুভ পুনর্মিলনী ২০২৬! প্রিয় প্রাক্তন শিক্ষার্থী, সবুজের আঙিনায় ঐতিহাসিক পুনর্মিলনীর রেজিস্ট্রেশন শুরু হয়েছে। বিস্তারিত: ${SITE}/events`,
     isCostSaver: false,
-    tag: "Unicode • 70 chars/part",
   },
   {
     id: "bn-idcard",
     lang: "bn",
     title: "ডিজিটাল আইডি প্রস্তুত (বাংলা)",
     category: "ID Card",
-    text: "সম্মানিত অ্যালামনাই, আপনার ডিজিটাল স্মার্ট আইডি প্রস্তুত হয়েছে। গেট পাস দেখতে লগইন করুন: https://sabujsghs.edu.bd/profile",
+    text: `সম্মানিত অ্যালামনাই, আপনার ডিজিটাল স্মার্ট আইডি প্রস্তুত হয়েছে। গেট পাস দেখতে লগইন করুন: ${SITE}/card`,
     isCostSaver: false,
-    tag: "Unicode • 70 chars/part",
   },
   {
     id: "bn-verify",
     lang: "bn",
     title: "প্রোফাইল ভেরিফাইড (বাংলা)",
     category: "Verification",
-    text: "অভিনন্দন! আপনার অ্যালামনাই প্রোফাইল ভেরিফাইড হয়েছে। সহপাঠীদের সাথে যুক্ত হতে ভিজিট করুন: https://sabujsghs.edu.bd",
+    text: `অভিনন্দন! আপনার অ্যালামনাই প্রোফাইল ভেরিফাইড হয়েছে। সহপাঠীদের সাথে যুক্ত হতে ভিজিট করুন: ${SITE}`,
     isCostSaver: false,
-    tag: "Unicode • 70 chars/part",
   },
 ];
+
+const PRESET_TEMPLATES: SmsTemplateItem[] = PRESET_TEMPLATE_TEXTS.map((t) => {
+  const m = calculateSmsMetrics(t.text);
+  return { ...t, isCostSaver: m.partsCount === 1, tag: `${m.partsCount} SMS • ${m.charCount} chars` };
+});
 
 export default function AdminBulkSmsPage() {
   // Gateway & Balance State
@@ -186,7 +181,7 @@ export default function AdminBulkSmsPage() {
 
   // Composer State
   const [templateLang, setTemplateLang] = useState<"en" | "banglish" | "bn">("en");
-  const [message, setMessage] = useState<string>(PRESET_TEMPLATES[0].text);
+  const [message, setMessage] = useState<string>("");
   const [customSenderId, setCustomSenderId] = useState<string>("");
 
   // Single Test SMS State
@@ -239,8 +234,6 @@ export default function AdminBulkSmsPage() {
       if (res.ok && data.contacts) {
         setContacts(data.contacts);
         setAvailableBatches(data.batches || []);
-        // By default select all valid contacts
-        setSelectedIds(new Set(data.contacts.map((c: SmsContactItem) => c.id)));
       }
     } catch (e) {
       console.error("Contacts fetch error:", e);

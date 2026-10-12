@@ -60,9 +60,6 @@ export default function PwaProvider({ children }: { children: React.ReactNode })
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
       navigator.serviceWorker
         .register("/sw.js")
-        .then((reg) => {
-          console.log("[PWA] Service Worker registered:", reg.scope);
-        })
         .catch((err) => {
           console.warn("[PWA] Service Worker registration failed:", err);
         });
@@ -106,8 +103,7 @@ export default function PwaProvider({ children }: { children: React.ReactNode })
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`[PWA] Install prompt outcome: ${outcome}`);
+    await deferredPrompt.userChoice;
     setDeferredPrompt(null);
     setShowInstallBanner(false);
   };

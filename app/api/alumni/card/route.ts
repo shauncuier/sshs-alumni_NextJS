@@ -28,8 +28,8 @@ interface AlumnusCardData {
   status: string;
 }
 
-const DEFAULT_AVATAR_URL =
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+// No photo yet: the member's initials, never a stranger's face.
+const initialsAvatar = (name: string) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=400&background=06281e&color=fcd34d&bold=true`;
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,12 +60,12 @@ export async function GET(req: NextRequest) {
     const alumnusData: AlumnusCardData = {
       id: user.id,
       alumniId: generateAlumniId(sscBatch, user.id),
-      fullName: user.profile?.fullName || "SSGHS Alumnus",
+      fullName: user.profile.fullName,
       sscBatch,
-      profession: user.profile?.profession || "Professional",
+      profession: user.profile.profession || "",
       // Blood group is not collected yet; leave it off the card rather than guess.
       membershipTier: "LIFETIME",
-      avatarUrl: user.profile?.avatarUrl || DEFAULT_AVATAR_URL,
+      avatarUrl: user.profile.avatarUrl || initialsAvatar(user.profile.fullName),
       status: user.status,
     };
 
