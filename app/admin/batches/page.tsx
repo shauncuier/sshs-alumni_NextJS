@@ -108,7 +108,7 @@ export default function AdminBatchesPage() {
   };
 
   useEffect(() => {
-    loadBatches();
+    loadBatches(); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   const totalBatches = batches.length;

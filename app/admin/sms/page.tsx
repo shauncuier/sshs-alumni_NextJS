@@ -189,8 +189,6 @@ export default function AdminBulkSmsPage() {
 
   // Manual Input & CSV State
   const [manualText, setManualText] = useState<string>("");
-  const [manualParsedNumbers, setManualParsedNumbers] = useState<string[]>([]);
-  const [manualInvalidNumbers, setManualInvalidNumbers] = useState<string[]>([]);
 
   // Composer State
   const [templateLang, setTemplateLang] = useState<"en" | "banglish" | "bn">("en");
@@ -274,18 +272,15 @@ export default function AdminBulkSmsPage() {
   };
 
   useEffect(() => {
-    fetchBalance();
+    fetchBalance(); // eslint-disable-line react-hooks/set-state-in-effect
     fetchContacts();
     fetchHistory();
   }, []);
 
   // ── Parse Manual Numbers Input ─────────────────────────────────────
-  useEffect(() => {
-    if (!manualText.trim()) {
-      setManualParsedNumbers([]);
-      setManualInvalidNumbers([]);
-      return;
-    }
+  // Numbers typed or pasted by hand, split into valid (deduplicated) and invalid.
+  const { manualParsedNumbers, manualInvalidNumbers } = useMemo(() => {
+    if (!manualText.trim()) return { manualParsedNumbers: [] as string[], manualInvalidNumbers: [] as string[] };
 
     const tokens = manualText
       .split(/[\n,;]+/)
@@ -308,8 +303,7 @@ export default function AdminBulkSmsPage() {
       }
     }
 
-    setManualParsedNumbers(valid);
-    setManualInvalidNumbers(invalid);
+    return { manualParsedNumbers: valid, manualInvalidNumbers: invalid };
   }, [manualText]);
 
   // ── Handle CSV File Upload ────────────────────────────────────────

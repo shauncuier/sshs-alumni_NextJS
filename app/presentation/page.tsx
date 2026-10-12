@@ -927,11 +927,11 @@ export default function PresentationPage() {
             </button>
           </div>
           <p className="text-xs text-slate-200 leading-relaxed max-h-56 overflow-y-auto pr-1">
-            "{current.speakerNotes}"
+            &ldquo;{current.speakerNotes}&rdquo;
           </p>
           <div className="mt-3 pt-2 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-400">
             <span>Slide {currentSlide + 1} Talking Points</span>
-            <span>Press 'N' to dismiss</span>
+            <span>Press &lsquo;N&rsquo; to dismiss</span>
           </div>
         </aside>
       )}
