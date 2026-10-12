@@ -4,7 +4,7 @@ import path from "node:path";
 import prisma from "@/lib/prisma";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
-import { verifiedPhoneToken } from "../helpers/phone";
+import { verifiedEmailToken, verifiedPhoneToken } from "../helpers/phone";
 
 const session = vi.hoisted(() => ({ user: null as { id: string; email: string; role: string } | null }));
 vi.mock("@/lib/session-user", () => ({ getSessionUser: async () => session.user, isAdminRole: () => false }));
@@ -114,6 +114,24 @@ describe("POST /api/events/[slug]/rsvp proof of study", () => {
     expect(entry).toMatchObject({ category: "EVENT", status: "SUCCESS", actorEmail: "new@example.test", targetType: "EventRegistration" });
     expect(entry.metadata).toMatchObject({ transactionRef: "TRX123456", contactVerifiedBy: "sms", paymentMethod: "bKash" });
     expect(JSON.stringify(entry.metadata)).not.toMatch(/phoneVerificationToken/);
+  });
+
+  it("joins with the email code when the SMS did not come (the fallback), and logs which one", async () => {
+    await jubilee();
+    const payload = JSON.parse(joinPayload());
+    payload.account = { ...payload.account, phone: "01811000333", phoneVerificationToken: undefined, emailVerificationToken: verifiedEmailToken("new@example.test") };
+    const res = await post(multipart(JSON.stringify(payload), photo, makePdf()));
+    expect(res.status).toBe(201);
+    const entry = await prisma.activityLog.findFirstOrThrow({ where: { action: "member.joined" } });
+    expect(entry.metadata).toMatchObject({ contactVerifiedBy: "email" });
+    expect(JSON.stringify(entry.metadata)).not.toMatch(/VerificationToken/);
+
+    // An email code for another address does not count.
+    await resetDatabase();
+    await jubilee();
+    payload.account.email = "other@example.test";
+    expect((await post(multipart(JSON.stringify(payload), photo, makePdf()))).status).toBe(400);
+    expect(await prisma.user.count()).toBe(0);
   });
 
   it("refuses a join without the proof file or its type", async () => {

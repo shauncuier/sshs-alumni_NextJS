@@ -47,7 +47,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 22 | Gate scanner with the phone camera | 5 · UX | M | ✅ Code done 2026-10-12 (20-ticket phone run by you) |
 | 23 | Join flow tested end to end on real phones | 5 · UX | S | 🟡 Checklist ready (`docs/PHONE_TEST_CHECKLIST.md`); the phone run is yours |
 | 24 | Production build passes, warnings cleaned | 6 · Quality | M | ✅ Build clean 2026-10-12 (`npm start` smoke check by you) |
-| 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ⬜ |
+| 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ✅ Done 2026-10-12 |
 | 26 | Manual QA walkthrough for every role | 6 · Quality | S | ⬜ |
 | 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | ⬜ |
 | 28 | Server set up (Node, Nginx, PM2, SSL, uploads folder) | 7 · Deploy | M | ⬜ |
@@ -287,7 +287,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** `npm run build` passes; fix type, lint and build warnings that matter; `npm start` serves the build locally.
 **Done when:** a clean build and a smoke check of the main pages on `npm start`.
 
-### 25. Test gaps · M
+### 25. Test gaps · M · ✅ Done 2026-10-12
+**Result:** new route tests: admin image upload by role (only content managers), payment-screenshot route (admins only, no-store, refuses foreign paths), verification decisions (second decision 409, unknown 404, bad status 400, moderators 403, each decision logged), joining through the form API with the **email code fallback** (and an email code for another address refused). `tests/write-routes.test.ts` now also fails if a write route stops writing to the activity log (5 listed exceptions with reasons). Timeouts raised (60 s per test, 90 s per hook) so a busy machine no longer fails the database-heavy tests. **Bugs found:** PDF proofs and payment screenshots were served with `frame-ancestors 'none'`, so the admin page's PDF preview was blocked (now `'self'`); the approval log said "membership of user 042258c1-…" and now names the member, email and batch. 300 tests.
+
 **Tasks:** route-handler tests for media admin gate, verification 409, logging entries per action, email fallback through the form API. Make the timing-sensitive tests robust: under heavy machine load (2026-10-12) the concurrent APPROVE/CANCEL race test and the joining tests timed out once, then passed on re-run.
 **Done when:** `npm test` passes and the listed gaps have tests.
 

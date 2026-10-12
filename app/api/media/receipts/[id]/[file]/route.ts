@@ -8,7 +8,8 @@ type Params = { params: Promise<{ id: string; file: string }> };
 const notFound = () => NextResponse.json({ error: "Not found." }, { status: 404 });
 
 const TYPES = new Map<string, { contentType: string; ext: string; csp: string }>([
-  ["receipt.pdf", { contentType: "application/pdf", ext: "pdf", csp: "frame-ancestors 'none'" }],
+  // Only this site may frame it (admin preview); other sites may not.
+  ["receipt.pdf", { contentType: "application/pdf", ext: "pdf", csp: "frame-ancestors 'self'" }],
   [
     "receipt.jpg",
     { contentType: "image/jpeg", ext: "jpg", csp: "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox" },

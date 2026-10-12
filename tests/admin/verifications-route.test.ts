@@ -54,6 +54,30 @@ const exists = (dir: string) => fs.access(dir).then(() => true, () => false);
 const patch = (body: unknown) =>
   PATCH(new Request("http://x/api/admin/verifications", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
 
+describe("verification decisions", () => {
+  it("decide once: a second decision is 409, an unknown request 404, non-admins 403", async () => {
+    const { request } = await pendingMember();
+    expect((await patch({ requestId: request.id, status: "VERIFIED" })).status).toBe(200);
+    const again = await patch({ requestId: request.id, status: "REJECTED" });
+    expect(again.status).toBe(409);
+    expect((await again.json()).error).toMatch(/already verified/);
+    expect((await prisma.user.findFirstOrThrow({ where: { email: "queue@example.test" } })).status).toBe("VERIFIED");
+    expect((await patch({ requestId: "no-such-request", status: "VERIFIED" })).status).toBe(404);
+    expect((await patch({ requestId: request.id, status: "MAYBE" })).status).toBe(400);
+
+    auth.session = { user: { email: "mod@example.test", role: "MODERATOR" } };
+    expect((await patch({ requestId: request.id, status: "REJECTED" })).status).toBe(403);
+  });
+
+  it("writes each decision to the activity log with who decided", async () => {
+    const { request } = await pendingMember();
+    await patch({ requestId: request.id, status: "REJECTED" });
+    const entry = await prisma.activityLog.findFirstOrThrow({ where: { action: "membership.rejected" } });
+    expect(entry).toMatchObject({ actorEmail: "admin@example.test", status: "SUCCESS" });
+    expect(entry.summary).toMatch(/queue@example.test|Queue Member/);
+  });
+});
+
 describe("verification queue and proof documents", () => {
   it("lists the proof details with each request", async () => {
     const { request } = await pendingMember();

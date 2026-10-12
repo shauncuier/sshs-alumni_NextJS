@@ -38,6 +38,18 @@ describe("every write route", () => {
     expect(missing).toEqual([]);
   });
 
+  it("writes to the activity log, unless listed as exempt", () => {
+    const NOT_LOGGED: Record<string, string> = {
+      "app/api/auth/register/route.ts": "always answers 410; changes nothing",
+      "app/api/media/ocr/route.ts": "reads text from an image; changes nothing",
+      "app/api/payments/sslcommerz/ipn/route.ts": "logged inside lib/payments/finalize.ts",
+      "app/api/payments/sslcommerz/success/route.ts": "logged inside lib/payments/finalize.ts",
+      "app/api/posts/[id]/like/route.ts": "likes are too frequent to log; the count is on the post",
+    };
+    const silent = writeRoutes.filter((f) => !NOT_LOGGED[f] && !/logActivity|logFailure/.test(fs.readFileSync(f, "utf8")));
+    expect(silent).toEqual([]);
+  });
+
   it("never reads a request body without a size cap", () => {
     const unbounded = writeRoutes.filter((f) => /\breq(uest)?\.(json|text|formData|arrayBuffer)\(\)/.test(fs.readFileSync(f, "utf8")));
     expect(unbounded).toEqual([]);

@@ -44,7 +44,7 @@ describe("GET /api/media/proofs/[id]/[file]", () => {
       expect(res.headers.get("x-content-type-options")).toBe("nosniff");
       expect(res.headers.get("content-disposition")).toBe(`inline; filename="membership-proof-${saved.id}.pdf"`);
       // A sandbox or default-src policy makes Chrome/Edge's PDF viewer show a blocked page.
-      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'self'");
       expect(Buffer.from(await res.arrayBuffer()).equals(makePdf())).toBe(true);
     }
   });

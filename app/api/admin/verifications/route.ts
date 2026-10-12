@@ -185,10 +185,14 @@ export async function PATCH(req: Request) {
       const updated =
         (await prisma.verificationRequest.findUnique({ where: { id: requestId } }).catch(() => null)) ?? result.updated;
 
+      const member = await prisma.user
+        .findUnique({ where: { id: result.updated.userId }, select: { email: true, profile: { select: { fullName: true, sscBatch: true } } } })
+        .catch(() => null);
+      const who = member ? `${member.profile?.fullName ?? member.email} (${member.email}${member.profile ? `, SSC ${member.profile.sscBatch}` : ""})` : `user ${result.updated.userId}`;
       await logActivity({
         category: "ADMIN",
         action: decision === "VERIFIED" ? "membership.approved" : "membership.rejected",
-        summary: `${decision === "VERIFIED" ? "Approved" : "Rejected"} membership of user ${result.updated.userId}`,
+        summary: `${decision === "VERIFIED" ? "Approved" : "Rejected"} the membership of ${who}`,
         actor: me,
         targetType: "User",
         targetId: result.updated.userId,

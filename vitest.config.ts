@@ -36,7 +36,10 @@ export default defineConfig({
     globalSetup: ["tests/setup/global-setup.ts"],
     // One shared database: run test files one at a time.
     fileParallelism: false,
-    testTimeout: 20_000,
+    // Generous: the suite shares one MySQL database, and under heavy machine load
+    // the concurrency and joining tests have taken over 20 s (2026-10-12).
+    testTimeout: 60_000,
+    hookTimeout: 90_000,
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       TEST_DATABASE_URL,

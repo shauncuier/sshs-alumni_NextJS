@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–16 done; Phase 4 integrations: code done, waiting for domain, operator tests and real payment details)
-**Tests:** 293 / 293 passing (49 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 300 / 300 passing (50 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
