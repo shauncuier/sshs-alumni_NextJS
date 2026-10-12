@@ -38,7 +38,8 @@ Size: 28 Prisma models, 54 pages, 85 API route files (2026-10-12).
 | `npm run db:remove-demo` | Delete the demo seed's sample posts, news, announcements, events and campaigns |
 | `npm run env:check -- <file>` | Check a production env file (names only); the server runs the same check at start-up in production |
 | `npm run privacy:cleanup` | Delete rejected applicants' photos and payment screenshots now (also runs daily) |
-| `npm run email:test -- <address>` / `npm run sms:test -- 01XXXXXXXXX` | Send one test email / one OTP-format SMS (costs a credit) |
+| `npm run email:preview` | Every email the site sends, with sample values, in `email-previews/` (one layout: `lib/email-templates.ts`) |
+| `npm run email:test -- <address> [email name]` / `npm run sms:test -- 01XXXXXXXXX` | Send one test email (e.g. `registration-confirmed`) / one OTP-format SMS (costs a credit) |
 | `npm run db:super-admin` | Create or sync the super admin from env without a restart |
 | `npm test` | Full Vitest suite |
 

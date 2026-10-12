@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { verificationCodeEmail } from "@/lib/email-templates";
 import { AppError } from "@/lib/app-error";
 import { getEmailProvider, sendEmail } from "@/lib/email";
 import { checkChallenge, issueChallenge, issueVerified, newOtpCode, OTP_RESEND_MS, OTP_TTL_MS, readVerified } from "@/lib/otp";
@@ -50,17 +51,7 @@ export async function requestEmailOtp(rawEmail: unknown, now = Date.now()): Prom
 
   const code = newOtpCode();
   const minutes = OTP_TTL_MS / 60_000;
-  const sent = await sendEmail({
-    to: email,
-    subject: `Your ${brand()} verification code: ${code}`,
-    text: `Your ${brand()} verification code is ${code}. It expires in ${minutes} minutes. If you did not ask for it, ignore this email.`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#0f172a">
-  <h2 style="color:#064e3b;margin:0 0 12px">${brand()}</h2>
-  <p>Your verification code is:</p>
-  <p style="font-size:32px;font-weight:700;letter-spacing:8px;margin:16px 0;color:#064e3b">${code}</p>
-  <p style="color:#475569;font-size:13px">It expires in ${minutes} minutes. If you did not ask for this code, you can ignore this email.</p>
-</div>`,
-  });
+  const sent = await sendEmail({ to: email, ...verificationCodeEmail(code, minutes, brand()) });
   if (!sent.success) {
     console.error("[email-otp] Email send failed:", sent.error);
     throw new AppError("EMAIL_FAILED", 502, "We could not send the email. Please check the address and try again.");

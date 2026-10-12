@@ -1,4 +1,5 @@
 import type { Mentor, MentorshipRequest } from "@prisma/client";
+import { noticeEmail, siteUrl } from "@/lib/email-templates";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import type { MentorProfile } from "@/lib/career-data";
@@ -167,22 +168,25 @@ export async function listMentorsForAdmin(status?: string | null) {
   return prisma.mentor.findMany({ where, orderBy: [{ status: "asc" }, { createdAt: "desc" }], include: acceptedCount });
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
-
-async function email(to: string, replyTo: string, subject: string, lines: (string | null | undefined)[]): Promise<boolean> {
-  const text = lines.filter(Boolean).join("\n");
+async function email(
+  to: string,
+  replyTo: string,
+  subject: string,
+  heading: string,
+  paragraphs: (string | null | undefined)[],
+  quote?: string | null
+): Promise<boolean> {
   try {
     const sent = await sendEmail({
       to,
       replyTo,
-      subject,
-      text,
-      html: `<div style="font-family:Arial,sans-serif;max-width:640px;color:#0f172a">${text
-        .split("\n")
-        .map((l) => `<p style="margin:6px 0;white-space:pre-wrap">${escapeHtml(l)}</p>`)
-        .join("")}</div>`,
+      ...noticeEmail({
+        subject,
+        heading,
+        paragraphs: paragraphs.filter((p): p is string => Boolean(p)),
+        quote: quote || undefined,
+        button: { label: "Open my mentorship requests", url: siteUrl("/mentorship/mine") },
+      }),
     });
     return sent.success;
   } catch {
@@ -222,12 +226,18 @@ export async function createRequest(actor: Actor, input: RequestInput): Promise<
       message: message || null,
     },
   });
-  const emailed = await email(mentor.email, actor.email, `Mentorship request from ${name}`, [
-    `${name}${request.menteeBatch ? ` (SSC ${request.menteeBatch})` : ""} asked for mentorship on: ${topic}`,
-    request.preferredTime ? `Preferred time: ${request.preferredTime}` : null,
-    request.message ? `\n${request.message}` : null,
-    "\nAccept or decline it at /mentorship/mine.",
-  ]);
+  const emailed = await email(
+    mentor.email,
+    actor.email,
+    `Mentorship request from ${name}`,
+    "New mentorship request",
+    [
+      `${name}${request.menteeBatch ? ` (SSC ${request.menteeBatch})` : ""} asked for your mentorship on: ${topic}`,
+      request.preferredTime ? `Preferred time: ${request.preferredTime}` : null,
+      "Accept or decline it on your mentorship page; reply to this email to write to them directly.",
+    ],
+    request.message
+  );
   return { request, mentor, emailed };
 }
 
@@ -247,19 +257,26 @@ export async function respondToRequest(actor: Actor, requestId: string, action: 
     const meetingDetails = str(input.meetingDetails);
     if (meetingDetails.length < 5) throw bad("Please say how and when you will meet (a meeting link, phone number or place and time).");
     const updated = await prisma.mentorshipRequest.update({ where: { id: requestId }, data: { status: "ACCEPTED", meetingDetails: meetingDetails.slice(0, 500), mentorReply: reply, respondedAt: now } });
-    await email(request.menteeEmail, request.mentor.email, `${request.mentor.name} accepted your mentorship request`, [
-      `${request.mentor.name} accepted your request about "${request.topic}".`,
-      `How to meet: ${updated.meetingDetails}`,
-      reply ? `\n${reply}` : null,
-    ]);
+    await email(
+      request.menteeEmail,
+      request.mentor.email,
+      `${request.mentor.name} accepted your mentorship request`,
+      "Your mentorship request was accepted",
+      [`${request.mentor.name} accepted your request about "${request.topic}".`, `How to meet: ${updated.meetingDetails}`],
+      reply
+    );
     return updated;
   }
   if (action === "DECLINE") {
     const updated = await prisma.mentorshipRequest.update({ where: { id: requestId }, data: { status: "DECLINED", mentorReply: reply, respondedAt: now } });
-    await email(request.menteeEmail, request.mentor.email, `Your mentorship request to ${request.mentor.name}`, [
-      `${request.mentor.name} is not able to take your request about "${request.topic}" right now.`,
-      reply ? `\n${reply}` : null,
-    ]);
+    await email(
+      request.menteeEmail,
+      request.mentor.email,
+      `Your mentorship request to ${request.mentor.name}`,
+      "About your mentorship request",
+      [`${request.mentor.name} is not able to take your request about "${request.topic}" right now. You can ask another mentor.`],
+      reply
+    );
     return updated;
   }
   throw new AppError("INVALID_REQUEST", 400, "Unknown action.");

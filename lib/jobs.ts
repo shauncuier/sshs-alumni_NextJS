@@ -1,4 +1,5 @@
 import { Prisma, type Job, type JobApplication } from "@prisma/client";
+import { noticeEmail, siteUrl } from "@/lib/email-templates";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import type { JobListing } from "@/lib/career-data";
@@ -202,30 +203,24 @@ export async function applyToJob(jobId: string, input: ApplicationInput, applica
   }
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
-
 /** Emails the poster about a new application (Reply-To: the applicant). Never throws. */
 export async function notifyPoster(job: Job, a: JobApplication): Promise<boolean> {
-  const lines = [
-    `${a.name} applied for "${job.title}" at ${job.company}.`,
-    `Email: ${a.email}`,
-    a.phone ? `Phone: ${a.phone}` : null,
-    a.sscBatch ? `SSC batch: ${a.sscBatch}` : null,
-    a.resumeUrl ? `CV: ${a.resumeUrl}` : null,
-    a.coverNote ? `\n${a.coverNote}` : null,
-    "\nAll applications for your jobs: /careers/mine",
-  ].filter(Boolean) as string[];
+  const rows: [string, string][] = [["Applicant", a.name], ["Email", a.email]];
+  if (a.phone) rows.push(["Phone", a.phone]);
+  if (a.sscBatch) rows.push(["SSC batch", String(a.sscBatch)]);
+  if (a.resumeUrl) rows.push(["CV", a.resumeUrl]);
   try {
     const sent = await sendEmail({
       to: job.postedByEmail,
       replyTo: a.email,
-      subject: `New application: ${job.title}`,
-      text: lines.join("\n"),
-      html: `<div style="font-family:Arial,sans-serif;max-width:640px;color:#0f172a">${lines
-        .map((l) => `<p style="margin:6px 0;white-space:pre-wrap">${escapeHtml(l)}</p>`)
-        .join("")}</div>`,
+      ...noticeEmail({
+        subject: `New application: ${job.title}`,
+        heading: "New job application",
+        paragraphs: [`${a.name} applied for ${job.title} at ${job.company}. Reply to this email to answer them directly.`],
+        rows,
+        quote: a.coverNote || undefined,
+        button: { label: "See all applications", url: siteUrl("/careers/mine") },
+      }),
     });
     return sent.success;
   } catch {

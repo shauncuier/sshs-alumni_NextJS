@@ -1,4 +1,5 @@
 import type { AlumniProfile, EventRegistration, User, VerificationRequest } from "@prisma/client";
+import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { discardProofsForUser } from "@/lib/members/proof-retention";
@@ -168,6 +169,14 @@ export async function decideRegistration(args: {
 
   // Never throws: a failed deletion is logged and retried later (see proof-retention).
   if (memberDecided) await discardProofsForUser(userId);
+
+  // Tell the member; a mail problem never fails the decision.
+  if (args.action === "APPROVE") {
+    if (memberDecided) await emailMembershipDecision(userId, "VERIFIED");
+    await emailRegistration(regId, "confirmed");
+  } else if (args.action === "CANCEL" && memberDecided) {
+    await emailMembershipDecision(userId, "REJECTED");
+  }
 
   return toAdminRegistration(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: regId }, include: WITH_USER }));
 }

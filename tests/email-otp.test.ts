@@ -23,7 +23,7 @@ beforeEach(async () => {
 });
 
 const lastCode = () => {
-  const code = /code is (\d+)\./.exec(mail.sent.at(-1)!.text!)![1];
+  const code = /code: (\d+)$/.exec(mail.sent.at(-1)!.subject)![1];
   expect(code).toHaveLength(OTP_LENGTH);
   return code;
 };

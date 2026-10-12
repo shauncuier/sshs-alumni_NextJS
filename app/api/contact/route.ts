@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { contactMessageEmail } from "@/lib/email-templates";
 import { NextResponse } from "next/server";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
@@ -8,11 +9,6 @@ import { requireRateLimit, readJsonBody, requireSameOrigin } from "@/lib/request
 const LIMITS = { name: 120, email: 254, subject: 200, message: 5000 };
 
 const field = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
-
-/** The sender's words go into the committee's inbox as text, never as markup. */
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
 
 // POST /api/contact — a visitor's message to the committee. It is emailed to
 // CONTACT_INBOX_EMAIL (Reply-To: the sender) and kept in the activity log.
@@ -37,19 +33,7 @@ export async function POST(req: Request) {
     const inbox = process.env.CONTACT_INBOX_EMAIL?.trim();
     let emailed = false;
     if (inbox) {
-      const sent = await sendEmail({
-        to: inbox,
-        replyTo: email,
-        subject: `[Contact ${ticketId}] ${subject}`,
-        text: `From: ${name} <${email}>\nReference: ${ticketId}\n\n${message}`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:640px;color:#0f172a">
-  <p style="color:#475569;font-size:13px">Contact form · ${ticketId}</p>
-  <p><strong>${escapeHtml(name)}</strong> &lt;${escapeHtml(email)}&gt;</p>
-  <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
-  <div style="white-space:pre-wrap;border-left:3px solid #059669;padding-left:12px">${escapeHtml(message)}</div>
-  <p style="color:#94a3b8;font-size:12px">Reply to this email to answer ${escapeHtml(name)} directly.</p>
-</div>`,
-      });
+      const sent = await sendEmail({ to: inbox, replyTo: email, ...contactMessageEmail({ name, email, subject, message, ticketId }) });
       emailed = sent.success;
       if (!sent.success) console.error("[contact] Could not email the committee:", sent.error);
     } else {

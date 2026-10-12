@@ -1,4 +1,5 @@
 import { Prisma, type Event, type EventRegistration } from "@prisma/client";
+import { emailRegistration } from "@/lib/member-emails";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
@@ -267,7 +268,10 @@ export async function registerForEvent(args: {
       throw err;
     });
 
-  return { registration: await toMemberRegistration(result.registration), createdAccount: result.createdAccount };
+  const registration = await toMemberRegistration(result.registration);
+  // Never fails the registration: a mail problem is only logged.
+  await emailRegistration(registration.id, registration.status === "PENDING_PAYMENT" ? "received" : "confirmed");
+  return { registration, createdAccount: result.createdAccount };
 }
 
 export async function getMemberRegistration(slug: string, userId: string): Promise<MemberRegistration | null> {

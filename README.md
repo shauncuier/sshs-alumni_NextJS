@@ -38,7 +38,8 @@ All settings live in one `.env.local` (development) or `.env.production` (server
 | `npm run db:seed:prod` | Production seed: super admin and settings only, no sample content |
 | `npm run db:remove-demo` | Removes sample members, posts and payments from a database |
 | `npm run db:super-admin` | Creates or syncs the super admin from the env file |
-| `npm run email:test -- <address>` / `npm run sms:test -- <phone>` | Sends a test email / SMS |
+| `npm run email:preview` | Writes every email the site sends (sample values) to `email-previews/`; open `index.html` |
+| `npm run email:test -- <address> [email name]` / `npm run sms:test -- <phone>` | Sends a test email (optionally one of the previews) / SMS |
 | `npm run privacy:cleanup` | Deletes rejected applicants' photos and proofs past the retention period |
 
 Do not run `npm run build` while `npm run dev` is running on the same folder.

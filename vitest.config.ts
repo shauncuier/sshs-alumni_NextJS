@@ -48,6 +48,10 @@ export default defineConfig({
       // .env.local holds the real SMS gateway key; tests must never text real phones.
       BULKSMSBD_API_KEY: "",
       SMS_API_KEY: "",
+      // Nor email real people: every send goes to the console.
+      RESEND_API_KEY: "",
+      SMTP_HOST: "",
+      EMAIL_PROVIDER: "",
     },
   },
 });

@@ -1,4 +1,5 @@
 import { after, NextResponse } from "next/server";
+import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import { logActivity } from "@/lib/activity-log";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
@@ -139,6 +140,7 @@ export async function PATCH(req: Request) {
 
         // If this user has an unconfirmed Jubilee membership registration,
         // confirm the event registration and payment directly alongside verification.
+        let confirmedRegistrationId: string | null = null;
         const pendingPayment = await hasPendingMembershipPayment(tx, request.userId);
         if (pendingPayment) {
           if (decision === "VERIFIED") {
@@ -154,6 +156,7 @@ export async function PATCH(req: Request) {
                   confirmedAt: new Date(),
                 },
               });
+              confirmedRegistrationId = pendingReg.id;
             }
           } else {
             await tx.eventRegistration.updateMany({
@@ -173,7 +176,7 @@ export async function PATCH(req: Request) {
           where: { userId: request.userId },
           data: { verificationStatus: decision },
         });
-        return { updated } as const;
+        return { updated, confirmedRegistrationId } as const;
       });
 
       if ("error" in result) {
@@ -199,6 +202,9 @@ export async function PATCH(req: Request) {
         metadata: { verificationRequestId: requestId },
         req,
       });
+      // Tell the member (never fails the decision).
+      await emailMembershipDecision(result.updated.userId, decision);
+      if (result.confirmedRegistrationId) await emailRegistration(result.confirmedRegistrationId, "confirmed");
       return NextResponse.json({
         message: `Verification request ${status.toLowerCase()} successfully`,
         request: updated,

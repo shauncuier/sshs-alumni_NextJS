@@ -1,8 +1,9 @@
 import crypto from "crypto";
+import { donationReceiptEmail } from "@/lib/email-templates";
 import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
-import { donationReceiptTemplate, sendEmail } from "@/lib/email";
+import {sendEmail } from "@/lib/email";
 import { openCampaignOrThrow } from "@/lib/campaigns";
 
 /**
@@ -135,8 +136,15 @@ export async function decideDonation(args: { donationId: string; decision: Donat
   });
 
   if (args.decision === "VERIFY" && donation.donorEmail) {
-    const receipt = donationReceiptTemplate(donation.donorName, donation.amount, donation.campaign.title, donation.receiptId ?? donation.id, donation.transactionRef ?? "");
-    const sent = await sendEmail({ ...receipt, to: donation.donorEmail });
+    const receipt = donationReceiptEmail({
+      donorName: donation.donorName,
+      amount: donation.amount,
+      campaignTitle: donation.campaign.title,
+      receiptId: donation.receiptId ?? donation.id,
+      paymentMethod: donation.paymentMethod,
+      transactionRef: donation.transactionRef ?? "",
+    });
+    const sent = await sendEmail({ to: donation.donorEmail, ...receipt });
     if (!sent.success) console.warn("[donations] Receipt email failed:", sent.error);
   }
   return donation;

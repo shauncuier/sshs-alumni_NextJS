@@ -46,3 +46,6 @@ next-env.d.ts
 
 # tesseract.js downloads its OCR language model at runtime
 *.traineddata
+
+# npm run email:preview output
+/email-previews
