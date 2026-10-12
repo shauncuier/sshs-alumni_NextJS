@@ -33,7 +33,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ✅ Done 2026-10-12 |
-| 11a | Donation campaigns created and edited in admin | 2 · Real data | M | ⬜ |
+| 11a | Donation campaigns created and edited in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
 | 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ⬜ |
 | 14 | Dependency audit and security headers | 3 · Security | S | ⬜ |
@@ -180,7 +180,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** `npm run db:seed:prod` that creates only batches, the super admin (from env) and the real membership event; refuses to create test accounts when `NODE_ENV=production`.
 **Done when:** running it on an empty database gives a clean, real-only site.
 
-### 11a. Donation campaigns in admin · M
+### 11a. Donation campaigns in admin · M · ✅ Done 2026-10-12
+**Result:** `lib/campaigns.ts` + `/api/admin/campaigns` (admins only): create, edit, close, reopen and delete fundraising campaigns from `/admin/donations` (title, category, goal, start and optional end date, banner image through the content-image pipeline). A campaign is **open** only when active, started and not past its end date; only open campaigns appear on `/donate`, the homepage and the dashboard, and only they accept donations. Editing never touches the money raised; a campaign with donations cannot be deleted, only closed. No more invented "45 days" or "0 days remaining" when there is no end date; `/donate` shows an empty state instead of "Loading…" forever. Every change in the activity log. 6 tests.
+
 **Why:** found in step 11 — campaigns can only be created by the demo seed; there is no admin page for them, so a production database would have an empty donations page.
 **Tasks:** create / edit / close / delete campaigns in `/admin/donations` (title, description, goal, dates, banner image through the content-image pipeline); deleting is blocked once donations exist; activity log; tests.
 **Done when:** the committee can open a campaign from the admin panel and members can donate to it.

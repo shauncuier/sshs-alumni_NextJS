@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { campaignStatus } from "@/lib/campaigns";
 
 export async function GET() {
   try {
@@ -36,26 +37,14 @@ export async function GET() {
       }),
     ]);
 
-    const now = Date.now();
-    const formattedCampaigns = campaigns.map((c) => ({
-      id: c.id,
-      title: c.title,
-      category: c.category,
-      description: c.description,
-      goalAmount: c.goalAmount,
-      raisedAmount: c.raisedAmount,
-      donorCount: c.donorCount,
-      bannerImage: c.bannerImage || "",
-      isActive: c.isActive,
-      daysLeft: c.endDate ? Math.max(0, Math.ceil((c.endDate.getTime() - now) / 86_400_000)) : 0,
-      createdAt: c.createdAt.toISOString(),
-    }));
+    // Campaigns themselves are listed and managed through /api/admin/campaigns.
+    const open = campaigns.filter((c) => campaignStatus(c) === "OPEN");
 
     // Aggregate metrics
     const campaignTotalRaised = campaigns.reduce((acc, c) => acc + (c.raisedAmount || 0), 0);
     const directDonationRaised = completedAgg._sum.amount || 0;
     const totalRaised = Math.max(campaignTotalRaised, directDonationRaised);
-    const totalGoal = campaigns.reduce((acc, c) => acc + (c.goalAmount || 0), 0);
+    const totalGoal = open.reduce((acc, c) => acc + (c.goalAmount || 0), 0);
 
     // Unique donors count
     const campaignDonorCount = campaigns.reduce((acc, c) => acc + (c.donorCount || 0), 0);
@@ -96,9 +85,8 @@ export async function GET() {
         totalRaised,
         totalGoal,
         totalDonors,
-        activeCampaignsCount: campaigns.filter((c) => c.isActive).length,
+        activeCampaignsCount: open.length,
       },
-      campaigns: formattedCampaigns,
       donations: formattedDonations,
     });
   } catch (error) {

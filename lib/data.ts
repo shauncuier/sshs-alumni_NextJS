@@ -120,7 +120,8 @@ export interface DonationCampaignItem {
   raisedAmount: number;
   donorCount: number;
   bannerImage: string;
-  daysLeft: number;
+  /** Days until the end date; null when the campaign has no end date. */
+  daysLeft: number | null;
   featured: boolean;
 }
 

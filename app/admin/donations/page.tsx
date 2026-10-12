@@ -1,21 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Heart, Plus, TrendingUp, Users, CheckCircle2, Clock, AlertCircle, RefreshCw } from "lucide-react";
-
-interface DonationCampaignItem {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  goalAmount: number;
-  raisedAmount: number;
-  donorCount: number;
-  bannerImage: string;
-  isActive: boolean;
-  daysLeft: number;
-  createdAt: string;
-}
+import { Heart, TrendingUp, Users, CheckCircle2, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import CampaignManager from "@/components/admin/CampaignManager";
 
 interface DonationRecord {
   id: string;
@@ -60,7 +47,6 @@ export default function AdminDonationsPage() {
     totalDonors: 0,
     activeCampaignsCount: 0,
   });
-  const [campaigns, setCampaigns] = useState<DonationCampaignItem[]>([]);
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [pending, setPending] = useState<PendingDonation[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -79,7 +65,6 @@ export default function AdminDonationsPage() {
       }
       const data = await res.json();
       if (data.stats) setStats(data.stats);
-      if (Array.isArray(data.campaigns)) setCampaigns(data.campaigns);
       if (Array.isArray(data.donations)) setDonations(data.donations);
       if (Array.isArray(data.pending)) setPending(data.pending);
     } catch (err) {
@@ -129,7 +114,7 @@ export default function AdminDonationsPage() {
             Donation Campaigns &amp; Transparency Ledger
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Monitor real-time funds raised for scholarships, STEM laboratories, and school infrastructure.
+            Create fundraising campaigns, verify manual payments and follow every donation.
           </p>
         </div>
 
@@ -225,18 +210,18 @@ export default function AdminDonationsPage() {
             {loading ? "..." : `৳${stats.totalRaised.toLocaleString()}`}
           </div>
           <span className="text-[10px] text-emerald-600 font-semibold">
-            {stats.activeCampaignsCount} active campaign{stats.activeCampaignsCount === 1 ? "" : "s"}
+            {stats.activeCampaignsCount} open campaign{stats.activeCampaignsCount === 1 ? "" : "s"}
           </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-            <Heart className="w-3.5 h-3.5 text-rose-500" /> Active Campaign Goal
+            <Heart className="w-3.5 h-3.5 text-rose-500" /> Open Campaign Goal
           </span>
           <div className="text-2xl font-black text-slate-900 mt-1">
             {loading ? "..." : `৳${stats.totalGoal.toLocaleString()}`}
           </div>
-          <span className="text-[10px] text-slate-400">Target across all drives</span>
+          <span className="text-[10px] text-slate-400">Target across open campaigns</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
@@ -250,58 +235,14 @@ export default function AdminDonationsPage() {
         </div>
       </div>
 
-      {/* Campaigns Section */}
-      <div className="space-y-4">
-        <h2 className="text-base font-bold text-slate-900">Active Campaign Progress</h2>
-        {campaigns.length === 0 && !loading && (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 space-y-2">
-            <p className="text-sm font-semibold">No active donation campaigns registered in database yet.</p>
-            <p className="text-xs text-slate-400">Campaigns created will automatically appear here with live metrics.</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {campaigns.map((c) => {
-            const pct = c.goalAmount > 0 ? Math.min((c.raisedAmount / c.goalAmount) * 100, 100) : 0;
-            return (
-              <div key={c.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      {c.category}
-                    </span>
-                    <h3 className="font-bold text-base text-slate-900 mt-1">{c.title}</h3>
-                  </div>
-                  <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" /> {c.daysLeft} days left
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-emerald-700">Raised: ৳{c.raisedAmount.toLocaleString()}</span>
-                    <span className="text-slate-500">Goal: ৳{c.goalAmount.toLocaleString()}</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                    <span>{pct.toFixed(1)}% funded</span>
-                    <span>{c.donorCount} donors</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <CampaignManager onChanged={() => void loadData()} />
 
       {/* Real-time Transparency Ledger */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-base text-slate-900">Recent Contributions Ledger</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Live donor transactions logged from verified payment gateways.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Every submitted donation, newest first (last 50).</p>
           </div>
           <span className="px-3 py-1 bg-emerald-50 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200">
             {donations.length} Transactions

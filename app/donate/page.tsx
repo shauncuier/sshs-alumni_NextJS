@@ -17,6 +17,7 @@ export default function DonatePage() {
   // Real campaigns: a donation must reference a campaign that exists in the database.
   const [campaigns, setCampaigns] = useState<DonationCampaignItem[]>([]);
   const [campaignsError, setCampaignsError] = useState<string | null>(null);
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [selectedCampaignChoice, setSelectedCampaign] = useState<string | null>(null);
   const selectedCampaign = selectedCampaignChoice ?? campaigns[0]?.id ?? "";
 
@@ -29,7 +30,8 @@ export default function DonatePage() {
         }
         setCampaigns(body.campaigns);
       })
-      .catch((err: Error) => setCampaignsError(err.message));
+      .catch((err: Error) => setCampaignsError(err.message))
+      .finally(() => setCampaignsLoaded(true));
   }, []);
   const [amount, setAmount] = useState<number | string>(5000);
   const [customAmount, setCustomAmount] = useState("");
@@ -148,14 +150,17 @@ export default function DonatePage() {
                 {campaignsError && (
                   <p role="alert" className="text-xs text-rose-700">{campaignsError}</p>
                 )}
-                {!campaignsError && campaigns.length === 0 && (
+                {!campaignsError && !campaignsLoaded && (
                   <p role="status" className="text-xs text-slate-500">Loading fundraising campaigns…</p>
                 )}
+                {!campaignsError && campaignsLoaded && campaigns.length === 0 && (
+                  <div className="p-6 rounded-3xl border border-slate-200 bg-white text-center space-y-1">
+                    <p className="text-sm font-bold text-slate-700">No fundraising campaign is open right now</p>
+                    <p className="text-xs text-slate-500">The committee will announce the next one here. Questions? <a href="/contact" className="font-bold text-emerald-800 hover:underline">Contact us</a>.</p>
+                  </div>
+                )}
                 {campaigns.map((campaign) => {
-                  const percent = Math.min(
-                    Math.round((campaign.raisedAmount / campaign.goalAmount) * 100),
-                    100
-                  );
+                  const percent = campaign.goalAmount > 0 ? Math.min(Math.round((campaign.raisedAmount / campaign.goalAmount) * 100), 100) : 0;
                   const isSelected = campaign.id === selectedCampaign;
 
                   return (
@@ -168,6 +173,9 @@ export default function DonatePage() {
                           : "border-slate-200 hover:border-slate-300 shadow-xs"
                       }`}
                     >
+                      {campaign.bannerImage && (
+                        <img src={campaign.bannerImage} alt="" className="w-full h-36 object-cover rounded-2xl mb-4 border border-slate-100" loading="lazy" />
+                      )}
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 uppercase tracking-wider">
@@ -206,7 +214,7 @@ export default function DonatePage() {
                         </div>
                         <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
                           <span>{campaign.donorCount} Generous Contributors</span>
-                          <span>{campaign.daysLeft} days remaining</span>
+                          {campaign.daysLeft !== null && <span>{campaign.daysLeft} days remaining</span>}
                         </div>
                       </div>
                     </div>

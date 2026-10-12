@@ -11,6 +11,7 @@ import { listPublicEvents } from "@/lib/events/service";
 import { latestPublishedPhotos } from "@/lib/gallery";
 import { listPublishedStories } from "@/lib/stories";
 import { listPublishedAchievements } from "@/lib/achievements";
+import { listOpenCampaigns } from "@/lib/campaigns";
 import prisma from "@/lib/prisma";
 import type {
   AlumniMember,
@@ -77,13 +78,7 @@ export default async function HomePage() {
       })
       .catch(() => []),
     prisma.batch.findMany().catch(() => []),
-    prisma.donationCampaign
-      .findMany({
-        where: { isActive: true },
-        take: 1,
-        orderBy: { createdAt: "desc" },
-      })
-      .catch(() => []),
+    listOpenCampaigns(1).catch(() => []),
     // Only published stories and achievements.
     listPublishedStories(2).catch(() => []),
     listPublishedAchievements(3).catch(() => []),
@@ -144,29 +139,7 @@ export default async function HomePage() {
   });
 
   // Dynamic Donation Campaign
-  const featuredDonation: DonationCampaignItem | null =
-    dbCampaigns.length > 0
-      ? {
-          id: dbCampaigns[0].id,
-          title: dbCampaigns[0].title,
-          category: (dbCampaigns[0].category as DonationCampaignItem["category"]) || "Scholarship",
-          description: dbCampaigns[0].description,
-          goalAmount: dbCampaigns[0].goalAmount,
-          raisedAmount: dbCampaigns[0].raisedAmount,
-          donorCount: dbCampaigns[0].donorCount,
-          bannerImage: dbCampaigns[0].bannerImage || "",
-          daysLeft: dbCampaigns[0].endDate
-            ? Math.max(
-                0,
-                Math.ceil(
-                  // eslint-disable-next-line react-hooks/purity
-                  (new Date(dbCampaigns[0].endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-                )
-              )
-            : 45,
-          featured: true,
-        }
-      : null;
+  const featuredDonation: DonationCampaignItem | null = dbCampaigns[0] ? { ...dbCampaigns[0], featured: true } : null;
 
   // Dynamic Stories
   const featuredStories: AlumniStoryItem[] = dbStories;
@@ -708,7 +681,7 @@ export default async function HomePage() {
 
                     <div className="flex items-center justify-between text-[11px] text-emerald-300">
                       <span>{featuredDonation.donorCount} Generous Donors</span>
-                      <span>{featuredDonation.daysLeft} days remaining</span>
+                      {featuredDonation.daysLeft !== null && <span>{featuredDonation.daysLeft} days remaining</span>}
                     </div>
                   </div>
 
@@ -717,7 +690,7 @@ export default async function HomePage() {
                       href="/donate"
                       className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-lg transition-colors"
                     >
-                      Contribute to Scholarship Fund
+                      Contribute to this fund
                     </Link>
                     <Link
                       href="/donate"

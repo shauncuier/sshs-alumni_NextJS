@@ -2,6 +2,7 @@ import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { donationReceiptTemplate, sendEmail } from "@/lib/email";
+import { openCampaignOrThrow } from "@/lib/campaigns";
 
 /**
  * Donations without a payment gateway: the donor pays by bKash, Nagad, Bangla QR,
@@ -60,8 +61,8 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
   const batch = Number(input.donorBatch);
   const donorBatch = Number.isInteger(batch) && batch >= 1960 && batch <= new Date().getFullYear() ? batch : null;
 
-  const campaign = typeof input.campaignId === "string" ? await prisma.donationCampaign.findUnique({ where: { id: input.campaignId } }) : null;
-  if (!campaign || !campaign.isActive) throw new AppError("CAMPAIGN_NOT_FOUND", 404, "That fundraising campaign is not available.");
+  // Closed, ended and not-yet-started campaigns take no donations.
+  const campaign = await openCampaignOrThrow(input.campaignId);
 
   // One payment, one claim: a transaction ID already used for a donation or a
   // registration cannot be submitted again.
