@@ -7,7 +7,7 @@ import { FIRST_BATCH } from "../lib/batches";
 import { normalizePackages, parseTaka } from "../lib/events/pricing";
 import { ensureSuperAdmin, envSuperAdminEmail, type EnsureResult } from "../lib/admin/super-admin";
 import { backfillEventJsonColumns } from "./backfill-events";
-import { MEMBERSHIP_EVENT_ID, membershipEvent, membershipPackageHeads } from "./membership-event";
+import { MEMBERSHIP_EVENT_ID, membershipEvent, membershipGuestTypes } from "./membership-event";
 import { demoEvents } from "./demo-events";
 
 /**
@@ -70,7 +70,6 @@ export async function seedEvent(e: EventItem, opts: { membership?: boolean } = {
   const slug = eventSlug(e);
   if (await prisma.event.findUnique({ where: { slug }, select: { id: true } })) return false;
   const membership = Boolean(opts.membership);
-  const heads = membership ? membershipPackageHeads : {};
   await prisma.event.create({
     data: {
       slug,
@@ -78,25 +77,24 @@ export async function seedEvent(e: EventItem, opts: { membership?: boolean } = {
       category: e.category,
       description: e.description,
       date: new Date(`${e.date}T09:00:00+06:00`),
-      time: e.time,
+      time: e.time || null,
       venue: e.venue,
       locationCity: e.locationCity,
       organizer: e.organizer,
       bannerImage: e.bannerImage,
       maxAttendees: e.maxAttendees,
-      registrationFee: membership ? 0 : parseTaka(e.registrationFee ?? 0) || 0,
+      registrationFee: parseTaka(e.registrationFee ?? 0) || 0,
       isRegistrationOpen: e.isRegistrationOpen,
       subtitle: e.subtitle ?? null,
       guestOfHonor: e.guestOfHonor ?? null,
       souvenirDetails: e.souvenirDetails ?? null,
-      registrationDeadline: membership ? new Date("2026-12-15T23:59:59+06:00") : null,
+      registrationDeadline: /^\d{4}-\d{2}-\d{2}$/.test(e.registrationDeadline ?? "") ? new Date(`${e.registrationDeadline}T23:59:59+06:00`) : null,
       isMegaEvent: e.isMegaEvent ?? false,
       isMembershipEvent: membership,
-      extraAdultFee: membership ? 500 : 0,
-      childFee: membership ? 300 : 0,
+      guestTypes: (membership ? membershipGuestTypes : []) as unknown as Prisma.InputJsonValue,
       agenda: (e.agenda ?? []) as unknown as Prisma.InputJsonValue,
       highlights: e.highlights ?? [],
-      packages: normalizePackages((e.packages ?? []).map((p) => ({ ...p, ...heads[p.name] }))) as unknown as Prisma.InputJsonValue,
+      packages: normalizePackages(e.packages ?? []) as unknown as Prisma.InputJsonValue,
       // Left for an admin to fill in; joining stays closed until they exist.
       paymentInstructions: null,
     },

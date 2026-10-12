@@ -1,5 +1,6 @@
 "use client";
 
+import GuestTypesEditor from "@/components/admin/GuestTypesEditor";
 import { Toast, useToast } from "@/components/admin/Toast";
 import React, { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
@@ -177,7 +178,9 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
         ...deadlineChange,
         guestOfHonor: merged.guestOfHonor, souvenirDetails: merged.souvenirDetails,
         isMegaEvent: merged.isMegaEvent, isMembershipEvent: merged.isMembershipEvent, registrationFee: merged.registrationFeeAmount,
-        extraAdultFee: merged.extraAdultFee, childFee: merged.childFee, paymentInstructions: merged.paymentInstructions,
+        // Guest types replace the older extra-adult / child fees once the event is saved.
+        guestTypes: merged.guestTypes.filter((g) => g.name.trim()), extraAdultFee: 0, childFee: 0,
+        paymentInstructions: merged.paymentInstructions,
         highlights: merged.highlights, agenda: merged.agenda,
         packages: merged.packages.map((p) => ({ ...p, price: p.priceAmount })),
       }),
@@ -236,9 +239,9 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   };
 
   const handleExportCSV = () => {
-    const header = "Name,Batch,Roll,Section,Email,Phone,Package,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
+    const header = "Name,Batch,Roll,Section,Email,Phone,Package,Guests,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
     const rows = attendees
-      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.email, a.phone, a.packageName ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
+      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map((g) => `${g.name} x${g.count}`).join("; "), a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(","))
       .join("\n");
@@ -570,7 +573,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
 
           <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2 text-xs">
             <label className="font-bold text-emerald-950 block">
-              Registration fee per person, in ৳ (0 = free)
+              Main registration fee for the member, in ৳ (0 = free)
               <input
                 type="number"
                 min={0}
@@ -582,18 +585,10 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
             <p className="text-[11px] text-emerald-700">Used when the event has no packages; the public fee text is generated from it.</p>
           </div>
 
+          <GuestTypesEditor value={event.guestTypes} onChange={(guestTypes) => setEvent({ ...event, guestTypes, customGuestTypes: true })} />
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <label className="font-bold text-slate-700">
-              Extra adult fee (৳)
-              <input type="number" min={0} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl" value={event.extraAdultFee}
-                onChange={(e) => setEvent({ ...event, extraAdultFee: Number(e.target.value) || 0 })} />
-            </label>
-            <label className="font-bold text-slate-700">
-              Child fee, under 12 (৳)
-              <input type="number" min={0} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl" value={event.childFee}
-                onChange={(e) => setEvent({ ...event, childFee: Number(e.target.value) || 0 })} />
-            </label>
-            <label className="font-bold text-slate-700 flex items-center gap-2 sm:mt-5">
+            <label className="font-bold text-slate-700 flex items-center gap-2 sm:col-span-3">
               <input type="checkbox" checked={event.isMembershipEvent}
                 onChange={(e) => setEvent({ ...event, isMembershipEvent: e.target.checked })} />
               Membership event (joining = this registration)
@@ -1479,7 +1474,14 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       </div>
                       {event.isMembershipEvent && <ProofOfStudy proof={a.proof} />}
                     </td>
-                    <td className="block md:table-cell py-1 md:py-3 md:px-3">{a.packageName ?? "—"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}</td>
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3">
+                      {a.packageName ?? "Member"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}
+                      {a.guests.length > 0 && (
+                        <span className="block text-[11px] text-slate-500">
+                          {a.guests.map((g) => `${g.name} × ${g.count}`).join(", ")}
+                        </span>
+                      )}
+                    </td>
                     <td className="block md:table-cell py-1 md:py-3 md:px-3">
                       {formatTaka(a.totalFee)}{a.donationAmount > 0 && <> + {formatTaka(a.donationAmount)} donation</>}
                       <div className="text-slate-500 font-mono">{a.paymentMethod ?? "—"} {a.transactionId ?? ""}</div>

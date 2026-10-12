@@ -343,3 +343,46 @@ describe("other events", () => {
     expect(await getMemberRegistration("picnic", (await makeMember()).id)).toBeNull();
   });
 });
+
+describe("guest types (Golden Jubilee 2026 prices)", () => {
+  const jubilee2026 = () =>
+    makeEvent({
+      slug: "jubilee-2026",
+      isMembershipEvent: true,
+      registrationFee: 1500,
+      guestTypes: [
+        { name: "Spouse", price: 700, max: 1 },
+        { name: "Child", price: 500, max: 5 },
+      ],
+      paymentInstructions: "bKash 01XXXXXXXXX",
+      maxAttendees: 10,
+    });
+
+  it("charges the member fee plus each guest and stores the guests on the registration", async () => {
+    await jubilee2026();
+    const { registration } = await registerForEvent({
+      slug: "jubilee-2026",
+      sessionUserId: null,
+      account,
+      photo,
+      proof,
+      rsvp: { guests: { Spouse: 1, Child: 2 }, paymentMethod: "bKash", transactionId: "TRX7001" },
+    });
+    expect(registration).toMatchObject({
+      headCount: 4,
+      totalFee: 1500 + 700 + 1000,
+      guests: [
+        { name: "Spouse", count: 1, price: 700 },
+        { name: "Child", count: 2, price: 500 },
+      ],
+    });
+  });
+
+  it("refuses more guests of a type than the event allows", async () => {
+    await jubilee2026();
+    await expect(
+      registerForEvent({ slug: "jubilee-2026", sessionUserId: null, account, photo, proof, rsvp: { guests: { Spouse: 2 }, paymentMethod: "bKash", transactionId: "TRX7002" } })
+    ).rejects.toMatchObject({ code: "INVALID_GUESTS" });
+    expect(await prisma.user.count({ where: { email: "new@example.test" } })).toBe(0);
+  });
+});

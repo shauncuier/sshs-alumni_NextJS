@@ -83,8 +83,8 @@ export default function RegistrationForm({
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
-  const [extraAdults, setExtraAdults] = useState(0);
-  const [extraChildren, setExtraChildren] = useState(0);
+  // How many of each guest type (Spouse, Child, ...) the member brings.
+  const [guestCounts, setGuestCounts] = useState<Record<string, number>>({});
   const [tshirtSize, setTshirtSize] = useState("L");
   const [mealPreference, setMealPreference] = useState("");
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -220,11 +220,17 @@ export default function RegistrationForm({
     return <p role="status" className="text-xs font-bold text-rose-700">{event.closedMessage}</p>;
   }
 
-  let total: { fee: number; donation: number; total: number; headCount: number } | null = null;
+  let total: ReturnType<typeof computeFee> | null = null;
   try {
     total = computeFee(
-      { registrationFee: event.registrationFeeAmount, extraAdultFee: event.extraAdultFee, childFee: event.childFee, packages: normalizePackages(event.packages.map((p) => ({ ...p, price: p.priceAmount }))) },
-      { packageName, extraAdults, extraChildren, donationAmount: donation ? Number(donation) : 0 }
+      {
+        registrationFee: event.registrationFeeAmount,
+        extraAdultFee: event.extraAdultFee,
+        childFee: event.childFee,
+        packages: normalizePackages(event.packages.map((p) => ({ ...p, price: p.priceAmount }))),
+        guestTypes: event.customGuestTypes ? event.guestTypes : [],
+      },
+      { packageName, guests: guestCounts, donationAmount: donation ? Number(donation) : 0 }
     );
   } catch {
     total = null;
@@ -253,8 +259,7 @@ export default function RegistrationForm({
           proof: needsAccount ? { type: proofType, note: proofType === "OTHER" ? proofNote.trim() : null } : undefined,
           rsvp: {
             packageName: event.packages.length ? packageName : null,
-            extraAdults,
-            extraChildren,
+            guests: guestCounts,
             tshirtSize,
             mealPreference: mealPreference || null,
             notes: volunteerNoteFormatted,
@@ -482,14 +487,27 @@ export default function RegistrationForm({
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="reg-adults" className={label}>Extra adults{event.extraAdultFee ? ` (+${formatTaka(event.extraAdultFee)} each)` : ""}</label>
-              <input id="reg-adults" type="number" min={0} max={10} className={input} value={extraAdults} onChange={(e) => setExtraAdults(Math.max(0, Math.min(10, Number(e.target.value) || 0)))} />
-            </div>
-            <div>
-              <label htmlFor="reg-children" className={label}>Children under 12{event.childFee ? ` (+${formatTaka(event.childFee)} each)` : ""}</label>
-              <input id="reg-children" type="number" min={0} max={10} className={input} value={extraChildren} onChange={(e) => setExtraChildren(Math.max(0, Math.min(10, Number(e.target.value) || 0)))} />
-            </div>
+            {event.guestTypes.map((g, i) => (
+              <div key={g.name}>
+                <label htmlFor={`reg-guest-${i}`} className={label}>
+                  {g.name}
+                  {g.price > 0 ? ` (+${formatTaka(g.price)} each)` : ""}
+                </label>
+                <input
+                  id={`reg-guest-${i}`}
+                  type="number"
+                  min={0}
+                  max={g.max}
+                  className={input}
+                  value={guestCounts[g.name] ?? 0}
+                  onChange={(e) => {
+                    const n = Math.max(0, Math.min(g.max, Math.floor(Number(e.target.value)) || 0));
+                    setGuestCounts((c) => ({ ...c, [g.name]: n }));
+                  }}
+                />
+                {g.max < 10 && <p className="text-[10px] text-slate-500 mt-0.5">Up to {g.max}</p>}
+              </div>
+            ))}
             <div>
               <label htmlFor="reg-tshirt" className={label}>T-shirt size</label>
               <select id="reg-tshirt" className={input} value={tshirtSize} onChange={(e) => setTshirtSize(e.target.value)}>
@@ -570,7 +588,20 @@ export default function RegistrationForm({
 
           {total && (
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-              <div className="flex justify-between"><span>Registration</span><strong>{formatTaka(total.fee)}</strong></div>
+              {total.guests.length > 0 ? (
+                <>
+                  <div className="flex justify-between"><span>{total.pkg ? total.pkg.name : "Member"}</span><strong>{formatTaka(total.pkg ? total.pkg.price : event.registrationFeeAmount)}</strong></div>
+                  {total.guests.map((g) => (
+                    <div key={g.name} className="flex justify-between">
+                      <span>{g.name} × {g.count}</span>
+                      <strong>{formatTaka(g.count * g.price)}</strong>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t border-slate-200 pt-1"><span>Registration</span><strong>{formatTaka(total.fee)}</strong></div>
+                </>
+              ) : (
+                <div className="flex justify-between"><span>Registration</span><strong>{formatTaka(total.fee)}</strong></div>
+              )}
               {total.donation > 0 && <div className="flex justify-between"><span>Donation</span><strong>{formatTaka(total.donation)}</strong></div>}
               <div className="flex justify-between text-sm"><span className="font-bold">Total to pay</span><strong>{formatTaka(total.total)}</strong></div>
               <div className="text-slate-500">{total.headCount} {total.headCount === 1 ? "person" : "people"}</div>

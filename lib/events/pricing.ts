@@ -1,5 +1,5 @@
 import { AppError } from "@/lib/app-error";
-import type { PackageDef } from "./types";
+import type { GuestLine, GuestTypeDef, PackageDef } from "./types";
 
 export const MAX_EXTRA_GUESTS = 10;
 const MAX_DONATION = 1_000_000;
@@ -61,42 +61,93 @@ export function normalizePackages(raw: unknown): PackageDef[] {
   });
 }
 
+/** Cleans admin input or stored JSON into guest types: unique names, a price and a maximum per registration. */
+export function normalizeGuestTypes(raw: unknown): GuestTypeDef[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  return raw.flatMap((item): GuestTypeDef[] => {
+    if (!item || typeof item !== "object") return [];
+    const g = item as Record<string, unknown>;
+    const name = typeof g.name === "string" ? g.name.trim().slice(0, 60) : "";
+    const price = parseTaka(g.price);
+    if (!name || Number.isNaN(price) || seen.has(name.toLowerCase())) return [];
+    seen.add(name.toLowerCase());
+    const max = Number(g.max);
+    return [{ name, price, max: Number.isInteger(max) && max >= 1 && max <= 20 ? max : MAX_EXTRA_GUESTS }];
+  });
+}
+
 export interface FeeEvent {
   registrationFee: number;
   extraAdultFee: number;
   childFee: number;
   packages: PackageDef[];
+  /** Admin-defined guest types (e.g. Spouse, Child). Empty: the older extra-adult / child fees apply. */
+  guestTypes?: GuestTypeDef[];
+}
+
+const LEGACY_ADULT = "Extra adult";
+const LEGACY_CHILD = "Child under 12";
+
+/** The guest types a member can add: the event's own, or the older extra-adult / child pair. */
+export function guestTypesOf(event: FeeEvent): GuestTypeDef[] {
+  if (event.guestTypes && event.guestTypes.length > 0) return event.guestTypes;
+  return [
+    { name: LEGACY_ADULT, price: event.extraAdultFee, max: MAX_EXTRA_GUESTS },
+    { name: LEGACY_CHILD, price: event.childFee, max: MAX_EXTRA_GUESTS },
+  ];
 }
 
 export interface FeeResult {
   pkg: PackageDef | null;
   extraAdults: number;
   extraChildren: number;
+  /** Guests added beyond the member (and the package), with the price each paid. */
+  guests: GuestLine[];
   headCount: number;
   fee: number;
   donation: number;
   total: number;
 }
 
-function guestCount(value: number | undefined, label: string): number {
+function guestCountFor(value: unknown, type: GuestTypeDef): number {
   if (value === undefined || value === null) return 0;
-  if (!Number.isInteger(value) || value < 0 || value > MAX_EXTRA_GUESTS) {
-    throw new AppError("INVALID_GUESTS", 400, `The number of ${label} must be between 0 and ${MAX_EXTRA_GUESTS}.`);
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > type.max) {
+    throw new AppError("INVALID_GUESTS", 400, `The number of guests for "${type.name}" must be between 0 and ${type.max}.`);
   }
-  return value;
+  return n;
 }
 
 /**
- * The "Jubilee price model": the package price covers its adults and children;
- * extra guests pay the event's per-guest fees unless the package makes them free.
- * The optional donation is added to the total but never to the fee.
+ * The price model: the package (or the main registration fee) covers the member and the
+ * package's own guests; each added guest pays the price of their guest type unless the
+ * package makes guests free. The optional donation is added to the total but never to the fee.
  */
 export function computeFee(
   event: FeeEvent,
-  rsvp: { packageName?: string | null; extraAdults?: number; extraChildren?: number; donationAmount?: number }
+  rsvp: {
+    packageName?: string | null;
+    /** Guest counts by guest-type name. */
+    guests?: Record<string, number> | null;
+    /** Older events: counts for the extra-adult / child pair. */
+    extraAdults?: number;
+    extraChildren?: number;
+    donationAmount?: number;
+  }
 ): FeeResult {
-  const extraAdults = guestCount(rsvp.extraAdults, "extra adults");
-  const extraChildren = guestCount(rsvp.extraChildren, "children");
+  const types = guestTypesOf(event);
+  const custom = Boolean(event.guestTypes && event.guestTypes.length > 0);
+  const requested: Record<string, unknown> =
+    rsvp.guests && typeof rsvp.guests === "object"
+      ? { ...rsvp.guests }
+      : custom
+        ? {}
+        : { [LEGACY_ADULT]: rsvp.extraAdults, [LEGACY_CHILD]: rsvp.extraChildren };
+  for (const name of Object.keys(requested)) {
+    if (!types.some((t) => t.name === name)) throw new AppError("INVALID_GUESTS", 400, `"${name}" is not a guest option for this event.`);
+  }
+  const lines: GuestLine[] = types.map((t) => ({ name: t.name, price: t.price, count: guestCountFor(requested[t.name], t) }));
 
   const donation = rsvp.donationAmount === undefined || rsvp.donationAmount === null ? 0 : Number(rsvp.donationAmount);
   if (!Number.isInteger(donation) || donation < 0 || donation > MAX_DONATION) {
@@ -110,10 +161,40 @@ export function computeFee(
   }
 
   const base = pkg ? pkg.price : event.registrationFee;
-  const guestFees = pkg?.guestsFree ? 0 : extraAdults * event.extraAdultFee + extraChildren * event.childFee;
+  const guestFees = pkg?.guestsFree ? 0 : lines.reduce((sum, l) => sum + l.count * l.price, 0);
   const fee = base + guestFees;
-  const headCount = (pkg ? pkg.adults + pkg.children : 1) + extraAdults + extraChildren;
-  return { pkg, extraAdults, extraChildren, headCount, fee, donation, total: fee + donation };
+  const added = lines.reduce((sum, l) => sum + l.count, 0);
+  const headCount = (pkg ? pkg.adults + pkg.children : 1) + added;
+  return {
+    pkg,
+    extraAdults: custom ? 0 : lines[0].count,
+    extraChildren: custom ? 0 : lines[1].count,
+    guests: lines.filter((l) => l.count > 0).map((l) => (pkg?.guestsFree ? { ...l, price: 0 } : l)),
+    headCount,
+    fee,
+    donation,
+    total: fee + donation,
+  };
+}
+
+/** Guests stored on a registration; older registrations only have the extra-adult / child counts. */
+export function storedGuests(reg: { guests?: unknown; extraAdults: number; extraChildren: number }): GuestLine[] {
+  const lines = Array.isArray(reg.guests)
+    ? reg.guests.flatMap((item): GuestLine[] => {
+        if (!item || typeof item !== "object") return [];
+        const g = item as Record<string, unknown>;
+        const count = Number(g.count);
+        const price = Number(g.price);
+        return typeof g.name === "string" && Number.isInteger(count) && count > 0
+          ? [{ name: g.name, count, price: Number.isFinite(price) ? price : 0 }]
+          : [];
+      })
+    : [];
+  if (lines.length > 0) return lines;
+  const legacy: GuestLine[] = [];
+  if (reg.extraAdults > 0) legacy.push({ name: LEGACY_ADULT, count: reg.extraAdults, price: 0 });
+  if (reg.extraChildren > 0) legacy.push({ name: LEGACY_CHILD, count: reg.extraChildren, price: 0 });
+  return legacy;
 }
 
 export function isPaidEvent(event: FeeEvent): boolean {

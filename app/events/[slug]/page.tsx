@@ -149,8 +149,8 @@ function EventDetailView({
   const isPaid =
     event.registrationFeeAmount > 0 ||
     event.packages.some((p) => p.priceAmount > 0) ||
-    event.extraAdultFee > 0 ||
-    event.childFee > 0;
+    event.guestTypes.some((g) => g.price > 0);
+  const paidGuests = event.guestTypes.filter((g) => g.price > 0);
 
   // Multi-day agendas label each item "Day N (...) - time"; one tab per day, in order.
   const dayOf = (time: string) => /^(Day \d+(?: \([^)]*\))?)/i.exec(time)?.[1] ?? null;
@@ -322,7 +322,7 @@ function EventDetailView({
               </div>
 
               {/* Fees, from the event's own settings */}
-              {isPaid && (event.extraAdultFee > 0 || event.childFee > 0) && (
+              {isPaid && paidGuests.length > 0 && (
                 <div className="bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 sm:p-7 rounded-3xl border border-emerald-600/40 shadow-xl space-y-4">
                   <h3 className="text-lg sm:text-xl font-black">Registration fees</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -330,18 +330,15 @@ function EventDetailView({
                       <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Member</span>
                       <div className="text-2xl font-black">{priceLabel}</div>
                     </div>
-                    {event.extraAdultFee > 0 && (
-                      <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
-                        <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Each extra adult</span>
-                        <div className="text-2xl font-black text-amber-300">+{formatTaka(event.extraAdultFee)}</div>
+                    {paidGuests.map((g) => (
+                      <div key={g.name} className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                        <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">
+                          {g.name}
+                          {g.max === 1 ? "" : " (each)"}
+                        </span>
+                        <div className="text-2xl font-black text-amber-300">+{formatTaka(g.price)}</div>
                       </div>
-                    )}
-                    {event.childFee > 0 && (
-                      <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
-                        <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Each child under 12</span>
-                        <div className="text-2xl font-black text-emerald-300">+{formatTaka(event.childFee)}</div>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}

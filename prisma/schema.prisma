@@ -192,6 +192,8 @@ model Event {
   packages             Json          @default("[]")
   extraAdultFee        Float         @default(0)
   childFee             Float         @default(0)
+  /// [{ name, price, max }]: guests a member can add (e.g. Spouse, Child). Empty: extraAdultFee / childFee apply.
+  guestTypes           Json          @default("[]")
   paymentInstructions  String?       @db.Text
 
   registrations EventRegistration[]
@@ -212,6 +214,8 @@ model EventRegistration {
   packageName    String?
   extraAdults    Int                @default(0)
   extraChildren  Int                @default(0)
+  /// [{ name, count, price }]: guests added, with the price each paid
+  guests         Json               @default("[]")
   headCount      Int                @default(1)
   tshirtSize     String?
   totalFee       Float              @default(0)

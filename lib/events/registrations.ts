@@ -8,7 +8,7 @@ import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof
 import { readVerifiedPhone } from "@/lib/phone-otp";
 import { readVerifiedEmail } from "@/lib/email-otp";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
-import { computeFee } from "./pricing";
+import { computeFee, storedGuests } from "./pricing";
 import { eventFeeRules } from "./service";
 import { ticketInfo } from "./tickets";
 import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type ProofInput, type RsvpInput } from "./types";
@@ -63,6 +63,7 @@ async function toMemberRegistration(reg: EventRegistration & { event: Event }): 
     status: reg.status,
     isMembershipEvent: reg.event.isMembershipEvent,
     packageName: reg.packageName,
+    guests: storedGuests(reg),
     headCount: reg.headCount,
     totalFee: reg.totalFee,
     donationAmount: reg.donationAmount,
@@ -190,7 +191,7 @@ export async function registerForEvent(args: {
 
       const price = computeFee(rules, args.rsvp);
       if (event.isMembershipEvent && price.fee <= 0) {
-        throw new AppError("MEMBERSHIP_MUST_BE_PAID", 400, "Membership registration requires a paid package.");
+        throw new AppError("MEMBERSHIP_MUST_BE_PAID", 400, "Membership registration requires a fee.");
       }
       if (reservedHeads + price.headCount > event.maxAttendees) {
         throw new AppError("REGISTRATION_CLOSED", 409, CLOSED_MESSAGES.FULL);
@@ -219,6 +220,7 @@ export async function registerForEvent(args: {
           packageName: price.pkg?.name ?? null,
           extraAdults: price.extraAdults,
           extraChildren: price.extraChildren,
+          guests: price.guests as unknown as Prisma.InputJsonValue,
           headCount: price.headCount,
           guestCount: price.headCount,
           totalFee: price.fee,

@@ -22,6 +22,21 @@ export interface PackageDef {
   guestsFree: boolean;
 }
 
+/** A kind of guest a member can bring, as stored in Event.guestTypes (price in whole taka). */
+export interface GuestTypeDef {
+  name: string;
+  price: number;
+  /** Most of this guest type one registration may add. */
+  max: number;
+}
+
+/** Guests on one registration, with the price each paid then. */
+export interface GuestLine {
+  name: string;
+  count: number;
+  price: number;
+}
+
 export interface AgendaEntry {
   time: string;
   activity: string;
@@ -29,6 +44,8 @@ export interface AgendaEntry {
 
 export interface RsvpInput {
   packageName?: string | null;
+  /** Guest counts by guest-type name. */
+  guests?: Record<string, number> | null;
   extraAdults?: number;
   extraChildren?: number;
   tshirtSize?: string | null;
@@ -97,6 +114,10 @@ export type PublicEvent = Omit<EventItem, "packages"> & {
   registrationFeeAmount: number;
   extraAdultFee: number;
   childFee: number;
+  /** What a member can add: the event's guest types, or the older extra-adult / child pair. */
+  guestTypes: GuestTypeDef[];
+  /** True when the admin defined the guest types (false: the older pair). */
+  customGuestTypes: boolean;
   paymentInstructions: string | null;
 };
 
@@ -115,6 +136,7 @@ export interface MemberRegistration {
   status: RegistrationStatusValue;
   isMembershipEvent: boolean;
   packageName: string | null;
+  guests: GuestLine[];
   headCount: number;
   totalFee: number;
   donationAmount: number;
@@ -138,6 +160,7 @@ export interface AdminRegistration {
   packageName: string | null;
   extraAdults: number;
   extraChildren: number;
+  guests: GuestLine[];
   headCount: number;
   totalFee: number;
   donationAmount: number;

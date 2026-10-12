@@ -11,12 +11,10 @@ import { formatTaka } from "@/lib/events/pricing";
 import { Calendar, Search } from "lucide-react";
 
 function jubileePriceText(event: PublicEvent): string {
-  const prices = event.packages.map((p) => p.priceAmount).filter((n) => n > 0);
+  const prices = event.packages.length > 0 ? event.packages.map((p) => p.priceAmount).filter((n) => n > 0) : [event.registrationFeeAmount].filter((n) => n > 0);
   if (prices.length === 0) return "";
-  let text = `From ${formatTaka(Math.min(...prices))} / person`;
-  const extras: string[] = [];
-  if (event.extraAdultFee > 0) extras.push(`+${formatTaka(event.extraAdultFee)} per extra adult`);
-  if (event.childFee > 0) extras.push(`+${formatTaka(event.childFee)} per child under 12`);
+  let text = event.packages.length > 1 ? `From ${formatTaka(Math.min(...prices))}` : `${formatTaka(prices[0])} per member`;
+  const extras = event.guestTypes.filter((g) => g.price > 0).map((g) => `${g.name.toLowerCase()} ${formatTaka(g.price)}`);
   if (extras.length > 0) text += ` (${extras.join(", ")})`;
   return text;
 }

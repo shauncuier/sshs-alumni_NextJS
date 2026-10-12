@@ -2,19 +2,20 @@ import type { Event, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
-import { formatTaka, isPaidEvent, normalizePackages, parseTaka, type FeeEvent } from "./pricing";
+import { formatTaka, guestTypesOf, isPaidEvent, normalizeGuestTypes, normalizePackages, parseTaka, type FeeEvent } from "./pricing";
 import type { AgendaEntry, PublicEvent } from "./types";
 
 const EVENT_CATEGORIES = ["REUNION", "SPORTS", "WEBINAR", "CULTURAL", "COMMUNITY"] as const;
 // Static API segments under /api/events; an event slug must never shadow them.
 const RESERVED_SLUGS = new Set(["membership", "verify-ticket"]);
 
-export function eventFeeRules(row: Event): FeeEvent {
+export function eventFeeRules(row: Event): Required<FeeEvent> {
   return {
     registrationFee: row.registrationFee,
     extraAdultFee: row.extraAdultFee,
     childFee: row.childFee,
     packages: normalizePackages(row.packages),
+    guestTypes: normalizeGuestTypes(row.guestTypes),
   };
 }
 
@@ -65,6 +66,8 @@ export function toPublicEvent(row: Event, heads: { reserved: number; attending: 
     registrationFeeAmount: row.registrationFee,
     extraAdultFee: row.extraAdultFee,
     childFee: row.childFee,
+    guestTypes: guestTypesOf(rules),
+    customGuestTypes: (rules.guestTypes ?? []).length > 0,
     paymentInstructions: row.paymentInstructions,
     agenda: normalizeAgenda(row.agenda),
     highlights: normalizeHighlights(row.highlights),
@@ -209,6 +212,7 @@ function parseEventInput(body: unknown, mode: "create" | "update"): Prisma.Event
     if (typeof b[key] === "boolean") data[key] = b[key] as boolean;
   }
   if (b.packages !== undefined) data.packages = normalizePackages(b.packages) as unknown as Prisma.InputJsonValue;
+  if (b.guestTypes !== undefined) data.guestTypes = normalizeGuestTypes(b.guestTypes) as unknown as Prisma.InputJsonValue;
   if (b.agenda !== undefined) data.agenda = normalizeAgenda(b.agenda) as unknown as Prisma.InputJsonValue;
   if (b.highlights !== undefined) data.highlights = normalizeHighlights(b.highlights);
   return data;

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { discardProofsForUser } from "@/lib/members/proof-retention";
 import { toProofSummary } from "@/lib/members/proof-types";
+import { storedGuests } from "./pricing";
 import { getPublicEventBySlug } from "./service";
 import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./types";
 
@@ -30,6 +31,7 @@ function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     packageName: reg.packageName,
     extraAdults: reg.extraAdults,
     extraChildren: reg.extraChildren,
+    guests: storedGuests(reg),
     headCount: reg.headCount,
     totalFee: reg.totalFee,
     donationAmount: reg.donationAmount,
