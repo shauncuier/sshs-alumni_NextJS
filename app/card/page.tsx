@@ -55,7 +55,6 @@ export default function CardPage() {
 
   const activeCard: CardData = cardData.card;
   const qrDataUrl = cardData.qrDataUrl;
-  const signedToken = cardData.signedToken;
   const verifyUrl = cardData.verifyUrl;
   // The gate only admits verified members, so say so plainly on the card page.
   const isVerified = activeCard.status === "VERIFIED";
@@ -125,7 +124,6 @@ export default function CardPage() {
                 <DigitalAlumniCard
                   card={activeCard}
                   qrDataUrl={qrDataUrl}
-                  signedToken={signedToken}
                   verifyUrl={verifyUrl}
                 />
               </div>
@@ -155,7 +153,7 @@ export default function CardPage() {
                       1
                     </span>
                     <p className="pt-0.5">
-                      Open your digital card on your phone or Apple/Google Wallet pass before approaching the school gate.
+                      Open this card on your phone (or print it) before you reach the school gate.
                     </p>
                   </div>
 

@@ -411,7 +411,15 @@ export default function AdminUsersPage() {
                     disabled={busy}
                     className={`${input} bg-white lg:w-36 min-h-[40px] py-2`}
                     value={u.role}
-                    onChange={(e) => void update(u, { action: "role", role: e.target.value }, `${u.name} is now ${ROLE_LABELS[e.target.value as Role]}.`)}
+                    onChange={(e) => {
+                      const role = e.target.value as Role;
+                      // A role change grants or removes access (and signs the user out): confirm it.
+                      if (!window.confirm(`Change ${u.name} from ${ROLE_LABELS[u.role as Role]} to ${ROLE_LABELS[role]}? They will be signed out.`)) {
+                        e.target.value = u.role;
+                        return;
+                      }
+                      void update(u, { action: "role", role }, `${u.name} is now ${ROLE_LABELS[role]}.`);
+                    }}
                   >
                     {assignableRoles(viewer).map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                   </select>

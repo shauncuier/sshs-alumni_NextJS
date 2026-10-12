@@ -39,23 +39,23 @@ export interface AdminShellProps {
 }
 
 const ADMIN_NAV = [
-  { name: "Executive Dashboard", href: "/admin", icon: LayoutDashboard, area: "dashboard" },
-  { name: "Verify Payments & Docs", href: "/admin/verifications", icon: ShieldCheck, area: "verifications" },
-  { name: "Alumni Verification", href: "/admin/alumni", icon: UserCheck, area: "alumni" },
-  { name: "Bulk SMS Broadcast", href: "/admin/sms", icon: MessageSquare, area: "sms" },
-  { name: "Committee Volunteers", href: "/admin/volunteers", icon: HeartHandshake, area: "volunteers" },
-  { name: "Manage Batches", href: "/admin/batches", icon: Layers, area: "batches" },
-  { name: "Events & Reunions", href: "/admin/events", icon: Calendar, area: "events" },
-  { name: "Gate Scanner", href: "/gate", icon: QrCode, area: "gate" },
-  { name: "Donations & Funds", href: "/admin/donations", icon: Heart, area: "donations" },
-  { name: "User Management", href: "/admin/users", icon: Users, area: "users" },
-  { name: "News", href: "/admin/news", icon: Newspaper, area: "news" },
-  { name: "Gallery", href: "/admin/gallery", icon: Images, area: "gallery" },
-  { name: "Stories & Achievements", href: "/admin/stories", icon: BookOpen, area: "stories" },
-  { name: "Jobs", href: "/admin/jobs", icon: Briefcase, area: "jobs" },
-  { name: "Mentors", href: "/admin/mentors", icon: GraduationCap, area: "mentors" },
-  { name: "Activity Log", href: "/admin/logs", icon: ScrollText, area: "logs" },
-] as const satisfies readonly { name: string; href: string; icon: unknown; area: AdminArea }[];
+  { name: "Executive Dashboard", short: "Dashboard", href: "/admin", icon: LayoutDashboard, area: "dashboard" },
+  { name: "Verify Payments & Docs", short: "Verify", href: "/admin/verifications", icon: ShieldCheck, area: "verifications" },
+  { name: "Alumni Verification", short: "Alumni", href: "/admin/alumni", icon: UserCheck, area: "alumni" },
+  { name: "Bulk SMS Broadcast", short: "SMS", href: "/admin/sms", icon: MessageSquare, area: "sms" },
+  { name: "Committee Volunteers", short: "Volunteers", href: "/admin/volunteers", icon: HeartHandshake, area: "volunteers" },
+  { name: "Manage Batches", short: "Batches", href: "/admin/batches", icon: Layers, area: "batches" },
+  { name: "Events & Reunions", short: "Events", href: "/admin/events", icon: Calendar, area: "events" },
+  { name: "Gate Scanner", short: "Gate", href: "/gate", icon: QrCode, area: "gate" },
+  { name: "Donations & Funds", short: "Donations", href: "/admin/donations", icon: Heart, area: "donations" },
+  { name: "User Management", short: "Users", href: "/admin/users", icon: Users, area: "users" },
+  { name: "News", short: "News", href: "/admin/news", icon: Newspaper, area: "news" },
+  { name: "Gallery", short: "Gallery", href: "/admin/gallery", icon: Images, area: "gallery" },
+  { name: "Stories & Achievements", short: "Stories", href: "/admin/stories", icon: BookOpen, area: "stories" },
+  { name: "Jobs", short: "Jobs", href: "/admin/jobs", icon: Briefcase, area: "jobs" },
+  { name: "Mentors", short: "Mentors", href: "/admin/mentors", icon: GraduationCap, area: "mentors" },
+  { name: "Activity Log", short: "Logs", href: "/admin/logs", icon: ScrollText, area: "logs" },
+] as const satisfies readonly { name: string; short: string; href: string; icon: unknown; area: AdminArea }[];
 
 export default function AdminShell({ children, user }: AdminShellProps) {
   const pathname = usePathname();
@@ -74,7 +74,13 @@ export default function AdminShell({ children, user }: AdminShellProps) {
   const navItems = ADMIN_NAV.filter((item) => can(effectiveRole, item.area));
   const userEmail = user?.email ?? null;
 
-  const activeItem = navItems.find((item) => pathname === item.href) || navItems[0] || ADMIN_NAV[0];
+  // Longest matching section, so /admin/events/[id] is "Events", not the dashboard.
+  const activeItem =
+    [...navItems].sort((a, b) => b.href.length - a.href.length).find((item) => pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`))) ||
+    navItems[0] ||
+    ADMIN_NAV[0];
+  // Bottom bar on phones: the first three sections this role may use.
+  const quickItems = navItems.filter((item) => item.area !== "gate").slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-100">
@@ -242,35 +248,21 @@ export default function AdminShell({ children, user }: AdminShellProps) {
 
       {/* Mobile Admin Bottom Navigation Bar (Fast 1-Thumb Switching on Mobile) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#041a13]/95 backdrop-blur-md border-t border-emerald-950/90 px-3 py-1.5 shadow-2xl flex items-center justify-around">
-        <Link
-          href="/admin"
-          className={`flex flex-col items-center py-1 px-2.5 rounded-xl text-[10px] font-semibold transition-colors ${
-            pathname === "/admin" ? "text-amber-400 font-bold" : "text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          <LayoutDashboard className="w-5 h-5 mb-0.5" />
-          <span>Dashboard</span>
-        </Link>
-
-        <Link
-          href="/admin/verifications"
-          className={`flex flex-col items-center py-1 px-2.5 rounded-xl text-[10px] font-semibold transition-colors ${
-            pathname === "/admin/verifications" ? "text-amber-400 font-bold" : "text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          <ShieldCheck className="w-5 h-5 mb-0.5" />
-          <span>Verify Docs</span>
-        </Link>
-
-        <Link
-          href="/admin/events"
-          className={`flex flex-col items-center py-1 px-2.5 rounded-xl text-[10px] font-semibold transition-colors ${
-            pathname.startsWith("/admin/events") ? "text-amber-400 font-bold" : "text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          <Calendar className="w-5 h-5 mb-0.5" />
-          <span>Events</span>
-        </Link>
+        {quickItems.map((item) => {
+          const Icon = item.icon;
+          const active = activeItem.href === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={`flex flex-col items-center py-1 px-2.5 rounded-xl text-[10px] font-semibold transition-colors ${active ? "text-amber-400 font-bold" : "text-slate-400 hover:text-slate-200"}`}
+            >
+              <Icon className="w-5 h-5 mb-0.5" />
+              <span>{item.short}</span>
+            </Link>
+          );
+        })}
 
         <button
           type="button"

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
-import { X, Image as ImageIcon, Send } from "lucide-react";
+import { X, Image as Send } from "lucide-react";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -91,23 +91,11 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
             rows={4}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Share an update, throwback photo, career milestone, or batch meetup idea..."
+            placeholder="Share an update, a memory, a career milestone or a batch meetup idea…"
             className="w-full text-sm placeholder-slate-400 border border-slate-200 rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none"
             required
             autoFocus
           />
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-            <span className="font-medium">Attach media:</span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 rounded-lg border border-slate-200 text-xs flex items-center gap-1 transition-colors"
-              >
-                <ImageIcon className="w-3.5 h-3.5 text-emerald-600" /> Photo
-              </button>
-            </div>
-          </div>
 
           <div className="pt-2 flex items-center justify-end gap-2">
             <button

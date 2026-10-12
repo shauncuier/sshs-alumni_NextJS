@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import type { VerificationRequestItem } from "@/lib/data";
-import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
+import { fetchVerificationRequests } from "@/lib/admin-verifications";
 import Link from "next/link";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
-import { Search, Check, Download, ArrowRight, CheckCircle2, CreditCard, Copy, ShieldCheck } from "lucide-react";
+import { Search, Check, ArrowRight, CheckCircle2, CreditCard, Copy, ShieldCheck } from "lucide-react";
 
 export default function AdminAlumniPage() {
   const [search, setSearch] = useState("");
@@ -13,7 +13,6 @@ export default function AdminAlumniPage() {
   const [requests, setRequests] = useState<VerificationRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedTrx, setCopiedTrx] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,21 +53,6 @@ export default function AdminAlumniPage() {
     return true;
   });
 
-  const decide = async (id: string, status: "VERIFIED" | "REJECTED") => {
-    setBusyId(id);
-    setError(null);
-    try {
-      const proof = await decideVerification(id, status);
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status, proof: proof ?? r.proof } : r)));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const handleApprove = (id: string) => decide(id, "VERIFIED");
-  const handleReject = (id: string) => decide(id, "REJECTED");
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -90,9 +74,6 @@ export default function AdminAlumniPage() {
             <ShieldCheck className="w-4 h-4 text-amber-400" />
             <span>Verify Payments &amp; Docs</span>
           </Link>
-          <button className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5">
-            <Download className="w-4 h-4" /> Export CSV
-          </button>
         </div>
       </div>
 
@@ -299,62 +280,13 @@ export default function AdminAlumniPage() {
                     </span>
                   </td>
                   <td className="block md:table-cell py-0.5 md:py-4 md:px-6 md:text-right">
-                    {r.status === "PENDING" && r.awaitingPayment ? (
-                      <div className="flex flex-col items-end gap-1.5">
-                        <div className="flex items-center gap-1.5 justify-end">
-                          <Link
-                            href={`/admin/verifications?id=${r.id}`}
-                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
-                            title="Open full document, photo and payment verification workspace"
-                          >
-                            <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-                            <span>Review</span>
-                          </Link>
-                          <button
-                            onClick={() => handleApprove(r.id)}
-                            disabled={busyId !== null}
-                            className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                            title="Directly approve member and confirm Jubilee registration"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-                            <span>Approve &amp; Confirm</span>
-                          </button>
-                          <Link
-                            href={r.membershipEventId ? `/admin/events/${r.membershipEventId}?tab=attendees` : `/admin/events`}
-                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-                            title="Open Jubilee attendee list to review transaction"
-                          >
-                            <span>Jubilee List</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-amber-700" />
-                          </Link>
-                        </div>
-                        <span className="text-[10px] font-semibold text-amber-700">Awaiting Jubilee payment</span>
-                      </div>
-                    ) : r.status === "PENDING" ? (
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/verifications?id=${r.id}`}
-                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
-                          title="Open full verification workspace"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-                          <span>Review</span>
-                        </Link>
-                        <button
-                          onClick={() => handleApprove(r.id)}
-                          disabled={busyId !== null}
-                          className="px-3 py-1 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(r.id)}
-                          disabled={busyId !== null}
-                          className="px-3 py-1 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Reject
-                        </button>
-                      </div>
+                    {r.status === "PENDING" ? (
+                      <Link
+                        href={`/admin/verifications?id=${r.id}`}
+                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                      >
+                        Review <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     ) : (
                       <span className="text-slate-400 text-xs italic">Reviewed</span>
                     )}

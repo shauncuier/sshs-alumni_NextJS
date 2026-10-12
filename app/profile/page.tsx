@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 interface ProfileRecord {
+  id: string;
   fullName: string;
   sscBatch: number;
   rollNumber: string | null;
@@ -137,6 +138,7 @@ export default function ProfilePage() {
 
   // The member's own record from the database; nothing here comes from sample data.
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [account, setAccount] = useState<AccountRecord | null>(null);
   const [profileData, setProfileData] = useState<ProfileForm | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -342,14 +344,17 @@ export default function ProfilePage() {
               <div className="absolute top-4 right-4 flex items-center gap-2">
                 <button
                   onClick={() => {
-                    if (typeof window !== "undefined") {
-                      navigator.clipboard?.writeText(window.location.href);
-                      alert("Profile link copied to clipboard!");
-                    }
+                    // The public profile page, which other people can open.
+                    const url = `${window.location.origin}/alumni/${profile.id}`;
+                    void navigator.clipboard?.writeText(url).then(() => {
+                      setLinkCopied(true);
+                      window.setTimeout(() => setLinkCopied(false), 2500);
+                    });
                   }}
+                  aria-live="polite"
                   className="px-3 py-1.5 bg-black/40 backdrop-blur-md hover:bg-black/60 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/20 transition-colors"
                 >
-                  <Share2 className="w-3.5 h-3.5" /> Share Profile
+                  <Share2 className="w-3.5 h-3.5" /> {linkCopied ? "Link copied" : "Copy profile link"}
                 </button>
               </div>
             </div>

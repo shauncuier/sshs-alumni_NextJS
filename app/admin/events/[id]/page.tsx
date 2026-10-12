@@ -215,6 +215,16 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
     save({ agenda: (event.agenda ?? []).filter((_, i) => i !== idx) }, "Agenda session removed.");
 
   const decide = async (a: AdminRegistration, action: "APPROVE" | "CANCEL" | "CHECK_IN" | "UNDO_CHECK_IN") => {
+    // Confirming takes the payment as received; cancelling ends the ticket (and, for a
+    // pending join, rejects the membership). Both need a deliberate yes.
+    const paid = a.totalFee + a.donationAmount > 0 ? ` (${formatTaka(a.totalFee + a.donationAmount)}${a.transactionId ? `, TrxID ${a.transactionId}` : ""})` : "";
+    const question =
+      action === "APPROVE"
+        ? `Confirm the payment from ${a.name}${paid}? Check it arrived in the account first.`
+        : action === "CANCEL"
+          ? `Cancel the registration of ${a.name}${paid}? This cannot be undone.`
+          : null;
+    if (question && !window.confirm(question)) return;
     setBusyId(a.id);
     const res = await fetch(`/api/admin/events/${event.id}/registrations/${a.id}`, {
       method: "PATCH",

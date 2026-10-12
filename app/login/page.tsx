@@ -4,14 +4,18 @@ import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, signOut } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
+import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
+import { schoolInfo } from "@/lib/data";
 import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/account-access";
 import { ArrowRight, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  // Only paths on this site: never redirect to another site after sign-in.
+  const requested = searchParams.get("callbackUrl");
+  const callbackUrl = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,11 +52,10 @@ function LoginForm() {
         );
         setLoading(false);
       } else {
-        if (email.toLowerCase().includes("admin")) {
-          router.push("/admin");
-        } else {
-          router.push(callbackUrl);
-        }
+        // Back to the page that asked for sign-in; otherwise staff to their admin
+        // section and members to their dashboard.
+        const role = (await getSession())?.user?.role;
+        router.push(callbackUrl ?? (canUseAdminPanel(role) ? homeForRole(role) : "/dashboard"));
         router.refresh();
       }
     } catch {
@@ -135,24 +138,12 @@ function LoginForm() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-[11px] text-slate-600">
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-[11px]">
-                <a href="#" className="font-semibold text-emerald-700 hover:text-emerald-800">
-                  Forgot password?
-                </a>
-              </div>
-            </div>
+            <p className="text-xs text-slate-600 pt-1">
+              Forgot your password?{" "}
+              <a href={`mailto:${schoolInfo.associationEmail}?subject=${encodeURIComponent("Password reset")}`} className="font-semibold text-emerald-700 hover:text-emerald-800 underline">
+                Ask the committee to reset it
+              </a>
+            </p>
 
             <button
               type="submit"

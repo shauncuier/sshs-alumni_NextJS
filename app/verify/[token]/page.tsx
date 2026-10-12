@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CheckCircle2, XCircle, School, Clock, UserCheck } from "lucide-react";
+import { CheckCircle2, XCircle, School } from "lucide-react";
 import Link from "next/link";
 
 interface VerificationResponse {
@@ -33,7 +33,6 @@ export default function VerifyTokenPage() {
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<VerificationResponse | null>(null);
-  const [checkedIn, setCheckedIn] = useState(false);
 
   useEffect(() => {
     async function verify() {
@@ -147,33 +146,11 @@ export default function VerifyTokenPage() {
               </div>
             </div>
 
-            {/* Check-in Action for Reunion Staff */}
-            <div className="pt-2 space-y-3">
-              {checkedIn ? (
-                <div className="p-3.5 bg-emerald-900/60 border border-emerald-500 rounded-2xl text-center space-y-1">
-                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-300">
-                    <UserCheck className="w-4 h-4" />
-                    <span>Gate Check-in Confirmed!</span>
-                  </div>
-                  <p className="text-[11px] text-emerald-200">
-                    Alumnus delegate kit and meal coupons may be issued.
-                  </p>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setCheckedIn(true)}
-                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  <span>Confirm Gate Check-In &amp; Issue Delegate Kit</span>
-                </button>
-              )}
-
-              <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500">
-                <Clock className="w-3 h-3" />
-                <span>Logged at {new Date().toLocaleTimeString()}</span>
-              </div>
-            </div>
+            {/* This page only confirms the card; event check-in is recorded at /gate. */}
+            <p className="pt-2 text-[11px] text-emerald-200/80 text-center">
+              Event staff: check tickets in at{" "}
+              <Link href="/gate" className="font-bold text-emerald-300 underline">the gate page</Link>.
+            </p>
           </div>
         ) : (
           <div className="bg-rose-950/60 rounded-3xl p-8 border border-rose-500/40 shadow-2xl text-center space-y-4">

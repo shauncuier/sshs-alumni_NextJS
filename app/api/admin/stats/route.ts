@@ -94,13 +94,11 @@ export async function GET() {
     const batchRange =
       uniqueBatches.length > 0
         ? `${uniqueBatches[0]} — ${uniqueBatches[uniqueBatches.length - 1]}`
-        : "1970 — Present";
+        : "—";
 
     // Verification rate
     const verificationRate =
-      totalRegistered > 0
-        ? Math.round((verifiedAlumni / totalRegistered) * 100)
-        : 100;
+      totalRegistered > 0 ? Math.round((verifiedAlumni / totalRegistered) * 100) : null;
 
     // Total funds raised (from donation campaigns, direct donations, and event fees)
     const campaignTotalFunds = donationDrives.reduce(
@@ -130,7 +128,7 @@ export async function GET() {
       ? jubileeEvent.title.length > 25
         ? jubileeEvent.title.substring(0, 25) + "…"
         : jubileeEvent.title
-      : "Golden Jubilee";
+      : "No membership event yet";
 
     return NextResponse.json({
       stats: {
@@ -143,7 +141,7 @@ export async function GET() {
         batchRange,
         totalFunds,
         fundsFormatted,
-        activeDrivesCount: donationDrives.length || 1,
+        activeDrivesCount: donationDrives.length,
         reunionRsvpCount,
         reunionTitle,
       },
