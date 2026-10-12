@@ -74,8 +74,7 @@ export function checkProductionEnv(env: Env): EnvReport {
     warnings.push("RESEND_FROM_EMAIL is not on a domain verified in Resend: emails reach only the Resend account owner, not members. Verify the association's domain in Resend (roadmap step 17).");
   }
   if (!set(env, "CONTACT_INBOX_EMAIL")) warnings.push("CONTACT_INBOX_EMAIL not set: contact-form messages are kept only in the activity log.");
-  if (!set(env, "NEXT_PUBLIC_DONATION_INSTRUCTIONS")) warnings.push("NEXT_PUBLIC_DONATION_INSTRUCTIONS not set: /donate shows no payment details.");
-  if (!set(env, "NEXT_PUBLIC_BANGLA_QR_IMAGE")) warnings.push("NEXT_PUBLIC_BANGLA_QR_IMAGE not set: the Bangla QR option shows instructions only (roadmap step 19).");
+  // bKash / Nagad / bank / Bangla QR are set in Admin → Donations → Payment details, not here.
   const uploads = env.UPLOADS_DIR?.trim() ?? "";
   if (!uploads || !(uploads.startsWith("/") || /^[A-Za-z]:[\\/]/.test(uploads))) {
     warnings.push("UPLOADS_DIR should be an absolute path outside the app folder, so uploads survive redeploys and are backed up.");

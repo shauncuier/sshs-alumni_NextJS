@@ -40,8 +40,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ✅ Done 2026-10-12 |
 | 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ✅ Done 2026-10-12 |
 | 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | 🟡 Resend key and association email set 2026-10-12; domain verification waits for the domain (step 3) |
-| 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | ⬜ |
-| 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | ⬜ |
+| 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | 🟡 Key works (balance ৳94.05), `npm run sms:test` ready; operator tests by you |
+| 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | 🟡 Admin page ready; the committee enters the real numbers and QR |
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
 | 21 | Admin pages usable on phones | 5 · UX | M | ⬜ |
 | 22 | Gate scanner with the phone camera | 5 · UX | M | ⬜ |
@@ -236,11 +236,15 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY`, `RESEND_FROM_EMAIL` and `CONTACT_INBOX_EMAIL`; send a test approval email, a test email code, a test donation receipt and a test contact-form message.
 **Done when:** emails arrive in Gmail's inbox (not spam) from the association's domain.
 
-### 18. SMS gateway · S · **You**
+### 18. SMS gateway · S · **You** · 🟡 Code done 2026-10-12
+**Done:** the BulkSMSBD key and sender ID `8809617634722` are set and the key works (balance check: ৳94.05, no SMS sent). `npm run sms:test -- 01XXXXXXXXX` sends one SMS in the exact OTP template (`Your SSGHS Alumni OTP is 1234`, brand from `OTP_BRAND_NAME`) and prints the gateway's answer and the balance.
+**Left (you):** confirm with BulkSMSBD that this template and sender ID are approved; run `sms:test` on a Grameenphone, a Robi and a Banglalink number.
 **Tasks:** confirm with BulkSMSBD that the OTP template `Your {Brand} OTP is XXXX` and the sender ID are approved; set `OTP_BRAND_NAME` to match; send a code to a Grameenphone, Robi and Banglalink number; one small broadcast; note the balance and how it is topped up.
 **Done when:** codes arrive within a minute on all three operators.
 
-### 19. Bangla QR and payment instructions · S · **You**
+### 19. Bangla QR and payment instructions · S · **You** · 🟡 Code done 2026-10-12
+**Done:** payment details moved out of env variables into **Admin → Donations → Payment details** (`Setting` table, `lib/payment-settings.ts`): bKash and Nagad numbers with account type, bank account, uploaded Bangla QR image and merchant name, extra note; `/donate` and the join form read them live (no rebuild); every change is in the activity log with old and new values. **Removed a dangerous button** on the event admin page ("Load SSHS Defaults") that filled made-up bKash, Nagad and bank numbers into the payment instructions; it is now "Use association details", which copies the saved real details; `npm run db:seed:prod` warns about any event still showing those made-up numbers (the local membership event has them). Also: the join form no longer pre-selects SSC batch 2010.
+**Left (you):** enter the real numbers and upload the bank's QR in Admin → Donations; apply them to the Golden Jubilee event (Admin → Events → Pricing → "Use association details" → Save); pay a small amount by scanning the QR.
 **Tasks:** get the bank-issued Bangla QR image; put it in `public/`; set `NEXT_PUBLIC_BANGLA_QR_IMAGE` and `NEXT_PUBLIC_BANGLA_QR_MERCHANT`; write the payment instructions on the membership event (bKash / Nagad numbers, bank account).
 **Done when:** a committee member pays a small amount by scanning the QR from the form.
 

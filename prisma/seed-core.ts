@@ -164,8 +164,20 @@ export async function findDemoLeftovers(env: Env = process.env): Promise<string[
   for (const [label, c] of counts) {
     if (c > 0) notes.push(`${c} demo ${label} found; remove with npm run db:remove-demo.`);
   }
+
+  // An old admin button filled made-up bKash, Nagad and bank numbers into events.
+  const fakeAccounts = await prisma.event.findMany({
+    where: { OR: FAKE_PAYMENT_MARKERS.map((m) => ({ paymentInstructions: { contains: m } })) },
+    select: { title: true },
+  });
+  for (const e of fakeAccounts) {
+    notes.push(`Event "${e.title}" shows made-up payment accounts; replace its payment instructions in /admin/events before anyone pays.`);
+  }
   return notes;
 }
+
+// Numbers from the removed "Load SSHS Defaults" button; none belongs to the association.
+export const FAKE_PAYMENT_MARKERS = ["01700000000", "01800000000", "104-101-0023456"];
 
 // Slugs of the sample campaigns created by the demo seed.
 export const DEMO_CAMPAIGN_SLUGS = ["student-merit-scholarship", "modern-stem-lab", "library-renovation-fund"];

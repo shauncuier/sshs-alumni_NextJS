@@ -88,33 +88,13 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   // Structured Payment Channels Manager
   const [activePaymentTab, setActivePaymentTab] = useState<"bkash" | "nagad" | "bank" | "cash">("bkash");
   const [showRawPaymentText, setShowRawPaymentText] = useState(false);
+  // Starts empty: members send real money to whatever is entered here, so nothing
+  // may be pre-filled except the association's own details (see "Use association details").
   const [paymentConfig, setPaymentConfig] = useState({
-    bkash: {
-      enabled: true,
-      number: "01700000000",
-      type: "Merchant" as "Merchant" | "Personal",
-      reference: "SSHS-2026",
-    },
-    nagad: {
-      enabled: true,
-      number: "01800000000",
-      type: "Merchant" as "Merchant" | "Personal",
-      reference: "SSHS-2026",
-    },
-    bank: {
-      enabled: true,
-      bankName: "Eastern Bank PLC",
-      accountName: "Sabuj Shikshayatan Govt High School Alumni Association",
-      accountNumber: "104-101-0023456",
-      branch: "Sitakunda Branch, Chattogram",
-      routingNumber: "090150123",
-    },
-    cash: {
-      enabled: true,
-      location: "SSGHS Alumni Secretariat Desk, Room 102, Main Academic Building",
-      contactPhone: "+880 1745-950025",
-      instructions: "Collect physical stamped receipt voucher with official serial number.",
-    },
+    bkash: { enabled: true, number: "", type: "Personal" as "Merchant" | "Personal", reference: "" },
+    nagad: { enabled: true, number: "", type: "Personal" as "Merchant" | "Personal", reference: "" },
+    bank: { enabled: false, bankName: "", accountName: "", accountNumber: "", branch: "", routingNumber: "" },
+    cash: { enabled: false, location: "", contactPhone: "", instructions: "" },
   });
 
   const buildPaymentInstructions = (cfg: typeof paymentConfig) => {
@@ -140,39 +120,27 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
     showToast("Payment accounts compiled and applied to event.");
   };
 
-  const handleResetSSHSDefaults = () => {
-    const defaults = {
-      bkash: {
-        enabled: true,
-        number: "01700000000",
-        type: "Merchant" as const,
-        reference: "SSHS-2026",
-      },
-      nagad: {
-        enabled: true,
-        number: "01800000000",
-        type: "Merchant" as const,
-        reference: "SSHS-2026",
-      },
-      bank: {
-        enabled: true,
-        bankName: "Eastern Bank PLC",
-        accountName: "Sabuj Shikshayatan Govt High School Alumni Association",
-        accountNumber: "104-101-0023456",
-        branch: "Sitakunda Branch, Chattogram",
-        routingNumber: "090150123",
-      },
-      cash: {
-        enabled: true,
-        location: "SSGHS Alumni Secretariat Desk, Room 102, Main Academic Building",
-        contactPhone: "+880 1745-950025",
-        instructions: "Collect physical stamped receipt voucher with official serial number.",
-      },
-    };
-    setPaymentConfig(defaults);
-    const formatted = buildPaymentInstructions(defaults);
-    setEvent((prev) => (prev ? { ...prev, paymentInstructions: formatted } : null));
-    showToast("Official SSHS Accounts loaded.");
+  // Fills the instructions from the payment details saved in Admin → Donations.
+  const handleUseAssociationDetails = async () => {
+    try {
+      const res = await fetch("/api/admin/payment-settings", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not load the payment details.");
+      const p = data.settings as { bkashNumber: string; bkashType: string; nagadNumber: string; nagadType: string; bankDetails: string; note: string };
+      const lines: string[] = [];
+      if (p.bkashNumber) lines.push(`📱 bKash (${p.bkashType}): Send to ${p.bkashNumber}. Enter the TrxID below.`);
+      if (p.nagadNumber) lines.push(`📱 Nagad (${p.nagadType}): Send to ${p.nagadNumber}. Enter the TrxID below.`);
+      if (p.bankDetails.trim()) lines.push(`🏛️ Bank transfer:\n${p.bankDetails.trim()}`);
+      if (p.note.trim()) lines.push(p.note.trim());
+      if (lines.length === 0) {
+        showToast("No payment details saved yet. Add them in Admin → Donations → Payment details first.");
+        return;
+      }
+      setEvent((prev) => (prev ? { ...prev, paymentInstructions: lines.join("\n\n") } : null));
+      showToast("The association's payment details are in the instructions. Save the event to publish them.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not load the payment details.");
+    }
   };
 
   const showToast = (msg: string) => {
@@ -660,12 +628,12 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   <button
                     type="button"
-                    onClick={handleResetSSHSDefaults}
+                    onClick={() => void handleUseAssociationDetails()}
                     className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-[11px] font-bold text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                    title="Populate with official verified SSHS accounts"
+                    title="Use the payment details saved in Admin → Donations"
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Load SSHS Defaults</span>
+                    <span>Use association details</span>
                   </button>
                   <button
                     type="button"
@@ -776,7 +744,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                           type="text"
                           className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono"
                           value={paymentConfig.bkash.number}
-                          placeholder="01700000000"
+                          placeholder="01XXXXXXXXX"
                           onChange={(e) =>
                             setPaymentConfig({
                               ...paymentConfig,
@@ -807,7 +775,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                           type="text"
                           className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
                           value={paymentConfig.bkash.reference}
-                          placeholder="SSHS-2026 or Batch"
+                          placeholder="Your SSC batch"
                           onChange={(e) =>
                             setPaymentConfig({
                               ...paymentConfig,
@@ -849,7 +817,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                           type="text"
                           className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono"
                           value={paymentConfig.nagad.number}
-                          placeholder="01800000000"
+                          placeholder="01XXXXXXXXX"
                           onChange={(e) =>
                             setPaymentConfig({
                               ...paymentConfig,
@@ -880,7 +848,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                           type="text"
                           className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
                           value={paymentConfig.nagad.reference}
-                          placeholder="SSHS-2026 or Batch"
+                          placeholder="Your SSC batch"
                           onChange={(e) =>
                             setPaymentConfig({
                               ...paymentConfig,

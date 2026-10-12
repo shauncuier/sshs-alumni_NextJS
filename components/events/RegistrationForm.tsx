@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePaymentDetails } from "@/components/shared/usePaymentDetails";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
@@ -11,9 +12,6 @@ import ContactVerifyField, { type ContactVerification } from "./ContactVerifyFie
 
 const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
-// The association's bank-issued Bangla QR (an image in public/ or a URL), shown when that method is picked.
-const BANGLA_QR_IMAGE = process.env.NEXT_PUBLIC_BANGLA_QR_IMAGE || "";
-const BANGLA_QR_MERCHANT = process.env.NEXT_PUBLIC_BANGLA_QR_MERCHANT || "";
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
@@ -66,6 +64,7 @@ export default function RegistrationForm({
   onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
   const { data: session, status: sessionStatus } = useSession();
+  const payment = usePaymentDetails();
   const isAuthed = sessionStatus === "authenticated" && Boolean(session?.user);
   const needsAccount = !isAuthed && Boolean(event.isMembershipEvent);
   // Step 1 (account details) only exists for signed-out visitors joining.
@@ -73,7 +72,7 @@ export default function RegistrationForm({
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
-  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "2010", rollNumber: "", section: "" });
+  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
@@ -376,7 +375,8 @@ export default function RegistrationForm({
           />
           <div>
             <label htmlFor="reg-batch" className={label}>SSC batch *</label>
-            <select id="reg-batch" className={input} value={account.sscBatch} onChange={(e) => setAccount({ ...account, sscBatch: e.target.value })}>
+            <select id="reg-batch" required className={input} value={account.sscBatch} onChange={(e) => setAccount({ ...account, sscBatch: e.target.value })}>
+              <option value="" disabled>Choose your SSC batch</option>
               {BATCH_YEARS.map((y) => <option key={y} value={y}>SSC Batch {y}</option>)}
             </select>
           </div>
@@ -606,14 +606,14 @@ export default function RegistrationForm({
 
               {paymentMethod === "Bangla QR" && (
                 <div className="p-3.5 rounded-xl border border-[#006a4e]/30 bg-emerald-50/60 flex flex-col sm:flex-row items-center gap-4">
-                  {BANGLA_QR_IMAGE && (
-                    <img src={BANGLA_QR_IMAGE} alt="Bangla QR code for paying the association" className="w-48 h-48 shrink-0 bg-white rounded-xl border object-contain p-2" />
+                  {payment?.banglaQrImage && (
+                    <img src={payment.banglaQrImage} alt="Bangla QR code for paying the association" className="w-48 h-48 shrink-0 bg-white rounded-xl border object-contain p-2" />
                   )}
                   <div className="text-[11px] text-slate-700 space-y-1.5">
                     <p className="font-bold text-[#006a4e] text-xs">Pay with Bangla QR</p>
-                    {BANGLA_QR_MERCHANT && <p>Merchant: <strong>{BANGLA_QR_MERCHANT}</strong></p>}
+                    {payment?.banglaQrMerchant && <p>Merchant: <strong>{payment.banglaQrMerchant}</strong></p>}
                     <p>
-                      {BANGLA_QR_IMAGE ? "Scan this code" : "Scan the association's Bangla QR code"} with any bank or mobile banking app
+                      {payment?.banglaQrImage ? "Scan this code" : "Scan the association's Bangla QR code"} with any bank or mobile banking app
                       (bKash, Nagad, Rocket, Upay or your bank&apos;s app), pay <strong>{total ? formatTaka(total.total) : "the total"}</strong>,
                       then enter the transaction ID from the payment receipt below.
                     </p>

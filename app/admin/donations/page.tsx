@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Heart, TrendingUp, Users, CheckCircle2, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import CampaignManager from "@/components/admin/CampaignManager";
+import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
 
 interface DonationRecord {
   id: string;
@@ -234,6 +235,8 @@ export default function AdminDonationsPage() {
           <span className="text-[10px] text-slate-400">Verified contributions</span>
         </div>
       </div>
+
+      <PaymentSettingsForm />
 
       <CampaignManager onChanged={() => void loadData()} />
 

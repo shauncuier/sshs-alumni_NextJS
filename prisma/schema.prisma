@@ -447,6 +447,15 @@ model Announcement {
   createdAt DateTime @default(now())
 }
 
+/// Site settings edited in the admin panel, one JSON value per key (e.g. "payment":
+/// bKash / Nagad numbers, bank details, Bangla QR image). Read by lib/payment-settings.ts.
+model Setting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.Text
+  updatedBy String?  @db.VarChar(255)
+  updatedAt DateTime @updatedAt
+}
+
 model VerificationRequest {
   id               String             @id @default(uuid()) @db.VarChar(36)
   userId           String             @db.VarChar(36)

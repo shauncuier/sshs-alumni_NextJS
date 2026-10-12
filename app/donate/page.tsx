@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePaymentDetails } from "@/components/shared/usePaymentDetails";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import type { DonationCampaignItem } from "@/lib/data";
@@ -9,11 +10,10 @@ import { Heart, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 const DONATION_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
 // Where to send money (numbers, bank account), one line each, separated by "|"; set by the committee.
-const DONATION_INSTRUCTIONS = (process.env.NEXT_PUBLIC_DONATION_INSTRUCTIONS || "").split("|").map((l) => l.trim()).filter(Boolean);
-const BANGLA_QR_IMAGE = process.env.NEXT_PUBLIC_BANGLA_QR_IMAGE || "";
-const BANGLA_QR_MERCHANT = process.env.NEXT_PUBLIC_BANGLA_QR_MERCHANT || "";
 
 export default function DonatePage() {
+  // bKash / Nagad / bank / Bangla QR, as set by the committee in /admin/donations.
+  const payment = usePaymentDetails();
   // Real campaigns: a donation must reference a campaign that exists in the database.
   const [campaigns, setCampaigns] = useState<DonationCampaignItem[]>([]);
   const [campaignsError, setCampaignsError] = useState<string | null>(null);
@@ -407,15 +407,15 @@ export default function DonatePage() {
 
                       <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 space-y-1.5">
                         <p className="font-bold">How to pay</p>
-                        {DONATION_INSTRUCTIONS.length > 0 ? (
-                          DONATION_INSTRUCTIONS.map((line) => <p key={line}>{line}</p>)
+                        {payment && payment.lines.length > 0 ? (
+                          payment.lines.map((line) => <p key={line} className="font-semibold">{line}</p>)
                         ) : (
                           <p>Send the amount by {paymentMethod} to the association&apos;s account (ask the committee for the number), then enter the transaction ID below.</p>
                         )}
-                        {paymentMethod === "Bangla QR" && BANGLA_QR_IMAGE && (
+                        {paymentMethod === "Bangla QR" && payment?.banglaQrImage && (
                           <div className="flex items-center gap-3 pt-1">
-                            <img src={BANGLA_QR_IMAGE} alt="Bangla QR code for donations" className="w-36 h-36 bg-white rounded-xl border object-contain p-1.5" />
-                            <span>Scan with any bank or mobile banking app{BANGLA_QR_MERCHANT ? ` (${BANGLA_QR_MERCHANT})` : ""}.</span>
+                            <img src={payment.banglaQrImage} alt="Bangla QR code for donations" className="w-36 h-36 bg-white rounded-xl border object-contain p-1.5" />
+                            <span>Scan with any bank or mobile banking app{payment.banglaQrMerchant ? ` (${payment.banglaQrMerchant})` : ""}.</span>
                           </div>
                         )}
                         <p>The committee checks every payment before it is added to the campaign total.</p>

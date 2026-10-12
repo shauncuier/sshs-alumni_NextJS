@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
-**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–16 done: Phase 3 security complete)
-**Tests:** 284 / 284 passing (46 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
+**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–16 done; Phase 4 integrations: code done, waiting for domain, operator tests and real payment details)
+**Tests:** 289 / 289 passing (47 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -37,6 +37,7 @@ Size: 19 Prisma models, 44 pages, 55 API route files.
 | `npm run db:remove-demo` | Delete the demo seed's sample posts, news, announcements, events and campaigns |
 | `npm run env:check -- <file>` | Check a production env file (names only); the server runs the same check at start-up in production |
 | `npm run privacy:cleanup` | Delete rejected applicants' photos and payment screenshots now (also runs daily) |
+| `npm run email:test -- <address>` / `npm run sms:test -- 01XXXXXXXXX` | Send one test email / one OTP-format SMS (costs a credit) |
 | `npm run db:super-admin` | Create or sync the super admin from env without a restart |
 | `npm test` | Full Vitest suite |
 

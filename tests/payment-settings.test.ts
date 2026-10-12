@@ -1,0 +1,73 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import prisma from "@/lib/prisma";
+import { makeEvent, makeMember, resetDatabase } from "./helpers/db";
+
+const session = vi.hoisted(() => ({ user: null as { id: string; email: string; role: string } | null }));
+vi.mock("@/lib/session-user", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/session-user")>();
+  return { ...actual, getSessionUser: async () => session.user };
+});
+
+import { getPaymentSettings, paymentLines, updatePaymentSettings } from "@/lib/payment-settings";
+import { GET as publicRoute } from "@/app/api/payment-settings/route";
+import { GET as adminGet, PUT as adminPut } from "@/app/api/admin/payment-settings/route";
+import { findDemoLeftovers } from "../prisma/seed-core";
+
+beforeEach(async () => {
+  session.user = null;
+  await resetDatabase();
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+const details = { bkashNumber: "+880 1711-000111", bkashType: "Merchant", nagadNumber: "01811000222", bankDetails: "A/C 123, Sonali Bank\nRouting 456", banglaQrMerchant: "SSGHS Alumni Association" };
+const put = (body: unknown) => new Request("http://x", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+
+describe("payment details", () => {
+  it("fall back to the environment until an admin saves them", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BANGLA_QR_MERCHANT", "From Env");
+    expect(await getPaymentSettings()).toMatchObject({ banglaQrMerchant: "From Env", bkashNumber: "", updatedAt: null });
+  });
+
+  it("are saved with normalised numbers and listed for members in a fixed order", async () => {
+    const { after } = await updatePaymentSettings(details, "admin@example.test");
+    expect(after).toMatchObject({ bkashNumber: "01711000111", bkashType: "Merchant", nagadNumber: "01811000222", nagadType: "Personal", updatedBy: "admin@example.test" });
+    expect(paymentLines(after)).toEqual(["bKash (Merchant): 01711000111", "Nagad (Personal): 01811000222", "A/C 123, Sonali Bank", "Routing 456"]);
+  });
+
+  it("refuse wrong numbers and linked (not uploaded) QR images", async () => {
+    await expect(updatePaymentSettings({ bkashNumber: "12345" }, "a@x")).rejects.toMatchObject({ status: 400 });
+    await expect(updatePaymentSettings({ nagadNumber: "02111000222" }, "a@x")).rejects.toMatchObject({ status: 400 });
+    await expect(updatePaymentSettings({ banglaQrImage: "https://evil.example/qr.png" }, "a@x")).rejects.toMatchObject({ status: 400 });
+  });
+
+  it("only admins change them; every change is logged with old and new values; anyone can read them", async () => {
+    expect((await adminPut(put(details))).status).toBe(403);
+    const mod = await makeMember({ role: "MODERATOR" });
+    session.user = { id: mod.id, email: mod.email, role: "MODERATOR" };
+    expect((await adminPut(put(details))).status).toBe(403);
+    expect((await adminGet()).status).toBe(403);
+
+    const admin = await makeMember({ role: "ADMIN" });
+    session.user = { id: admin.id, email: admin.email, role: "ADMIN" };
+    expect((await adminPut(put(details))).status).toBe(200);
+    const log = await prisma.activityLog.findFirstOrThrow({ where: { action: "payment_settings.updated" } });
+    expect(JSON.stringify(log.metadata)).toContain("01711000111");
+
+    session.user = null;
+    const pub = await (await publicRoute()).json();
+    expect(pub).toMatchObject({ bkashNumber: "01711000111", nagadNumber: "01811000222", banglaQrMerchant: "SSGHS Alumni Association" });
+    expect(pub.lines).toHaveLength(4);
+    expect(pub).not.toHaveProperty("updatedBy");
+  });
+});
+
+describe("made-up payment accounts", () => {
+  it("are reported by the production seed", async () => {
+    await makeEvent({ title: "Golden Jubilee", paymentInstructions: "bKash (Merchant): Send to 01700000000" });
+    await makeEvent({ title: "Real", paymentInstructions: "bKash: 01711000111" });
+    const warnings = await findDemoLeftovers({});
+    expect(warnings).toEqual([expect.stringContaining('"Golden Jubilee" shows made-up payment accounts')]);
+  });
+});
