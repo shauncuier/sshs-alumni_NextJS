@@ -109,7 +109,9 @@ function EventDetailView({
 
 
   useEffect(() => {
-    const dateStr = event.date ? `${event.date}T08:30:00+06:00` : "2026-12-30T08:30:00+06:00";
+    const start = /^(\d{1,2}):(\d{2})\s*([AP]M)/i.exec(event.time ?? "");
+    const hour = start ? (Number(start[1]) % 12) + (start[3].toUpperCase() === "PM" ? 12 : 0) : 9;
+    const dateStr = `${event.date}T${String(hour).padStart(2, "0")}:${start ? start[2] : "00"}:00+06:00`;
     const targetDate = new Date(dateStr).getTime();
 
     const updateTimer = () => {
@@ -129,7 +131,7 @@ function EventDetailView({
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [event.date]);
+  }, [event.date, event.time]);
 
   const handleOpenRsvpWithPackage = (pkgName?: string) => {
     setSelectedPackage(pkgName);
@@ -228,7 +230,9 @@ function EventDetailView({
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm text-emerald-100 mt-4 pt-4 border-t border-white/15">
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-amber-300 shrink-0" />
-                <strong className="text-white">{event.date}</strong>
+                <strong className="text-white">
+                  {new Date(`${event.date}T12:00:00+06:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" })}
+                </strong>
               </span>
               <span>•</span>
               <span className="flex items-center gap-2">
@@ -477,7 +481,7 @@ function EventDetailView({
                     <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0">
                       <Gift className="w-6 h-6" />
                     </div>
-                    <h3 className="text-xl font-black">Souvenir</h3>
+                    <h3 className="text-xl font-black">Included with registration</h3>
                   </div>
                   <p className="text-sm text-emerald-100/90 leading-relaxed whitespace-pre-line">{event.souvenirDetails}</p>
                 </div>
@@ -492,7 +496,7 @@ function EventDetailView({
                     </div>
                     <div>
                       <h4 className="font-extrabold text-base text-slate-900">
-                        স্মৃতিচারণ ও লেখা আহবান: সুবর্ণ জয়ন্তী স্মারকগ্রন্থ &apos;সবুজ পদাবলি&apos;
+                        স্মৃতিচারণ ও লেখা আহবান: সুবর্ণ জয়ন্তী স্মারকগ্রন্থ
                       </h4>
                       <p className="text-xs text-slate-600">
                         Call for articles, memoirs, poems and old photos ({schoolInfo.established}–{event.date.slice(0, 4)})
@@ -507,7 +511,7 @@ function EventDetailView({
                       Email Articles: {schoolInfo.associationEmail}
                     </span>
                     <span className="text-slate-600">
-                      Last Date of Submission: October 31, 2026
+                      Please write your name and SSC batch with your submission.
                     </span>
                   </div>
                 </div>
@@ -577,7 +581,7 @@ function EventDetailView({
                   )}
                   <p className="text-[11px] text-slate-400 text-center mt-2">
                     {isPaid
-                      ? "Pay by bKash/Nagad/Bank, then enter your transaction ID — the committee confirms it"
+                      ? `Pay by ${event.paymentMethods.length > 0 ? event.paymentMethods.join(", ") : "the methods shown on the form"}, then enter your transaction ID — the committee confirms it`
                       : "Free — confirmed instantly"}
                   </p>
 
