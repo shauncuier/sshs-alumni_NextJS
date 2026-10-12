@@ -1263,9 +1263,9 @@ export default function AdminBulkSmsPage() {
             No SMS broadcasts recorded yet. Send your first announcement above.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
+          <div className="md:overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse block md:table">
+              <thead className="hidden md:table-header-group">
                 <tr className="border-b border-slate-200 text-slate-500 font-bold text-[11px]">
                   <th className="py-2.5 px-3">Date &amp; Time</th>
                   <th className="py-2.5 px-3">Sender ID</th>
@@ -1275,10 +1275,10 @@ export default function AdminBulkSmsPage() {
                   <th className="py-2.5 px-3">Gateway Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="block md:table-row-group space-y-2 md:space-y-0 md:divide-y md:divide-slate-100 text-slate-700">
                 {history.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3 px-3 font-mono text-[11px] whitespace-nowrap">
+                  <tr key={item.id} className="block md:table-row border border-slate-200 rounded-xl p-3 md:p-0 md:border-0 md:rounded-none hover:bg-slate-50/60 transition-colors">
+                    <td className="block md:table-cell py-0.5 md:py-3 md:px-3 font-mono text-[11px] md:whitespace-nowrap">
                       {new Date(item.timestamp).toLocaleString("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -1286,19 +1286,19 @@ export default function AdminBulkSmsPage() {
                         minute: "2-digit",
                       })}
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                    <td className="block md:table-cell py-0.5 md:py-3 md:px-3 font-mono font-bold text-slate-900">
                       {item.senderId}
                     </td>
-                    <td className="py-3 px-3 font-bold text-emerald-800">
+                    <td className="block md:table-cell py-0.5 md:py-3 md:px-3 font-bold text-emerald-800">
                       {item.validRecipients} contacts
                     </td>
-                    <td className="py-3 px-3 font-semibold text-slate-600">
+                    <td className="block md:table-cell py-0.5 md:py-3 md:px-3 font-semibold text-slate-600">
                       {item.totalCreditsUsed} credits
                     </td>
-                    <td className="py-3 px-3 max-w-xs truncate text-slate-600" title={item.message}>
+                    <td className="block md:table-cell py-0.5 md:py-3 md:px-3 md:max-w-xs md:truncate text-slate-600" title={item.message}>
                       {item.message}
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="block md:table-cell py-0.5 md:py-3 md:px-3">
                       {item.status === "FAILED" ? (
                         <span title={item.error} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
                           Failed{item.gatewayResponseCode ? ` (${item.gatewayResponseCode})` : ""}

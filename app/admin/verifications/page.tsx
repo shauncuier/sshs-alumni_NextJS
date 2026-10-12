@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, Suspense } from "react";
+import React, { useEffect, useRef, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { VerificationRequestItem } from "@/lib/data";
@@ -38,7 +38,14 @@ function VerificationReviewContent() {
 
   const [userSelectedId, setUserSelectedId] = useState<string | null>(null);
   const selectedId = userSelectedId ?? qId ?? null;
-  const setSelectedId = (id: string) => setUserSelectedId(id);
+  // On a phone the review panel sits below the list: bring it into view on tap.
+  const detailRef = useRef<HTMLDivElement>(null);
+  const setSelectedId = (id: string) => {
+    setUserSelectedId(id);
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<
@@ -378,7 +385,7 @@ function VerificationReviewContent() {
       {/* Main Dual-Pane Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: Applicant Queue List (4 cols) */}
-        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 shadow-xs flex flex-col h-[750px] overflow-hidden">
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 shadow-xs flex flex-col max-h-[60vh] lg:max-h-none lg:h-[750px] overflow-hidden">
           {/* Search & Tabs */}
           <div className="p-4 border-b border-slate-100 space-y-3 bg-slate-50/50">
             <div className="relative">
@@ -549,9 +556,10 @@ function VerificationReviewContent() {
         </div>
 
         {/* RIGHT COLUMN: Full Inspection & Action Canvas (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
+        <div ref={detailRef} className="lg:col-span-8 space-y-6 scroll-mt-20">
           {activeApplicant ? (
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+            // overflow-clip (not hidden) keeps the rounded corners without breaking the sticky action bar.
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-clip">
               {/* Applicant Header Bar */}
               <div className="p-5 sm:p-6 bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -614,7 +622,7 @@ function VerificationReviewContent() {
               </div>
 
               {/* Detail Inspection Body */}
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-6">
                 {/* 1. MANDATORY PROFILE PHOTO CHECK */}
                 <div
                   className={`p-5 rounded-2xl border transition-all ${
@@ -1083,8 +1091,8 @@ function VerificationReviewContent() {
                   )}
                 </div>
 
-                {/* 4. VERIFICATION ACTION CONTROLS */}
-                <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* 4. VERIFICATION ACTION CONTROLS: stays above the bottom nav on phones while the panel is in view */}
+                <div className="sticky bottom-16 lg:static z-10 -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 pb-3 lg:pb-0 bg-white/95 backdrop-blur pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                   <div>
                     {!isPhotoMandatorySatisfied ? (
                       <div className="text-xs font-bold text-rose-700 flex items-center gap-1.5">
@@ -1099,11 +1107,11 @@ function VerificationReviewContent() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                  <div className="grid grid-cols-2 sm:flex items-center gap-3 w-full sm:w-auto justify-end">
                     <button
                       onClick={() => handleDecide(activeApplicant.id, "REJECTED")}
                       disabled={busyId !== null || activeApplicant.status === "REJECTED"}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Reject Application
                     </button>
@@ -1115,7 +1123,7 @@ function VerificationReviewContent() {
                         activeApplicant.status === "VERIFIED" ||
                         !isPhotoMandatorySatisfied
                       }
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white shadow-md transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                       title={
                         !isPhotoMandatorySatisfied
                           ? "Profile picture is mandatory"

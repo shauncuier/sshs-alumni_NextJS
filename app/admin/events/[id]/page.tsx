@@ -1443,10 +1443,10 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
             </div>
           </div>
 
-          {/* Attendees Table */}
-          <div className="border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+          {/* Attendees: a table on wider screens, one card per attendee on phones */}
+          <div className="md:border border-slate-200 rounded-2xl md:overflow-hidden md:overflow-x-auto">
+            <table className="w-full text-left text-xs block md:table">
+              <thead className="hidden md:table-header-group bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                 <tr>
                   <th className="p-3.5">Attendee</th>
                   <th className="p-3.5">Batch &amp; membership</th>
@@ -1456,15 +1456,15 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                   <th className="p-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block md:table-row-group space-y-3 md:space-y-0">
                 {filteredAttendees.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400">No attendees found matching filter.</td>
+                  <tr className="block md:table-row">
+                    <td colSpan={6} className="block md:table-cell p-8 text-center text-slate-400">No attendees found matching filter.</td>
                   </tr>
                 )}
                 {filteredAttendees.map((a) => (
-                  <tr key={a.id} className="border-t border-slate-100 text-xs">
-                    <td className="py-3 px-3">
+                  <tr key={a.id} className="block md:table-row border border-slate-200 md:border-0 md:border-t md:border-slate-100 rounded-2xl md:rounded-none p-3 md:p-0 bg-white text-xs">
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3">
                       <div className="flex items-center gap-3">
                         <img src={a.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
                         <div>
@@ -1483,33 +1483,33 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3">
                       SSC {a.batch ?? "—"}{a.rollNumber ? ` · Roll ${a.rollNumber}` : ""}{a.section ? ` · ${a.section}` : ""}
                       <div className={a.membershipStatus === "VERIFIED" ? "text-emerald-700" : a.membershipStatus === "REJECTED" ? "text-rose-700" : "text-amber-700"}>
                         Membership: {a.membershipStatus.toLowerCase()}
                       </div>
                       {event.isMembershipEvent && <ProofOfStudy proof={a.proof} />}
                     </td>
-                    <td className="py-3 px-3">{a.packageName ?? "—"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}</td>
-                    <td className="py-3 px-3">
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3">{a.packageName ?? "—"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}</td>
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3">
                       {formatTaka(a.totalFee)}{a.donationAmount > 0 && <> + {formatTaka(a.donationAmount)} donation</>}
                       <div className="text-slate-500 font-mono">{a.paymentMethod ?? "—"} {a.transactionId ?? ""}</div>
                     </td>
-                    <td className="py-3 px-3 font-bold">{a.status.replace("_", " ")}</td>
-                    <td className="py-3 px-3 text-right space-x-1 whitespace-nowrap">
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3 font-bold">{a.status.replace("_", " ")}</td>
+                    <td className="flex flex-wrap gap-2 pt-2 md:pt-3 md:table-cell md:py-3 md:px-3 md:text-right md:space-x-1 md:whitespace-nowrap">
                       {a.status === "PENDING_PAYMENT" && (
-                        <button disabled={busyId === a.id} onClick={() => decide(a, "APPROVE")} className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white font-bold disabled:opacity-50">
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "APPROVE")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-emerald-800 text-white font-bold disabled:opacity-50">
                           {event.isMembershipEvent ? "Approve (payment + membership)" : "Confirm payment"}
                         </button>
                       )}
                       {a.status === "CONFIRMED" && (
-                        <button disabled={busyId === a.id} onClick={() => decide(a, "CHECK_IN")} className="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold disabled:opacity-50">Check in</button>
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "CHECK_IN")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold disabled:opacity-50">Check in</button>
                       )}
                       {a.status === "CHECKED_IN" && (
-                        <button disabled={busyId === a.id} onClick={() => decide(a, "UNDO_CHECK_IN")} className="px-2.5 py-1 rounded-lg bg-slate-100 font-bold disabled:opacity-50">Undo check-in</button>
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "UNDO_CHECK_IN")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-100 font-bold disabled:opacity-50">Undo check-in</button>
                       )}
                       {(a.status === "PENDING_PAYMENT" || a.status === "CONFIRMED") && (
-                        <button disabled={busyId === a.id} onClick={() => decide(a, "CANCEL")} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold disabled:opacity-50">
+                        <button disabled={busyId === a.id} onClick={() => decide(a, "CANCEL")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold disabled:opacity-50">
                           {a.status === "PENDING_PAYMENT" && event.isMembershipEvent ? "Reject" : "Cancel"}
                         </button>
                       )}

@@ -237,7 +237,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
       </aside>
 
       {/* Main Content Area (Mobile-optimized with bottom padding for thumb navigation) */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto min-h-screen pb-20 lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-clip min-h-screen pb-20 lg:pb-0">
         {children}
       </div>
 

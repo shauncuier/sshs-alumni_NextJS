@@ -43,7 +43,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | 🟡 Key works (balance ৳94.05), `npm run sms:test` ready; operator tests by you |
 | 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | 🟡 Admin page ready; the committee enters the real numbers and QR |
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
-| 21 | Admin pages usable on phones | 5 · UX | M | ⬜ |
+| 21 | Admin pages usable on phones | 5 · UX | M | ✅ Done 2026-10-12 |
 | 22 | Gate scanner with the phone camera | 5 · UX | M | ⬜ |
 | 23 | Join flow tested end to end on real phones | 5 · UX | S | ⬜ |
 | 24 | Production build passes, warnings cleaned | 6 · Quality | M | ⬜ |
@@ -256,7 +256,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ## Phase 5 — Admin and member experience
 
-### 21. Admin pages on phones · M
+### 21. Admin pages on phones · M · ✅ Done 2026-10-12
+**Result:** every admin page checked at 375 px (no sideways page scroll anywhere). Verifications: the applicant list no longer fills a fixed 750 px box; tapping an applicant scrolls to the review; Approve / Reject stay pinned above the bottom bar while reviewing (the admin layout's content wrapper was a scroll container that broke sticky elements, now `overflow-x-clip`). The wide tables — event attendees and check-in (848 px, "Check in" was off-screen), donations ledger, alumni, volunteers and SMS history — become one card per row below 768 px and stay tables on larger screens; row buttons are at least 40 px tall on phones. **Checked:** a pending join approved end to end at 375 px with a throwaway local applicant (deleted afterwards).
+
 **Tasks:** make verifications, events, registrations, donations, SMS and logs usable at 375 px wide (the users page already is).
 **Done when:** a committee member can approve a join from a phone.
 

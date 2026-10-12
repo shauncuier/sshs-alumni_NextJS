@@ -118,7 +118,6 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 ## 6. Known issues and backlog
 
 - **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed:prod`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
-- Admin pages are only partly responsive on phones (users page is responsive; others are not yet).
 - Gate scanner has no camera yet (roadmap step 22); the headers already allow the camera on this site.
 - `sitemap.ts` is generated at build time.
 - `sshs_dev` contains test accounts and test events from earlier sessions.

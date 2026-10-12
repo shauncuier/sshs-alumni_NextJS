@@ -195,9 +195,9 @@ export default function AdminAlumniPage() {
 
       {/* Table */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200">
+        <div className="md:overflow-x-auto">
+          <table className="w-full text-left text-xs block md:table">
+            <thead className="hidden md:table-header-group bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200">
               <tr>
                 <th className="py-3 px-6">Name</th>
                 <th className="py-3 px-4">Batch</th>
@@ -210,17 +210,17 @@ export default function AdminAlumniPage() {
                 <th className="py-3 px-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="block md:table-row-group space-y-2 md:space-y-0 md:divide-y md:divide-slate-100">
               {(loading || filteredRequests.length === 0) && (
-                <tr>
-                  <td colSpan={9} className="py-8 px-6 text-center text-slate-400">
+                <tr className="block md:table-row">
+                  <td colSpan={9} className="block md:table-cell py-0.5 md:py-8 md:px-6 text-center text-slate-400">
                     {loading ? "Loading verification requests…" : "No verification requests match."}
                   </td>
                 </tr>
               )}
               {filteredRequests.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50">
-                  <td className="py-4 px-6">
+                <tr key={r.id} className="block md:table-row border border-slate-200 rounded-xl p-3 md:p-0 md:border-0 md:rounded-none hover:bg-slate-50">
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-6">
                     <div className="flex items-center gap-3">
                       <img src={r.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
                       <div>
@@ -229,13 +229,13 @@ export default function AdminAlumniPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4 font-bold text-emerald-800">SSC {r.sscBatch}</td>
-                  <td className="py-4 px-4 font-medium text-slate-600">{r.rollNumber}</td>
-                  <td className="py-4 px-4 text-slate-700">{r.profession}</td>
-                  <td className="py-4 px-4 max-w-[16rem]">
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4 font-bold text-emerald-800">SSC {r.sscBatch}</td>
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4 font-medium text-slate-600">{r.rollNumber}</td>
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4 text-slate-700">{r.profession}</td>
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4 md:max-w-[16rem]">
                     <ProofOfStudy proof={r.proof} emptyText="No proof uploaded" />
                   </td>
-                  <td className="py-4 px-4 min-w-[14rem]">
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4 md:min-w-[14rem]">
                     {r.transactionId || r.paymentMethod || r.totalFee ? (
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -294,8 +294,8 @@ export default function AdminAlumniPage() {
                       <span className="text-slate-400 italic text-[11px]">No fee required</span>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-slate-400">{r.submittedAt}</td>
-                  <td className="py-4 px-4">
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4 text-slate-400">{r.submittedAt}</td>
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-4">
                     <span
                       className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
                         r.status === "VERIFIED"
@@ -308,7 +308,7 @@ export default function AdminAlumniPage() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-right">
+                  <td className="block md:table-cell py-0.5 md:py-4 md:px-6 md:text-right">
                     {r.status === "PENDING" && r.awaitingPayment ? (
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="flex items-center gap-1.5 justify-end">

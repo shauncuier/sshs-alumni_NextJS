@@ -257,9 +257,9 @@ export default function AdminDonationsPage() {
             No donation transactions recorded yet.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 uppercase text-[10px] text-slate-500 border-b">
+          <div className="md:overflow-x-auto p-3 md:p-0">
+            <table className="w-full text-left text-xs block md:table">
+              <thead className="hidden md:table-header-group bg-slate-50 uppercase text-[10px] text-slate-500 border-b">
                 <tr>
                   <th className="py-3 px-6">Donor</th>
                   <th className="py-3 px-4">Batch</th>
@@ -271,18 +271,18 @@ export default function AdminDonationsPage() {
                   <th className="py-3 px-6 text-right">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="block md:table-row-group space-y-2 md:space-y-0 md:divide-y md:divide-slate-100">
                 {donations.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50/70">
-                    <td className="py-3.5 px-6 font-semibold text-slate-900">{d.donorName}</td>
-                    <td className="py-3.5 px-4 text-emerald-800 font-medium">
+                  <tr key={d.id} className="grid grid-cols-2 gap-x-3 gap-y-1 p-3 border border-slate-200 rounded-xl md:table-row md:p-0 md:border-0 md:rounded-none hover:bg-slate-50/70">
+                    <td className="md:table-cell md:py-3.5 md:px-6 font-semibold text-slate-900">{d.donorName}</td>
+                    <td className="md:table-cell md:py-3.5 md:px-4 text-emerald-800 font-medium">
                       {d.donorBatch ? `SSC '${String(d.donorBatch).slice(-2)}` : "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600">{d.campaignTitle}</td>
-                    <td className="py-3.5 px-4 font-black text-emerald-800">৳{d.amount.toLocaleString()}</td>
-                    <td className="py-3.5 px-4 text-slate-500 font-medium">{d.paymentMethod}</td>
-                    <td className="py-3.5 px-4 font-mono text-slate-600">{d.transactionRef ?? "—"}</td>
-                    <td className="py-3.5 px-4">
+                    <td className="md:table-cell md:py-3.5 md:px-4 text-slate-600">{d.campaignTitle}</td>
+                    <td className="md:table-cell md:py-3.5 md:px-4 font-black text-emerald-800">৳{d.amount.toLocaleString()}</td>
+                    <td className="md:table-cell md:py-3.5 md:px-4 text-slate-500 font-medium">{d.paymentMethod}</td>
+                    <td className="md:table-cell md:py-3.5 md:px-4 font-mono text-slate-600">{d.transactionRef ?? "—"}</td>
+                    <td className="md:table-cell md:py-3.5 md:px-4">
                       <span
                         className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
                           d.paymentStatus === "COMPLETED"
@@ -295,7 +295,7 @@ export default function AdminDonationsPage() {
                         {d.paymentStatus}
                       </span>
                     </td>
-                    <td className="py-3.5 px-6 text-right text-slate-400 text-[11px]">
+                    <td className="md:table-cell md:py-3.5 md:px-6 text-right text-slate-400 text-[11px]">
                       {new Date(d.createdAt).toLocaleDateString()}
                     </td>
                   </tr>

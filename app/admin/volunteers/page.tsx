@@ -281,9 +281,9 @@ export default function AdminVolunteersPage() {
             No volunteers found matching current criteria.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+          <div className="md:overflow-x-auto">
+            <table className="w-full text-left text-xs block md:table">
+              <thead className="hidden md:table-header-group bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                 <tr>
                   <th className="p-3.5">Volunteer Details</th>
                   <th className="p-3.5">Subcommittee Wing</th>
@@ -293,14 +293,14 @@ export default function AdminVolunteersPage() {
                   <th className="p-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="block md:table-row-group space-y-2 md:space-y-0 md:divide-y md:divide-slate-100">
                 {filtered.map((item) => {
                   const subDef = SUBCOMMITTEES.find((s) => s.id === item.subcommittee);
                   const Icon = subDef ? ICONS_MAP[subDef.icon] || Users : Users;
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-3.5 align-top">
+                    <tr key={item.id} className="block md:table-row border border-slate-200 rounded-xl p-3 md:p-0 md:border-0 md:rounded-none hover:bg-slate-50/80 transition-colors">
+                      <td className="block md:table-cell py-0.5 md:p-3.5 align-top">
                         <div className="font-bold text-slate-900 text-sm">{item.fullName}</div>
                         <div className="text-slate-500 text-[11px] mt-0.5">
                           SSC {item.sscBatch} · {item.phone}
@@ -313,7 +313,7 @@ export default function AdminVolunteersPage() {
                         )}
                       </td>
 
-                      <td className="p-3.5 align-top">
+                      <td className="block md:table-cell py-0.5 md:p-3.5 align-top">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 font-bold text-xs border border-emerald-200/80">
                           <Icon className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                           <span>{item.subcommitteeLabel}</span>
@@ -341,7 +341,7 @@ export default function AdminVolunteersPage() {
                         </div>
                       </td>
 
-                      <td className="p-3.5 align-top space-y-1">
+                      <td className="block md:table-cell py-0.5 md:p-3.5 align-top space-y-1">
                         {item.skills && (
                           <div>
                             <span className="font-semibold text-slate-700">Skills: </span>
@@ -359,7 +359,7 @@ export default function AdminVolunteersPage() {
                         )}
                       </td>
 
-                      <td className="p-3.5 align-top text-[11px] text-slate-500 whitespace-nowrap">
+                      <td className="block md:table-cell py-0.5 md:p-3.5 align-top text-[11px] text-slate-500 md:whitespace-nowrap">
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                             item.source === "EVENT_REGISTRATION"
@@ -378,7 +378,7 @@ export default function AdminVolunteersPage() {
                         </div>
                       </td>
 
-                      <td className="p-3.5 align-top whitespace-nowrap">
+                      <td className="block md:table-cell py-0.5 md:p-3.5 align-top md:whitespace-nowrap">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                             item.status === "APPROVED"
@@ -395,7 +395,7 @@ export default function AdminVolunteersPage() {
                         </span>
                       </td>
 
-                      <td className="p-3.5 align-top text-right whitespace-nowrap space-x-1.5">
+                      <td className="block md:table-cell py-0.5 md:p-3.5 align-top md:text-right md:whitespace-nowrap space-x-1.5">
                         {item.status !== "APPROVED" && (
                           <button
                             disabled={busyId === item.id}
