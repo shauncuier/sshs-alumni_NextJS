@@ -29,7 +29,7 @@ It prints variable names only, never values, and exits with an error when the si
 | `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (or `SMTP_*`) | Email codes, receipts, job and mentorship emails. The sender must be on a domain verified in Resend; `onboarding@resend.dev` or a Gmail address only reaches the Resend account owner | 17 |
 | `EMAIL_REPLY_TO`, `NEXT_PUBLIC_CONTACT_EMAIL` | Association mailbox for replies and the site's contact address (`sabujshikshayatanalumni@gmail.com`) | 17 |
 | `BULKSMSBD_API_KEY`, `BULKSMSBD_SENDER_ID`, `OTP_BRAND_NAME` | SMS codes and broadcasts | 18 |
-| — | bKash / Nagad numbers, bank account and the Bangla QR image are **not** env variables any more: an admin sets them in **Admin → Donations → Payment details** (the old `NEXT_PUBLIC_BANGLA_QR_*` and `NEXT_PUBLIC_DONATION_INSTRUCTIONS` are only a fallback until then) | 19 |
+| — | bKash / Nagad numbers, bank account and the Bangla QR image are **not** env variables any more: an admin sets them in **Admin → Payment settings** (each method switched on or off) (the old `NEXT_PUBLIC_BANGLA_QR_*` and `NEXT_PUBLIC_DONATION_INSTRUCTIONS` are only a fallback until then) | 19 |
 | `CONTACT_INBOX_EMAIL` | Contact-form messages by email | 17 |
 | `UPLOADS_DIR` | Absolute path outside the app folder (e.g. `/var/lib/ssghs/uploads`), included in backups | 28, 30 |
 | `LOG_RETENTION_DAYS` | Activity log retention, default 365 | — |

@@ -14,6 +14,8 @@ export interface AvailabilityEvent extends FeeEvent {
   registrationDeadline: Date | null;
   maxAttendees: number;
   paymentInstructions: string | null;
+  /** The association's payment settings offer at least one method (Admin → Payment settings). */
+  globalPaymentReady?: boolean;
 }
 
 /** Why registration is closed right now, or null when it is open. */
@@ -22,6 +24,6 @@ export function registrationClosedReason(event: AvailabilityEvent, reservedHeads
   if (event.registrationDeadline && now > event.registrationDeadline) return "DEADLINE_PASSED";
   if (reservedHeads >= event.maxAttendees) return "FULL";
   // Never ask anyone to pay without telling them where.
-  if (isPaidEvent(event) && !event.paymentInstructions?.trim()) return "PAYMENT_DETAILS_MISSING";
+  if (isPaidEvent(event) && !event.globalPaymentReady && !event.paymentInstructions?.trim()) return "PAYMENT_DETAILS_MISSING";
   return null;
 }

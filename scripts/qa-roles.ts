@@ -21,7 +21,7 @@ type Expect = "ok" | "login" | "forbidden";
 const PUBLIC = ["/", "/events", "/news", "/gallery", "/stories", "/achievements", "/donate", "/about", "/contact", "/alumni", "/batches", "/careers", "/mentorship", "/school", "/volunteer"];
 const MEMBER = ["/dashboard", "/feed", "/network", "/messages", "/profile", "/card", "/notifications", "/careers/new", "/careers/mine", "/mentorship/become", "/mentorship/mine"];
 const MOD_ADMIN = ["/admin/news", "/admin/gallery", "/admin/stories", "/admin/jobs", "/admin/mentors"];
-const ADMIN_ONLY = ["/presentation", "/admin", "/admin/verifications", "/admin/users", "/admin/logs", "/admin/donations", "/admin/events", "/admin/sms", "/admin/alumni", "/admin/volunteers", "/admin/batches"];
+const ADMIN_ONLY = ["/presentation", "/admin", "/admin/verifications", "/admin/users", "/admin/logs", "/admin/donations", "/admin/payments", "/admin/events", "/admin/sms", "/admin/alumni", "/admin/volunteers", "/admin/batches"];
 const APIS: [string, Record<Role, number>][] = [
   ["/api/posts", { VISITOR: 401, ALUMNI: 200, MODERATOR: 200, ADMIN: 200, SUPER_ADMIN: 200 }],
   ["/api/notifications", { VISITOR: 401, ALUMNI: 200, MODERATOR: 200, ADMIN: 200, SUPER_ADMIN: 200 }],

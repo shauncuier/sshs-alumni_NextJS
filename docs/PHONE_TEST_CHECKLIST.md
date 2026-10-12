@@ -5,8 +5,8 @@ Do this once on an **Android phone with Chrome** and once on an **iPhone with Sa
 ## Before you start
 
 - [ ] The site is reachable from the internet over **https**: the live site, or for a test from this PC `ngrok http 3000` (ngrok addresses are already allowed by the dev server).
-- [ ] Admin → Donations → **Payment details**: the real bKash / Nagad numbers and the bank's Bangla QR are saved.
-- [ ] Admin → Events → Golden Jubilee → Pricing: **Use association details** applied and saved (no made-up numbers in the instructions).
+- [ ] Admin → **Payment settings**: the real bKash / Nagad numbers and the bank's Bangla QR are saved, and the methods to accept are switched on.
+- [ ] Admin → Events → Golden Jubilee: the event shows the methods from Payment settings; its extra instructions (if any) hold no made-up numbers.
 - [ ] BulkSMSBD has at least ৳20 balance (`npm run sms:test` shows it) and the OTP template is approved.
 - [ ] Each tester has: a clear photo of themselves (face, at least 600 × 600), a photo or PDF of their SSC certificate / marksheet / school ID, and a bKash or Nagad account for a small real payment.
 

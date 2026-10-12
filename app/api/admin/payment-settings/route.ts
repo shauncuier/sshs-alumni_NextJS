@@ -5,7 +5,7 @@ import { requireArea } from "@/lib/admin/require-admin";
 import { BKASH_ACCOUNT_TYPES, getPaymentSettings, updatePaymentSettings } from "@/lib/payment-settings";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
-const requireAdmin = () => requireArea("donations", "Only administrators can change payment details.");
+const requireAdmin = () => requireArea("payments", "Only administrators can change payment details.");
 
 // GET /api/admin/payment-settings — the current payment details, for editing.
 export async function GET() {

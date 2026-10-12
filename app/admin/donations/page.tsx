@@ -4,7 +4,7 @@ import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import { Heart, TrendingUp, Users, CheckCircle2, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import CampaignManager from "@/components/admin/CampaignManager";
-import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
+import Link from "next/link";
 
 interface DonationRecord {
   id: string;
@@ -237,7 +237,10 @@ export default function AdminDonationsPage() {
         </div>
       </div>
 
-      <PaymentSettingsForm />
+      <p className="text-xs text-slate-600 bg-white p-4 rounded-2xl border border-slate-200">
+        Where donors send money (bKash, Nagad, Bangla QR, bank, cash) is set once for the whole site in{" "}
+        <Link href="/admin/payments" className="font-bold text-emerald-800 underline">Payment settings</Link>.
+      </p>
 
       <CampaignManager onChanged={() => void loadData()} />
 

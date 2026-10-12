@@ -17,6 +17,7 @@ export const ADMIN_AREAS = [
   "batches",
   "events",
   "donations",
+  "payments",
   "users",
   "news",
   "gallery",

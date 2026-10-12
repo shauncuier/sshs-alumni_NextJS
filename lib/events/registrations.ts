@@ -9,6 +9,7 @@ import { readVerifiedPhone } from "@/lib/phone-otp";
 import { readVerifiedEmail } from "@/lib/email-otp";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee, storedGuests } from "./pricing";
+import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import { eventFeeRules } from "./service";
 import { ticketInfo } from "./tickets";
 import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type ProofInput, type RsvpInput } from "./types";
@@ -180,7 +181,8 @@ export async function registerForEvent(args: {
       });
       const reservedHeads = reserved._sum.headCount ?? 0;
       const rules = eventFeeRules(event);
-      const closed = registrationClosedReason({ ...event, ...rules }, reservedHeads, now);
+      const methods = availableMethods(await getPaymentSettings());
+      const closed = registrationClosedReason({ ...event, ...rules, globalPaymentReady: methods.length > 0 }, reservedHeads, now);
       if (closed) throw new AppError("REGISTRATION_CLOSED", 409, CLOSED_MESSAGES[closed]);
 
       const existing = await tx.eventRegistration.findUnique({
@@ -203,6 +205,10 @@ export async function registerForEvent(args: {
       if (needsPayment) {
         if (!PAYMENT_METHODS.includes(paymentMethod as (typeof PAYMENT_METHODS)[number])) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please choose how you paid.");
+        }
+        // Only the methods the association accepts (when it has set any).
+        if (methods.length > 0 && !(methods as string[]).includes(paymentMethod!)) {
+          throw new AppError("PAYMENT_REQUIRED", 400, `${paymentMethod} is not accepted right now. Please choose another way to pay.`);
         }
         if (!/^[A-Z0-9-]{6,40}$/.test(transactionId)) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");

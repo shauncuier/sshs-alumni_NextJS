@@ -54,7 +54,10 @@ export default function DonatePage() {
   const donorEmail = donorEmailEdit ?? (session?.user?.email ?? "");
   const [donorPhoneEdit, setDonorPhone] = useState<string | null>(null);
   const donorPhone = donorPhoneEdit ?? ("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("bKash");
+  const [paymentMethodChoice, setPaymentMethod] = useState<string | null>(null);
+  // Only the methods the association accepts (Admin → Payment settings).
+  const donationMethods: readonly string[] = payment && payment.methods.length > 0 ? payment.methods : DONATION_METHODS;
+  const paymentMethod = paymentMethodChoice && donationMethods.includes(paymentMethodChoice) ? paymentMethodChoice : donationMethods[0];
   const [transactionId, setTransactionId] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -418,7 +421,7 @@ export default function DonatePage() {
                             onChange={(e) => setPaymentMethod(e.target.value)}
                             className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           >
-                            {DONATION_METHODS.map((m) => (
+                            {donationMethods.map((m) => (
                               <option key={m} value={m}>{m === "Bank" ? "Bank transfer / deposit" : m === "Cash" ? "Cash to the committee" : m}</option>
                             ))}
                           </select>

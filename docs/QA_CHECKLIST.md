@@ -49,7 +49,7 @@ It creates one throwaway account per role (deleted at the end), signs in over HT
 ### Admin
 
 - [ ] Verifications: approve one join and reject one (on a phone); the approved member can sign in; the rejected one cannot.
-- [ ] Events: create an event with packages and dates; payment instructions via "Use association details"; edit; the membership flag cannot move while joins are waiting.
+- [ ] Events: create an event with packages and dates; guest types (e.g. spouse ৳700 up to 1, child ৳500); payment methods come from Admin → Payment settings; edit; the membership flag cannot move while joins are waiting.
 - [ ] Event attendees: confirm a payment, check someone in, undo, cancel.
 - [ ] Donations: set payment details; create, edit, close and reopen a campaign; verify and reject a donation (the donor gets the receipt email once the email domain works).
 - [ ] Batches: set a representative and reunion date; they show on the batch page.

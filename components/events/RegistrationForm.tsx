@@ -91,7 +91,7 @@ export default function RegistrationForm({
   const [volunteerSubcommittee, setVolunteerSubcommittee] = useState<string>(SUBCOMMITTEES[0].id);
   const [volunteerNotes, setVolunteerNotes] = useState("");
   const [donation, setDonation] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("bKash");
+  const [paymentMethodChoice, setPaymentMethod] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -236,6 +236,10 @@ export default function RegistrationForm({
     total = null;
   }
   const paid = (total?.total ?? 0) > 0;
+  // The methods the association accepts (Admin → Payment settings); all of them only
+  // when nothing is set there and the event gives its own instructions.
+  const methods: string[] = event.paymentMethods.length > 0 ? event.paymentMethods : [...PAYMENT_METHODS];
+  const paymentMethod = paymentMethodChoice && methods.includes(paymentMethodChoice) ? paymentMethodChoice : methods[0];
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -610,11 +614,15 @@ export default function RegistrationForm({
 
           {paid && (
             <div className="space-y-3">
-              <p className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 whitespace-pre-line">{event.paymentInstructions}</p>
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 space-y-1">
+                <p className="font-bold">How to pay {total ? formatTaka(total.total) : ""}</p>
+                {payment?.lines.map((line) => <p key={line}>{line}</p>)}
+                {event.paymentInstructions && <p className="whitespace-pre-line pt-1">{event.paymentInstructions}</p>}
+              </div>
               <div>
                 <p id="reg-pay-channel" className={label}>Select Payment Channel *</p>
                 <div role="group" aria-labelledby="reg-pay-channel" className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {PAYMENT_METHODS.map((m) => {
+                  {methods.map((m) => {
                     const isSelected = paymentMethod === m;
                     return (
                       <button

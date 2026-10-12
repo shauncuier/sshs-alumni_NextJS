@@ -26,6 +26,7 @@ import {
   BookOpen,
   Briefcase,
   GraduationCap,
+  Wallet,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -48,6 +49,7 @@ const ADMIN_NAV = [
   { name: "Events & Reunions", short: "Events", href: "/admin/events", icon: Calendar, area: "events" },
   { name: "Gate Scanner", short: "Gate", href: "/gate", icon: QrCode, area: "gate" },
   { name: "Donations & Funds", short: "Donations", href: "/admin/donations", icon: Heart, area: "donations" },
+  { name: "Payment Settings", short: "Payments", href: "/admin/payments", icon: Wallet, area: "payments" },
   { name: "User Management", short: "Users", href: "/admin/users", icon: Users, area: "users" },
   { name: "News", short: "News", href: "/admin/news", icon: Newspaper, area: "news" },
   { name: "Gallery", short: "Gallery", href: "/admin/gallery", icon: Images, area: "gallery" },

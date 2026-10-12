@@ -153,7 +153,7 @@ The push is not prompt-free on a database that already has events and registrati
 
 `AlumniProfile.avatarOriginalUrl` (`VARCHAR(500)`, nullable) holds the print-quality copy of the profile photo given when joining; `avatarUrl` holds the 400 x 400 web avatar. Run `npm run db:push` to add the column. The image files themselves live on the server disk (see the production deployment guide), not in the database.
 
-Joining the association is registration for the **membership event** (the event marked "membership" in Admin → Events). It stays closed ("Payment details coming soon") until an admin enters its **payment instructions** in the event editor ("Use association details" copies them from Admin → Donations → Payment details).
+Joining the association is registration for the **membership event** (the event marked "membership" in Admin → Events). It stays closed ("Payment details coming soon") until at least one payment method is switched on in **Admin → Payment settings** (or the event has its own payment instructions).
 
 ---
 

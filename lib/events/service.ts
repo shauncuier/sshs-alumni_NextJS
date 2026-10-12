@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { formatTaka, guestTypesOf, isPaidEvent, normalizeGuestTypes, normalizePackages, parseTaka, type FeeEvent } from "./pricing";
+import { availableMethods, getPaymentSettings, type PaymentMethodName } from "@/lib/payment-settings";
 import type { AgendaEntry, PublicEvent } from "./types";
 
 const EVENT_CATEGORIES = ["REUNION", "SPORTS", "WEBINAR", "CULTURAL", "COMMUNITY"] as const;
@@ -34,9 +35,14 @@ function normalizeHighlights(raw: unknown): string[] {
   return Array.isArray(raw) ? raw.filter((s): s is string => typeof s === "string" && s.trim() !== "") : [];
 }
 
-export function toPublicEvent(row: Event, heads: { reserved: number; attending: number }, now: Date): PublicEvent {
+export function toPublicEvent(
+  row: Event,
+  heads: { reserved: number; attending: number },
+  now: Date,
+  paymentMethods: PaymentMethodName[] = []
+): PublicEvent {
   const rules = eventFeeRules(row);
-  const closedReason = registrationClosedReason({ ...row, ...rules }, heads.reserved, now);
+  const closedReason = registrationClosedReason({ ...row, ...rules, globalPaymentReady: paymentMethods.length > 0 }, heads.reserved, now);
   return {
     id: row.id,
     slug: row.slug,
@@ -69,6 +75,7 @@ export function toPublicEvent(row: Event, heads: { reserved: number; attending: 
     guestTypes: guestTypesOf(rules),
     customGuestTypes: (rules.guestTypes ?? []).length > 0,
     paymentInstructions: row.paymentInstructions,
+    paymentMethods,
     agenda: normalizeAgenda(row.agenda),
     highlights: normalizeHighlights(row.highlights),
     packages: rules.packages.map((p) => ({
@@ -105,7 +112,8 @@ export async function headCounts(eventIds: string[]): Promise<Map<string, { rese
 
 async function toPublicList(rows: Event[], now: Date): Promise<PublicEvent[]> {
   const counts = await headCounts(rows.map((r) => r.id));
-  return rows.map((r) => toPublicEvent(r, counts.get(r.id)!, now));
+  const methods = availableMethods(await getPaymentSettings());
+  return rows.map((r) => toPublicEvent(r, counts.get(r.id)!, now, methods));
 }
 
 export async function listPublicEvents(now = new Date()): Promise<PublicEvent[]> {

@@ -8,7 +8,9 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
   return { ...actual, getSessionUser: async () => session.user };
 });
 
-import { getPaymentSettings, paymentLines, updatePaymentSettings } from "@/lib/payment-settings";
+import { availableMethods, getPaymentSettings, paymentLines, updatePaymentSettings } from "@/lib/payment-settings";
+import { getPublicEventBySlug } from "@/lib/events/service";
+import { registerForEvent } from "@/lib/events/registrations";
 import { GET as publicRoute } from "@/app/api/payment-settings/route";
 import { GET as adminGet, PUT as adminPut } from "@/app/api/admin/payment-settings/route";
 import { findDemoLeftovers } from "../prisma/seed-core";
@@ -69,5 +71,36 @@ describe("made-up payment accounts", () => {
     await makeEvent({ title: "Real", paymentInstructions: "bKash: 01711000111" });
     const warnings = await findDemoLeftovers({});
     expect(warnings).toEqual([expect.stringContaining('"Golden Jubilee" shows made-up payment accounts')]);
+  });
+});
+
+describe("payment methods switched on and off (one setting for the whole site)", () => {
+  it("offers only methods that are on and have their details", async () => {
+    const { after } = await updatePaymentSettings({ ...details, enabledMethods: ["bKash", "Cash"], cashDetails: "School office, to the treasurer" }, "a@x");
+    expect(availableMethods(after)).toEqual(["bKash", "Cash"]);
+    expect(paymentLines(after)).toEqual(["bKash (Merchant): 01711000111", "Cash: School office, to the treasurer"]);
+    const pub = await (await publicRoute()).json();
+    expect(pub.methods).toEqual(["bKash", "Cash"]);
+  });
+
+  it("refuses to switch on a method without its details", async () => {
+    await expect(updatePaymentSettings({ enabledMethods: ["Nagad"] }, "a@x")).rejects.toThrow(/Nagad is switched on/);
+    await expect(updatePaymentSettings({ enabledMethods: ["Bangla QR"] }, "a@x")).rejects.toThrow(/Bangla QR image/);
+  });
+
+  it("opens paid events without per-event instructions, and refuses a method that is off", async () => {
+    await makeEvent({ slug: "paid", registrationFee: 500, paymentInstructions: null });
+    expect((await getPublicEventBySlug("paid"))?.closedReason).toBe("PAYMENT_DETAILS_MISSING");
+
+    await updatePaymentSettings({ ...details, enabledMethods: ["bKash"] }, "a@x");
+    const event = await getPublicEventBySlug("paid");
+    expect(event).toMatchObject({ closedReason: null, paymentMethods: ["bKash"] });
+
+    const member = await makeMember();
+    await expect(
+      registerForEvent({ slug: "paid", sessionUserId: member.id, rsvp: { paymentMethod: "Nagad", transactionId: "TRX9001" } })
+    ).rejects.toThrow(/Nagad is not accepted/);
+    const { registration } = await registerForEvent({ slug: "paid", sessionUserId: member.id, rsvp: { paymentMethod: "bKash", transactionId: "TRX9002" } });
+    expect(registration).toMatchObject({ status: "PENDING_PAYMENT", totalFee: 500 });
   });
 });

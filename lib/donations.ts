@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { donationReceiptTemplate, sendEmail } from "@/lib/email";
@@ -54,6 +55,10 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
     throw new AppError("INVALID_DONATION", 400, "Please choose how you paid.");
   }
   const method = input.paymentMethod as DonationMethod;
+  const accepted = availableMethods(await getPaymentSettings());
+  if (accepted.length > 0 && !(accepted as string[]).includes(method)) {
+    throw new AppError("INVALID_DONATION", 400, `${method} is not accepted right now. Please choose another way to pay.`);
+  }
   const transactionRef = normalizeTransactionRef(input.transactionId);
   if (!/^[A-Z0-9-]{6,40}$/.test(transactionRef)) {
     throw new AppError("INVALID_DONATION", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");

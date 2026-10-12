@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
-import { getPaymentSettings, paymentLines } from "@/lib/payment-settings";
+import { availableMethods, getPaymentSettings, paymentLines } from "@/lib/payment-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -8,11 +8,13 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const s = await getPaymentSettings();
+    const methods = availableMethods(s);
     return NextResponse.json({
+      methods,
       lines: paymentLines(s),
       bkashNumber: s.bkashNumber || null,
       nagadNumber: s.nagadNumber || null,
-      banglaQrImage: s.banglaQrImage || null,
+      banglaQrImage: methods.includes("Bangla QR") ? s.banglaQrImage : null,
       banglaQrMerchant: s.banglaQrMerchant || null,
     });
   } catch (err) {

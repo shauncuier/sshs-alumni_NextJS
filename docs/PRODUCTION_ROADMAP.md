@@ -244,7 +244,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ### 19. Bangla QR and payment instructions · S · **You** · 🟡 Code done 2026-10-12
 **Done:** payment details moved out of env variables into **Admin → Donations → Payment details** (`Setting` table, `lib/payment-settings.ts`): bKash and Nagad numbers with account type, bank account, uploaded Bangla QR image and merchant name, extra note; `/donate` and the join form read them live (no rebuild); every change is in the activity log with old and new values. **Removed a dangerous button** on the event admin page ("Load SSHS Defaults") that filled made-up bKash, Nagad and bank numbers into the payment instructions; it is now "Use association details", which copies the saved real details; `npm run db:seed:prod` warns about any event still showing those made-up numbers (the local membership event has them). Also: the join form no longer pre-selects SSC batch 2010.
-**Left (you):** enter the real numbers and upload the bank's QR in Admin → Donations; apply them to the Golden Jubilee event (Admin → Events → Pricing → "Use association details" → Save); pay a small amount by scanning the QR.
+**Left (you):** enter the real numbers, upload the bank's QR and switch on the accepted methods in Admin → Payment settings (2026-10-13: one global setting used by events, joining and donations; the per-event copy is gone); pay a small amount by scanning the QR.
 **Tasks:** get the bank-issued Bangla QR image; put it in `public/`; set `NEXT_PUBLIC_BANGLA_QR_IMAGE` and `NEXT_PUBLIC_BANGLA_QR_MERCHANT`; write the payment instructions on the membership event (bKash / Nagad numbers, bank account).
 **Done when:** a committee member pays a small amount by scanning the QR from the form.
 
@@ -318,7 +318,7 @@ A read-through of every page and route against the steps above, with a UX/UI eye
 - **Consistency, feedback, accessibility** (`4a4f778`): failed loads say so; shared admin toast; dialogs close on Escape; menus close on outside click; one money format; labelled form fields; 16px fields on phones.
 - **SEO and docs**: titles and descriptions for every public page, event pages from the event, share image at its real size; this file, README, `.env.example`.
 
-**Left for you:** change the remote database password (critical); replace the sample payment numbers saved on the dev membership event ("Use association details" in the event editor); edit the event text that still says "1974"; confirm the school phone in `lib/data.ts` (+880 1745-950025) is real.
+**Left for you:** change the remote database password (critical); switch on the payment methods in Admin → Payment settings (the dev database was emptied of sample data on 2026-10-13 and the real Golden Jubilee seeded: member ৳1,500, spouse ৳700, child ৳500); confirm the school phone in `lib/data.ts` (+880 1745-950025) is real.
 
 ---
 

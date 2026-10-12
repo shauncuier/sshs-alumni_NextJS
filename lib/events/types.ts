@@ -118,7 +118,10 @@ export type PublicEvent = Omit<EventItem, "packages"> & {
   guestTypes: GuestTypeDef[];
   /** True when the admin defined the guest types (false: the older pair). */
   customGuestTypes: boolean;
+  /** Extra payment instructions for this event only; the association's own come from paymentMethods. */
   paymentInstructions: string | null;
+  /** Methods members can pay with (Admin → Payment settings). */
+  paymentMethods: string[];
 };
 
 export interface TicketInfo {
