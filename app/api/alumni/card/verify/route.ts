@@ -8,12 +8,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCardToken } from "@/lib/id-card";
 import { checkCardMembership } from "@/lib/card-membership";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 
 export async function POST(req: NextRequest) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "card-verify", { limit: 60, windowMs: 60_000 });
 
     const body = await readJsonBody(req);

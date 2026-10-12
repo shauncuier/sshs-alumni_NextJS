@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 import { listBroadcasts, recordBroadcast } from "@/lib/sms-history";
 import {
   sendBulkSms,
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
     requireSameOrigin(req);
     requireRateLimit(req, "admin-sms-send", { limit: 30, windowMs: 60 * 60_000 });
-    const { recipients, message, senderId } = await readJsonBody(req);
+    const { recipients, message, senderId } = await readJsonBody(req, LARGE_JSON_BYTES);
 
     if (!message || typeof message !== "string" || message.trim() === "") {
       return NextResponse.json(

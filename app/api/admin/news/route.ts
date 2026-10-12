@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { createNews, listAllNews, NEWS_CATEGORIES } from "@/lib/news";
-import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireSameOrigin } from "@/lib/request-security";
 import { requireArea } from "@/lib/admin/require-admin";
 
 const requireAdmin = () => requireArea("news", "You cannot manage news.");
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   try {
     requireSameOrigin(req);
     const me = await requireAdmin();
-    const article = await createNews(await readJsonBody(req), me.email);
+    const article = await createNews(await readJsonBody(req, LARGE_JSON_BYTES), me.email);
     await logActivity({
       category: "CONTENT",
       action: article.isPublished ? "news.published" : "news.drafted",

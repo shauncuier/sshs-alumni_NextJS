@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { requireArea } from "@/lib/admin/require-admin";
 import { createStory, listStoriesForAdmin } from "@/lib/stories";
-import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireSameOrigin } from "@/lib/request-security";
 
 const DENIED = "Only administrators can manage stories.";
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   try {
     requireSameOrigin(req);
     const me = await requireArea("stories", DENIED);
-    const story = await createStory(await readJsonBody(req), me.email);
+    const story = await createStory(await readJsonBody(req, LARGE_JSON_BYTES), me.email);
     await logActivity({ category: "CONTENT", action: story.isPublished ? "story.published" : "story.drafted", summary: `${story.isPublished ? "Published" : "Drafted"} story "${story.title}"`, actor: me, targetType: "AlumniStory", targetId: story.id, req });
     return NextResponse.json({ story }, { status: 201 });
   } catch (err) {

@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
-**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–12 done)
-**Tests:** 273 / 273 passing (44 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–13 done)
+**Tests:** 278 / 278 passing (45 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -140,5 +140,5 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Single `.env.local`; scripts load it through `lib/load-env.ts`.
 - Bangla QR payment option.
 - Security fixes in section 5.
-- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin, production env check (`docs/PRODUCTION_ENV.md`).
+- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin, production env check (`docs/PRODUCTION_ENV.md`), same-origin check and body caps on every write route.
 - Dev fix: a leftover PWA service worker served old JavaScript in `next dev` (hydration mismatch); dev now removes it.

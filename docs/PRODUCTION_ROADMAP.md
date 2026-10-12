@@ -35,7 +35,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ✅ Done 2026-10-12 |
 | 11a | Donation campaigns created and edited in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 12 | Secrets and environment for production | 3 · Security | S | ✅ Code done 2026-10-12 (values set on the server in step 28) |
-| 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ⬜ |
+| 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ✅ Done 2026-10-12 |
 | 14 | Dependency audit and security headers | 3 · Security | S | ⬜ |
 | 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ⬜ |
 | 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ⬜ |
@@ -202,7 +202,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 **Done when:** production env reviewed line by line against `.env.example`; nothing secret in git.
 
-### 13. Same-origin checks and body limits on all write routes · M
+### 13. Same-origin checks and body limits on all write routes · M · ✅ Done 2026-10-12
+**Result:** all 59 write routes checked: the 10 without a same-origin check got one (card and ticket verification, OCR, messages send and mark-read, payment initiation, profile photo upload and removal, password change, push subscribe, event registration); `requireSameOrigin` also refuses `Sec-Fetch-Site: cross-site` and no longer skips itself under tests. JSON bodies are capped at 64 KB (512 KB for news, stories, events, jobs and bulk SMS) and read as a stream, so an oversized body gets 413 and a malformed one 400; the event-registration JSON branch and the SSLCommerz callbacks (exempt from the origin check: the gateway posts them) are capped too. `tests/write-routes.test.ts` fails if a write route is added without the origin check or reads a body without a cap. 5 tests.
+
 **Tasks:** add `requireSameOrigin` to the remaining write routes (profile photo, password, posts, likes, jobs, messages, volunteers, RSVP JSON branch, payments initiate); cap JSON bodies (e.g. 64 KB); malformed bodies return 400, not 500.
 **Done when:** every POST/PUT/PATCH/DELETE route (except gateway callbacks) refuses cross-site requests; tests cover a few.
 

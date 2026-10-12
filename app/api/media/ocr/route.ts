@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { AppError } from "@/lib/app-error";
 import { OCR_LIMITS, performOcr, validateOcrImage } from "@/lib/media/ocr";
-import { readLimitedFormData, requireRateLimit } from "@/lib/request-security";
+import { readLimitedFormData, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 
 export async function POST(req: Request) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "ocr", { limit: 3, windowMs: 10 * 60_000 });
     const formData = await readLimitedFormData(req, OCR_LIMITS.maxBytes + 64 * 1024);
     const file = formData.get("file");

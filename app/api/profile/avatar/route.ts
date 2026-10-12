@@ -4,10 +4,11 @@ import prisma from "@/lib/prisma";
 import { logActivity } from "@/lib/activity-log";
 import { AVATAR_LIMITS, processAvatar, saveAvatar } from "@/lib/media/avatars";
 import { AppError } from "@/lib/app-error";
-import { readLimitedFormData, requireRateLimit } from "@/lib/request-security";
+import { readLimitedFormData, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 
 export async function POST(req: Request) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "avatar-upload", { limit: 10, windowMs: 15 * 60_000 });
 
     const session = await getMemberSession();
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    requireSameOrigin(req);
     const session = await getMemberSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
@@ -105,6 +107,9 @@ export async function DELETE(req: Request) {
     await logActivity({ category: "ACCOUNT", action: "photo.removed", summary: `${session.user.email} removed their profile photo`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, req });
     return NextResponse.json({ success: true, avatarUrl: null });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Profile Avatar DELETE Error]:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
-import { readJsonBody } from "@/lib/request-security";
+import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
 // In-memory or Redis/DB store of push subscriptions
 interface PushSubscriptionRecord {
@@ -26,6 +26,7 @@ const pushSubscriptions: PushSubscriptionRecord[] = [];
 
 export async function POST(req: NextRequest) {
   try {
+    requireSameOrigin(req);
     const session = await getSessionUser();
     if (!session) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     const body = await readJsonBody(req);

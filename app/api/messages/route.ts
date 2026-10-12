@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendToUser, SSE_EVENTS, isUserOnline } from "@/lib/realtime";
 import { getSessionUser } from "@/lib/session-user";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 import { canReceiveMessages, memberBasics } from "@/lib/network";
@@ -113,6 +113,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "send-message", { limit: 30, windowMs: 60_000 });
 
     const me = await getSessionUser();
@@ -219,6 +220,7 @@ export async function POST(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
+    requireSameOrigin(req);
     const me = await getSessionUser();
     if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -256,6 +258,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("[Messages API] PATCH error:", error);
     return NextResponse.json(
       { error: "Failed to mark as read" },

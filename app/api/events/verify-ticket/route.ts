@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { checkInTicket } from "@/lib/events/tickets";
 import { getSessionUser, isGateRole } from "@/lib/session-user";
-import { readJsonBody } from "@/lib/request-security";
+import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
 
 export async function POST(req: Request) {
   const me = await getSessionUser();
@@ -11,6 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Only gate staff can check tickets in." }, { status: 403 });
   }
   try {
+    requireSameOrigin(req);
     const { code } = await readJsonBody(req);
     if (typeof code !== "string" || !code.trim()) return NextResponse.json({ error: "Scan a ticket first." }, { status: 400 });
     const result = await checkInTicket(code, me.email);

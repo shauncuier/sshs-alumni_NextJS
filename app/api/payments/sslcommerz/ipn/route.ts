@@ -7,12 +7,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+// Gateway callbacks come from SSLCommerz, not this site, so there is no same-origin
+// check; the form is still capped (a real callback is a few KB).
+import { readLimitedFormData } from "@/lib/request-security";
 import { validateTransaction, validateIPNHash } from "@/lib/payments/sslcommerz";
 import { finalizeDonationPayment } from "@/lib/payments/finalize";
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
+    const formData = await readLimitedFormData(req, 64 * 1024);
     const data: Record<string, string> = {};
     formData.forEach((value, key) => {
       data[key] = String(value);

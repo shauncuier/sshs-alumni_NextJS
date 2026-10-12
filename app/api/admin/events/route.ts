@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { createEvent, listPublicEvents } from "@/lib/events/service";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
-import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireSameOrigin } from "@/lib/request-security";
 
 const forbidden = () => NextResponse.json({ error: "Only administrators can manage events." }, { status: 403 });
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   if (!me || !isAdminRole(me.role)) return forbidden();
   try {
     requireSameOrigin(req);
-    const event = await createEvent(await readJsonBody(req));
+    const event = await createEvent(await readJsonBody(req, LARGE_JSON_BYTES));
     await logActivity({ category: "EVENT", action: "event.created", summary: `Created event "${event.title}"`, actor: me, targetType: "Event", targetId: event.id, metadata: { slug: event.slug }, req });
     return NextResponse.json({ event }, { status: 201 });
   } catch (err) {

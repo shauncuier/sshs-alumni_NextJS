@@ -12,7 +12,7 @@ import prisma from "@/lib/prisma";
 import { initiatePayment, resolveGateway } from "@/lib/payments";
 import { getSessionUser } from "@/lib/session-user";
 import { logActivity } from "@/lib/activity-log";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 
 export async function POST(req: Request) {
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     );
   }
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "payment-initiation", { limit: 10, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
     const {

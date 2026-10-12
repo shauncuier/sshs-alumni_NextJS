@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { deleteNews, updateNews } from "@/lib/news";
-import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireSameOrigin } from "@/lib/request-security";
 import { requireArea } from "@/lib/admin/require-admin";
 
 type Params = { params: Promise<{ id: string }> };
@@ -14,7 +14,7 @@ export async function PATCH(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
     const me = await requireAdmin();
-    const body = await readJsonBody(req);
+    const body = await readJsonBody(req, LARGE_JSON_BYTES);
     const { item, published } = await updateNews((await params).id, body, me.email);
     const action = published ? "news.published" : body.isPublished === false ? "news.unpublished" : "news.updated";
     await logActivity({

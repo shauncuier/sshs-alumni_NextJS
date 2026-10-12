@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { requireArea } from "@/lib/admin/require-admin";
 import { deleteStory, updateStory } from "@/lib/stories";
-import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireSameOrigin } from "@/lib/request-security";
 
 type Params = { params: Promise<{ id: string }> };
 const DENIED = "Only administrators can manage stories.";
@@ -13,7 +13,7 @@ export async function PATCH(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
     const me = await requireArea("stories", DENIED);
-    const body = await readJsonBody(req);
+    const body = await readJsonBody(req, LARGE_JSON_BYTES);
     const { item, published } = await updateStory((await params).id, body, me.email);
     const action = published ? "story.published" : body.isPublished === false ? "story.unpublished" : "story.updated";
     await logActivity({ category: "CONTENT", action, summary: `${action === "story.published" ? "Published" : action === "story.unpublished" ? "Unpublished" : "Edited"} story "${item.title}"`, actor: me, targetType: "AlumniStory", targetId: item.id, metadata: { fields: Object.keys(body) }, req });

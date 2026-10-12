@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { AppError } from "@/lib/app-error";
 import { logActivity, logFailure } from "@/lib/activity-log";
 import { decideJob } from "@/lib/jobs";
-import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireSameOrigin } from "@/lib/request-security";
 import { getSessionUser } from "@/lib/session-user";
 
 type Params = { params: Promise<{ id: string }> };
@@ -16,7 +16,7 @@ export async function PATCH(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
     if (!me) throw new AppError("SIGN_IN_REQUIRED", 401, "Please sign in.");
-    const { action, reason } = await readJsonBody(req);
+    const { action, reason } = await readJsonBody(req, LARGE_JSON_BYTES);
     const job = await decideJob(me, id, action, reason);
     const verb = action === "APPROVE" ? "Approved" : action === "REJECT" ? "Rejected" : "Closed";
     await logActivity({

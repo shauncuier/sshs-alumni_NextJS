@@ -3,7 +3,7 @@ import { getMemberSession } from "@/lib/session-user";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { logActivity } from "@/lib/activity-log";
-import { requireRateLimit, readJsonBody } from "@/lib/request-security";
+import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { isEnvSuperAdmin } from "@/lib/admin/super-admin";
 
@@ -12,6 +12,7 @@ const MIN_PASSWORD_LENGTH = 8;
 // POST /api/profile/password — change the signed-in member's password.
 export async function POST(req: Request) {
   try {
+    requireSameOrigin(req);
     requireRateLimit(req, "password-change", { limit: 5, windowMs: 15 * 60_000 });
 
     const session = await getMemberSession();

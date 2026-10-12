@@ -3,7 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { AppError } from "@/lib/app-error";
 import { logActivity, logFailure } from "@/lib/activity-log";
 import { createJob, listOpenJobs } from "@/lib/jobs";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { readJsonBody, LARGE_JSON_BYTES, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 import { getSessionUser } from "@/lib/session-user";
 
 // GET /api/jobs — approved jobs still taking applications.
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     requireRateLimit(req, "job-posting", { limit: 5, windowMs: 60 * 60_000 });
     if (!me) throw new AppError("SIGN_IN_REQUIRED", 401, "Please sign in to post a job.");
-    const job = await createJob(me, await readJsonBody(req));
+    const job = await createJob(me, await readJsonBody(req, LARGE_JSON_BYTES));
     await logActivity({
       category: "CONTENT",
       action: job.status === "APPROVED" ? "job.posted" : "job.submitted",
