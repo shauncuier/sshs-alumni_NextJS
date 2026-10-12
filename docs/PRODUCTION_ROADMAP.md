@@ -48,7 +48,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 23 | Join flow tested end to end on real phones | 5 · UX | S | 🟡 Checklist ready (`docs/PHONE_TEST_CHECKLIST.md`); the phone run is yours |
 | 24 | Production build passes, warnings cleaned | 6 · Quality | M | ✅ Build clean 2026-10-12 (`npm start` smoke check by you) |
 | 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ✅ Done 2026-10-12 |
-| 26 | Manual QA walkthrough for every role | 6 · Quality | S | ⬜ |
+| 26 | Manual QA walkthrough for every role | 6 · Quality | S | 🟡 Access checks automated and passing; hands-on part by you |
 | 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | ⬜ |
 | 28 | Server set up (Node, Nginx, PM2, SSL, uploads folder) | 7 · Deploy | M | ⬜ |
 | 29 | Production database: back up, rehearse, migrate, seed | 7 · Deploy | M | ⬜ |
@@ -293,7 +293,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** route-handler tests for media admin gate, verification 409, logging entries per action, email fallback through the form API. Make the timing-sensitive tests robust: under heavy machine load (2026-10-12) the concurrent APPROVE/CANCEL race test and the joining tests timed out once, then passed on re-run.
 **Done when:** `npm test` passes and the listed gaps have tests.
 
-### 26. Manual QA by role · S
+### 26. Manual QA by role · S · 🟡 Prepared 2026-10-12
+**Done:** `npm run qa:roles` signs in as visitor, alumni, moderator, admin and super admin (throwaway accounts, deleted afterwards) against the local dev server and checks 42 pages and 6 APIs each, plus that a pending member cannot sign in: **all pass**. Found and fixed: signed-out visitors could open the "Post a job" form and only learned at submit that they must sign in (now sent to sign in first, like "Become a mentor"). `docs/QA_CHECKLIST.md` lists the hands-on actions per role.
+**Left (you):** run part 2 of the checklist.
 **Tasks:** written checklist, run once per role: visitor, alumni (pending → verified), moderator (gate), admin (approve, events, SMS), super admin (users, logs).
 **Done when:** every line passes; issues found become their own steps.
 
