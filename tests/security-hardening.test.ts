@@ -19,8 +19,8 @@ describe("security headers", () => {
     vi.stubEnv("NODE_ENV", env);
     vi.resetModules();
     const config = (await import("../next.config")).default;
-    const [rule] = await config.headers!();
-    return Object.fromEntries(rule.headers.map((h) => [h.key, h.value]));
+    const rules = await config.headers!();
+    return Object.fromEntries(rules[0].headers.map((h) => [h.key, h.value]));
   };
 
   it("production sends a strict policy, HSTS and no legacy XSS auditor", async () => {
@@ -31,8 +31,17 @@ describe("security headers", () => {
     expect(h["Content-Security-Policy"]).not.toContain("unsafe-eval");
     expect(h["Strict-Transport-Security"]).toBe("max-age=31536000; includeSubDomains");
     expect(h["X-XSS-Protection"]).toBe("0");
-    expect(h["Permissions-Policy"]).toContain("camera=(self)");
+    expect(h["Permissions-Policy"]).toContain("camera=()");
     expect(h["Cross-Origin-Opener-Policy"]).toBe("same-origin");
+  });
+
+  it("only the gate scanner may use the camera", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.resetModules();
+    const rules = await (await import("../next.config")).default.headers!();
+    const gate = rules.find((r) => r.source === "/gate");
+    expect(rules.indexOf(gate!)).toBeGreaterThan(0); // after the site-wide rule, so it wins
+    expect(gate!.headers).toEqual([{ key: "Permissions-Policy", value: expect.stringContaining("camera=(self)") }]);
   });
 
   it("development allows the HMR socket and sends no HSTS", async () => {

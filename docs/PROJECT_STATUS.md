@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–16 done; Phase 4 integrations: code done, waiting for domain, operator tests and real payment details)
-**Tests:** 289 / 289 passing (47 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 293 / 293 passing (49 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -30,6 +30,7 @@ Size: 19 Prisma models, 44 pages, 55 API route files.
 
 | Command | What it does |
 | --- | --- |
+| `npm run dev:https` | Dev server with HTTPS on :3443 for testing the gate camera from a phone |
 | `npm run dev` | Dev server on :3000 (`-H 0.0.0.0` for phone testing over LAN) |
 | `npm run db:push` | Legacy-column backfill, then `prisma db push` |
 | `npm run db:seed` | Local only: sample data plus one account per role (see 3); blocked when `NODE_ENV=production` |
@@ -63,7 +64,7 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Joining (Golden Jubilee registration) | Live | Photo, proof of study, payment details, admin approval; creates PENDING account |
 | Contact verification on joining | Live | Phone by SMS code (template `Your {Brand} OTP is XXXX`, `OTP_BRAND_NAME`); if the SMS fails or does not arrive, the member gets the code by email instead. One verified contact is required. **Email needs Resend or SMTP in production** — none is configured yet, so locally the emailed code is printed in the `next dev` console |
 | Payment methods on registration | Live | bKash, Nagad, **Bangla QR**, Bank, Cash — manual: member pays, enters transaction ID, committee approves. Bangla QR shows the image from `NEXT_PUBLIC_BANGLA_QR_IMAGE` |
-| Events, tickets, gate check-in | Live | QR tickets (sealed tokens); gate is typed/pasted, no camera |
+| Events, tickets, gate check-in | Live | QR tickets (sealed tokens); `/gate` scans with the phone camera (HTTPS needed), checks in for the chosen event only, live count |
 | Admin verifications queue | Live | Approve/reject payment + membership together |
 | User management (`/admin/users`) | Live | Search, add, role change, reset password, disable/enable; every change signs the user out |
 | Bulk SMS broadcast (`/admin/sms`) | Live | History in the `SmsBroadcast` table with the full recipient list; failed sends recorded |
@@ -118,7 +119,6 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 ## 6. Known issues and backlog
 
 - **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed:prod`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
-- Gate scanner has no camera yet (roadmap step 22); the headers already allow the camera on this site.
 - `sitemap.ts` is generated at build time.
 - `sshs_dev` contains test accounts and test events from earlier sessions.
 

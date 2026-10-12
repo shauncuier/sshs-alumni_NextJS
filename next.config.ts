@@ -61,8 +61,8 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      // camera=(self): the gate scanner may use the phone camera (roadmap step 22).
-      { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
+      // No page may use the camera, except the gate scanner (rule below).
+      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
       { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
       // The old XSS auditor is removed from browsers and could be abused; "0" turns it off.
       { key: "X-XSS-Protection", value: "0" },
@@ -70,7 +70,11 @@ const nextConfig: NextConfig = {
     ];
     // HTTPS only in production. No "preload": joining the browsers' preload list is hard to undo.
     if (!dev) headers.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });
-    return [{ source: "/:path*", headers }];
+    return [
+      { source: "/:path*", headers },
+      // Later rules override earlier ones for the same header: the gate scanner reads QR codes with the camera.
+      { source: "/gate", headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" }] },
+    ];
   },
 };
 

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
+    "dev:https": "next dev --experimental-https -H 0.0.0.0 -p 3443",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -32,6 +33,7 @@
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.2",
+    "jsqr": "^1.4.0",
     "lucide-react": "^1.47.0",
     "next": "16.3.8",
     "next-auth": "^4.24.15",

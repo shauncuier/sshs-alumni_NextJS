@@ -44,7 +44,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | 🟡 Admin page ready; the committee enters the real numbers and QR |
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
 | 21 | Admin pages usable on phones | 5 · UX | M | ✅ Done 2026-10-12 |
-| 22 | Gate scanner with the phone camera | 5 · UX | M | ⬜ |
+| 22 | Gate scanner with the phone camera | 5 · UX | M | ✅ Code done 2026-10-12 (20-ticket phone run by you) |
 | 23 | Join flow tested end to end on real phones | 5 · UX | S | ⬜ |
 | 24 | Production build passes, warnings cleaned | 6 · Quality | M | ⬜ |
 | 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ⬜ |
@@ -262,7 +262,10 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** make verifications, events, registrations, donations, SMS and logs usable at 375 px wide (the users page already is).
 **Done when:** a committee member can approve a join from a phone.
 
-### 22. Gate scanner with the camera · M
+### 22. Gate scanner with the camera · M · ✅ Code done 2026-10-12
+**Result:** `/gate` rebuilt phone-first. The camera reads QR codes continuously (the browser's own reader on Android Chrome, `jsQR` on iPhone Safari), with a green/red result card, a beep and a vibration; the same code held in view is read once, and scanning pauses 1.5 s after each result. Staff pick the event they are checking in for: a ticket for another event is refused (`WRONG_EVENT`), and a counter shows tickets in / expected and people in. Typing or pasting a code (or a USB/Bluetooth QR reader) still works. Camera allowed by `Permissions-Policy` on `/gate` only. Tests: wrong-event refusal, counts, gate-staff-only access, and that ticket QR codes decode with `jsQR` even from a blurred, dark frame. Checked at 375 px with a throwaway ticket: let in, then refused as already checked in. The camera needs HTTPS: test on a phone with `npm run dev:https` (port 3443, self-signed certificate) or an ngrok address.
+**Left (you):** check in 20 tickets from a phone in under 5 minutes.
+
 **Why:** on event day volunteers must scan tickets quickly; today the ticket code is typed or pasted.
 **Tasks:** camera QR scanning on `/gate`; allow camera in `Permissions-Policy` for that page only; check-in tied to the event being scanned.
 **Done when:** 20 tickets are checked in from a phone in under 5 minutes.

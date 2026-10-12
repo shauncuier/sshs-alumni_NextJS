@@ -25,10 +25,13 @@ export async function ticketInfo(registrationId: string): Promise<TicketInfo> {
 
 export type CheckInResult =
   | { ok: true; attendee: { name: string; batch: number | null }; eventTitle: string; packageName: string | null; headCount: number }
-  | { ok: false; reason: "INVALID" | "PENDING_PAYMENT" | "CANCELLED" | "ALREADY_CHECKED_IN"; message: string };
+  | { ok: false; reason: "INVALID" | "PENDING_PAYMENT" | "CANCELLED" | "ALREADY_CHECKED_IN" | "WRONG_EVENT"; message: string };
 
-/** Checks a scanned ticket in exactly once; refuses anything not CONFIRMED. */
-export async function checkInTicket(scan: string, staffEmail: string, now = new Date()): Promise<CheckInResult> {
+/**
+ * Checks a scanned ticket in exactly once; refuses anything not CONFIRMED. With
+ * `eventId` (the event the gate is running), a ticket for another event is refused.
+ */
+export async function checkInTicket(scan: string, staffEmail: string, now = new Date(), eventId?: string | null): Promise<CheckInResult> {
   const registrationId = readTicketToken(scan);
   if (!registrationId) return { ok: false, reason: "INVALID", message: "This is not a valid event ticket." };
 
@@ -38,6 +41,7 @@ export async function checkInTicket(scan: string, staffEmail: string, now = new 
       include: { event: true, user: { include: { profile: true } } },
     });
     if (!reg) return { ok: false, reason: "INVALID", message: "This ticket's registration no longer exists." } as const;
+    if (eventId && reg.eventId !== eventId) return { ok: false, reason: "WRONG_EVENT", message: `This ticket is for another event: ${reg.event.title}.` } as const;
     if (reg.status === "PENDING_PAYMENT") return { ok: false, reason: "PENDING_PAYMENT", message: "Payment not confirmed." } as const;
     if (reg.status === "CANCELLED") return { ok: false, reason: "CANCELLED", message: "Registration cancelled." } as const;
     if (reg.status === "CHECKED_IN") {
@@ -58,4 +62,20 @@ export async function checkInTicket(scan: string, staffEmail: string, now = new 
       headCount: reg.headCount,
     } as const;
   });
+}
+
+/** Check-in progress for the gate: confirmed tickets and how many are in. */
+export async function checkInCounts(eventId: string): Promise<{ checkedIn: number; expected: number; people: number }> {
+  const rows = await prisma.eventRegistration.groupBy({
+    by: ["status"],
+    where: { eventId, status: { in: ["CONFIRMED", "CHECKED_IN"] } },
+    _count: { id: true },
+    _sum: { headCount: true },
+  });
+  const inRow = rows.find((r) => r.status === "CHECKED_IN");
+  return {
+    checkedIn: inRow?._count.id ?? 0,
+    expected: rows.reduce((n, r) => n + r._count.id, 0),
+    people: inRow?._sum.headCount ?? 0,
+  };
 }
