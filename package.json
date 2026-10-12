@@ -15,6 +15,7 @@
     "db:seed:prod": "tsx prisma/seed-prod.ts",
     "db:remove-demo": "tsx prisma/remove-demo.ts",
     "db:super-admin": "tsx scripts/ensure-super-admin.ts",
+    "env:check": "tsx scripts/check-env.ts",
     "db:import-volunteers": "tsx scripts/import-volunteers.ts",
     "db:import-sms-history": "tsx scripts/import-sms-history.ts",
     "test": "vitest run",

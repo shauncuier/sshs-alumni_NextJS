@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
-**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–11a done)
-**Tests:** 268 / 268 passing (43 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–12 done)
+**Tests:** 273 / 273 passing (44 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -35,6 +35,7 @@ Size: 19 Prisma models, 44 pages, 55 API route files.
 | `npm run db:seed` | Local only: sample data plus one account per role (see 3); blocked when `NODE_ENV=production` |
 | `npm run db:seed:prod` | Production: batches, super admin, membership event only; disables accounts with old published passwords; lists leftover test accounts and demo content |
 | `npm run db:remove-demo` | Delete the demo seed's sample posts, news, announcements, events and campaigns |
+| `npm run env:check -- <file>` | Check a production env file (names only); the server runs the same check at start-up in production |
 | `npm run db:super-admin` | Create or sync the super admin from env without a restart |
 | `npm test` | Full Vitest suite |
 
@@ -139,5 +140,5 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Single `.env.local`; scripts load it through `lib/load-env.ts`.
 - Bangla QR payment option.
 - Security fixes in section 5.
-- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin.
+- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin, production env check (`docs/PRODUCTION_ENV.md`).
 - Dev fix: a leftover PWA service worker served old JavaScript in `next dev` (hydration mismatch); dev now removes it.

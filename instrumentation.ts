@@ -1,6 +1,18 @@
 // Runs once when a Next.js server starts.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  if (process.env.NODE_ENV === "production") {
+    const { checkProductionEnv } = await import("./lib/env-check");
+    const { errors, warnings } = checkProductionEnv(process.env);
+    for (const w of warnings) console.warn(`[env] ${w}`);
+    for (const e of errors) console.error(`[env] ${e}`);
+    // A public site must not run with a published secret or without its super admin.
+    // A production build started on this machine (localhost URL) only gets the messages.
+    const local = /localhost|127\.0\.0\.1/.test(process.env.NEXT_PUBLIC_APP_URL ?? "localhost");
+    if (errors.length > 0 && !local) {
+      throw new Error(`Refusing to start: ${errors.length} production setting(s) missing or unsafe (see [env] lines above). Check with: npm run env:check`);
+    }
+  }
   const { ensureSuperAdmin, envSuperAdminEmail } = await import("./lib/admin/super-admin");
   const { logActivity, pruneActivityLog } = await import("./lib/activity-log");
   try {

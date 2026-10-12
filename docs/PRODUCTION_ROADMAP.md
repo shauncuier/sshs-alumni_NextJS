@@ -34,7 +34,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 11 | Production-safe seed (no sample content) | 2 · Real data | S | ✅ Done 2026-10-12 |
 | 11a | Donation campaigns created and edited in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
-| 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
+| 12 | Secrets and environment for production | 3 · Security | S | ✅ Code done 2026-10-12 (values set on the server in step 28) |
 | 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ⬜ |
 | 14 | Dependency audit and security headers | 3 · Security | S | ⬜ |
 | 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ⬜ |
@@ -191,7 +191,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ## Phase 3 — Security
 
-### 12. Secrets and environment · S
+### 12. Secrets and environment · S · ✅ Code done 2026-10-12
+**Result:** `lib/env-check.ts` checks a production environment; in production the server refuses to start with a missing, short or published `NEXTAUTH_SECRET`, non-https or local `NEXTAUTH_URL` / `NEXT_PUBLIC_APP_URL` (or different ones), no super admin or a short password, or online payments switched on, and logs warnings for test-account passwords, missing email/SMS/contact/donation/Bangla QR settings and a relative `UPLOADS_DIR`. `npm run env:check -- <file>` runs the same check on an env file (names only, never values). `.env.example` no longer contains a secret; `docs/PRODUCTION_ENV.md` lists every production variable. Git history scanned: no current API key, database URL or super admin password in it; the old example `NEXTAUTH_SECRET` and an old local seed admin password are (both must not be used anywhere). The real values are set on the server in step 28 (hosting deferred). 5 tests.
+
 **Tasks:**
 - Generate a new `NEXTAUTH_SECRET` (`openssl rand -base64 32`) for production; replace the fixed example value in `.env.example` with a placeholder.
 - Production `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` (12+ characters, password manager).
