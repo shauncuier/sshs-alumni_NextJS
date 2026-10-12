@@ -8,7 +8,6 @@ import AlumniCard from "@/components/alumni/AlumniCard";
 import type { AlumniMember } from "@/lib/data";
 
 // Every SSC batch the association covers, newest first.
-const FIRST_SSC_BATCH = 1985;
 const SSC_BATCH_YEARS = Array.from(
   { length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 },
   (_, i) => new Date().getFullYear() - i
@@ -57,6 +56,7 @@ function toMember(row: DirectoryRow): AlumniMember {
   };
 }
 import { Search, LayoutGrid, List, SlidersHorizontal, X, BadgeCheck, GraduationCap, Loader2 } from "lucide-react";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 function DirectoryContent() {
   const searchParams = useSearchParams();
@@ -225,7 +225,7 @@ function DirectoryContent() {
                 onChange={(e) => setSelectedBatch(e.target.value)}
                 className="bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600"
               >
-                <option value="all">All Batches (1985-2025)</option>
+                <option value="all">All batches</option>
                 {SSC_BATCH_YEARS.map((year) => (
                   <option key={year} value={year.toString()}>
                     SSC Batch {year}

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { hashMemberPassword } from "@/lib/members/create-member";
 import { isEnvSuperAdmin } from "./super-admin";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 /**
  * User management for the admin console. Who may do what:
@@ -18,7 +19,6 @@ export const ASSIGNABLE_ROLES = ["ALUMNI", "MODERATOR", "ADMIN"] as const;
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 export const USER_PAGE_SIZE = 25;
 const MIN_PASSWORD_LENGTH = 8;
-const FIRST_SSC_BATCH = 1985;
 
 export type Actor = { id: string; email: string; role: string };
 type Target = { id: string; email: string; role: string };

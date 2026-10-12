@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
-import type { BatchInfo } from "@/lib/data";
+import { FIRST_SSC_BATCH, type BatchInfo } from "@/lib/data";
 
 /**
  * SSC batches 1985 to this year. Member counts come from verified profiles; the
@@ -9,7 +9,7 @@ import type { BatchInfo } from "@/lib/data";
  * representative shows none.
  */
 
-export const FIRST_BATCH = 1985;
+export const FIRST_BATCH = FIRST_SSC_BATCH;
 const DEFAULT_COVER = "/golden-jubilee.jpg";
 
 export function isBatchYear(year: number): boolean {

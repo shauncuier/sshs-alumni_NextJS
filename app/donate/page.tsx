@@ -35,6 +35,13 @@ export default function DonatePage() {
   }, []);
   const [amount, setAmount] = useState<number | string>(5000);
   const [customAmount, setCustomAmount] = useState("");
+  // The home page links here with ?amount=1000 etc.
+  useEffect(() => {
+    const preset = Number(new URLSearchParams(window.location.search).get("amount"));
+    if (!Number.isFinite(preset) || preset < 10 || preset > 10_000_000) return;
+    setAmount(preset); // eslint-disable-line react-hooks/set-state-in-effect
+    if (![500, 1000, 5000, 10000].includes(preset)) setCustomAmount(String(preset));
+  }, []);
   // Prefill from the signed-in member; visitors start with empty fields.
   const { data: session } = useSession();
   const [donorNameEdit, setDonorName] = useState<string | null>(null);

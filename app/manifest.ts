@@ -37,7 +37,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "Alumni Directory",
         short_name: "Directory",
-        description: "Search classmates across batches 1985–2025",
+        description: "Search classmates by SSC batch",
         url: "/alumni",
         icons: [{ src: "/icon-192.png", sizes: "192x192" }],
       },

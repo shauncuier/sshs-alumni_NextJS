@@ -6,12 +6,44 @@ import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
 import { MapPin, Phone, Mail, Send, CheckCircle2, Globe } from "lucide-react";
 
-export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
+const SUBJECTS = [
+  "General question",
+  "Joining & verification",
+  "Events & sponsorship",
+  "Donations",
+  "Batch representative",
+];
+const field = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600";
+const label = "block font-semibold text-slate-700 mb-1";
 
-  const handleSubmit = (e: React.FormEvent) => {
+export default function ContactPage() {
+  const [form, setForm] = useState({ name: "", batch: "", email: "", phone: "", subject: SUBJECTS[0], message: "" });
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reference, setReference] = useState<string | null>(null);
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // Sent to POST /api/contact: emailed to the committee's inbox and kept in the activity log.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSending(true);
+    setError(null);
+    const details = [form.batch.trim() && `SSC batch: ${form.batch.trim()}`, form.phone.trim() && `Phone: ${form.phone.trim()}`].filter(Boolean).join("\n");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name, email: form.email, subject: form.subject, message: details ? `${details}\n\n${form.message}` : form.message }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Your message could not be sent. Please try again.");
+      setReference(data.ticketId ?? data.reference ?? "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Your message could not be sent. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -57,16 +89,16 @@ export default function ContactPage() {
                   <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
-                      <strong className="block text-slate-900 font-semibold">Hotline:</strong>
-                      <span>{schoolInfo.phone}</span>
+                      <strong className="block text-slate-900 font-semibold">School phone:</strong>
+                      <a href={`tel:${schoolInfo.phone.replace(/[^+\d]/g, "")}`} className="text-emerald-700 hover:underline">{schoolInfo.phone}</a>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
-                      <strong className="block text-slate-900 font-semibold">Official Email:</strong>
-                      <span>{schoolInfo.associationEmail}</span>
+                      <strong className="block text-slate-900 font-semibold">Alumni association email:</strong>
+                      <a href={`mailto:${schoolInfo.associationEmail}`} className="text-emerald-700 hover:underline break-all">{schoolInfo.associationEmail}</a>
                     </div>
                   </div>
 
@@ -101,83 +133,54 @@ export default function ContactPage() {
                 Our volunteer executive committee typically responds within 24 to 48 hours.
               </p>
 
-              {submitted ? (
-                <div className="p-8 text-center space-y-3 bg-emerald-50 rounded-2xl border border-emerald-200">
+              {reference !== null ? (
+                <div role="status" className="p-8 text-center space-y-3 bg-emerald-50 rounded-2xl border border-emerald-200">
                   <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                  <h4 className="font-bold text-base text-slate-900">Message Received</h4>
-                  <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                    Thank you for contacting the Sabuj Shikshayatan Alumni Secretariat. A designated batch coordinator or committee secretary will reach out shortly.
+                  <h4 className="font-bold text-base text-slate-900">Message sent</h4>
+                  <p className="text-sm text-slate-600 max-w-sm mx-auto">
+                    Thank you. The committee will reply to {form.email}.{reference ? ` Your reference: ${reference}.` : ""}
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                <form onSubmit={handleSubmit} className="space-y-4 text-sm">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Your Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Md. Rahim Ahmed"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                      />
+                      <label htmlFor="ct-name" className={label}>Your name *</label>
+                      <input id="ct-name" type="text" required autoComplete="name" maxLength={120} value={form.name} onChange={set("name")} className={field} />
                     </div>
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">SSC Batch Year (if Alumnus)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 2008"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                      />
+                      <label htmlFor="ct-batch" className={label}>SSC batch <span className="font-normal text-slate-400">(if you studied here)</span></label>
+                      <input id="ct-batch" type="text" inputMode="numeric" maxLength={4} value={form.batch} onChange={set("batch")} className={field} />
                     </div>
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="name@example.com"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                      />
+                      <label htmlFor="ct-email" className={label}>Email *</label>
+                      <input id="ct-email" type="email" required autoComplete="email" maxLength={254} value={form.email} onChange={set("email")} className={field} />
                     </div>
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
-                      <input
-                        type="text"
-                        placeholder="+880 1700-000000"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                      />
+                      <label htmlFor="ct-phone" className={label}>Phone <span className="font-normal text-slate-400">(optional)</span></label>
+                      <input id="ct-phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={30} value={form.phone} onChange={set("phone")} className={field} />
                     </div>
                   </div>
-
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Subject</label>
-                    <select className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600">
-                      <option>General Alumni Inquiry</option>
-                      <option>Registration &amp; Verification Support</option>
-                      <option>Reunion &amp; Event Sponsorship</option>
-                      <option>Scholarship Fund Contribution</option>
-                      <option>Batch Representative Appointment</option>
+                    <label htmlFor="ct-subject" className={label}>Subject</label>
+                    <select id="ct-subject" value={form.subject} onChange={set("subject")} className={field}>
+                      {SUBJECTS.map((s) => <option key={s}>{s}</option>)}
                     </select>
                   </div>
-
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Your Message</label>
-                    <textarea
-                      rows={5}
-                      required
-                      placeholder="Please describe how we can assist you..."
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none"
-                    />
+                    <label htmlFor="ct-message" className={label}>Message *</label>
+                    <textarea id="ct-message" rows={5} required maxLength={5000} value={form.message} onChange={set("message")} className={`${field} resize-none`} />
                   </div>
-
+                  {error && <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p>}
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-emerald-800 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors flex items-center gap-2"
+                    disabled={sending}
+                    className="px-6 py-3 min-h-[48px] bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold rounded-xl shadow-md transition-colors flex items-center gap-2 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Send Message to Secretariat</span>
+                    <span>{sending ? "Sending…" : "Send message"}</span>
                   </button>
                 </form>
               )}

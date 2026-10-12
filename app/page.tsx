@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
@@ -8,254 +9,195 @@ import AlumniCard from "@/components/alumni/AlumniCard";
 import BatchCard from "@/components/batches/BatchCard";
 import EventCard from "@/components/events/EventCard";
 import StoryCard from "@/components/stories/StoryCard";
-import { listPublicEvents } from "@/lib/events/service";
+import { getMembershipEvent, listPublicEvents } from "@/lib/events/service";
 import { latestPublishedPhotos } from "@/lib/gallery";
 import { listPublishedStories } from "@/lib/stories";
 import { listPublishedAchievements } from "@/lib/achievements";
 import { listOpenCampaigns } from "@/lib/campaigns";
+import { listPublishedNews } from "@/lib/news";
+import { listOpenJobs } from "@/lib/jobs";
+import { listApprovedMentors } from "@/lib/mentorship";
+import { listBatches } from "@/lib/batches";
+import { formatTaka } from "@/lib/events/pricing";
+import { formatDate } from "@/lib/utils";
 import prisma from "@/lib/prisma";
-import type {
-  AlumniMember,
-  BatchInfo,
-  AlumniStoryItem,
-  AchievementItem,
-  GalleryPhotoItem,
-  DonationCampaignItem,
-} from "@/lib/data";
-import { GraduationCap, Heart, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { schoolInfo, type AlumniMember } from "@/lib/data";
+import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Newspaper, Sparkles, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: { absolute: "SSGHS Alumni Association | Sabuj Shikshayatan Government High School" },
+  description:
+    "The alumni association of Sabuj Shikshayatan Government High School, Sitakunda: find batchmates, join events, mentor juniors and give back to the school.",
+  openGraph: { images: [{ url: "/golden-jubilee.jpg", width: 1376, height: 768 }] },
+};
+
+// Every section below shows real records and hides itself when there are none.
 export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
+  const yearsSinceFounding = new Date().getFullYear() - schoolInfo.established;
+  // Members the public directory lists: verified profiles of accounts that are not disabled.
+  const listed = { verificationStatus: "VERIFIED" as const, user: { disabledAt: null } };
 
-  // Fetch dynamic records from database with safety fallbacks
-  const verifiedProfile = { verificationStatus: "VERIFIED" as const };
   const [
-    dbVerifiedCount,
-    dbBatchCounts,
-    dbCountries,
-    dbProfessions,
-    dbProfiles,
-    dbBatches,
-    dbCampaigns,
-    dbStories,
-    dbAchievements,
-    dbPhotos,
-    allEvents,
+    verifiedCount,
+    countries,
+    professions,
+    recentProfiles,
+    batches,
+    campaigns,
+    stories,
+    achievements,
+    photos,
+    events,
+    membershipEvent,
+    news,
+    jobs,
+    mentors,
   ] = await Promise.all([
-    prisma.user.count({ where: { status: "VERIFIED" } }).catch(() => 0),
+    prisma.alumniProfile.count({ where: listed }).catch(() => 0),
+    prisma.alumniProfile.groupBy({ by: ["locationCountry"], where: { ...listed, locationCountry: { not: "" } } }).catch(() => []),
+    prisma.alumniProfile.groupBy({ by: ["profession"], where: { ...listed, profession: { not: "" } } }).catch(() => []),
     prisma.alumniProfile
-      .groupBy({ by: ["sscBatch"], where: verifiedProfile, _count: { id: true } })
+      .findMany({ where: listed, take: 4, orderBy: { createdAt: "desc" }, include: { user: { select: { email: true } } } })
       .catch(() => []),
-    prisma.alumniProfile
-      .groupBy({ by: ["locationCountry"], where: { ...verifiedProfile, locationCountry: { not: "" } } })
-      .catch(() => []),
-    prisma.alumniProfile
-      .groupBy({ by: ["profession"], where: { ...verifiedProfile, profession: { not: "" } } })
-      .catch(() => []),
-    // Only verified members are public; pending and rejected profiles must never be featured.
-    prisma.alumniProfile
-      .findMany({
-        where: verifiedProfile,
-        take: 4,
-        orderBy: { createdAt: "desc" },
-        include: { user: true },
-      })
-      .catch(() => []),
-    prisma.batch.findMany().catch(() => []),
-    listOpenCampaigns(1).catch(() => []),
-    // Only published stories and achievements.
+    listBatches().catch(() => []),
+    listOpenCampaigns().catch(() => []),
     listPublishedStories(2).catch(() => []),
     listPublishedAchievements(3).catch(() => []),
-    // Only photos from published albums.
     latestPublishedPhotos(4).catch(() => []),
     listPublicEvents().catch(() => []),
+    getMembershipEvent().catch(() => null),
+    listPublishedNews(3).catch(() => []),
+    listOpenJobs().catch(() => []),
+    listApprovedMentors().catch(() => []),
   ]);
 
-  // Dynamic Featured Alumni
-  const dynamicAlumni: AlumniMember[] = dbProfiles.map((p) => ({
+  const recentMembers: AlumniMember[] = recentProfiles.map((p) => ({
     id: p.id,
     fullName: p.fullName,
     sscBatch: p.sscBatch,
     graduationYear: p.graduationYear || p.sscBatch,
-    rollNumber: p.rollNumber || undefined,
-    profession: p.profession || "Distinguished Alumnus",
-    company: p.company || "",
-    industry: p.industry || "General",
-    locationCity: p.locationCity || "Chattogram",
-    locationCountry: p.locationCountry || "Bangladesh",
-    bio: p.bio || `Sabuj Shikshayatan SSC Batch of ${p.sscBatch}`,
-    avatarUrl:
-      p.avatarUrl ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(p.fullName)}&background=06281e&color=fcd34d&bold=true`,
-    coverUrl: p.coverUrl || undefined,
-    isVerified: p.user?.status === "VERIFIED",
+    profession: p.profession,
+    company: p.company ?? "",
+    industry: p.industry ?? "",
+    locationCity: p.locationCity,
+    locationCountry: p.locationCountry,
+    bio: p.bio ?? "",
+    avatarUrl: p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.fullName)}&background=06281e&color=fcd34d&bold=true`,
+    isVerified: true,
     phone: p.isPhonePublic ? p.phone || undefined : undefined,
-    email: p.isEmailPublic ? p.user?.email || "" : "",
+    email: p.isEmailPublic ? p.user.email : "",
     skills: Array.isArray(p.skills) ? (p.skills as string[]) : [],
     connectionCount: 0,
   }));
-  const featuredAlumni = dynamicAlumni;
 
-  // Featured batches: the three with the most verified members
-  const memberCount = new Map(dbBatchCounts.map((c) => [c.sscBatch, c._count.id]));
-  const batchByYear = new Map(dbBatches.map((b) => [b.year, b]));
-  const topBatchYears = [...memberCount.entries()]
-    .sort((a, b) => b[1] - a[1] || b[0] - a[0])
-    .slice(0, 3)
-    .map(([year]) => year);
-  const featuredBatches: BatchInfo[] = topBatchYears.map((year) => {
-    const b = batchByYear.get(year);
-    return {
-      year,
-      name: b?.name || `SSC Batch ${year}`,
-      tagline: b?.tagline || `Class of ${year}`,
-      totalAlumni: memberCount.get(year) ?? 0,
-      classRepresentative: b?.classRepresentative || "Batch Secretariat",
-      representativePhone: b?.representativePhone || "",
-      reunionDate: b?.reunionDate ? b.reunionDate.toISOString().slice(0, 10) : undefined,
-      coverImage:
-        b?.coverImage ||
-        "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80",
-      description:
-        b?.description ||
-        `Celebrating lifelong bonds and mutual achievements of the ${year} SSC graduates.`,
-    };
-  });
+  const batchesWithMembers = batches.filter((b) => b.totalAlumni > 0);
+  const topBatches = [...batchesWithMembers].sort((a, b) => b.totalAlumni - a.totalAlumni || b.year - a.year).slice(0, 3);
 
-  // Dynamic Donation Campaign
-  const featuredDonation: DonationCampaignItem | null = dbCampaigns[0] ? { ...dbCampaigns[0], featured: true } : null;
-
-  // Dynamic Stories
-  const featuredStories: AlumniStoryItem[] = dbStories;
-
-  // Dynamic Achievements
-  const featuredAchievements: AchievementItem[] = dbAchievements;
-
-  // Dynamic Gallery Photos
-  const galleryPreview: GalleryPhotoItem[] = dbPhotos;
-
-  const upcomingEvents = allEvents.filter((e) => e.date >= today).slice(0, 3);
-  const jubileeEvent = allEvents.find((e) => e.isMegaEvent);
-  const batchDisplayCount = memberCount.size;
-  const countryCount = dbCountries.length;
-  const professionCount = dbProfessions.length;
+  // The hero shows the membership event (joining the association) or, failing that, the next big event.
+  const heroEvent = membershipEvent ?? events.find((e) => e.isMegaEvent && e.date >= today) ?? null;
+  const upcomingEvents = events.filter((e) => e.date >= today && e.id !== heroEvent?.id).slice(0, 3);
+  const featuredCampaign = campaigns[0] ?? null;
+  const latestJobs = jobs.slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />
 
       <main className="flex-1">
-        {/* =========================================================
-            1. HERO SECTION
-        ========================================================= */}
-        <section className="relative bg-[#06281e] text-white overflow-hidden py-20 lg:py-28">
-          {/* Subtle background overlay & texture */}
+        {/* 1. HERO */}
+        <section className="relative bg-[#06281e] text-white overflow-hidden py-16 lg:py-24">
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]" />
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              {/* Left Column: Headline & CTAs */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
               <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-                {/* School Accreditation Pill */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-xs font-semibold shadow-inner">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <span>Official Digital Alumni Community • EIIN: 105070</span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-xs font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span>Alumni Association · EIIN {schoolInfo.eiin}</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]">
                   Connecting Generations of{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-200 to-amber-300">
-                    Sabuj Shikshayatan
-                  </span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-200 to-amber-300">Sabuj Shikshayatan</span>
                 </h1>
 
-                <p className="text-base sm:text-xl text-emerald-100/90 font-normal leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                  One school. Generations of memories. A lifetime of connections.
-                  Reunite with classmates, celebrate collective milestones, and shape the future of our alma mater.
+                <p className="text-base sm:text-xl text-emerald-100/90 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                  One school, {yearsSinceFounding} years of students. Find your batchmates, join our events and help the school that taught us.
                 </p>
 
-                {/* Primary & Secondary Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-                  <Link
-                    href="/register"
-                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-bold text-base shadow-xl shadow-emerald-950/60 transition-all transform hover:-translate-y-1 text-center flex items-center justify-center gap-2"
-                  >
-                    <span>Join the Alumni Network</span>
+                  <Link href="/register" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-bold text-base shadow-xl transition-colors text-center flex items-center justify-center gap-2">
+                    <span>Join the association</span>
                     <ArrowRight className="w-5 h-5" />
                   </Link>
-
-                  <Link
-                    href="/alumni"
-                    className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-[#0b3d2c]/90 hover:bg-[#0e4d36] text-emerald-200 hover:text-white border border-emerald-700/60 font-bold text-base transition-all text-center"
-                  >
-                    Explore Alumni Directory
+                  <Link href="/alumni" className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-[#0b3d2c]/90 hover:bg-[#0e4d36] text-emerald-200 hover:text-white border border-emerald-700/60 font-bold text-base transition-colors text-center">
+                    Find alumni
                   </Link>
                 </div>
 
-                {/* Verified Members Badge */}
-                <div className="pt-4 flex items-center justify-center lg:justify-start gap-4 text-xs text-emerald-300/80">
-                  <div className="flex -space-x-2">
-                    {featuredAlumni.slice(0, 4).map((a) => (
-                      <img loading="lazy" decoding="async"
-                        key={a.id}
-                        src={a.avatarUrl}
-                        alt={a.fullName}
-                        className="w-8 h-8 rounded-full border-2 border-[#06281e] object-cover"
-                      />
-                    ))}
+                {verifiedCount > 0 && (
+                  <div className="pt-2 flex items-center justify-center lg:justify-start gap-4 text-xs text-emerald-300/90">
+                    <div className="flex -space-x-2">
+                      {recentMembers.map((a) => (
+                        <img key={a.id} loading="lazy" decoding="async" src={a.avatarUrl} alt="" className="w-8 h-8 rounded-full border-2 border-[#06281e] object-cover" />
+                      ))}
+                    </div>
+                    <span>
+                      {verifiedCount} verified {verifiedCount === 1 ? "member" : "members"} from {batchesWithMembers.length} {batchesWithMembers.length === 1 ? "batch" : "batches"}
+                    </span>
                   </div>
-                  <span>{dbVerifiedCount} verified alumni across {batchDisplayCount} batches</span>
-                </div>
+                )}
               </div>
 
-              {/* Right Column: Hero Visual Showcase */}
-              <div className="lg:col-span-5 relative">
-                <div className="relative mx-auto max-w-md lg:max-w-none">
-                  {/* Outer decorative card */}
-                  <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-gradient-to-b from-emerald-800/40 to-[#041a13]">
+              {/* Membership / next big event, from the events table */}
+              <div className="lg:col-span-5">
+                <div className="relative mx-auto max-w-md lg:max-w-none rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-[#041a13]">
+                  {heroEvent?.bannerImage && !heroEvent.bannerImage.startsWith("/golden-jubilee") ? (
+                    <img src={heroEvent.bannerImage} alt="" loading="eager" fetchPriority="high" decoding="async" className="w-full h-[360px] sm:h-[400px] object-cover" />
+                  ) : (
                     <Image
-                      src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80"
-                      alt="Sabuj Shikshayatan School Reunion"
-                      width={1200}
-                      height={800}
-                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      src="/golden-jubilee.jpg"
+                      alt={`${schoolInfo.name}, ${yearsSinceFounding} years`}
+                      width={1376}
+                      height={768}
+                      sizes="(max-width: 1024px) 100vw, 40vw"
                       loading="eager"
                       fetchPriority="high"
-                      className="w-full h-[400px] object-cover object-center"
+                      className="w-full h-[360px] sm:h-[400px] object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/30 to-transparent" />
-
-                    {/* Floating Info Pill 1 */}
-                    <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-[#06281e]/95 backdrop-blur-md border border-amber-400/50 shadow-2xl flex items-center justify-between">
-                      <div>
-                        <div className="text-[11px] font-black text-amber-300 uppercase tracking-wider flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-amber-300" />
-                          <span>50-Year Golden Jubilee Landmark</span>
-                        </div>
-                        <div className="font-bold text-sm text-white line-clamp-1">
-                          সুবর্ণ জয়ন্তী ৫০ বছর পূর্তি উৎসব
-                        </div>
-                        <div className="text-xs text-emerald-200">
-                          Approx. Dec 30, 2026 • Sitakunda, Chattogram
-                        </div>
-                      </div>
-                      <Link
-                        href={jubileeEvent ? `/events/${jubileeEvent.slug}` : "/events"}
-                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition-colors shrink-0 shadow"
-                      >
-                        Register
-                      </Link>
-                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/30 to-transparent" />
+                  <div className="absolute -top-0 right-4 mt-4 bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow-xl flex items-center gap-1.5 text-xs">
+                    <Sparkles className="w-4 h-4" />
+                    <span>{yearsSinceFounding} years · {schoolInfo.established}–{new Date().getFullYear()}</span>
                   </div>
-
-                  {/* Floating badge top right */}
-                  <div className="absolute -top-4 -right-4 bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-2xl shadow-xl flex items-center gap-1.5 text-xs rotate-3 border-2 border-white">
-                    <Sparkles className="w-4 h-4 fill-slate-950" />
-                    <span>50 Years of Legacy</span>
+                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-[#06281e]/95 border border-amber-400/50 shadow-2xl flex items-center justify-between gap-3">
+                    {heroEvent ? (
+                      <>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-black text-amber-300 uppercase tracking-wider">
+                            {heroEvent.isMembershipEvent ? "Join through this event" : "Coming up"}
+                          </p>
+                          <p className="font-bold text-sm text-white line-clamp-2">{heroEvent.title}</p>
+                          <p className="text-xs text-emerald-200 mt-0.5">
+                            {formatDate(heroEvent.date)}
+                            {heroEvent.locationCity ? ` · ${heroEvent.locationCity}` : ""}
+                          </p>
+                        </div>
+                        <Link href={`/events/${heroEvent.slug}`} className="px-3.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shrink-0">
+                          {heroEvent.isMembershipEvent ? "Register" : "Details"}
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-bold text-sm text-white">Become a member of the alumni association</p>
+                        <Link href="/register" className="px-3.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shrink-0">
+                          Join
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -263,232 +205,111 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* =========================================================
-            2. STATS SECTION (Animated Counters)
-        ========================================================= */}
-        <section className="bg-white border-y border-slate-200/80 py-10 shadow-xs relative z-20 -mt-2">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-              <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={dbVerifiedCount} />
-                </div>
-                <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
-                  Registered Alumni
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">Across science, arts &amp; business</p>
-              </div>
-
-              <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={batchDisplayCount} />
-                </div>
-                <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
-                  SSC Batches
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">With verified members</p>
-              </div>
-
-              <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={countryCount} />
-                </div>
-                <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
-                  Countries Worldwide
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">Where our members live</p>
-              </div>
-
-              <div className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
-                  <StatCounter end={professionCount} />
-                </div>
-                <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">
-                  Professions &amp; Fields
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">Doctors, Engineers &amp; Leaders</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================
-            3. ABOUT ALUMNI ASSOCIATION & SCHOOL HERITAGE
-        ========================================================= */}
-        <section className="py-20 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              <div className="lg:col-span-6 space-y-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
-                  <GraduationCap className="w-4 h-4 text-emerald-700" />
-                  <span>Our Heritage &amp; Purpose</span>
-                </div>
-
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                  Built on Integrity, United by Lifetime Friendships.
-                </h2>
-
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  Sabuj Shikshayatan Government High School, nestled in South Sonaichhari, Sitakunda, Chattogram, has nurtured thousands of young minds who have gone on to lead in medicine, infrastructure engineering, computer science, education, and civil administration.
-                </p>
-
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  The Alumni Association serves as the institutional bridge between generations of former students and current learners. We sponsor scholarships, modernize STEM and computer laboratories, celebrate retired educators, and maintain an inclusive global network.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {[
-                    "Classmate & Batch Finder",
-                    "Student Merit Scholarships",
-                    "Annual Mega Reunions",
-                    "Free Healthcare Camps",
-                    "Mentorship for Juniors",
-                    "Verified Member Directory",
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-3">
-                  <Link
-                    href="/about"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-emerald-800 hover:text-emerald-700"
-                  >
-                    <span>Read More About Our Constitution &amp; Executive Board</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Visual Grid of School Memories */}
-              <div className="lg:col-span-6 grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <Image src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80" alt="Assembly" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-48 object-cover hover:scale-105 transition-transform" />
+        {/* 2. NUMBERS (only real counts; hidden until there are members) */}
+        {verifiedCount > 0 && (
+          <section className="bg-white border-y border-slate-200/80 py-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8">
+              {[
+                { n: verifiedCount, label: "Verified members", note: "In the alumni directory" },
+                { n: batchesWithMembers.length, label: "SSC batches", note: "With verified members" },
+                { n: countries.length, label: "Countries", note: "Where members live" },
+                { n: professions.length, label: "Professions", note: "Members' fields of work" },
+              ].map((s) => (
+                <div key={s.label} className="text-center p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                  <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-900 tracking-tight">
+                    <StatCounter end={s.n} />
                   </div>
-                  <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <Image src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80" alt="Teachers Tribute" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-60 object-cover hover:scale-105 transition-transform" />
-                  </div>
+                  <div className="text-xs sm:text-sm font-bold text-emerald-800 uppercase tracking-wider mt-1">{s.label}</div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{s.note}</p>
                 </div>
-
-                <div className="space-y-4 pt-8">
-                  <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <Image src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80" alt="Reunion Group" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-60 object-cover hover:scale-105 transition-transform" />
-                  </div>
-                  <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <Image src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=600&q=80" alt="Computer Lab" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-48 object-cover hover:scale-105 transition-transform" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================
-            4. FEATURED ALUMNI DIRECTORY PREVIEW
-        ========================================================= */}
-        {featuredAlumni.length > 0 && (
-          <section className="py-20 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                    Global Directory
-                  </div>
-                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Meet Our Distinguished Alumni
-                  </h2>
-                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                    Discover classmates, industry pioneers, and fellow graduates making a proud impact across Bangladesh and abroad.
-                  </p>
-                </div>
-
-                <Link
-                  href="/alumni"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-                >
-                  <span>Browse Full Directory ({dbVerifiedCount})</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {featuredAlumni.map((alumnus) => (
-                  <AlumniCard key={alumnus.id} alumni={alumnus} viewMode="grid" />
-                ))}
-              </div>
+              ))}
             </div>
           </section>
         )}
 
-        {/* =========================================================
-            5. EXPLORE BATCHES (SSC 1985 - 2025)
-        ========================================================= */}
-        {featuredBatches.length > 0 && (
-          <section className="py-20 bg-slate-50 border-t border-slate-200/80">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                    Four Decades of Brotherhood
-                  </div>
-                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Explore by SSC Batch
-                  </h2>
-                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                    Each batch has its own unique heritage, class representatives, reunion archives, and active discussions.
-                  </p>
-                </div>
-
-                <Link
-                  href="/batches"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-                >
-                  <span>View All Batches (1985-2025)</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+        {/* 3. ABOUT: facts about the school and what the site offers */}
+        <section className="py-16 lg:py-20 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-6 space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+                <GraduationCap className="w-4 h-4" />
+                <span>Since {schoolInfo.established}</span>
               </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">One school, generations of friends</h2>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                {schoolInfo.name} ({schoolInfo.bengaliName}) in {schoolInfo.location} has taught students for {yearsSinceFounding} years.
+                The alumni association keeps its former students in touch with each other and with the school.
+              </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {[
+                  { href: "/batches", label: "Find your batch and classmates" },
+                  { href: "/alumni", label: "Verified member directory" },
+                  { href: "/events", label: "Events with digital tickets" },
+                  { href: "/mentorship", label: "Mentorship from senior alumni" },
+                  { href: "/careers", label: "Jobs shared by alumni" },
+                  { href: "/donate", label: "Give back to the school" },
+                ].map((f) => (
+                  <li key={f.href}>
+                    <Link href={f.href} className="flex items-center gap-2 text-sm font-semibold text-slate-800 hover:text-emerald-800 py-1">
+                      <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{f.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/about" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-800 hover:text-emerald-700">
+                <span>More about the association</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="lg:col-span-6">
+              <div className="rounded-3xl overflow-hidden shadow-md border border-slate-200">
+                <Image src="/golden-jubilee.jpg" alt={`${schoolInfo.name} golden jubilee`} width={1376} height={768} sizes="(max-width: 1024px) 100vw, 50vw" className="w-full h-64 sm:h-80 object-cover" />
+              </div>
+            </div>
+          </div>
+        </section>
 
+        {/* 4. LATEST NEWS */}
+        {news.length > 0 && (
+          <section className="py-16 lg:py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SectionHeader eyebrow="News" title="Latest from the association" href="/news" link="All news" icon={<Newspaper className="w-4 h-4" />} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featuredBatches.map((batch) => (
-                  <BatchCard key={batch.year} batch={batch} />
+                {news.map((n) => (
+                  <Link key={n.id} href={`/news/${n.id}`} className="group bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                    <img src={n.featuredImage} alt="" loading="lazy" decoding="async" className="w-full h-44 object-cover" />
+                    <div className="p-5 space-y-2 flex-1">
+                      <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">{n.category} · {n.date}</p>
+                      <h3 className="font-bold text-base text-slate-900 leading-snug group-hover:text-emerald-800">{n.title}</h3>
+                      <p className="text-sm text-slate-600 line-clamp-3">{n.excerpt}</p>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
           </section>
         )}
 
-        {/* =========================================================
-            6. UPCOMING EVENTS & REUNIONS
-        ========================================================= */}
-        {upcomingEvents.length > 0 && (
-          <section className="py-20 bg-white">
+        {/* 5. RECENTLY JOINED MEMBERS */}
+        {recentMembers.length > 0 && (
+          <section className="py-16 lg:py-20 bg-slate-50 border-t border-slate-200/80">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                    Connect &amp; Celebrate
-                  </div>
-                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Upcoming Reunions &amp; Gatherings
-                  </h2>
-                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                    From our signature annual mega-reunion to sports tournaments and career summits.
-                  </p>
-                </div>
-
-                <Link
-                  href="/events"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-                >
-                  <span>See All Events</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              <SectionHeader eyebrow="Directory" title="Recently joined members" href="/alumni" link={`All ${verifiedCount} members`} icon={<Users className="w-4 h-4" />} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {recentMembers.map((m) => (
+                  <AlumniCard key={m.id} alumni={m} viewMode="grid" />
+                ))}
               </div>
+            </div>
+          </section>
+        )}
 
+        {/* 6. UPCOMING EVENTS */}
+        {upcomingEvents.length > 0 && (
+          <section className="py-16 lg:py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SectionHeader eyebrow="Events" title="Upcoming events" href="/events" link="All events" icon={<CalendarDays className="w-4 h-4" />} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {upcomingEvents.map((evt) => (
                   <EventCard key={evt.id} event={evt} />
@@ -498,36 +319,69 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* =========================================================
-            7. INSPIRATIONAL ALUMNI STORIES
-        ========================================================= */}
-        {featuredStories.length > 0 && (
-          <section className="py-20 bg-[#06281e] text-white">
+        {/* 7. BATCHES WITH THE MOST MEMBERS */}
+        {topBatches.length > 0 && (
+          <section className="py-16 lg:py-20 bg-slate-50 border-t border-slate-200/80">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">
-                    Editorial Spotlight
-                  </div>
-                  <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                    Stories That Inspire
-                  </h2>
-                  <p className="text-sm text-emerald-200 mt-1 max-w-xl">
-                    Personal reflections, career journeys, and inspiring milestones from fellow alumni across the world.
-                  </p>
-                </div>
-
-                <Link
-                  href="/stories"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 hover:text-white border border-emerald-700/60 font-semibold text-xs transition-colors shrink-0"
-                >
-                  <span>Read All Stories</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              <SectionHeader eyebrow="Batches" title="Explore by SSC batch" href="/batches" link="All batches" icon={<GraduationCap className="w-4 h-4" />} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {topBatches.map((batch) => (
+                  <BatchCard key={batch.year} batch={batch} />
+                ))}
               </div>
+            </div>
+          </section>
+        )}
 
+        {/* 8. CAREERS & MENTORSHIP */}
+        {(latestJobs.length > 0 || mentors.length > 0) && (
+          <section className="py-16 lg:py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {latestJobs.length > 0 && (
+                <div className={mentors.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
+                  <SectionHeader eyebrow="Careers" title="Jobs shared by alumni" href="/careers" link={`All ${jobs.length} open jobs`} icon={<Briefcase className="w-4 h-4" />} />
+                  <ul className="space-y-3">
+                    {latestJobs.map((j) => (
+                      <li key={j.id}>
+                        <Link href={`/careers/${j.id}`} className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200 bg-slate-50 hover:border-emerald-400 hover:bg-white transition-colors">
+                          <div className="min-w-0">
+                            <p className="font-bold text-sm text-slate-900 truncate">{j.title}</p>
+                            <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                              {j.company} · <MapPin className="w-3 h-3" /> {j.location} · {j.jobType}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-emerald-700 shrink-0" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {mentors.length > 0 && (
+                <div className="rounded-3xl bg-[#06281e] text-white p-6 sm:p-8 flex flex-col justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-amber-300">Mentorship</p>
+                    <p className="text-4xl font-black">{mentors.length}</p>
+                    <p className="text-sm text-emerald-100">
+                      {mentors.length === 1 ? "alumnus is" : "alumni are"} ready to guide younger members on study and career choices.
+                    </p>
+                  </div>
+                  <Link href="/mentorship" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm">
+                    Find a mentor <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* 9. STORIES */}
+        {stories.length > 0 && (
+          <section className="py-16 lg:py-20 bg-[#06281e] text-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SectionHeader dark eyebrow="Stories" title="Stories from our alumni" href="/stories" link="All stories" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {featuredStories.map((story) => (
+                {stories.map((story) => (
                   <StoryCard key={story.id} story={story} />
                 ))}
               </div>
@@ -535,269 +389,127 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* =========================================================
-            8. ACHIEVEMENTS (HALL OF FAME)
-        ========================================================= */}
-        {featuredAchievements.length > 0 && (
-          <section className="py-20 bg-white">
+        {/* 10. HALL OF FAME */}
+        {achievements.length > 0 && (
+          <section className="py-16 lg:py-20 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center max-w-2xl mx-auto mb-12">
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                  Pride of Sabuj Shikshayatan
-                </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  Alumni Hall of Fame
-                </h2>
-                <p className="text-sm text-slate-500 mt-2">
-                  Honoring exceptional accomplishments in medicine, civil engineering, entrepreneurship, research, and governance.
-                </p>
-              </div>
-
+              <SectionHeader eyebrow="Achievements" title="Alumni hall of fame" href="/achievements" link="All achievements" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featuredAchievements.map((ach) => (
-                  <div
-                    key={ach.id}
-                    className="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-shadow"
-                  >
+                {achievements.map((ach) => (
+                  <div key={ach.id} className="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
-                          {ach.category}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-400">
-                          Year {ach.yearAwarded}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full border border-amber-300">{ach.category}</span>
+                        <span className="text-xs font-semibold text-slate-500">{ach.yearAwarded}</span>
                       </div>
-
-                      <div className="flex items-center gap-3 pt-2">
-                        <img loading="lazy" decoding="async"
-                          src={ach.photoUrl}
-                          alt={ach.recipientName}
-                          className="w-12 h-12 rounded-xl object-cover border border-emerald-300"
-                        />
+                      <div className="flex items-center gap-3 pt-1">
+                        <img loading="lazy" decoding="async" src={ach.photoUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-emerald-300" />
                         <div>
                           <div className="font-bold text-sm text-slate-900">{ach.recipientName}</div>
-                          <div className="text-xs text-slate-500">SSC Batch &apos;{ach.batchYear}</div>
+                          <div className="text-xs text-slate-500">SSC {ach.batchYear}</div>
                         </div>
                       </div>
-
-                      <h4 className="font-bold text-base text-slate-800 leading-snug">
-                        {ach.title}
-                      </h4>
-
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        {ach.description}
-                      </p>
+                      <h3 className="font-bold text-base text-slate-800 leading-snug">{ach.title}</h3>
+                      <p className="text-xs text-slate-600 leading-relaxed line-clamp-4">{ach.description}</p>
                     </div>
-
-                    <div className="pt-4 mt-4 border-t border-slate-200/80 text-[11px] text-emerald-800 font-semibold">
-                      Conferred by {ach.organization}
-                    </div>
+                    {ach.organization && <div className="pt-4 mt-4 border-t border-slate-200/80 text-[11px] text-emerald-800 font-semibold">{ach.organization}</div>}
                   </div>
                 ))}
               </div>
-
-              <div className="mt-10 text-center">
-                <Link
-                  href="/achievements"
-                  className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-sm"
-                >
-                  <span>Explore Full Hall of Fame by Profession</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
             </div>
           </section>
         )}
 
-        {/* =========================================================
-            9. GIVING BACK / DONATION HIGHLIGHT
-        ========================================================= */}
-        {featuredDonation && (
-          <section className="py-20 bg-emerald-950 text-white relative overflow-hidden">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                <div className="lg:col-span-7 space-y-5">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-400/30">
-                    <Heart className="w-3.5 h-3.5 fill-amber-300" />
-                    <span>Give Back to Alma Mater</span>
-                  </div>
-
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                    {featuredDonation.title}
-                  </h2>
-
-                  <p className="text-sm text-emerald-100/90 leading-relaxed max-w-xl">
-                    {featuredDonation.description}
-                  </p>
-
-                  {/* Progress bar */}
-                  <div className="space-y-2 max-w-lg">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-amber-300">
-                        Raised: ৳{featuredDonation.raisedAmount.toLocaleString()}
-                      </span>
-                      <span className="text-emerald-300">
-                        Goal: ৳{featuredDonation.goalAmount.toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="w-full h-3 bg-emerald-900 rounded-full overflow-hidden p-0.5 border border-emerald-700">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full"
-                        style={{
-                          width: `${Math.min(
-                            (featuredDonation.raisedAmount / featuredDonation.goalAmount) * 100,
-                            100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-emerald-300">
-                      <span>{featuredDonation.donorCount} Generous Donors</span>
-                      {featuredDonation.daysLeft !== null && <span>{featuredDonation.daysLeft} days remaining</span>}
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex flex-wrap gap-3">
-                    <Link
-                      href="/donate"
-                      className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-lg transition-colors"
-                    >
-                      Contribute to this fund
-                    </Link>
-                    <Link
-                      href="/donate"
-                      className="px-6 py-3 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 font-semibold text-xs border border-emerald-700 transition-colors"
-                    >
-                      View All 4 Campaigns
-                    </Link>
-                  </div>
+        {/* 11. GIVING BACK: the newest open campaign */}
+        {featuredCampaign && (
+          <section className="py-16 lg:py-20 bg-emerald-950 text-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              <div className="lg:col-span-7 space-y-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-400/30">
+                  <Heart className="w-3.5 h-3.5 fill-amber-300" />
+                  <span>Give back</span>
                 </div>
-
-                {/* Donation Card */}
-                <div className="lg:col-span-5 bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-emerald-800">
-                  <h3 className="font-extrabold text-lg text-slate-900">Make an Impact Today</h3>
-                  <p className="text-xs text-slate-500 mt-1 mb-5">
-                    Select a pledge amount. 100% of contributions are audited by the Alumni Executive Board.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-3 mb-5">
-                    {["৳500", "৳1,000", "৳5,000", "৳10,000"].map((amt, idx) => (
-                      <button
-                        key={amt}
-                        className={`py-3 rounded-xl text-xs font-bold border transition-colors ${
-                          idx === 2
-                            ? "bg-emerald-800 text-white border-emerald-800 shadow-sm"
-                            : "bg-slate-50 text-slate-800 border-slate-200 hover:border-emerald-600"
-                        }`}
-                      >
-                        {amt}
-                      </button>
-                    ))}
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">{featuredCampaign.title}</h2>
+                <p className="text-sm text-emerald-100/90 leading-relaxed max-w-xl line-clamp-4">{featuredCampaign.description}</p>
+                <div className="space-y-2 max-w-lg">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-amber-300">Raised {formatTaka(featuredCampaign.raisedAmount)}</span>
+                    <span className="text-emerald-300">Goal {formatTaka(featuredCampaign.goalAmount)}</span>
                   </div>
-
-                  <Link
-                    href="/donate"
-                    className="w-full py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md"
-                  >
-                    <Heart className="w-4 h-4 fill-white" />
-                    <span>Proceed to Donation Gateway</span>
-                  </Link>
-
-                  <p className="text-[10px] text-slate-400 text-center mt-3">
-                    Direct support via bKash, Nagad, Visa, Mastercard, and Bank Transfer
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* =========================================================
-            10. NOSTALGIC PHOTO MEMORIES PREVIEW
-        ========================================================= */}
-        {galleryPreview.length > 0 && (
-          <section className="py-20 bg-slate-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
-                    School Archives
-                  </div>
-                  <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Treasured Moments in Time
-                  </h2>
-                  <p className="text-sm text-slate-500 mt-1 max-w-xl">
-                    Step back into the verandas, green fields, and reunion celebrations that define Sabuj Shikshayatan.
-                  </p>
-                </div>
-
-                <Link
-                  href="/gallery"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700 font-semibold text-xs transition-colors shrink-0"
-                >
-                  <span>Open Full Photo Gallery</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {galleryPreview.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-64 bg-slate-900"
-                  >
-                    <img loading="lazy" decoding="async"
-                      src={item.thumbUrl ?? item.imageUrl}
-                      alt={item.caption || item.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-90"
+                  <div className="w-full h-3 bg-emerald-900 rounded-full overflow-hidden p-0.5 border border-emerald-700">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full"
+                      style={{ width: `${featuredCampaign.goalAmount > 0 ? Math.min((featuredCampaign.raisedAmount / featuredCampaign.goalAmount) * 100, 100) : 0}%` }}
                     />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-emerald-300">
+                    <span>{featuredCampaign.donorCount} {featuredCampaign.donorCount === 1 ? "donor" : "donors"}</span>
+                    {featuredCampaign.daysLeft !== null && <span>{featuredCampaign.daysLeft} days left</span>}
+                  </div>
+                </div>
+                {campaigns.length > 1 && (
+                  <Link href="/donate" className="inline-flex px-5 py-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-emerald-200 font-semibold text-xs border border-emerald-700">
+                    See all {campaigns.length} open campaigns
+                  </Link>
+                )}
+              </div>
+              <div className="lg:col-span-5 bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <h3 className="font-extrabold text-lg">Choose an amount</h3>
+                <p className="text-xs text-slate-500 mt-1 mb-5">Every donation is checked by the committee before it counts.</p>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  {[500, 1000, 5000, 10000].map((amt) => (
+                    <Link key={amt} href={`/donate?amount=${amt}`} className="py-3 rounded-xl text-sm font-bold border bg-slate-50 text-slate-800 border-slate-200 hover:border-emerald-600 hover:bg-emerald-50 text-center">
+                      {formatTaka(amt)}
+                    </Link>
+                  ))}
+                </div>
+                <Link href="/donate" className="w-full py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-1.5">
+                  <Heart className="w-4 h-4 fill-white" />
+                  <span>Donate</span>
+                </Link>
+                <p className="text-[11px] text-slate-500 text-center mt-3">Pay by bKash, Nagad, Bangla QR or bank transfer, then enter the transaction ID.</p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 12. GALLERY */}
+        {photos.length > 0 && (
+          <section className="py-16 lg:py-20 bg-slate-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SectionHeader eyebrow="Gallery" title="Photos from our albums" href="/gallery" link="Open the gallery" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {photos.map((item) => (
+                  <Link key={item.id} href="/gallery" className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow h-48 sm:h-64 bg-slate-900">
+                    <img loading="lazy" decoding="async" src={item.thumbUrl ?? item.imageUrl} alt={item.caption || item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <span className="text-[10px] uppercase font-bold text-amber-300 block mb-1">
-                        {item.albumCategory}
-                      </span>
-                      <h4 className="font-bold text-xs sm:text-sm line-clamp-1">{item.title}</h4>
-                      <p className="text-[11px] text-slate-300 line-clamp-1 mt-0.5">{item.caption}</p>
+                      <span className="text-[10px] uppercase font-bold text-amber-300 block mb-0.5">{item.albumCategory}</span>
+                      <p className="font-bold text-xs sm:text-sm line-clamp-1">{item.title}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
           </section>
         )}
 
-        {/* =========================================================
-            11. JOIN ALUMNI CALL TO ACTION
-        ========================================================= */}
-        <section className="py-20 bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white text-center relative overflow-hidden">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-amber-400 text-slate-950 font-black flex items-center justify-center mx-auto shadow-xl">
+        {/* 13. JOIN */}
+        <section className="py-16 lg:py-20 bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white text-center">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center mx-auto shadow-xl">
               <GraduationCap className="w-8 h-8" />
             </div>
-
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-              Ready to Reconnect with Your Alma Mater?
-            </h2>
-
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">Studied at Sabuj Shikshayatan?</h2>
             <p className="text-emerald-100 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-              Verify your SSC graduation records, reconnect with batchmates, participate in community discussions, and never miss an alumni event.
+              Join the association: verify your SSC batch, find your classmates and never miss an alumni event.
             </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-sm shadow-xl transition-transform hover:-translate-y-0.5"
-              >
-                Start Alumni Registration
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <Link href="/register" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-sm shadow-xl">
+                Join the association
               </Link>
-              <Link
-                href="/login"
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-700/60 font-semibold text-sm transition-colors"
-              >
-                Existing Member Login
+              <Link href="/login" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-700/60 font-semibold text-sm">
+                Member sign in
               </Link>
             </div>
           </div>
@@ -805,6 +517,29 @@ export default async function HomePage() {
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, title, href, link, icon, dark }: { eyebrow: string; title: string; href: string; link: string; icon?: React.ReactNode; dark?: boolean }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+      <div>
+        <p className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5 ${dark ? "text-amber-300" : "text-emerald-700"}`}>
+          {icon}
+          {eyebrow}
+        </p>
+        <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${dark ? "text-white" : "text-slate-900"}`}>{title}</h2>
+      </div>
+      <Link
+        href={href}
+        className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-semibold text-xs shrink-0 w-fit ${
+          dark ? "bg-emerald-900 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60" : "bg-slate-100 hover:bg-emerald-800 hover:text-white text-slate-700"
+        }`}
+      >
+        <span>{link}</span>
+        <ArrowRight className="w-4 h-4" />
+      </Link>
     </div>
   );
 }

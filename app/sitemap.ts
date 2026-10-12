@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { FIRST_BATCH } from "@/lib/batches";
+import { listBatches } from "@/lib/batches";
 import { publishedStoryIds } from "@/lib/stories";
 import { listPublicEvents } from "@/lib/events/service";
 
@@ -31,8 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Dynamic Batch pages
-  // Every SSC batch year has a page.
-  const years = Array.from({ length: new Date().getFullYear() - FIRST_BATCH + 1 }, (_, i) => FIRST_BATCH + i);
+  // Only batches with verified members: empty years have nothing to show.
+  const years = (await listBatches().catch(() => [])).filter((b) => b.totalAlumni > 0).map((b) => b.year);
   const batchPages = years.map((year) => ({
     url: `${baseUrl}/batches/${year}`,
     lastModified: now,

@@ -2,8 +2,8 @@ import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
 import { AppError } from "@/lib/app-error";
 import type { AccountInput } from "@/lib/events/types";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
-const FIRST_SSC_BATCH = 1985;
 const MIN_PASSWORD_LENGTH = 8;
 const BCRYPT_COST = 12;
 

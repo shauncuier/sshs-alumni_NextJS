@@ -196,7 +196,7 @@ export const schoolInfo = {
   name: "Sabuj Shikshayatan Government High School",
   shortName: "SSGHS",
   bengaliName: "সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়",
-  established: 1985,
+  established: 1976,
   eiin: "105070",
   location: "South Sonaichhari, Sitakunda, Chattogram, Bangladesh",
   board: "Board of Intermediate and Secondary Education, Chattogram",
@@ -208,3 +208,6 @@ export const schoolInfo = {
   tagline: "Connecting Generations, Preserving Heritage, Shaping the Future",
   motto: "Knowledge, Character, and National Dedication",
 };
+
+/** The earliest SSC batch the site accepts: the year after the school opened. */
+export const FIRST_SSC_BATCH = schoolInfo.established + 1;

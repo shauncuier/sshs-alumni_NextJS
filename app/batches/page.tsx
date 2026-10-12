@@ -1,12 +1,13 @@
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import BatchCard from "@/components/batches/BatchCard";
+import BatchGrid from "@/components/batches/BatchGrid";
 import { listBatches } from "@/lib/batches";
 import { Layers } from "lucide-react";
 
 // Every SSC batch with its real member count and the representative admins set.
 export const dynamic = "force-dynamic";
+export const metadata = { title: "SSC batches" };
 
 export default async function BatchesPage() {
   const batches = await listBatches();
@@ -23,7 +24,7 @@ export default async function BatchesPage() {
                 <span>Classroom Chronicles</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                Explore Batches (1985 — {new Date().getFullYear()})
+                Explore batches
               </h1>
               <p className="text-emerald-100 text-sm leading-relaxed">
                 Every batch has shaped the legacy of Sabuj Shikshayatan Government High School. Open your batch year to find classmates and your batch representative.
@@ -33,11 +34,7 @@ export default async function BatchesPage() {
         </section>
 
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {batches.map((batch) => (
-              <BatchCard key={batch.year} batch={batch} />
-            ))}
-          </div>
+          <BatchGrid batches={batches} />
         </section>
       </main>
 

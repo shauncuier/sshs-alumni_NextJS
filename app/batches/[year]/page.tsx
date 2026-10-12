@@ -16,6 +16,7 @@ import {
   UserPlus,
   Loader2,
 } from "lucide-react";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 interface BatchPageProps {
   params: Promise<{ year: string }>;
@@ -69,8 +70,8 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
   const resolvedParams = use(params);
   const yearNum = Number(resolvedParams.year);
 
-  // Only real SSC batches (1985 to this year) have a page; anything else is a 404.
-  if (!Number.isInteger(yearNum) || yearNum < 1985 || yearNum > new Date().getFullYear()) {
+  // Only real SSC batches (the first batch to this year) have a page; anything else is a 404.
+  if (!Number.isInteger(yearNum) || yearNum < FIRST_SSC_BATCH || yearNum > new Date().getFullYear()) {
     notFound();
   }
 

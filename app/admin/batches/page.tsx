@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Layers, Users, Search, RefreshCw, AlertCircle, Award, Pencil, X, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 interface BatchItem {
   year: number;
@@ -166,7 +167,7 @@ export default function AdminBatchesPage() {
           <div className="text-2xl font-black text-slate-900 mt-1">
             {loading ? "..." : totalBatches}
           </div>
-          <span className="text-[10px] text-slate-400">1985 — {new Date().getFullYear()} cohorts</span>
+          <span className="text-[10px] text-slate-400">{FIRST_SSC_BATCH} — {new Date().getFullYear()} cohorts</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">

@@ -19,6 +19,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 const ICONS_MAP: Record<string, React.ElementType> = {
   Sparkles,
@@ -31,7 +32,6 @@ const ICONS_MAP: Record<string, React.ElementType> = {
   Users,
 };
 
-const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from(
   { length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 },
   (_, i) => new Date().getFullYear() - i

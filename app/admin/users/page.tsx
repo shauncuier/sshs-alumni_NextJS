@@ -16,6 +16,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 type Role = "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "ALUMNI";
 
@@ -47,7 +48,6 @@ interface Viewer {
 }
 
 const ROLE_LABELS: Record<Role, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", MODERATOR: "Moderator", ALUMNI: "Alumni" };
-const FIRST_SSC_BATCH = 1985;
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
 const input = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-600";
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
