@@ -3,6 +3,9 @@ import { listBatches } from "@/lib/batches";
 import { publishedStoryIds } from "@/lib/stories";
 import { listPublicEvents } from "@/lib/events/service";
 
+// Rebuilt at most hourly from the database, not frozen at build time.
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const now = new Date();
