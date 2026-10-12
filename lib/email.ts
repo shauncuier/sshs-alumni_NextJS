@@ -21,6 +21,11 @@ interface EmailPayload {
   replyTo?: string;
 }
 
+/** Where replies to site emails go: EMAIL_REPLY_TO, else the association's mailbox. */
+function replyToAddress(): string {
+  return process.env.EMAIL_REPLY_TO || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sabujshikshayatanalumni@gmail.com";
+}
+
 // ── Email Provider Detection ──────────────────────────────────────────
 export function getEmailProvider(): "resend" | "smtp" | "console" {
   if (process.env.RESEND_API_KEY) return "resend";
@@ -61,14 +66,14 @@ async function sendViaResend(payload: EmailPayload) {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          "SSGHS Alumni <alumni@sabujsghs.edu.bd>",
+        // Resend sends only from a domain verified in the Resend account; until
+        // one is, its test sender delivers to the account owner's own address only.
+        from: process.env.RESEND_FROM_EMAIL || "SSGHS Alumni <onboarding@resend.dev>",
         to: payload.to,
         subject: payload.subject,
         html: payload.html,
         text: payload.text,
-        reply_to: payload.replyTo || "alumni@sabujsghs.edu.bd",
+        reply_to: payload.replyTo || replyToAddress(),
       }),
     });
 
@@ -76,6 +81,10 @@ async function sendViaResend(payload: EmailPayload) {
 
     if (response.ok) {
       return { success: true, messageId: data.id };
+    }
+
+    if (/verify a domain|testing emails|not verified/i.test(String(data.message))) {
+      console.warn(`[Email/Resend] Not sent to a member: the sender domain is not verified in Resend (${data.message}). See docs/PRODUCTION_ENV.md.`);
     }
 
     return {
@@ -118,13 +127,12 @@ async function sendViaSMTP(payload: EmailPayload) {
 
     const info = await transporter.sendMail({
       from:
-        process.env.SMTP_FROM ||
-        '"SSGHS Alumni Association" <alumni@sabujsghs.edu.bd>',
+        process.env.SMTP_FROM || `"SSGHS Alumni Association" <${replyToAddress()}>`,
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
       text: payload.text,
-      replyTo: payload.replyTo,
+      replyTo: payload.replyTo || replyToAddress(),
     });
 
     return { success: true, messageId: info.messageId };

@@ -39,7 +39,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 14 | Dependency audit and security headers | 3 · Security | S | ✅ Done 2026-10-12 |
 | 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ✅ Done 2026-10-12 |
 | 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ✅ Done 2026-10-12 |
-| 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | ⬜ |
+| 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | 🟡 Resend key and association email set 2026-10-12; domain verification waits for the domain (step 3) |
 | 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | ⬜ |
 | 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | ⬜ |
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
@@ -230,7 +230,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ## Phase 4 — Integrations
 
-### 17. Email provider · S · **You**
+### 17. Email provider · S · **You** · 🟡 Partly done 2026-10-12
+**Done:** Resend API key (send-only) in `.env.local`; the association's mailbox `sabujshikshayatanalumni@gmail.com` is the reply-to of every email (`EMAIL_REPLY_TO`), the contact-form inbox (`CONTACT_INBOX_EMAIL`) and the contact address on the site (`NEXT_PUBLIC_CONTACT_EMAIL`: footer, contact page, souvenir call); the made-up `alumni@`/`souvenir@sabujsghs.edu.bd` addresses are gone. Sender is Resend's test address `onboarding@resend.dev`, which **only delivers to the Resend account owner's own address**; the production check warns about it, and `npm run email:test -- <address>` sends a test. Also fixed: a signed-in member volunteering while registering was saved with an invented email, phone ("Registered Attendee") and batch 2010; the server now uses their profile.
+**Left:** verify the association's domain in Resend (SPF/DKIM) once the domain exists (step 3), set `RESEND_FROM_EMAIL` to an address on it, then send the four test emails below.
 **Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY`, `RESEND_FROM_EMAIL` and `CONTACT_INBOX_EMAIL`; send a test approval email, a test email code, a test donation receipt and a test contact-form message.
 **Done when:** emails arrive in Gmail's inbox (not spam) from the association's domain.
 

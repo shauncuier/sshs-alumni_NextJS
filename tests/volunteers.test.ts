@@ -69,6 +69,18 @@ describe("/api/volunteers", () => {
     expect(row.userId).toBe(member.id);
   });
 
+  it("a signed-in member volunteering while registering gets their own details, never invented ones", async () => {
+    const member = await makeMember({ email: "reg@example.test" });
+    await prisma.alumniProfile.update({ where: { userId: member.id }, data: { fullName: "Rahim Uddin", phone: "01711000111", sscBatch: 2004 } });
+    session.user = { id: member.id, email: member.email, role: "ALUMNI" };
+    const res = await POST(json({ subcommittee: "MEDICAL_FIRSTAID", source: "EVENT_REGISTRATION" }));
+    expect(res.status).toBe(201);
+    expect(await prisma.volunteer.findFirstOrThrow()).toMatchObject({ fullName: "Rahim Uddin", email: "reg@example.test", phone: "01711000111", sscBatch: 2004, userId: member.id });
+    // Signed out, the details are required.
+    session.user = null;
+    expect((await POST(json({ subcommittee: "GATE_SECURITY" }))).status).toBe(400);
+  });
+
   it("answers wrongly typed input with 400, not a crash", async () => {
     for (const bad of [{ ...application, fullName: 42 }, { ...application, email: ["x"] }, { ...application, sscBatch: "abc" }, { ...application, subcommittee: 7 }]) {
       expect((await POST(json(bad))).status).toBe(400);

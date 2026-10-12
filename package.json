@@ -16,6 +16,7 @@
     "db:remove-demo": "tsx prisma/remove-demo.ts",
     "db:super-admin": "tsx scripts/ensure-super-admin.ts",
     "env:check": "tsx scripts/check-env.ts",
+    "email:test": "tsx scripts/email-test.ts",
     "privacy:cleanup": "tsx scripts/privacy-cleanup.ts",
     "db:import-volunteers": "tsx scripts/import-volunteers.ts",
     "db:import-sms-history": "tsx scripts/import-sms-history.ts",

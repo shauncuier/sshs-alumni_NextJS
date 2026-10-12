@@ -295,10 +295,8 @@ export default function RegistrationForm({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            fullName: needsAccount ? account.fullName : (session?.user?.name || "Event Attendee"),
-            email: needsAccount ? account.email : (session?.user?.email || "alumni@ssghs.org"),
-            phone: needsAccount ? account.phone : "Registered Attendee",
-            sscBatch: Number(needsAccount ? account.sscBatch : 2010),
+            // Signed-in members: the server fills these from their profile.
+            ...(needsAccount ? { fullName: account.fullName, email: account.email, phone: account.phone, sscBatch: Number(account.sscBatch) } : {}),
             subcommittee: volunteerSubcommittee,
             notes: volunteerNotes.trim() || undefined,
             source: "EVENT_REGISTRATION",

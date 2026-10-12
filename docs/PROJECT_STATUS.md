@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
 **Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–16 done: Phase 3 security complete)
-**Tests:** 282 / 282 passing (46 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
+**Tests:** 284 / 284 passing (46 files, `npm test`, Vitest 4) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -112,7 +112,7 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 
 - **Rate limits are in memory, per server process.** With several instances or after a restart the counters reset. Fine for one VPS; use a shared store (Redis) if the app is scaled out.
 - `braces` (high, dev-only, inside ESLint): no fixed version exists yet; it only matches the project's own lint patterns. `npm audit --omit=dev` is clean.
-- **No email provider configured.** `RESEND_API_KEY` / `SMTP_HOST` are empty and `nodemailer` is not installed, so every email (including the OTP fallback) only prints to the server console. In production, email OTP refuses with 503 until a provider is set; Resend needs no extra package.
+- **Email reaches only the Resend account owner until a domain is verified.** Resend is configured (send-only key) with the test sender `onboarding@resend.dev`; replies and contact-form messages go to `sabujshikshayatanalumni@gmail.com`. Members (email codes, receipts, approvals) get nothing until the association's domain is verified in Resend (roadmap step 17, waits for step 3).
 
 ## 6. Known issues and backlog
 

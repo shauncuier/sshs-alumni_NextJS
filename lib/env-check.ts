@@ -69,6 +69,10 @@ export function checkProductionEnv(env: Env): EnvReport {
   if (!set(env, "BULKSMSBD_API_KEY") || !set(env, "BULKSMSBD_SENDER_ID")) {
     warnings.push("BULKSMSBD_API_KEY / BULKSMSBD_SENDER_ID not set: SMS codes and broadcasts will not be sent (roadmap step 18).");
   }
+  const from = env.RESEND_FROM_EMAIL ?? "";
+  if (set(env, "RESEND_API_KEY") && /@(resend\.dev|gmail\.com|yahoo\.com|outlook\.com|hotmail\.com)\b/i.test(from || "@resend.dev")) {
+    warnings.push("RESEND_FROM_EMAIL is not on a domain verified in Resend: emails reach only the Resend account owner, not members. Verify the association's domain in Resend (roadmap step 17).");
+  }
   if (!set(env, "CONTACT_INBOX_EMAIL")) warnings.push("CONTACT_INBOX_EMAIL not set: contact-form messages are kept only in the activity log.");
   if (!set(env, "NEXT_PUBLIC_DONATION_INSTRUCTIONS")) warnings.push("NEXT_PUBLIC_DONATION_INSTRUCTIONS not set: /donate shows no payment details.");
   if (!set(env, "NEXT_PUBLIC_BANGLA_QR_IMAGE")) warnings.push("NEXT_PUBLIC_BANGLA_QR_IMAGE not set: the Bangla QR option shows instructions only (roadmap step 19).");

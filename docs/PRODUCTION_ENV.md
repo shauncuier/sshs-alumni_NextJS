@@ -26,7 +26,8 @@ It prints variable names only, never values, and exits with an error when the si
 
 | Variable | Feature | Roadmap |
 | --- | --- | --- |
-| `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (or `SMTP_*`) | Email codes, receipts, job and mentorship emails | 17 |
+| `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (or `SMTP_*`) | Email codes, receipts, job and mentorship emails. The sender must be on a domain verified in Resend; `onboarding@resend.dev` or a Gmail address only reaches the Resend account owner | 17 |
+| `EMAIL_REPLY_TO`, `NEXT_PUBLIC_CONTACT_EMAIL` | Association mailbox for replies and the site's contact address (`sabujshikshayatanalumni@gmail.com`) | 17 |
 | `BULKSMSBD_API_KEY`, `BULKSMSBD_SENDER_ID`, `OTP_BRAND_NAME` | SMS codes and broadcasts | 18 |
 | `NEXT_PUBLIC_BANGLA_QR_IMAGE`, `NEXT_PUBLIC_BANGLA_QR_MERCHANT` | Bangla QR payment option | 19 |
 | `NEXT_PUBLIC_DONATION_INSTRUCTIONS` | Payment details on `/donate` | 19 |

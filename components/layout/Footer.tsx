@@ -84,7 +84,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>{schoolInfo.email}</span>
+                <span>{schoolInfo.associationEmail}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Globe className="w-4 h-4 text-emerald-500 shrink-0" />

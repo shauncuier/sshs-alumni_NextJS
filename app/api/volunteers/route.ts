@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import prisma from "@/lib/prisma";
 import { requireRateLimit, readJsonBody, requireSameOrigin } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { logActivity, logFailure } from "@/lib/activity-log";
@@ -39,14 +40,16 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     requireRateLimit(req, "volunteer-application", { limit: 3, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
-    const fullName = text(body.fullName);
-    const email = text(body.email);
-    const phone = text(body.phone);
-    const batchNum = Number(body.sscBatch);
+    // A signed-in member's own details fill whatever the form left out.
+    const profile = me ? await prisma.alumniProfile.findUnique({ where: { userId: me.id }, select: { fullName: true, phone: true, sscBatch: true } }) : null;
+    const fullName = text(body.fullName) || profile?.fullName || "";
+    const email = text(body.email) || (me?.email ?? "");
+    const phone = text(body.phone) || profile?.phone || "";
+    const batchNum = Number(body.sscBatch) || profile?.sscBatch || NaN;
 
     if (!fullName) throw new AppError("INVALID_VOLUNTEER", 400, "Full name is required");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AppError("INVALID_VOLUNTEER", 400, "Valid email is required");
-    if (!phone) throw new AppError("INVALID_VOLUNTEER", 400, "Phone number is required");
+    if (!phone && !me) throw new AppError("INVALID_VOLUNTEER", 400, "Phone number is required");
     if (!Number.isInteger(batchNum) || batchNum < 1960 || batchNum > new Date().getFullYear()) {
       throw new AppError("INVALID_VOLUNTEER", 400, "Valid SSC batch year is required");
     }

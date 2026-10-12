@@ -74,7 +74,7 @@ export default function ContactPage() {
                     <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <strong className="block text-slate-900 font-semibold">Official Email:</strong>
-                      <span>{schoolInfo.email}</span>
+                      <span>{schoolInfo.associationEmail}</span>
                     </div>
                   </div>
 

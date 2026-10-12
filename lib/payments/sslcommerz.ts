@@ -72,7 +72,7 @@ export async function initiateSession(
       product_category: "Donation",
       product_profile: "non-physical-goods",
       cus_name: req.donorName,
-      cus_email: req.donorEmail || "alumni@sabujsghs.edu.bd",
+      cus_email: req.donorEmail || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sabujshikshayatanalumni@gmail.com",
       cus_phone: req.donorPhone || "01700000000",
       cus_add1: "Chattogram, Bangladesh",
       cus_city: "Chattogram",

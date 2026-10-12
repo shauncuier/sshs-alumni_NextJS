@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, use } from "react";
+import { schoolInfo } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
@@ -594,7 +595,7 @@ function EventDetailView({
                   </p>
                   <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
                     <span className="text-emerald-900 bg-white px-3 py-1.5 rounded-xl border border-amber-300">
-                      Email Articles: souvenir@sabujsghs.edu.bd
+                      Email Articles: {schoolInfo.associationEmail}
                     </span>
                     <span className="text-slate-600">
                       Last Date of Submission: October 31, 2026
