@@ -19,7 +19,13 @@ const PHOTO_MIN_SIDE = 600;
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
 
 /** Returns an error message, or null when the file is an acceptable profile photo. */
+// Some Android phones (and iPhones sharing the original file) save photos as HEIC/HEIF,
+// which the server cannot read: say what to do instead of a generic "wrong type".
+const HEIC_HELP = "This photo is in HEIC format. Take a screenshot of it and upload the screenshot, or set the camera to save JPEG (Camera settings → Picture format).";
+const isHeic = (file: File) => /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+
 async function checkPhoto(file: File): Promise<string | null> {
+  if (isHeic(file)) return HEIC_HELP;
   if (!PHOTO_TYPES.includes(file.type)) return "Please upload a JPEG, PNG or WebP photo.";
   if (file.size > PHOTO_MAX_BYTES) return "The photo must be 5 MB or smaller.";
   try {
@@ -39,6 +45,7 @@ const PROOF_MISSING = "Please add a document that shows you studied at SSGHS.";
 /** Returns an error message, or null when the file can be sent as the proof document. */
 function checkProof(file: File): string | null {
   // Some systems send PDFs without a MIME type; the server checks the real bytes anyway.
+  if (isHeic(file)) return HEIC_HELP;
   const looksLikePdf = !file.type && /\.pdf$/i.test(file.name);
   if (!PROOF_FILE_TYPES.includes(file.type) && !looksLikePdf) return "Please upload your proof as a JPEG, PNG, WebP or PDF file.";
   if (file.size > PROOF_MAX_BYTES) return "The proof document must be 10 MB or smaller.";
@@ -344,7 +351,7 @@ export default function RegistrationForm({
           </div>
           <div className="sm:col-span-2">
             <label htmlFor="reg-name" className={label}>Full name *</label>
-            <input id="reg-name" required className={input} value={account.fullName} onChange={(e) => setAccount({ ...account, fullName: e.target.value })} />
+            <input id="reg-name" required autoComplete="name" className={input} value={account.fullName} onChange={(e) => setAccount({ ...account, fullName: e.target.value })} />
           </div>
           <div>
             <label htmlFor="reg-email" className={label}>Email *</label>
@@ -352,6 +359,7 @@ export default function RegistrationForm({
               id="reg-email"
               type="email"
               required
+              autoComplete="email"
               className={input}
               value={account.email}
               onChange={(e) => {
@@ -382,7 +390,7 @@ export default function RegistrationForm({
           </div>
           <div>
             <label htmlFor="reg-roll" className={label}>Roll number</label>
-            <input id="reg-roll" className={input} value={account.rollNumber} onChange={(e) => setAccount({ ...account, rollNumber: e.target.value })} />
+            <input id="reg-roll" inputMode="numeric" className={input} value={account.rollNumber} onChange={(e) => setAccount({ ...account, rollNumber: e.target.value })} />
           </div>
           <div>
             <label htmlFor="reg-section" className={label}>Section / Discipline</label>

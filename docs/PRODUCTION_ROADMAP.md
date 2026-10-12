@@ -45,7 +45,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
 | 21 | Admin pages usable on phones | 5 · UX | M | ✅ Done 2026-10-12 |
 | 22 | Gate scanner with the phone camera | 5 · UX | M | ✅ Code done 2026-10-12 (20-ticket phone run by you) |
-| 23 | Join flow tested end to end on real phones | 5 · UX | S | ⬜ |
+| 23 | Join flow tested end to end on real phones | 5 · UX | S | 🟡 Checklist ready (`docs/PHONE_TEST_CHECKLIST.md`); the phone run is yours |
 | 24 | Production build passes, warnings cleaned | 6 · Quality | M | ⬜ |
 | 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ⬜ |
 | 26 | Manual QA walkthrough for every role | 6 · Quality | S | ⬜ |
@@ -270,7 +270,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** camera QR scanning on `/gate`; allow camera in `Permissions-Policy` for that page only; check-in tied to the event being scanned.
 **Done when:** 20 tickets are checked in from a phone in under 5 minutes.
 
-### 23. Join flow on real phones · S
+### 23. Join flow on real phones · S · 🟡 Prepared 2026-10-12
+**Done:** join form checked at 375 px signed out: nothing scrolls sideways, every field is 16 px or larger (no zoom-in on iPhone), buttons 48 px; phone keyboards and autofill hints for name, email, mobile and roll; HEIC photos (some Android phones, shared iPhone originals) now get a clear "take a screenshot / set the camera to JPEG" message instead of "wrong type"; the SSC batch is no longer pre-filled (step 19). `docs/PHONE_TEST_CHECKLIST.md` is the step-by-step run for both phones and the committee.
+**Left (you):** run the checklist on an Android phone and an iPhone over mobile data.
 **Tasks:** complete a join on Android Chrome and iPhone Safari over mobile data: photo, proof, SMS code (and email fallback), Bangla QR / bKash, transaction ID.
 **Done when:** both phones finish without help, and the committee approves both.
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 import jsQR from "jsqr";
 import { generateQrDataUrl } from "@/lib/id-card";
 import { TICKET_QR_PREFIX } from "@/lib/events/tickets";
@@ -7,7 +7,7 @@ import { TICKET_QR_PREFIX } from "@/lib/events/tickets";
 // The gate scanner reads tickets with jsQR on phones without a built-in QR reader
 // (iPhone Safari). The ticket QR (green on white, high error correction) must decode,
 // also at the downscaled size the scanner uses and as a darker, blurrier camera frame.
-async function decode(dataUrl: string, size: number, tweak?: (img: sharp.Sharp) => sharp.Sharp) {
+async function decode(dataUrl: string, size: number, tweak?: (img: Sharp) => Sharp) {
   let img = sharp(Buffer.from(dataUrl.split(",")[1], "base64")).resize(size, size).ensureAlpha();
   if (tweak) img = tweak(img);
   const { data, info } = await img.raw().toBuffer({ resolveWithObject: true });
