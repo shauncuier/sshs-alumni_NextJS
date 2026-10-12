@@ -8,7 +8,7 @@ import MobileNav from "@/components/layout/MobileNav";
 import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
 import type { PostItem } from "@/lib/data";
-import { Plus, Radio, Layers, Sparkles, Filter } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export default function FeedPage() {
   const { data: session } = useSession();
@@ -28,8 +28,6 @@ export default function FeedPage() {
   const userName = user?.name || "Member";
   const userFirst = userName.split(" ")[0] || "Alumnus";
   const userBatch = user?.batchYear || 0;
-  const userRole = user?.role || "ALUMNI";
-  const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
   const handlePostCreated = async (content: string, batchTag?: number) => {
     const res = await fetch("/api/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content, batchTag }) });

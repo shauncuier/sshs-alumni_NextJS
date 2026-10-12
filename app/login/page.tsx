@@ -6,7 +6,7 @@ import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/account-access";
-import { ArrowRight, ShieldCheck, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
+import { ArrowRight, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();

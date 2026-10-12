@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, MapPin, Briefcase, GraduationCap, UserPlus, Check, MessageSquare } from "lucide-react";
+import { BadgeCheck, MapPin, Briefcase, UserPlus, Check } from "lucide-react";
 import { AlumniMember } from "@/lib/data";
 
 interface AlumniCardProps {

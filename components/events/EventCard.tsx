@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Calendar, MapPin, Clock, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import { MapPin, Clock, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 import { EventItem } from "@/lib/data";
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 import RSVPModal from "./RSVPModal";
@@ -18,7 +18,6 @@ export default function EventCard({ event }: EventCardProps) {
   const eventDate = new Date(event.date);
   const day = eventDate.getDate();
   const month = eventDate.toLocaleString("default", { month: "short" });
-  const year = eventDate.getFullYear();
 
   return (
     <>

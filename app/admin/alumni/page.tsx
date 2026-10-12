@@ -5,17 +5,7 @@ import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 import Link from "next/link";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
-import {
-  Search,
-  Check,
-  Download,
-  ArrowRight,
-  CheckCircle2,
-  CreditCard,
-  Copy,
-  ExternalLink,
-  ShieldCheck,
-} from "lucide-react";
+import { Search, Check, Download, ArrowRight, CheckCircle2, CreditCard, Copy, ShieldCheck } from "lucide-react";
 
 export default function AdminAlumniPage() {
   const [search, setSearch] = useState("");

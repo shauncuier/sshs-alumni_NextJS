@@ -13,9 +13,7 @@ import {
   GraduationCap,
   Users,
   CheckCircle2,
-  Clock,
   Award,
-  ChevronRight,
   ArrowRight,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";

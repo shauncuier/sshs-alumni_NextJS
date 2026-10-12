@@ -18,15 +18,12 @@ import {
   PhoneCall,
   LayoutDashboard,
   ShieldCheck,
-  UserPlus,
   LogIn,
   LogOut,
-  User,
   HeartHandshake,
   Sparkles,
-  ExternalLink,
   Briefcase,
-  GraduationCap
+  GraduationCap,
 } from "lucide-react";
 import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
 

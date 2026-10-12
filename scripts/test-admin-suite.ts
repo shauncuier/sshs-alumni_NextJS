@@ -122,7 +122,7 @@ async function run() {
 
   // 6. Test API: /api/admin/verifications
   const verifApiRes = await fetch(`${BASE_URL}/api/admin/verifications?status=all`, { headers: authHeaders });
-  const verifData = await logResult(
+  await logResult(
     "API: /api/admin/verifications?status=all",
     verifApiRes,
     (_, json) => verifApiRes.status === 200 && Array.isArray(json?.requests),
@@ -140,7 +140,7 @@ async function run() {
 
   // 8. Test API: /api/alumni
   const alumniApiRes = await fetch(`${BASE_URL}/api/alumni?limit=20`, { headers: authHeaders });
-  const { json: alumniJson } = await logResult(
+  await logResult(
     "API: /api/alumni",
     alumniApiRes,
     (_, json) => alumniApiRes.status === 200 && Array.isArray(json?.alumni),

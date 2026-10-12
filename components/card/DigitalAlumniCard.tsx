@@ -1,18 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ShieldCheck,
-  Award,
-  Sparkles,
-  QrCode,
-  RotateCw,
-  Download,
-  Share2,
-  CheckCircle2,
-  School,
-  ExternalLink
-} from "lucide-react";
+import { Sparkles, QrCode, RotateCw, Share2, CheckCircle2, School } from "lucide-react";
 
 export interface CardData {
   alumniId: string;
@@ -49,12 +38,6 @@ export default function DigitalAlumniCard({
       navigator.clipboard.writeText(verifyUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handlePrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
     }
   };
 

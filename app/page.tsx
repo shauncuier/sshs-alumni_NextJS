@@ -21,22 +21,7 @@ import type {
   GalleryPhotoItem,
   DonationCampaignItem,
 } from "@/lib/data";
-import {
-  GraduationCap,
-  Users,
-  Globe2,
-  Briefcase,
-  Heart,
-  Calendar,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  BookOpen,
-  Award,
-  Image,
-  ExternalLink,
-} from "lucide-react";
+import { GraduationCap, Heart, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 

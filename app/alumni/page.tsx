@@ -56,18 +56,7 @@ function toMember(row: DirectoryRow): AlumniMember {
     connectionCount: 0,
   };
 }
-import {
-  Search,
-  Filter,
-  LayoutGrid,
-  List,
-  SlidersHorizontal,
-  X,
-  BadgeCheck,
-  UserCheck,
-  GraduationCap,
-  Loader2
-} from "lucide-react";
+import { Search, LayoutGrid, List, SlidersHorizontal, X, BadgeCheck, GraduationCap, Loader2 } from "lucide-react";
 
 function DirectoryContent() {
   const searchParams = useSearchParams();
@@ -95,11 +84,6 @@ function DirectoryContent() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filter options come from the unfiltered directory, so they match real members.
-  const uniqueProfessions = useMemo(() => {
-    const set = new Set(allAlumni.map((a) => a.profession.split(" ")[0]).filter(Boolean));
-    return Array.from(set).sort();
-  }, [allAlumni]);
-
   const uniqueCities = useMemo(() => {
     const set = new Set(allAlumni.map((a) => a.locationCity).filter(Boolean));
     return Array.from(set).sort();

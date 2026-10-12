@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Layers, Plus, Users, Calendar, Phone, Search, RefreshCw, AlertCircle, Award, Pencil, X, Loader2 } from "lucide-react";
+import { Layers, Users, Search, RefreshCw, AlertCircle, Award, Pencil, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 interface BatchItem {

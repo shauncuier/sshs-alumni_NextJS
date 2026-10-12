@@ -2,15 +2,7 @@ import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
-import {
-  GraduationCap,
-  MapPin,
-  Calendar,
-  Award,
-  BookOpen,
-  CheckCircle2,
-  ExternalLink
-} from "lucide-react";
+import { GraduationCap, ExternalLink } from "lucide-react";
 
 export default function SchoolPage() {
   return (

@@ -27,7 +27,10 @@ function replyToAddress(): string {
 }
 
 // ── Email Provider Detection ──────────────────────────────────────────
+// EMAIL_PROVIDER=smtp forces SMTP (e.g. Gmail with an app password) even when a
+// Resend key is set; useful until the association's domain is verified in Resend.
 export function getEmailProvider(): "resend" | "smtp" | "console" {
+  if (process.env.EMAIL_PROVIDER === "smtp" && process.env.SMTP_HOST) return "smtp";
   if (process.env.RESEND_API_KEY) return "resend";
   if (process.env.SMTP_HOST) return "smtp";
   return "console"; // Fallback: log to console
@@ -101,20 +104,11 @@ async function sendViaResend(payload: EmailPayload) {
 }
 
 /**
- * Send via SMTP (Nodemailer)
- * Uses dynamic import to avoid bundling nodemailer when not needed.
+ * Send via SMTP (Nodemailer), loaded only when SMTP is the provider.
  */
 async function sendViaSMTP(payload: EmailPayload) {
   try {
-    // Dynamic import to avoid bundling nodemailer when not installed
-    const nodemailerModule = await import("nodemailer" as string).catch(() => null);
-    const nodemailer = nodemailerModule?.default || nodemailerModule;
-
-    if (!nodemailer) {
-      console.warn("[Email/SMTP] nodemailer not installed. Run: npm install nodemailer");
-      return sendViaConsole(payload);
-    }
-
+    const nodemailer = (await import("nodemailer")).default;
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || "587"),

@@ -11,7 +11,6 @@ import {
   Briefcase,
   GraduationCap,
   MapPin,
-  Mail,
   Phone,
   Globe,
   Share2,
@@ -19,20 +18,10 @@ import {
   Save,
   CheckCircle2,
   Heart,
-  Calendar,
-  Building,
-  Award,
   Sparkles,
   Camera,
   Trash2,
-  Upload,
   ExternalLink,
-  Shield,
-  Eye,
-  EyeOff,
-  User,
-  X,
-  Plus
 } from "lucide-react";
 
 interface ProfileRecord {

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import {
   MessageSquare,
   Send,
@@ -13,18 +12,13 @@ import {
   Upload,
   Smartphone,
   ShieldCheck,
-  Sparkles,
-  ArrowRight,
   Info,
   Clock,
   Check,
-  ChevronDown,
   Layers,
   HeartHandshake,
   UserCheck,
   FileText,
-  HelpCircle,
-  PhoneCall,
   CheckSquare,
   Square,
   AlertTriangle,
@@ -173,7 +167,7 @@ const PRESET_TEMPLATES: SmsTemplateItem[] = [
 export default function AdminBulkSmsPage() {
   // Gateway & Balance State
   const [balance, setBalance] = useState<string>("...");
-  const [isSimulated, setIsSimulated] = useState<boolean>(true);
+  const [, setIsSimulated] = useState<boolean>(true);
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
   const [senderId, setSenderId] = useState<string>("SSGHS");
   const [balanceLoading, setBalanceLoading] = useState<boolean>(true);

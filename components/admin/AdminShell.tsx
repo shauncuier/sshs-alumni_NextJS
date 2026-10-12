@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -60,7 +60,6 @@ const ADMIN_NAV = [
 export default function AdminShell({ children, user }: AdminShellProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Close mobile drawer on route change
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -73,7 +72,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
   const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : effectiveRole === "MODERATOR" ? "Moderator" : "Administrator";
   // Only the sections this role may use (lib/permissions.ts); pages and APIs check the same map.
   const navItems = ADMIN_NAV.filter((item) => can(effectiveRole, item.area));
-  const userEmail = user?.email ?? (mounted ? session?.user?.email : null);
+  const userEmail = user?.email ?? null;
 
   const activeItem = navItems.find((item) => pathname === item.href) || navItems[0] || ADMIN_NAV[0];
 

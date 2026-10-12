@@ -1,16 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import NextImage from "next/image";
-import {
-  GraduationCap,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  ExternalLink,
-  Heart,
-  ShieldCheck
-} from "lucide-react";
+import { MapPin, Phone, Mail, Globe, ExternalLink, ShieldCheck } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
 
 export default function Footer() {

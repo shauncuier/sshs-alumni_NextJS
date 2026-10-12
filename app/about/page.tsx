@@ -1,16 +1,7 @@
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import {
-  GraduationCap,
-  Target,
-  Eye,
-  Award,
-  Users,
-  ShieldCheck,
-  CheckCircle2,
-  FileText
-} from "lucide-react";
+import { Target, Eye, Users } from "lucide-react";
 
 export default function AboutPage() {
   const committee = [

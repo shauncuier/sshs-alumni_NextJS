@@ -46,7 +46,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 21 | Admin pages usable on phones | 5 · UX | M | ✅ Done 2026-10-12 |
 | 22 | Gate scanner with the phone camera | 5 · UX | M | ✅ Code done 2026-10-12 (20-ticket phone run by you) |
 | 23 | Join flow tested end to end on real phones | 5 · UX | S | 🟡 Checklist ready (`docs/PHONE_TEST_CHECKLIST.md`); the phone run is yours |
-| 24 | Production build passes, warnings cleaned | 6 · Quality | M | ⬜ |
+| 24 | Production build passes, warnings cleaned | 6 · Quality | M | ✅ Build clean 2026-10-12 (`npm start` smoke check by you) |
 | 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ⬜ |
 | 26 | Manual QA walkthrough for every role | 6 · Quality | S | ⬜ |
 | 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | ⬜ |
@@ -280,7 +280,10 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ## Phase 6 — Quality gates
 
-### 24. Production build · M
+### 24. Production build · M · ✅ Done 2026-10-12 (except the `npm start` check)
+**Result:** `npm run build` passes with **no warnings** (92 pages). The one build warning was the missing `nodemailer` for the SMTP email path: installed (10.1.0, overriding the vulnerable 7.x that next-auth 4 asks for; next-auth does not use it) and imported normally; `EMAIL_PROVIDER=smtp` can force SMTP (e.g. Gmail with an app password) while the Resend domain is not verified. ESLint: 0 errors; 115 unused imports and 9 unused variables removed; the 75 remaining warnings are all `<img>` → `next/image` (step 27). Found while cleaning: every job post was saved as "Mid Level" (no field to change it) and the salary was pre-filled with an invented range; the form now has an experience-level picker and an empty, optional salary. `npm audit --omit=dev`: 0.
+**Note:** running `npm run build` while `npm run dev` is running crashes the dev server (they share Turbopack's cache in `.next`); stop dev first, or restart it afterwards.
+**Left (you):** `npm run build && npm start`, open the home, events, join, login, dashboard and admin pages once.
 **Tasks:** `npm run build` passes; fix type, lint and build warnings that matter; `npm start` serves the build locally.
 **Done when:** a clean build and a smoke check of the main pages on `npm start`.
 

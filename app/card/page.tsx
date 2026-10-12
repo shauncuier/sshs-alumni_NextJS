@@ -4,18 +4,7 @@ import React, { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import DigitalAlumniCard, { CardData } from "@/components/card/DigitalAlumniCard";
-import {
-  ShieldCheck,
-  Download,
-  Share2,
-  Printer,
-  Sparkles,
-  QrCode,
-  Smartphone,
-  ExternalLink,
-  Award,
-  CheckCircle2
-} from "lucide-react";
+import { Sparkles, QrCode, ExternalLink, Award } from "lucide-react";
 
 export default function CardPage() {
   const [loading, setLoading] = useState(true);

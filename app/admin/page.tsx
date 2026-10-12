@@ -2,23 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Users,
-  UserCheck,
-  Clock,
-  Layers,
-  Heart,
-  Calendar,
-  ShieldAlert,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  Eye,
-  Plus,
-  Copy,
-  Check,
-  MessageSquare,
-} from "lucide-react";
+import { UserCheck, ArrowRight, CheckCircle2, XCircle, Plus, Copy, Check, MessageSquare } from "lucide-react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";

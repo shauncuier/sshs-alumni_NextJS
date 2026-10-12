@@ -120,6 +120,7 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 
 - **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed:prod`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
 - `sitemap.ts` is generated at build time.
+- Running `npm run build` while `npm run dev` runs crashes the dev server (shared Turbopack cache in `.next`): stop dev first or restart it after.
 - `sshs_dev` contains test accounts and test events from earlier sessions.
 
 ## 7. Before going live

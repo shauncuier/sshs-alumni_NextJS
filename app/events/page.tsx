@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
 import type { PublicEvent } from "@/lib/events/types";
 import { formatTaka } from "@/lib/events/pricing";
-import { Calendar, Search, Filter, Loader2 } from "lucide-react";
+import { Calendar, Search } from "lucide-react";
 
 function jubileePriceText(event: PublicEvent): string {
   const prices = event.packages.map((p) => p.priceAmount).filter((n) => n > 0);

@@ -17,7 +17,8 @@ export default function NewJobPage() {
   const [workplaceType, setWorkplaceType] = useState("Hybrid");
   const [jobType, setJobType] = useState("Full-time");
   const [department, setDepartment] = useState("Engineering");
-  const [salaryRange, setSalaryRange] = useState("৳60,000 - ৳90,000 BDT");
+  // Empty unless the poster gives one; the job page then says "Negotiable".
+  const [salaryRange, setSalaryRange] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("Mid Level");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
@@ -213,8 +214,22 @@ export default function NewJobPage() {
                   </div>
 
                   <div>
+                    <label htmlFor="job-experience" className="block font-semibold text-slate-700 mb-1">
+                      Experience level
+                    </label>
+                    <select
+                      id="job-experience"
+                      value={experienceLevel}
+                      onChange={(e) => setExperienceLevel(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    >
+                      {["Entry Level", "Mid Level", "Senior Level", "Executive"].map((l) => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      Estimated Salary / Stipend
+                      Estimated Salary / Stipend <span className="font-normal text-slate-400">(optional)</span>
                     </label>
                     <input
                       type="text"

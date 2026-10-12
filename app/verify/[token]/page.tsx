@@ -2,19 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import {
-  ShieldCheck,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  School,
-  Clock,
-  MapPin,
-  UserCheck,
-  Calendar,
-  Sparkles,
-  ArrowRight
-} from "lucide-react";
+import { CheckCircle2, XCircle, School, Clock, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 interface VerificationResponse {

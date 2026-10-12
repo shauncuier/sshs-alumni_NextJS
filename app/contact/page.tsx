@@ -4,15 +4,7 @@ import React, { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Send,
-  CheckCircle2,
-  Building,
-  Globe
-} from "lucide-react";
+import { MapPin, Phone, Mail, Send, CheckCircle2, Globe } from "lucide-react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);

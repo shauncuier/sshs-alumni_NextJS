@@ -14,24 +14,20 @@ import {
   Clock,
   MapPin,
   Users,
-  ShieldCheck,
   ArrowLeft,
   Share2,
   CheckCircle2,
   ListOrdered,
   Sparkles,
   Award,
-  Music,
   Utensils,
   BookOpen,
-  Camera,
   Shirt,
   PhoneCall,
   Info,
   ChevronRight,
   Gift,
   Flame,
-  Radio
 } from "lucide-react";
 
 interface EventDetailPageProps {

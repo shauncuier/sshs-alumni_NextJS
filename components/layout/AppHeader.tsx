@@ -4,16 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 import { useSession, signOut } from "next-auth/react";
-import {
-  Bell,
-  MessageSquare,
-  Search,
-  User,
-  Settings,
-  LogOut,
-  ShieldCheck,
-  CheckCircle2
-} from "lucide-react";
+import { Bell, MessageSquare, Search, User, Settings, LogOut, ShieldCheck } from "lucide-react";
 import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
 import { useNotifications } from "@/components/notifications/useNotifications";
 import { relativeTime } from "@/lib/utils";

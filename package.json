@@ -37,6 +37,7 @@
     "lucide-react": "^1.47.0",
     "next": "16.3.8",
     "next-auth": "^4.24.15",
+    "nodemailer": "^10.1.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -47,6 +48,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -65,6 +67,7 @@
     "mariadb": "$mariadb",
     "source-map-js": "^1.2.2",
     "mysql2": "^3.24.5",
-    "deepmerge-ts": "^8.0.2"
+    "deepmerge-ts": "^8.0.2",
+    "nodemailer": "$nodemailer"
   }
 }

@@ -6,7 +6,6 @@ import type { EventItem } from "@/lib/data";
 import { dhakaDateInput } from "@/lib/events/pricing";
 import type { AdminRegistration, PublicEvent } from "@/lib/events/types";
 import {
-  Calendar,
   Plus,
   Users,
   MapPin,
@@ -20,9 +19,7 @@ import {
   Sparkles,
   AlertCircle,
   Clock,
-  Tag,
   Layers,
-  BarChart3
 } from "lucide-react";
 
 export default function AdminEventsPage() {

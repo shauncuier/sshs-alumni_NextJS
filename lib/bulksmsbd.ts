@@ -94,7 +94,6 @@ export function isValidBdMobile(normalized: string): boolean {
 export function isUnicodeText(text: string): boolean {
   // Checks if any character falls outside standard GSM 7-bit charset
   // Standard GSM-7 basic regex
-  // eslint-disable-next-line no-control-regex
   const gsmRegex = /^[@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !"#¤%&'()*+,\-./0-9:;<=>?¡A-ZÄÖÑÜ§¿a-zäöñüà^{}\\[~\]|€]*$/;
   return !gsmRegex.test(text);
 }
