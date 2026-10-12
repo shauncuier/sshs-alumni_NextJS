@@ -1,16 +1,16 @@
 import "../lib/load-env";
 import { Role, VerificationStatus } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { demoEvents } from "./demo-events";
-import { normalizePackages, parseTaka } from "../lib/events/pricing";
-import { backfillEventJsonColumns } from "./backfill-events";
 import { ensureSuperAdmin, envSuperAdminEmail } from "../lib/admin/super-admin";
+import { DEMO_ACCOUNT_DEFAULTS, LEGACY_ACCOUNTS, assertDemoSeedAllowed, repairLegacyRows, seedBatches, seedEvent, seedMembershipEvent } from "./seed-core";
+
+// npm run db:seed — LOCAL DEVELOPMENT ONLY: one test account per role plus sample
+// events, campaigns, news and posts. Production uses npm run db:seed:prod.
 
 // Earlier seeds created these accounts with published passwords; replace them on sight.
-const LEGACY_ADMIN = { email: "admin@sabujsghs.edu.bd", password: "admin123" };
-const LEGACY_ALUMNI = { email: "jashedul@example.com", password: "password123" };
+const [LEGACY_ADMIN, LEGACY_ALUMNI] = LEGACY_ACCOUNTS;
 const MIN_SEED_PASSWORD_LENGTH = 12;
 
 // Seed emails may be configured; they are not secret, so the old addresses are the default.
@@ -54,13 +54,14 @@ async function replaceLegacyPassword(
 }
 
 async function main() {
-  console.log("🌱 Starting SSGHS Alumni database seed for MySQL...");
+  assertDemoSeedAllowed();
+  console.log("🌱 Starting SSGHS Alumni demo seed (local development)...");
 
   // 1. Hash passwords
   // Read all settings before touching the database, so a bad value writes nothing.
-  const adminEmail = emailFromEnv("SEED_ADMIN_EMAIL", LEGACY_ADMIN.email);
-  const alumniEmail = emailFromEnv("SEED_ALUMNI_EMAIL", LEGACY_ALUMNI.email);
-  const moderatorEmail = emailFromEnv("SEED_MODERATOR_EMAIL", "moderator@sabujsghs.edu.bd");
+  const adminEmail = emailFromEnv("SEED_ADMIN_EMAIL", DEMO_ACCOUNT_DEFAULTS.SEED_ADMIN_EMAIL);
+  const alumniEmail = emailFromEnv("SEED_ALUMNI_EMAIL", DEMO_ACCOUNT_DEFAULTS.SEED_ALUMNI_EMAIL);
+  const moderatorEmail = emailFromEnv("SEED_MODERATOR_EMAIL", DEMO_ACCOUNT_DEFAULTS.SEED_MODERATOR_EMAIL);
   const seedEmails = [adminEmail, alumniEmail, moderatorEmail, envSuperAdminEmail()].filter(Boolean);
   if (new Set(seedEmails).size !== seedEmails.length) {
     throw new Error("SUPER_ADMIN_EMAIL, SEED_ADMIN_EMAIL, SEED_MODERATOR_EMAIL and SEED_ALUMNI_EMAIL must all be different addresses.");
@@ -167,78 +168,17 @@ async function main() {
   await replaceLegacyPassword(alumniEmail, LEGACY_ALUMNI.password, userPasswordHash, "SEED_ALUMNI_PASSWORD");
   await replaceLegacyPassword(LEGACY_ALUMNI.email, LEGACY_ALUMNI.password, userPasswordHash, "SEED_ALUMNI_PASSWORD");
 
-  // 4. Seed Batches (1985 to 2025)
-  console.log("Seeding Batches from 1985 to 2025...");
-  const batchYears = Array.from({ length: 41 }, (_, i) => 1985 + i);
-  for (const year of batchYears) {
-    await prisma.batch.upsert({
-      where: { year },
-      update: {},
-      create: {
-        year,
-        name: `SSC Batch ${year}`,
-        tagline: `Proud alumni of Sabuj Shikshayatan Government High School Class of ${year}`,
-        totalMembers: Math.floor(Math.random() * 80) + 40,
-        classRepresentative: `Representative Batch ${year}`,
-        reunionCount: year < 2015 ? Math.floor(Math.random() * 5) + 1 : 0,
-      },
-    });
-  }
+  // 4. SSC batches (name only; representatives are set by admins).
+  console.log(`SSC batches created: ${await seedBatches()}`);
 
-  // 5. Seed events from the site's event content. The Golden Jubilee is the membership
-  // event: joining the association is its paid registration. Payment instructions are
-  // left for an admin to fill in, so joining stays closed until they exist.
+  // 5. Events: the membership event plus sample events.
   console.log("Seeding Events...");
-  // Events that existed before `db push` added the agenda/highlights/packages JSON
-  // columns hold no value there; repair them before Prisma reads any event.
-  const repairedJson = await backfillEventJsonColumns(prisma);
-  if (repairedJson > 0) {
-    console.log(`Backfilled ${repairedJson} empty event agenda/highlights/packages value(s) to [].`);
+  const repaired = await repairLegacyRows();
+  if (repaired.eventJson || repaired.registrations) {
+    console.log(`Repaired ${repaired.eventJson} event JSON value(s) and ${repaired.registrations} legacy free registration(s).`);
   }
-  const JUBILEE_ID = "evt-golden-jubilee-50";
-  const packageHeads: Record<string, { adults: number; children: number; guestsFree?: boolean }> = {
-    "General Alumnus Delegate": { adults: 1, children: 0 },
-    "Alumnus + Spouse / Extra Guest": { adults: 2, children: 0 },
-    "Family (Alumnus + Spouse + 1 Child < 12yr)": { adults: 2, children: 1 },
-    "Golden Patron & Sponsor": { adults: 1, children: 0, guestsFree: true },
-  };
-  const slugFor = (e: (typeof demoEvents)[number]) =>
-    e.title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
-
-  for (const e of demoEvents) {
-    const isJubilee = e.id === JUBILEE_ID;
-    await prisma.event.upsert({
-      where: { slug: slugFor(e) },
-      update: {},
-      create: {
-        slug: slugFor(e),
-        title: e.title,
-        category: e.category,
-        description: e.description,
-        date: new Date(`${e.date}T09:00:00+06:00`),
-        time: e.time,
-        venue: e.venue,
-        locationCity: e.locationCity,
-        organizer: e.organizer,
-        bannerImage: e.bannerImage,
-        maxAttendees: e.maxAttendees,
-        registrationFee: isJubilee ? 0 : parseTaka(e.registrationFee ?? 0) || 0,
-        isRegistrationOpen: e.isRegistrationOpen,
-        subtitle: e.subtitle ?? null,
-        guestOfHonor: e.guestOfHonor ?? null,
-        souvenirDetails: e.souvenirDetails ?? null,
-        registrationDeadline: isJubilee ? new Date("2026-12-15T23:59:59+06:00") : null,
-        isMegaEvent: e.isMegaEvent ?? false,
-        isMembershipEvent: isJubilee,
-        extraAdultFee: isJubilee ? 500 : 0,
-        childFee: isJubilee ? 300 : 0,
-        agenda: (e.agenda ?? []) as unknown as Prisma.InputJsonValue,
-        highlights: e.highlights ?? [],
-        packages: normalizePackages((e.packages ?? []).map((p) => ({ ...p, ...packageHeads[p.name] }))) as unknown as Prisma.InputJsonValue,
-        paymentInstructions: null,
-      },
-    });
-  }
+  await seedMembershipEvent();
+  for (const e of demoEvents) await seedEvent(e);
 
   // Events written by earlier versions of this seed, removed if nobody registered.
   await prisma.event.deleteMany({
@@ -247,20 +187,6 @@ async function main() {
       registrations: { none: {} },
     },
   });
-
-  // Ruling: the schema migration that added RegistrationStatus defaulted every
-  // pre-existing registration to PENDING_PAYMENT. New code never leaves a
-  // registration in that state with no money attached — a free registration is
-  // created CONFIRMED, and a paid one always carries a transactionId — so any
-  // row matching all three conditions below can only be a legacy row the
-  // migration mis-defaulted, and is safe to fix up here.
-  const backfilled = await prisma.eventRegistration.updateMany({
-    where: { status: "PENDING_PAYMENT", totalFee: 0, donationAmount: 0, transactionId: null },
-    data: { status: "CONFIRMED" },
-  });
-  if (backfilled.count > 0) {
-    console.log(`Backfilled ${backfilled.count} legacy free registration(s) from PENDING_PAYMENT to CONFIRMED.`);
-  }
 
   // 6. Seed Donation Campaigns
   console.log("Seeding Transparent Giving Back Campaigns...");
@@ -401,8 +327,8 @@ async function main() {
       batchTag: 2008,
       content:
         "Had the privilege of visiting our beloved Sabuj Shikshayatan campus yesterday! Walked through the old classrooms on the 2nd floor.",
-      likesCount: 25,
-      commentsCount: 4,
+      likesCount: 0,
+      commentsCount: 0,
       isPinned: true,
     },
     {
@@ -411,8 +337,8 @@ async function main() {
       batchTag: 2006,
       content:
         "Free Cardiac and General Health Screening Camp on October 10th at the school auditorium, dedicated to our current and retired teachers.",
-      likesCount: 42,
-      commentsCount: 8,
+      likesCount: 0,
+      commentsCount: 0,
       isPinned: false,
     },
     {
@@ -421,8 +347,8 @@ async function main() {
       batchTag: 2011,
       content:
         "Proud to share that our startup has been nominated for the National Sustainable Enterprise Award! None of this would have been possible without SSGHS!",
-      likesCount: 18,
-      commentsCount: 3,
+      likesCount: 0,
+      commentsCount: 0,
       isPinned: false,
     },
   ];

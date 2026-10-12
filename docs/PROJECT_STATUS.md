@@ -1,7 +1,7 @@
 # SSGHS Alumni Platform — Project Status
 
-**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–10 done)
-**Tests:** 254 / 254 passing (41 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
+**Snapshot:** 2026-10-12 · **Branch:** `prod-readiness` (roadmap steps 1–11 done)
+**Tests:** 262 / 262 passing (42 files, `npm test`) · **Typecheck:** clean · **Lint:** 0 errors
 
 **Next steps:** the ordered go-live plan is in [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md).
 
@@ -32,7 +32,9 @@ Size: 19 Prisma models, 44 pages, 55 API route files.
 | --- | --- |
 | `npm run dev` | Dev server on :3000 (`-H 0.0.0.0` for phone testing over LAN) |
 | `npm run db:push` | Legacy-column backfill, then `prisma db push` |
-| `npm run db:seed` | Seed data plus one account per role (see 3) |
+| `npm run db:seed` | Local only: sample data plus one account per role (see 3); blocked when `NODE_ENV=production` |
+| `npm run db:seed:prod` | Production: batches, super admin, membership event only; disables accounts with old published passwords; lists leftover test accounts and demo content |
+| `npm run db:remove-demo` | Delete the demo seed's sample posts, news, announcements, events and campaigns |
 | `npm run db:super-admin` | Create or sync the super admin from env without a restart |
 | `npm test` | Full Vitest suite |
 
@@ -113,7 +115,7 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 
 ## 6. Known issues and backlog
 
-- **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
+- **Remote (production) database not migrated.** Needs backup, then `npm run db:push` (adds `disabledAt` and earlier event/RSVP changes) and `npm run db:seed:prod`. Checklist: `docs/DATABASE_SETUP.md`. Deploying before that breaks sign-in.
 - Admin pages are only partly responsive on phones (users page is responsive; others are not yet).
 - Gate scanner has no camera; `Permissions-Policy: camera=()` in `next.config.ts` would block one.
 - Changing an event's membership flag while joins are pending leaves them unapprovable.
@@ -137,5 +139,5 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Single `.env.local`; scripts load it through `lib/load-env.ts`.
 - Bangla QR payment option.
 - Security fixes in section 5.
-- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data).
+- Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`).
 - Dev fix: a leftover PWA service worker served old JavaScript in `next dev` (hydration mismatch); dev now removes it.

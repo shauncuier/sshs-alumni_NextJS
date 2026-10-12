@@ -53,9 +53,18 @@ npm run db:generate
 # Create or update tables to match prisma/schema.prisma
 npm run db:push
 
-# Seed demo users, batches 1985–2025, events, campaigns, announcements, news, and posts
+# LOCAL ONLY: demo users (one per role), batches, events, campaigns, announcements, news and posts
 npm run db:seed
+
+# PRODUCTION: batches, the super admin (SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD) and the
+# membership event only. No test accounts, no sample content. Safe to re-run.
+npm run db:seed:prod
+
+# Delete the demo seed's sample content (keeps events with registrations, campaigns with donations)
+npm run db:remove-demo
 ```
+
+`npm run db:seed` refuses to run when `NODE_ENV=production`. On the production database use `npm run db:seed:prod`: it also disables any account that still has one of the old published default passwords, and lists test accounts and demo content still present so they can be disabled or removed.
 
 The seed reads its two accounts from `.env`. Passwords are required (each at least 12 characters; there are no defaults). Emails are optional and default to the addresses shown; they are stored lowercased.
 
@@ -125,7 +134,7 @@ The file itself lives on disk under `UPLOADS_DIR/proofs/<id>/` (see `docs/PRODUC
 The push is not prompt-free on a database that already has events and registrations. Do it in this order:
 
 1. **Back up** the remote database (phpMyAdmin → Export, or `mysqldump`).
-2. **Rehearse on a copy first:** restore that backup into a scratch database, then run `db:push` and `db:seed` against the scratch copy (override `DATABASE_URL` on the command line, as in *Local development* below). Confirm both finish and the site's events load before touching the live database.
+2. **Rehearse on a copy first:** restore that backup into a scratch database, then run `db:push` and `db:seed:prod` against the scratch copy (override `DATABASE_URL` on the command line, as in *Local development* below). Confirm both finish and the site's events load before touching the live database.
 3. **Check for duplicates** on the live database. Both queries must return no rows:
 
    ```sql
@@ -136,7 +145,7 @@ The push is not prompt-free on a database that already has events and registrati
 
    Note the registration count, and compare it after the push.
 4. **Run `npm run db:push`.** Prisma warns that it will add unique constraints on `EventRegistration` (`[eventId, userId]` and `transactionId`) and asks whether to continue. Answer **yes only if the duplicate checks in step 3 returned nothing**; otherwise answer no, resolve the duplicates, and start again.
-5. **Run `npm run db:seed` straight after the push.** MySQL cannot give a JSON column a default, so events that existed before the push have empty `agenda`/`highlights`/`packages` values and fail to load until the seed sets them to `[]`. The seed also marks old free registrations (no fee, no transaction ID) as `CONFIRMED`.
+5. **Run `npm run db:seed:prod` straight after the push** (never `db:seed`, which adds test accounts and sample content). MySQL cannot give a JSON column a default, so events that existed before the push have empty `agenda`/`highlights`/`packages` values and fail to load until the seed sets them to `[]`. It also marks old free registrations (no fee, no transaction ID) as `CONFIRMED`.
 
 **Never use `prisma db push --force-reset`** (Prisma may suggest it when a push cannot be applied): it drops and recreates every table, deleting all members, events and registrations. If Prisma suggests it, stop and work out the cause on the scratch copy instead.
 

@@ -32,7 +32,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 9f | Network built from real verified members | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 9g | Moderators can manage content (news, gallery, stories) | 2 · Real data | M | ✅ Done 2026-10-12 |
 | 10 | Remove sample-data fallbacks from feed, dashboard, network, sitemap | 2 · Real data | M | ✅ Done 2026-10-12 |
-| 11 | Production-safe seed (no sample content) | 2 · Real data | S | ⬜ |
+| 11 | Production-safe seed (no sample content) | 2 · Real data | S | ✅ Done 2026-10-12 |
+| 11a | Donation campaigns created and edited in admin | 2 · Real data | M | ⬜ |
 | 12 | Secrets and environment for production | 3 · Security | S | ⬜ |
 | 13 | Same-origin checks and body-size limits on every write route | 3 · Security | M | ⬜ |
 | 14 | Dependency audit and security headers | 3 · Security | S | ⬜ |
@@ -172,10 +173,17 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** feed, dashboard widgets, network, messages and `sitemap.ts` stop mixing in `lib/data.ts` samples; show empty states instead.
 **Done when:** a fresh database shows empty states, never invented people.
 
-### 11. Production-safe seed · S
+### 11. Production-safe seed · S · ✅ Done 2026-10-12
+**Result:** `npm run db:seed:prod` (`prisma/seed-prod.ts`, shared steps in `prisma/seed-core.ts`) creates the SSC batches 1985 to this year (name only), the super admin from `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` (required) and the membership event (`prisma/membership-event.ts`, payment instructions left for an admin) — nothing else; existing rows are never overwritten, so it can be re-run. It repairs legacy event/registration rows, disables accounts that still have the old published default passwords, clears the invented batch representatives earlier seeds wrote, and warns about test accounts and demo content still present. `npm run db:seed` (demo data and test accounts) now refuses to run when `NODE_ENV=production`. `npm run db:remove-demo` deletes the demo posts, news, announcements, events and campaigns, keeping events with registrations and campaigns with donations. `docs/DATABASE_SETUP.md` updated. 8 tests.
+
 **Why:** `npm run db:seed` creates sample events, posts, news and test accounts — wrong for production.
 **Tasks:** `npm run db:seed:prod` that creates only batches, the super admin (from env) and the real membership event; refuses to create test accounts when `NODE_ENV=production`.
 **Done when:** running it on an empty database gives a clean, real-only site.
+
+### 11a. Donation campaigns in admin · M
+**Why:** found in step 11 — campaigns can only be created by the demo seed; there is no admin page for them, so a production database would have an empty donations page.
+**Tasks:** create / edit / close / delete campaigns in `/admin/donations` (title, description, goal, dates, banner image through the content-image pipeline); deleting is blocked once donations exist; activity log; tests.
+**Done when:** the committee can open a campaign from the admin panel and members can donate to it.
 
 ---
 
