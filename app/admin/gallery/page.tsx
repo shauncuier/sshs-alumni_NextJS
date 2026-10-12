@@ -372,7 +372,7 @@ export default function AdminGalleryPage() {
               {albums.map((a) => (
                 <button key={a.id} type="button" onClick={() => setOpenId(a.id)} className="text-left bg-white rounded-3xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
                   <div className="aspect-[16/10] bg-slate-100 flex items-center justify-center">
-                    {thumb(a.coverUrl) ? <img src={thumb(a.coverUrl)!} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-10 h-10 text-slate-300" />}
+                    {thumb(a.coverUrl) ? <img loading="lazy" decoding="async" src={thumb(a.coverUrl)!} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-10 h-10 text-slate-300" />}
                   </div>
                   <div className="p-4 space-y-1">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${a.isPublished ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{a.isPublished ? "PUBLISHED" : "NOT PUBLISHED"}</span>

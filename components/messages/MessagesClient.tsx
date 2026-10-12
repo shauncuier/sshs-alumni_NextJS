@@ -151,7 +151,7 @@ export default function MessagesClient({ currentUserId, initialTo }: { currentUs
               onClick={() => void openThread(c.partnerId)}
               className={`w-full text-left p-3.5 flex items-center gap-3 hover:bg-slate-50 cursor-pointer ${c.partnerId === activeId ? "bg-emerald-50/70" : ""}`}
             >
-              <img src={c.partner?.avatarUrl} alt="" className="w-10 h-10 rounded-xl object-cover bg-slate-100 shrink-0" />
+              <img loading="lazy" decoding="async" src={c.partner?.avatarUrl} alt="" className="w-10 h-10 rounded-xl object-cover bg-slate-100 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-slate-900 truncate">{c.partner?.fullName ?? "Member"}</span>
@@ -182,7 +182,7 @@ export default function MessagesClient({ currentUserId, initialTo }: { currentUs
               <button type="button" onClick={() => setActiveId(null)} aria-label="Back to conversations" className="md:hidden p-1.5 -ml-1 text-slate-500 cursor-pointer">
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              {partner && <img src={partner.avatarUrl} alt="" className="w-9 h-9 rounded-xl object-cover bg-slate-100" />}
+              {partner && <img loading="lazy" decoding="async" src={partner.avatarUrl} alt="" className="w-9 h-9 rounded-xl object-cover bg-slate-100" />}
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-900 truncate">{partner?.fullName ?? (loadingThread ? "Loading…" : "Member")}</p>
                 {partner?.sscBatch && <p className="text-[11px] text-slate-500">SSC Batch {partner.sscBatch}</p>}

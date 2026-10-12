@@ -12,7 +12,7 @@ export default function NewsCard({ news }: NewsCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
       {/* Thumbnail */}
       <div className="relative h-48 overflow-hidden bg-slate-900">
-        <img
+        <img loading="lazy" decoding="async"
           src={news.featuredImage}
           alt={news.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"

@@ -244,7 +244,7 @@ export default function AdminDashboardPage() {
                 <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <img src={r.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
+                      <img loading="lazy" decoding="async" src={r.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
                       <div>
                         <div className="font-bold text-slate-900 text-sm">{r.fullName}</div>
                         <div className="text-slate-500 text-[11px]">{r.email} • {r.phone}</div>

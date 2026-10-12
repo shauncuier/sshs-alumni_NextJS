@@ -97,7 +97,7 @@ export default function DigitalAlumniCard({
             {/* Middle: Alumnus Details */}
             <div className="relative z-10 flex items-center gap-4 my-auto pt-2">
               <div className="relative shrink-0">
-                <img
+                <img loading="lazy" decoding="async"
                   src={card.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
                   alt={card.fullName}
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-md ring-4 ring-emerald-900/50"
@@ -188,7 +188,7 @@ export default function DigitalAlumniCard({
             <div className="relative z-10 flex items-center justify-center gap-6 my-auto">
               <div className="p-2.5 bg-white rounded-2xl shadow-xl border-2 border-amber-400">
                 {qrDataUrl ? (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={qrDataUrl}
                     alt="Gate QR Code"
                     className="w-24 h-24 sm:w-28 sm:h-28 object-contain"

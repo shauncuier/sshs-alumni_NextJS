@@ -52,7 +52,7 @@ export default function FeedPage() {
           {/* Top Post Creator Bar */}
           <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-3">
             {user?.image ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={user.image}
                 alt={userName}
                 className="w-10 h-10 rounded-full object-cover border border-emerald-400"

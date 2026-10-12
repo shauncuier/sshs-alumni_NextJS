@@ -414,7 +414,7 @@ export default function DonatePage() {
                         )}
                         {paymentMethod === "Bangla QR" && payment?.banglaQrImage && (
                           <div className="flex items-center gap-3 pt-1">
-                            <img src={payment.banglaQrImage} alt="Bangla QR code for donations" className="w-36 h-36 bg-white rounded-xl border object-contain p-1.5" />
+                            <img loading="lazy" decoding="async" src={payment.banglaQrImage} alt="Bangla QR code for donations" className="w-36 h-36 bg-white rounded-xl border object-contain p-1.5" />
                             <span>Scan with any bank or mobile banking app{payment.banglaQrMerchant ? ` (${payment.banglaQrMerchant})` : ""}.</span>
                           </div>
                         )}

@@ -61,7 +61,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
           {error && <p role="alert" className="text-xs font-bold text-rose-700">{error}</p>}
           <div className="flex items-center gap-3">
             {userImage ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={userImage}
                 alt={userName}
                 className="w-10 h-10 rounded-full object-cover border border-emerald-300"

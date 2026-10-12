@@ -24,7 +24,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
       <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
-            <img
+            <img loading="lazy" decoding="async"
               src={avatarSrc}
               alt={alumni.fullName}
               onError={() => setImgError(true)}
@@ -117,7 +117,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
       <div className="px-5 pb-5 pt-0 flex-1 flex flex-col">
         <div className="relative -mt-10 mb-3 flex items-end justify-between">
           <div className="relative">
-            <img
+            <img loading="lazy" decoding="async"
               src={avatarSrc}
               alt={alumni.fullName}
               onError={() => setImgError(true)}

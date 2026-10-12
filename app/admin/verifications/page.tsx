@@ -472,7 +472,7 @@ function VerificationReviewContent() {
                   >
                     {/* Avatar */}
                     <div className="relative shrink-0 mt-0.5">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={r.avatarUrl || "/logo.png"}
                         alt=""
                         className="w-10 h-10 rounded-full object-cover border border-white/20 bg-slate-200 shrink-0"
@@ -564,7 +564,7 @@ function VerificationReviewContent() {
               <div className="p-5 sm:p-6 bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={activeApplicant.avatarUrl || "/logo.png"}
                       alt=""
                       className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500 bg-slate-800 shrink-0"
@@ -659,7 +659,7 @@ function VerificationReviewContent() {
 
                   <div className="flex flex-col sm:flex-row items-center gap-5">
                     <div className="relative group shrink-0">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={activeApplicant.avatarUrl || "/logo.png"}
                         alt="Profile photo preview"
                         className="w-28 h-28 rounded-2xl object-cover border-2 border-slate-200 shadow-sm bg-white"
@@ -805,7 +805,7 @@ function VerificationReviewContent() {
                                 rel="noopener noreferrer"
                                 className="block max-h-[360px] overflow-hidden rounded-xl cursor-zoom-in"
                               >
-                                <img
+                                <img loading="lazy" decoding="async"
                                   src={activeApplicant.proof.fileUrl}
                                   alt="Study proof document"
                                   onError={() => setDocImageFailed(true)}
@@ -1036,7 +1036,7 @@ function VerificationReviewContent() {
                           </div>
 
                           <div className="p-2 bg-white rounded-xl border border-emerald-100 max-h-60 overflow-hidden flex items-center justify-center">
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={activeApplicant.paymentReceiptUrl}
                               alt="Payment screenshot"
                               className="max-h-56 w-auto object-contain rounded-lg"

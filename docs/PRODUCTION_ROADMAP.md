@@ -49,7 +49,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 24 | Production build passes, warnings cleaned | 6 · Quality | M | ✅ Build clean 2026-10-12 (`npm start` smoke check by you) |
 | 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ✅ Done 2026-10-12 |
 | 26 | Manual QA walkthrough for every role | 6 · Quality | S | 🟡 Access checks automated and passing; hands-on part by you |
-| 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | ⬜ |
+| 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | 🟡 Images done; Lighthouse on a production build by you |
 | 28 | Server set up (Node, Nginx, PM2, SSL, uploads folder) | 7 · Deploy | M | ⬜ |
 | 29 | Production database: back up, rehearse, migrate, seed | 7 · Deploy | M | ⬜ |
 | 30 | Backups running and a restore tested | 7 · Deploy | S | ⬜ |
@@ -299,7 +299,9 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:** written checklist, run once per role: visitor, alumni (pending → verified), moderator (gate), admin (approve, events, SMS), super admin (users, logs).
 **Done when:** every line passes; issues found become their own steps.
 
-### 27. Performance · M
+### 27. Performance · M · 🟡 Done except the Lighthouse run, 2026-10-12
+**Result:** `golden-jubilee.jpg` (default banner and cover) re-encoded 962 → 177 KB; `logo.png` was a 960 px JPEG with a .png name (100 KB, shown at ~36 px) and is now a real 256 px PNG (31 KB); real 192/512 PNG app icons for the PWA manifest (it claimed PNGs it did not have); the unused `dr-nusrat.jpg` (621 KB, a made-up person's photo) and `logo.jpg` deleted. Static and stock photos on the home and events pages use `next/image` (served as WebP at the displayed size: e.g. a 600 px stock photo 20 KB, the banner 23 KB on a phone), the hero loads first; the 65 other `<img>` (uploads, already resized to WebP by `lib/media`) lazy-load, except each detail page's main banner, which loads first. ESLint: 0 problems. Unused `framer-motion` removed. Client JS: the largest chunk is React DOM itself; the camera library loads only on `/gate`.
+**Left (you):** `npm run build && npm start` (with the dev server stopped), then Chrome DevTools → Lighthouse → Mobile on `/`, `/events/50-years-golden-jubilee-grand-celebration` and `/alumni`; target performance ≥ 80.
 **Tasks:** `next/image` for large images; check bundle size; mobile Lighthouse on home, join and directory.
 **Done when:** mobile Lighthouse performance ≥ 80 on those pages.
 

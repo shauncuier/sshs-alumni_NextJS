@@ -90,7 +90,7 @@ export default function RegisterClientView({ initialEvent }: RegisterClientViewP
                   : "Registered"}
             </p>
             {registration.ticket && (
-              <img src={registration.ticket.qrDataUrl} alt="Event ticket QR code" className="w-40 h-40 bg-white rounded-xl border" />
+              <img loading="lazy" decoding="async" src={registration.ticket.qrDataUrl} alt="Event ticket QR code" className="w-40 h-40 bg-white rounded-xl border" />
             )}
             <button
               type="button"

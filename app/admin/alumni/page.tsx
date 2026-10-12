@@ -212,7 +212,7 @@ export default function AdminAlumniPage() {
                 <tr key={r.id} className="block md:table-row border border-slate-200 rounded-xl p-3 md:p-0 md:border-0 md:rounded-none hover:bg-slate-50">
                   <td className="block md:table-cell py-0.5 md:py-4 md:px-6">
                     <div className="flex items-center gap-3">
-                      <img src={r.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
+                      <img loading="lazy" decoding="async" src={r.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
                       <div>
                         <div className="font-bold text-slate-900">{r.fullName}</div>
                         <div className="text-slate-400 text-[11px]">{r.email}</div>

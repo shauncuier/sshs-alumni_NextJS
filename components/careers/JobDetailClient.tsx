@@ -85,7 +85,7 @@ export default function JobDetailClient({ job, open }: { job: JobListing; open: 
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-white p-2.5 flex items-center justify-center shrink-0 shadow-lg">
                   {job.companyLogo ? (
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={job.companyLogo}
                       alt={job.company}
                       className="w-full h-full object-cover rounded-xl"
@@ -119,7 +119,7 @@ export default function JobDetailClient({ job, open }: { job: JobListing; open: 
 
               {/* Recruiter Alumnus Mini Badge */}
               <div className="bg-emerald-900/60 p-3.5 rounded-2xl border border-emerald-700/60 flex items-center gap-3">
-                <img
+                <img loading="lazy" decoding="async"
                   src={job.postedByAlumnus.avatarUrl}
                   alt={job.postedByAlumnus.name}
                   className="w-10 h-10 rounded-full object-cover border border-amber-400"

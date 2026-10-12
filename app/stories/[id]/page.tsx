@@ -68,7 +68,7 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
           <article className="bg-white p-6 sm:p-12 rounded-3xl border border-slate-200/80 shadow-md space-y-8">
             {/* Featured Image */}
             <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-200">
-              <img
+              <img loading="eager" fetchPriority="high" decoding="async"
                 src={story.coverImage}
                 alt={story.title}
                 className="w-full h-[400px] object-cover"

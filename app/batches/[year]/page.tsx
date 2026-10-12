@@ -138,7 +138,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
       <main className="flex-1 pb-24">
         {/* Hero Cover */}
         <div className="relative min-h-[380px] sm:min-h-[440px] bg-slate-900 overflow-hidden flex flex-col justify-between">
-          <img
+          <img loading="eager" fetchPriority="high" decoding="async"
             src={batch.coverImage}
             alt={batch.name}
             className="absolute inset-0 w-full h-full object-cover opacity-75"

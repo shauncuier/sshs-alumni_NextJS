@@ -56,7 +56,7 @@ export default function SchoolPage() {
             </div>
 
             <div className="lg:col-span-5 rounded-3xl overflow-hidden shadow-xl border border-slate-200">
-              <img
+              <img loading="lazy" decoding="async"
                 src="https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80"
                 alt="School Building"
                 className="w-full h-80 object-cover"

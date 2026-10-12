@@ -125,7 +125,7 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
               className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition-colors"
             >
               {user?.image ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={user.image}
                   alt={userName}
                   className="w-8 h-8 rounded-full object-cover border border-emerald-300"

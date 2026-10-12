@@ -175,7 +175,7 @@ function EventDetailView({
       <main className="flex-1 pb-24">
         {/* Banner Section */}
         <div className="relative min-h-[380px] sm:min-h-[460px] bg-slate-950 overflow-hidden flex flex-col justify-end">
-          <img
+          <img loading="eager" fetchPriority="high" decoding="async"
             src={event.bannerImage}
             alt={event.title}
             className="absolute inset-0 w-full h-full object-cover opacity-85"
@@ -678,7 +678,7 @@ function EventDetailView({
                             : "You're registered"}
                       </p>
                       {registration.ticket && (
-                        <img src={registration.ticket.qrDataUrl} alt="Event ticket QR code" className="w-40 h-40 bg-white rounded-xl border" />
+                        <img loading="lazy" decoding="async" src={registration.ticket.qrDataUrl} alt="Event ticket QR code" className="w-40 h-40 bg-white rounded-xl border" />
                       )}
                     </div>
                   )}

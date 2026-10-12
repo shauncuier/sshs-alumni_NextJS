@@ -117,7 +117,7 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <Link href={profileHref} className="shrink-0">
-            <img src={post.author.avatar} alt={post.author.name} className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-100 hover:border-emerald-600 transition-colors" />
+            <img loading="lazy" decoding="async" src={post.author.avatar} alt={post.author.name} className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-100 hover:border-emerald-600 transition-colors" />
           </Link>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">

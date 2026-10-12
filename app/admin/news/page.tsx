@@ -111,7 +111,7 @@ function Editor({ draft, categories, onClose, onSaved }: { draft: Draft; categor
           <span className={label}>Image</span>
           <div className="flex items-center gap-3">
             <div className="w-32 h-20 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-              {form.featuredImage ? <img src={form.featuredImage} alt="Article image" className="w-full h-full object-cover" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
+              {form.featuredImage ? <img loading="lazy" decoding="async" src={form.featuredImage} alt="Article image" className="w-full h-full object-cover" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
             </div>
             <div className="space-y-1.5">
               <label className={`${ghost} w-fit`}>
@@ -237,7 +237,7 @@ export default function AdminNewsPage() {
         {articles.map((a) => (
           <div key={a.id} className="p-4 flex flex-col sm:flex-row gap-3">
             <div className="w-full sm:w-32 h-32 sm:h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0">
-              {a.featuredImage && <img src={a.featuredImage.replace("/large.webp", "/thumb.webp")} alt="" className="w-full h-full object-cover" />}
+              {a.featuredImage && <img loading="lazy" decoding="async" src={a.featuredImage.replace("/large.webp", "/thumb.webp")} alt="" className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-1.5">

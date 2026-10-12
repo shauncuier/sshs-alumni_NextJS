@@ -12,7 +12,7 @@ export default function BatchCard({ batch }: BatchCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
       {/* Cover Image */}
       <div className="relative h-44 overflow-hidden bg-slate-900">
-        <img
+        <img loading="lazy" decoding="async"
           src={batch.coverImage}
           alt={batch.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"

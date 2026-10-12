@@ -190,7 +190,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                     className="flex items-center justify-between p-2.5 rounded-xl hover:bg-emerald-50/80 transition-colors group"
                   >
                     <div className="flex items-center gap-3">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={
                           alumnus.avatarUrl ||
                           `https://ui-avatars.com/api/?name=${encodeURIComponent(alumnus.fullName)}&background=06281e&color=fcd34d&bold=true`

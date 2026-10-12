@@ -423,7 +423,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
             <div className="md:col-span-2 space-y-1">
               <label className="font-bold text-slate-700 block">Banner Preview</label>
               <div className="h-44 w-full rounded-2xl overflow-hidden border border-slate-200 relative bg-slate-900">
-                <img
+                <img loading="lazy" decoding="async"
                   src={event.bannerImage}
                   alt={event.title}
                   className="w-full h-full object-cover"
@@ -1452,7 +1452,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                   <tr key={a.id} className="block md:table-row border border-slate-200 md:border-0 md:border-t md:border-slate-100 rounded-2xl md:rounded-none p-3 md:p-0 bg-white text-xs">
                     <td className="block md:table-cell py-1 md:py-3 md:px-3">
                       <div className="flex items-center gap-3">
-                        <img src={a.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
+                        <img loading="lazy" decoding="async" src={a.avatarUrl || "/logo.png"} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
                         <div>
                           <div className="font-bold text-slate-900">{a.name}</div>
                           <div className="text-slate-500">{a.email} · {a.phone}</div>

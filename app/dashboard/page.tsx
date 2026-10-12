@@ -171,7 +171,7 @@ export default function DashboardPage() {
           {/* Quick Create Post Bar */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
             {user?.image ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={user.image}
                 alt={userName}
                 className="w-10 h-10 rounded-full object-cover border border-emerald-400"
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                 {upcomingEvent && (
                   <>
                     <div className="rounded-xl overflow-hidden relative h-32 bg-slate-900">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={upcomingEvent.bannerImage}
                         alt={upcomingEvent.title}
                         className="w-full h-full object-cover opacity-80"
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                   {displayClassmates.map((alumnus) => (
                     <div key={alumnus.id} className="flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 overflow-hidden">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={alumnus.avatarUrl}
                           alt={alumnus.fullName}
                           className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"

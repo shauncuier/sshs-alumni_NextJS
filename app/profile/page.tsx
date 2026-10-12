@@ -333,7 +333,7 @@ export default function ProfilePage() {
             {/* Cover Banner */}
             <div className="h-44 sm:h-56 bg-gradient-to-r from-emerald-950 via-emerald-800 to-[#041a13] relative overflow-hidden">
               {profile.coverUrl && (
-                <img
+                <img loading="lazy" decoding="async"
                   src={profile.coverUrl}
                   alt="Profile Cover"
                   className="w-full h-full object-cover opacity-60"
@@ -361,7 +361,7 @@ export default function ProfilePage() {
                 <div className="relative group">
                   <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-emerald-900">
                     {profile.avatarUrl ? (
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={profile.avatarUrl}
                         alt={profileData.fullName}
                         className="w-full h-full object-cover"
@@ -968,7 +968,7 @@ export default function ProfilePage() {
                       <div key={a.id} className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2.5">
                           {a.avatarUrl ? (
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={a.avatarUrl}
                               alt={a.fullName}
                               className="w-8 h-8 rounded-full object-cover border"

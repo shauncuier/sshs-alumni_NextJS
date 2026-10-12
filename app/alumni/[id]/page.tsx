@@ -112,7 +112,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
         {/* Cover Section */}
         <div className="relative h-64 md:h-80 w-full bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 overflow-hidden">
           {profile.coverUrl ? (
-            <img
+            <img loading="eager" fetchPriority="high" decoding="async"
               src={profile.coverUrl}
               alt="Profile Cover"
               className="w-full h-full object-cover opacity-60"
@@ -144,7 +144,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left">
                   <div className="relative shrink-0">
-                    <img
+                    <img loading="eager" fetchPriority="high" decoding="async"
                       src={avatarSrc}
                       alt={profile.fullName}
                       className="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl sm:rounded-3xl object-cover border-4 border-white shadow-xl ring-2 ring-emerald-500/20"

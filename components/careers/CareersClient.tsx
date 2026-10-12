@@ -172,7 +172,7 @@ export default function CareersClient({ jobs }: { jobs: JobListing[] }) {
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 p-2 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
                     {job.companyLogo ? (
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={job.companyLogo}
                         alt={job.company}
                         className="w-full h-full object-cover rounded-xl"
@@ -212,7 +212,7 @@ export default function CareersClient({ jobs }: { jobs: JobListing[] }) {
 
                     {/* Posted by Alumnus Badge */}
                     <div className="pt-1 flex items-center gap-2 text-[11px] text-slate-500">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={job.postedByAlumnus.avatarUrl}
                         alt={job.postedByAlumnus.name}
                         className="w-5 h-5 rounded-full object-cover border border-emerald-400"

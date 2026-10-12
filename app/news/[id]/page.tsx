@@ -48,7 +48,7 @@ export default async function NewsArticlePage({ params }: Props) {
             </div>
           </header>
 
-          <img src={article.featuredImage} alt="" className="w-full rounded-3xl border border-slate-200 bg-slate-100 object-cover max-h-[480px]" />
+          <img loading="eager" fetchPriority="high" decoding="async" src={article.featuredImage} alt="" className="w-full rounded-3xl border border-slate-200 bg-slate-100 object-cover max-h-[480px]" />
 
           <p className="text-base sm:text-lg text-slate-700 font-medium leading-relaxed">{article.excerpt}</p>
           <div className="space-y-4 text-sm sm:text-base text-slate-800 leading-relaxed">

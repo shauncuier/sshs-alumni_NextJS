@@ -88,7 +88,7 @@ function ImageField({ value, onChange, round }: { value: string | null; onChange
   return (
     <div className="flex items-center gap-3">
       <div className={`${round ? "w-20 h-20 rounded-full" : "w-32 h-20 rounded-xl"} border border-slate-200 bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center`}>
-        {value ? <img src={thumb(value)!} alt="" className="w-full h-full object-cover" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
+        {value ? <img loading="lazy" decoding="async" src={thumb(value)!} alt="" className="w-full h-full object-cover" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
       </div>
       <div className="space-y-1.5">
         <label className={`${ghost} w-fit`}>
@@ -359,7 +359,7 @@ export default function AdminStoriesPage() {
           ) : (
             stories.map((s) => (
               <div key={s.id} className="p-4 flex flex-col sm:flex-row gap-3">
-                <div className="w-full sm:w-32 h-32 sm:h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0">{thumb(s.coverImage) && <img src={thumb(s.coverImage)!} alt="" className="w-full h-full object-cover" />}</div>
+                <div className="w-full sm:w-32 h-32 sm:h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0">{thumb(s.coverImage) && <img loading="lazy" decoding="async" src={thumb(s.coverImage)!} alt="" className="w-full h-full object-cover" />}</div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {statusBadge(s.isPublished)}
@@ -385,7 +385,7 @@ export default function AdminStoriesPage() {
           ) : (
             achievements.map((a) => (
               <div key={a.id} className="p-4 flex flex-col sm:flex-row gap-3">
-                <div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden shrink-0">{thumb(a.photoUrl) && <img src={thumb(a.photoUrl)!} alt="" className="w-full h-full object-cover" />}</div>
+                <div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden shrink-0">{thumb(a.photoUrl) && <img loading="lazy" decoding="async" src={thumb(a.photoUrl)!} alt="" className="w-full h-full object-cover" />}</div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-1.5">{statusBadge(a.isPublished)}<span className="text-[10px] text-slate-400">{a.category} · {a.yearAwarded}</span></div>
                   <p className="text-sm font-bold text-slate-900 break-words">{a.recipientName} — {a.title}</p>

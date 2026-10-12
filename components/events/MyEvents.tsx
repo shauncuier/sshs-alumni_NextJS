@@ -65,7 +65,7 @@ export default function MyEvents() {
               </button>
             )}
             {r.ticket && openTicket === r.id && (
-              <img src={r.ticket.qrDataUrl} alt={`Ticket for ${r.eventTitle}`} className="w-44 h-44 bg-white border rounded-xl" />
+              <img loading="lazy" decoding="async" src={r.ticket.qrDataUrl} alt={`Ticket for ${r.eventTitle}`} className="w-44 h-44 bg-white border rounded-xl" />
             )}
           </li>
         ))}

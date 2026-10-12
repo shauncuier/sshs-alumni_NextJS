@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import EventCard from "@/components/events/EventCard";
@@ -117,10 +118,14 @@ export default function EventsPage() {
               <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
                 {/* Left 7 cols: Image & Badges */}
                 <div className="lg:col-span-6 relative h-64 sm:h-80 lg:h-full min-h-[300px] overflow-hidden">
-                  <img
+                  <Image
                     src="/golden-jubilee.jpg"
                     alt="50 Years Golden Jubilee Grand Celebration"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    loading="eager"
+                    fetchPriority="high"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#06281e]" />
                   <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow">

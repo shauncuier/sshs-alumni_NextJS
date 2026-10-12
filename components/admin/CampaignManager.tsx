@@ -73,7 +73,7 @@ function BannerField({ value, onChange }: { value: string | null; onChange: (url
   return (
     <div className="flex items-center gap-3">
       <div className="w-32 h-20 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-        {value ? <img src={thumb(value)!} alt="" className="w-full h-full object-cover" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
+        {value ? <img loading="lazy" decoding="async" src={thumb(value)!} alt="" className="w-full h-full object-cover" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
       </div>
       <div className="space-y-1.5">
         <label className={`${ghost} w-fit`}>
@@ -259,7 +259,7 @@ export default function CampaignManager({ onChanged }: { onChanged?: () => void 
                   </div>
                   <h3 className="font-bold text-sm text-slate-900 mt-1.5">{c.title}</h3>
                 </div>
-                {c.bannerImage && <img src={thumb(c.bannerImage)!} alt="" className="w-20 h-14 rounded-lg object-cover border border-slate-100 shrink-0" />}
+                {c.bannerImage && <img loading="lazy" decoding="async" src={thumb(c.bannerImage)!} alt="" className="w-20 h-14 rounded-lg object-cover border border-slate-100 shrink-0" />}
               </div>
 
               <div className="space-y-1">

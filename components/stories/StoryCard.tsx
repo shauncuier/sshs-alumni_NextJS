@@ -12,7 +12,7 @@ export default function StoryCard({ story }: StoryCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
       {/* Cover Image */}
       <div className="relative h-52 overflow-hidden bg-slate-900">
-        <img
+        <img loading="lazy" decoding="async"
           src={story.coverImage}
           alt={story.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95"

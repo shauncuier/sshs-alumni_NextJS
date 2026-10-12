@@ -331,7 +331,7 @@ export default function RegistrationForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2 flex items-center gap-4">
             <div className="w-20 h-20 shrink-0 rounded-full overflow-hidden bg-slate-100 border border-slate-300 flex items-center justify-center text-[10px] text-slate-400 text-center">
-              {photoPreview ? <img src={photoPreview} alt="Your profile photo preview" className="w-full h-full object-cover" /> : "No photo"}
+              {photoPreview ? <img loading="lazy" decoding="async" src={photoPreview} alt="Your profile photo preview" className="w-full h-full object-cover" /> : "No photo"}
             </div>
             <div className="flex-1 min-w-0">
               <label htmlFor="reg-photo" className={label}>Profile photo *</label>
@@ -443,7 +443,7 @@ export default function RegistrationForm({
               {proof && (
                 <div className="mt-2 flex items-center gap-3 min-w-0">
                   <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-white border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                    {proofPreview ? <img src={proofPreview} alt="Your proof document preview" className="w-full h-full object-cover" /> : "PDF"}
+                    {proofPreview ? <img loading="lazy" decoding="async" src={proofPreview} alt="Your proof document preview" className="w-full h-full object-cover" /> : "PDF"}
                   </div>
                   <div className="min-w-0 text-[11px]">
                     <div className="font-semibold text-slate-800 truncate">{proof.name}</div>
@@ -615,7 +615,7 @@ export default function RegistrationForm({
               {paymentMethod === "Bangla QR" && (
                 <div className="p-3.5 rounded-xl border border-[#006a4e]/30 bg-emerald-50/60 flex flex-col sm:flex-row items-center gap-4">
                   {payment?.banglaQrImage && (
-                    <img src={payment.banglaQrImage} alt="Bangla QR code for paying the association" className="w-48 h-48 shrink-0 bg-white rounded-xl border object-contain p-2" />
+                    <img loading="lazy" decoding="async" src={payment.banglaQrImage} alt="Bangla QR code for paying the association" className="w-48 h-48 shrink-0 bg-white rounded-xl border object-contain p-2" />
                   )}
                   <div className="text-[11px] text-slate-700 space-y-1.5">
                     <p className="font-bold text-[#006a4e] text-xs">Pay with Bangla QR</p>
@@ -672,7 +672,7 @@ export default function RegistrationForm({
                 </p>
                 {paymentReceiptPreview && (
                   <div className="mt-2 flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200">
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={paymentReceiptPreview}
                       alt="Payment receipt preview"
                       className="w-12 h-12 object-cover rounded-md border border-slate-200 shrink-0"

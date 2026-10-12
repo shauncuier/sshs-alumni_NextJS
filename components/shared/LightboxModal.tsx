@@ -67,7 +67,7 @@ export default function LightboxModal({
       {/* Main Image Container */}
       <div className="max-w-5xl w-full flex flex-col items-center">
         <div className="relative max-h-[75vh] overflow-hidden rounded-2xl shadow-2xl border border-white/10">
-          <img
+          <img loading="lazy" decoding="async"
             src={currentPhoto.imageUrl}
             alt={currentPhoto.title}
             className="max-h-[75vh] w-auto object-contain mx-auto"

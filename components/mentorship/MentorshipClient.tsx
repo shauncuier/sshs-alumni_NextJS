@@ -119,7 +119,7 @@ export default function MentorshipClient({
                 <div key={mentor.id} className="bg-white rounded-3xl border border-slate-200 hover:border-emerald-600 transition-all p-6 sm:p-7 shadow-xs hover:shadow-md flex flex-col justify-between space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-start gap-4">
-                      <img src={mentor.avatarUrl} alt={mentor.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-emerald-400 shadow-md shrink-0" />
+                      <img loading="lazy" decoding="async" src={mentor.avatarUrl} alt={mentor.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-emerald-400 shadow-md shrink-0" />
                       <div className="space-y-1 min-w-0">
                         <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">{mentor.domain}</span>
                         <h3 className="font-extrabold text-base sm:text-lg text-slate-900 truncate">{mentor.name}</h3>

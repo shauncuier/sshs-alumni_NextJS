@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StatCounter from "@/components/shared/StatCounter";
@@ -199,7 +200,7 @@ export default async function HomePage() {
                 <div className="pt-4 flex items-center justify-center lg:justify-start gap-4 text-xs text-emerald-300/80">
                   <div className="flex -space-x-2">
                     {featuredAlumni.slice(0, 4).map((a) => (
-                      <img
+                      <img loading="lazy" decoding="async"
                         key={a.id}
                         src={a.avatarUrl}
                         alt={a.fullName}
@@ -216,9 +217,14 @@ export default async function HomePage() {
                 <div className="relative mx-auto max-w-md lg:max-w-none">
                   {/* Outer decorative card */}
                   <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-gradient-to-b from-emerald-800/40 to-[#041a13]">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80"
                       alt="Sabuj Shikshayatan School Reunion"
+                      width={1200}
+                      height={800}
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      loading="eager"
+                      fetchPriority="high"
                       className="w-full h-[400px] object-cover object-center"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/30 to-transparent" />
@@ -361,35 +367,19 @@ export default async function HomePage() {
               <div className="lg:col-span-6 grid grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <img
-                      src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80"
-                      alt="Assembly"
-                      className="w-full h-48 object-cover hover:scale-105 transition-transform"
-                    />
+                    <Image src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80" alt="Assembly" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-48 object-cover hover:scale-105 transition-transform" />
                   </div>
                   <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <img
-                      src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80"
-                      alt="Teachers Tribute"
-                      className="w-full h-60 object-cover hover:scale-105 transition-transform"
-                    />
+                    <Image src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=600&q=80" alt="Teachers Tribute" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-60 object-cover hover:scale-105 transition-transform" />
                   </div>
                 </div>
 
                 <div className="space-y-4 pt-8">
                   <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <img
-                      src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80"
-                      alt="Reunion Group"
-                      className="w-full h-60 object-cover hover:scale-105 transition-transform"
-                    />
+                    <Image src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80" alt="Reunion Group" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-60 object-cover hover:scale-105 transition-transform" />
                   </div>
                   <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200">
-                    <img
-                      src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=600&q=80"
-                      alt="Computer Lab"
-                      className="w-full h-48 object-cover hover:scale-105 transition-transform"
-                    />
+                    <Image src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=600&q=80" alt="Computer Lab" width={600} height={400} sizes="(max-width: 768px) 50vw, 25vw" className="w-full h-48 object-cover hover:scale-105 transition-transform" />
                   </div>
                 </div>
               </div>
@@ -580,7 +570,7 @@ export default async function HomePage() {
                       </div>
 
                       <div className="flex items-center gap-3 pt-2">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={ach.photoUrl}
                           alt={ach.recipientName}
                           className="w-12 h-12 rounded-xl object-cover border border-emerald-300"
@@ -759,7 +749,7 @@ export default async function HomePage() {
                     key={item.id}
                     className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-64 bg-slate-900"
                   >
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={item.thumbUrl ?? item.imageUrl}
                       alt={item.caption || item.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-90"

@@ -86,7 +86,7 @@ export default function AchievementsClient({ achievements, allCategories }: { ac
                   </div>
 
                   <div className="flex items-center gap-3.5 pt-1">
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={ach.photoUrl}
                       alt={ach.recipientName}
                       className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-100 group-hover:border-emerald-600 transition-colors shadow-sm"

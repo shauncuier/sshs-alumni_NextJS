@@ -124,7 +124,7 @@ export default function PaymentSettingsForm() {
           <span className={label}>Bangla QR image</span>
           <div className="flex items-center gap-3">
             <div className="w-24 h-24 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
-              {form.banglaQrImage ? <img src={form.banglaQrImage} alt="Bangla QR" className="w-full h-full object-contain" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
+              {form.banglaQrImage ? <img loading="lazy" decoding="async" src={form.banglaQrImage} alt="Bangla QR" className="w-full h-full object-contain" /> : <ImagePlus className="w-6 h-6 text-slate-300" />}
             </div>
             <div className="space-y-1.5">
               <label className={`${ghost} w-fit`}>
