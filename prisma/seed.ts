@@ -66,8 +66,8 @@ async function main() {
   if (new Set(seedEmails).size !== seedEmails.length) {
     throw new Error("SUPER_ADMIN_EMAIL, SEED_ADMIN_EMAIL, SEED_MODERATOR_EMAIL and SEED_ALUMNI_EMAIL must all be different addresses.");
   }
-  const adminPassword = passwordFromEnv("SEED_ADMIN_PASSWORD", LEGACY_ADMIN.password);
-  const alumniPassword = passwordFromEnv("SEED_ALUMNI_PASSWORD", LEGACY_ALUMNI.password);
+  const adminPassword = passwordFromEnv("SEED_ADMIN_PASSWORD", LEGACY_ADMIN.publishedPassword);
+  const alumniPassword = passwordFromEnv("SEED_ALUMNI_PASSWORD", LEGACY_ALUMNI.publishedPassword);
   const moderatorPassword = passwordFromEnv("SEED_MODERATOR_PASSWORD", "");
   const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   const userPasswordHash = await bcrypt.hash(alumniPassword, 10);
@@ -101,8 +101,8 @@ async function main() {
 
   // Also check the old address: if the email was changed, an admin created by an
   // earlier seed would otherwise keep the published password.
-  await replaceLegacyPassword(adminEmail, LEGACY_ADMIN.password, adminPasswordHash, "SEED_ADMIN_PASSWORD");
-  await replaceLegacyPassword(LEGACY_ADMIN.email, LEGACY_ADMIN.password, adminPasswordHash, "SEED_ADMIN_PASSWORD");
+  await replaceLegacyPassword(adminEmail, LEGACY_ADMIN.publishedPassword, adminPasswordHash, "SEED_ADMIN_PASSWORD");
+  await replaceLegacyPassword(LEGACY_ADMIN.email, LEGACY_ADMIN.publishedPassword, adminPasswordHash, "SEED_ADMIN_PASSWORD");
 
   // 2b. Super admin (from SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD) and a moderator,
   // so every role has an account to sign in with.
@@ -165,8 +165,8 @@ async function main() {
     },
   });
 
-  await replaceLegacyPassword(alumniEmail, LEGACY_ALUMNI.password, userPasswordHash, "SEED_ALUMNI_PASSWORD");
-  await replaceLegacyPassword(LEGACY_ALUMNI.email, LEGACY_ALUMNI.password, userPasswordHash, "SEED_ALUMNI_PASSWORD");
+  await replaceLegacyPassword(alumniEmail, LEGACY_ALUMNI.publishedPassword, userPasswordHash, "SEED_ALUMNI_PASSWORD");
+  await replaceLegacyPassword(LEGACY_ALUMNI.email, LEGACY_ALUMNI.publishedPassword, userPasswordHash, "SEED_ALUMNI_PASSWORD");
 
   // 4. SSC batches (name only; representatives are set by admins).
   console.log(`SSC batches created: ${await seedBatches()}`);

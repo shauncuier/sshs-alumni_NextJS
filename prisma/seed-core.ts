@@ -19,8 +19,8 @@ type Env = Record<string, string | undefined>;
 
 // Accounts that earlier seeds created with passwords published in this repository.
 export const LEGACY_ACCOUNTS = [
-  { email: "admin@sabujsghs.edu.bd", password: "admin123" },
-  { email: "jashedul@example.com", password: "password123" },
+  { email: "admin@sabujsghs.edu.bd", publishedPassword: "admin123" },
+  { email: "jashedul@example.com", publishedPassword: "password123" },
 ];
 
 // Default addresses of the demo seed's test accounts (one per role).
@@ -130,7 +130,7 @@ export async function repairLegacyRows(): Promise<{ eventJson: number; registrat
  */
 export async function lockLegacyAccounts(): Promise<string[]> {
   const locked: string[] = [];
-  for (const { email, password } of LEGACY_ACCOUNTS) {
+  for (const { email, publishedPassword: password } of LEGACY_ACCOUNTS) {
     const user = await prisma.user.findUnique({ where: { email }, select: { id: true, passwordHash: true } });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) continue;
     await prisma.user.update({
