@@ -1,5 +1,6 @@
 "use client";
 
+import { useEscapeKey } from "@/components/shared/useEscapeKey";
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { X, Image as Send } from "lucide-react";
@@ -22,6 +23,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
   const effectiveBatchTag = batchTag ?? (userBatch ? String(userBatch) : "all");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  useEscapeKey(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -44,12 +46,14 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Create community post" className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h3 className="text-sm font-bold text-slate-900">Create Community Post</h3>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close"
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
           >
             <X className="w-5 h-5" />

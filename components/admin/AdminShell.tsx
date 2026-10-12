@@ -142,6 +142,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu"
             className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-emerald-900/60"
           >
             <X className="w-5 h-5" />

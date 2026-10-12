@@ -581,8 +581,8 @@ export default function RegistrationForm({
             <div className="space-y-3">
               <p className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 whitespace-pre-line">{event.paymentInstructions}</p>
               <div>
-                <label className={label}>Select Payment Channel *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <p id="reg-pay-channel" className={label}>Select Payment Channel *</p>
+                <div role="group" aria-labelledby="reg-pay-channel" className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {PAYMENT_METHODS.map((m) => {
                     const isSelected = paymentMethod === m;
                     return (
@@ -590,6 +590,7 @@ export default function RegistrationForm({
                         key={m}
                         type="button"
                         onClick={() => setPaymentMethod(m)}
+                        aria-pressed={isSelected}
                         className={`min-h-[46px] px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                           isSelected
                             ? m === "bKash"

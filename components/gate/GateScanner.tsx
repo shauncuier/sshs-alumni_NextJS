@@ -54,6 +54,7 @@ function feedback(ok: boolean) {
 // Rendered by app/gate/page.tsx, which checks the gate-staff role on the server.
 export default function GateScanner() {
   const [events, setEvents] = useState<GateEvent[]>([]);
+  const [eventsError, setEventsError] = useState(false);
   const [eventId, setEventIdState] = useState<string>("");
   const [counts, setCounts] = useState<{ checkedIn: number; expected: number; people: number } | null>(null);
   const [manual, setManual] = useState("");
@@ -72,7 +73,10 @@ export default function GateScanner() {
 
   useEffect(() => {
     fetch("/api/events/verify-ticket", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : { events: [] }))
+      .then((res) => {
+        if (!res.ok) throw new Error(`Events request failed (${res.status})`);
+        return res.json();
+      })
       .then((data: { events: GateEvent[] }) => {
         setEvents(data.events);
         let saved = "";
@@ -82,7 +86,7 @@ export default function GateScanner() {
         const pick = data.events.find((e) => e.id === saved) ?? data.events[0];
         if (pick) setEventIdState(pick.id);
       })
-      .catch(() => setEvents([]));
+      .catch(() => setEventsError(true));
   }, []);
 
   const refreshCounts = useCallback(async (id: string) => {
@@ -169,7 +173,9 @@ export default function GateScanner() {
             <label htmlFor="gate-event" className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-700" /> Checking in for
             </label>
-            {events.length === 0 ? (
+            {eventsError ? (
+              <p role="alert" className="text-xs text-rose-700">Couldn&apos;t load the event list. Tickets are still checked, for any event. Refresh to try again.</p>
+            ) : events.length === 0 ? (
               <p className="text-xs text-slate-500">No upcoming events. Tickets are still checked, for any event.</p>
             ) : (
               <select id="gate-event" value={eventId} onChange={(e) => setEventId(e.target.value)} className="w-full px-3 py-3 min-h-[48px] bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-sm font-semibold">

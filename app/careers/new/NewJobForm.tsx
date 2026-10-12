@@ -13,10 +13,11 @@ export default function NewJobForm() {
 
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
-  const [location, setLocation] = useState("Chattogram, Bangladesh");
-  const [workplaceType, setWorkplaceType] = useState("Hybrid");
+  // Nothing preselected: the poster chooses each of these.
+  const [location, setLocation] = useState("");
+  const [workplaceType, setWorkplaceType] = useState("");
   const [jobType, setJobType] = useState("Full-time");
-  const [department, setDepartment] = useState("Engineering");
+  const [department, setDepartment] = useState("");
   // Empty unless the poster gives one; the job page then says "Negotiable".
   const [salaryRange, setSalaryRange] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("Mid Level");
@@ -120,10 +121,10 @@ export default function NewJobForm() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-1" className="block font-semibold text-slate-700 mb-1">
                       Job / Internship Title *
                     </label>
-                    <input
+                    <input id="job-1"
                       type="text"
                       required
                       placeholder="e.g. Senior Software Architect"
@@ -134,10 +135,10 @@ export default function NewJobForm() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-2" className="block font-semibold text-slate-700 mb-1">
                       Hiring Company / Organization *
                     </label>
-                    <input
+                    <input id="job-2"
                       type="text"
                       required
                       placeholder="e.g. NexGen Cloud Labs"
@@ -150,14 +151,16 @@ export default function NewJobForm() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-3" className="block font-semibold text-slate-700 mb-1">
                       Department / Industry
                     </label>
-                    <select
+                    <select id="job-3"
+                      required
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     >
+                      <option value="" disabled>Choose…</option>
                       <option value="Engineering">Engineering &amp; Tech</option>
                       <option value="Clinical Medicine">Medical &amp; Healthcare</option>
                       <option value="Logistics">Shipping &amp; Logistics</option>
@@ -168,14 +171,16 @@ export default function NewJobForm() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-4" className="block font-semibold text-slate-700 mb-1">
                       Workplace Setting
                     </label>
-                    <select
+                    <select id="job-4"
+                      required
                       value={workplaceType}
                       onChange={(e) => setWorkplaceType(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     >
+                      <option value="" disabled>Choose…</option>
                       <option value="Hybrid">Hybrid</option>
                       <option value="Remote">Remote</option>
                       <option value="On-site">On-site</option>
@@ -183,10 +188,10 @@ export default function NewJobForm() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-5" className="block font-semibold text-slate-700 mb-1">
                       Job Type
                     </label>
-                    <select
+                    <select id="job-5"
                       value={jobType}
                       onChange={(e) => setJobType(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
@@ -201,11 +206,12 @@ export default function NewJobForm() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-6" className="block font-semibold text-slate-700 mb-1">
                       Location
                     </label>
-                    <input
+                    <input id="job-6"
                       type="text"
+                      required
                       placeholder="e.g. Agrabad, Chattogram"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
@@ -228,10 +234,10 @@ export default function NewJobForm() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-7" className="block font-semibold text-slate-700 mb-1">
                       Estimated Salary / Stipend <span className="font-normal text-slate-400">(optional)</span>
                     </label>
-                    <input
+                    <input id="job-7"
                       type="text"
                       placeholder="e.g. ৳80,000 - ৳1,20,000 BDT"
                       value={salaryRange}
@@ -241,10 +247,10 @@ export default function NewJobForm() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-8" className="block font-semibold text-slate-700 mb-1">
                       Application Deadline
                     </label>
-                    <input
+                    <input id="job-8"
                       type="date"
                       value={deadline}
                       onChange={(e) => setDeadline(e.target.value)}
@@ -254,10 +260,10 @@ export default function NewJobForm() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
+                  <label htmlFor="job-9" className="block font-semibold text-slate-700 mb-1">
                     Job Overview &amp; Role Description *
                   </label>
-                  <textarea
+                  <textarea id="job-9"
                     rows={4}
                     required
                     placeholder="Describe the role, day-to-day responsibilities, and team culture..."
@@ -269,10 +275,10 @@ export default function NewJobForm() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-10" className="block font-semibold text-slate-700 mb-1">
                       Candidate Requirements (one per line)
                     </label>
-                    <textarea
+                    <textarea id="job-10"
                       rows={4}
                       placeholder="3+ years React experience&#10;Familiarity with REST APIs&#10;SSGHS graduate"
                       value={requirements}
@@ -282,10 +288,10 @@ export default function NewJobForm() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="job-11" className="block font-semibold text-slate-700 mb-1">
                       Benefits &amp; Perks (one per line)
                     </label>
-                    <textarea
+                    <textarea id="job-11"
                       rows={4}
                       placeholder="Health insurance&#10;Festival bonuses (2x)&#10;Flexible hybrid hours"
                       value={benefits}
@@ -308,7 +314,7 @@ export default function NewJobForm() {
                     disabled={submitting}
                     className="px-6 py-2.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors shadow-lg disabled:opacity-60"
                   >
-                    {submitting ? "Publishing..." : "Publish Job to Alumni"}
+                    {submitting ? "Submitting…" : "Submit for review"}
                   </button>
                 </div>
               </form>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEscapeKey } from "@/components/shared/useEscapeKey";
 import React from "react";
 import { X } from "lucide-react";
 import RegistrationForm from "./RegistrationForm";
@@ -18,6 +19,7 @@ export default function RSVPModal({
   initialPackage?: string;
   onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
+  useEscapeKey(isOpen, onClose);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={`Register for ${event.title}`}>

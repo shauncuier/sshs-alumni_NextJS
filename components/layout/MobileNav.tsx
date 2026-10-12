@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Radio,
   Users,
-  MessageSquare,
+  CalendarDays,
   User
 } from "lucide-react";
 
@@ -17,13 +17,13 @@ export default function MobileNav() {
   const tabs = [
     { name: "Portal", href: "/dashboard", icon: LayoutDashboard },
     { name: "Feed", href: "/feed", icon: Radio },
+    { name: "Events", href: "/events", icon: CalendarDays },
     { name: "Directory", href: "/alumni", icon: Users },
-    { name: "Messages", href: "/messages", icon: MessageSquare },
     { name: "Profile", href: "/profile", icon: User },
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
+    <nav aria-label="Member menu" className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
       <div className="flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -32,6 +32,7 @@ export default function MobileNav() {
             <Link
               key={tab.name}
               href={tab.href}
+              aria-current={isActive ? "page" : undefined}
               className={`flex flex-col items-center py-1.5 px-3 rounded-xl text-[10px] font-semibold transition-colors touch-manipulation ${
                 isActive
                   ? "text-emerald-800 font-bold"
@@ -44,6 +45,6 @@ export default function MobileNav() {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

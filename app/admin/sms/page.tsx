@@ -1,5 +1,6 @@
 "use client";
 
+import { useEscapeKey } from "@/components/shared/useEscapeKey";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   MessageSquare,
@@ -191,6 +192,7 @@ export default function AdminBulkSmsPage() {
 
   // Broadcast Dispatch State
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  useEscapeKey(showConfirmModal, () => setShowConfirmModal(false));
   const [isSending, setIsSending] = useState<boolean>(false);
   const [broadcastFeedback, setBroadcastFeedback] = useState<{
     success: boolean;
@@ -436,11 +438,13 @@ export default function AdminBulkSmsPage() {
   // ── Send Bulk Broadcast ────────────────────────────────────────────
   const handleConfirmBroadcast = async () => {
     if (activeRecipientNumbers.length === 0) {
-      alert("No recipients selected.");
+      setBroadcastFeedback({ success: false, text: "Choose at least one recipient." });
+      setShowConfirmModal(false);
       return;
     }
     if (!message.trim()) {
-      alert("Message content cannot be empty.");
+      setBroadcastFeedback({ success: false, text: "Write the message first." });
+      setShowConfirmModal(false);
       return;
     }
 
@@ -1306,7 +1310,7 @@ export default function AdminBulkSmsPage() {
       {/* ── Confirmation Modal ──────────────────────────────────────── */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-scale-in">
+          <div role="alertdialog" aria-modal="true" aria-label="Confirm SMS broadcast" className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-scale-in">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
                 <Send className="w-5 h-5 text-emerald-700" />

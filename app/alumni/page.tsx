@@ -163,7 +163,7 @@ function DirectoryContent() {
         </section>
 
         {/* Filter Controls Bar */}
-        <section className="sticky top-20 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs py-4">
+        <section className="sticky top-16 sm:top-[104px] z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs py-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               {/* Search Bar */}
@@ -178,6 +178,8 @@ function DirectoryContent() {
                 />
                 {searchQuery && (
                   <button
+                    type="button"
+                    aria-label="Clear search"
                     onClick={() => setSearchQuery("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >

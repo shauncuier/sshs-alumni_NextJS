@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCurrencyBDT } from "@/lib/utils";
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { usePaymentDetails } from "@/components/shared/usePaymentDetails";
 import Navbar from "@/components/layout/Navbar";
@@ -153,7 +155,7 @@ export default function DonatePage() {
                 Active Alumni Initiatives &amp; Funds
               </h2>
 
-              <div className="space-y-4">
+              <div className="space-y-4" role="radiogroup" aria-label="Campaign">
                 {campaignsError && (
                   <p role="alert" className="text-xs text-rose-700">{campaignsError}</p>
                 )}
@@ -163,7 +165,7 @@ export default function DonatePage() {
                 {!campaignsError && campaignsLoaded && campaigns.length === 0 && (
                   <div className="p-6 rounded-3xl border border-slate-200 bg-white text-center space-y-1">
                     <p className="text-sm font-bold text-slate-700">No fundraising campaign is open right now</p>
-                    <p className="text-xs text-slate-500">The committee will announce the next one here. Questions? <a href="/contact" className="font-bold text-emerald-800 hover:underline">Contact us</a>.</p>
+                    <p className="text-xs text-slate-500">The committee will announce the next one here. Questions? <Link href="/contact" className="font-bold text-emerald-800 hover:underline">Contact us</Link>.</p>
                   </div>
                 )}
                 {campaigns.map((campaign) => {
@@ -173,7 +175,16 @@ export default function DonatePage() {
                   return (
                     <div
                       key={campaign.id}
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={0}
                       onClick={() => setSelectedCampaign(campaign.id)}
+                      onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedCampaign(campaign.id);
+                  }
+                }}
                       className={`p-6 rounded-3xl border transition-all cursor-pointer bg-white ${
                         isSelected
                           ? "border-emerald-600 ring-2 ring-emerald-600/30 shadow-md"
@@ -207,10 +218,10 @@ export default function DonatePage() {
                       <div className="mt-4 space-y-1.5">
                         <div className="flex items-center justify-between text-xs font-bold">
                           <span className="text-emerald-800">
-                            Raised: ৳{campaign.raisedAmount.toLocaleString()} ({percent}%)
+                            Raised: {formatCurrencyBDT(campaign.raisedAmount)} ({percent}%)
                           </span>
                           <span className="text-slate-500">
-                            Goal: ৳{campaign.goalAmount.toLocaleString()}
+                            Goal: {formatCurrencyBDT(campaign.goalAmount)}
                           </span>
                         </div>
                         <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
@@ -271,7 +282,7 @@ export default function DonatePage() {
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="text-slate-500">Amount:</span>
-                        <span className="font-bold text-emerald-700">৳{receiptData.amount.toLocaleString()} BDT</span>
+                        <span className="font-bold text-emerald-700">{formatCurrencyBDT(receiptData.amount)} BDT</span>
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="text-slate-500">Paid by:</span>
@@ -297,14 +308,16 @@ export default function DonatePage() {
                       Make Another Contribution
                     </button>
                   </div>
+                ) : campaignsLoaded && campaigns.length === 0 ? (
+                  <p className="text-xs text-slate-500">Donations open when the committee starts a campaign.</p>
                 ) : (
                   <form onSubmit={handlePledge} className="space-y-4 text-xs">
                     {/* Select preset amount */}
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-2">
+                      <p id="don-amount-label" className="block font-semibold text-slate-700 mb-2">
                         Select Amount (BDT ৳)
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
+                      </p>
+                      <div role="group" aria-labelledby="don-amount-label" className="grid grid-cols-2 gap-2">
                         {presetAmounts.map((amt) => (
                           <button
                             type="button"
@@ -319,7 +332,7 @@ export default function DonatePage() {
                                 : "bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-600"
                             }`}
                           >
-                            ৳{amt.toLocaleString()}
+                            {formatCurrencyBDT(amt)}
                           </button>
                         ))}
                       </div>
@@ -341,10 +354,10 @@ export default function DonatePage() {
                     {/* Donor Details */}
                     <div className="space-y-3 pt-2 border-t border-slate-100">
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">
+                        <label htmlFor="don2-1" className="block font-semibold text-slate-700 mb-1">
                           Donor Name
                         </label>
-                        <input
+                        <input id="don2-1"
                           type="text"
                           required
                           value={donorName}
@@ -355,10 +368,10 @@ export default function DonatePage() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block font-semibold text-slate-700 mb-1">
+                          <label htmlFor="don-1" className="block font-semibold text-slate-700 mb-1">
                             Email Address
                           </label>
-                          <input
+                          <input id="don-1"
                             type="email"
                             required
                             value={donorEmail}
@@ -368,10 +381,10 @@ export default function DonatePage() {
                         </div>
 
                         <div>
-                          <label className="block font-semibold text-slate-700 mb-1">
+                          <label htmlFor="don-2" className="block font-semibold text-slate-700 mb-1">
                             Mobile (for SMS)
                           </label>
-                          <input
+                          <input id="don-2"
                             type="tel"
                             required
                             value={donorPhone}
@@ -383,10 +396,10 @@ export default function DonatePage() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block font-semibold text-slate-700 mb-1">
+                          <label htmlFor="don-3" className="block font-semibold text-slate-700 mb-1">
                             SSC Batch
                           </label>
-                          <input
+                          <input id="don-3"
                             type="text"
                             required
                             value={donorBatch}
@@ -451,7 +464,7 @@ export default function DonatePage() {
                           className="rounded text-emerald-700 focus:ring-emerald-600"
                         />
                         <label htmlFor="anon" className="text-slate-600 cursor-pointer">
-                          Make donation anonymous on public donor ledger
+                          Hide my name in the association&apos;s announcements (the committee still sees it)
                         </label>
                       </div>
                     </div>

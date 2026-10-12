@@ -1,7 +1,9 @@
 "use client";
 
+import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useCallback, useEffect, useState } from "react";
 import { Clock, ImagePlus, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useEscapeKey } from "@/components/shared/useEscapeKey";
 
 interface Campaign {
   id: string;
@@ -89,6 +91,7 @@ function BannerField({ value, onChange }: { value: string | null; onChange: (url
 }
 
 function CampaignForm({ campaign, categories, onClose, onSaved }: { campaign: Campaign | null; categories: Category[]; onClose: () => void; onSaved: (message: string) => void }) {
+  useEscapeKey(true, onClose);
   const [form, setForm] = useState<Form>(() =>
     campaign
       ? { title: campaign.title, category: campaign.category, description: campaign.description, goalAmount: String(campaign.goalAmount), bannerImage: campaign.bannerImage, startDate: campaign.startDate, endDate: campaign.endDate ?? "" }
@@ -264,8 +267,8 @@ export default function CampaignManager({ onChanged }: { onChanged?: () => void 
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-emerald-700">Raised: ৳{c.raisedAmount.toLocaleString()}</span>
-                  <span className="text-slate-500">Goal: ৳{c.goalAmount.toLocaleString()}</span>
+                  <span className="text-emerald-700">Raised: {formatCurrencyBDT(c.raisedAmount)}</span>
+                  <span className="text-slate-500">Goal: {formatCurrencyBDT(c.goalAmount)}</span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${pct}%` }} />

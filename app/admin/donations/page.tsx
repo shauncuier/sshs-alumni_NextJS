@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import { Heart, TrendingUp, Users, CheckCircle2, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import CampaignManager from "@/components/admin/CampaignManager";
@@ -82,9 +83,9 @@ export default function AdminDonationsPage() {
   const decide = async (d: PendingDonation, action: "VERIFY" | "REJECT") => {
     let reason: string | null = null;
     if (action === "REJECT") {
-      reason = window.prompt(`Why is the ${d.paymentMethod} payment ${d.transactionRef ?? ""} of ৳${d.amount.toLocaleString()} rejected?`);
+      reason = window.prompt(`Why is the ${d.paymentMethod} payment ${d.transactionRef ?? ""} of ${formatCurrencyBDT(d.amount)} rejected?`);
       if (!reason || !reason.trim()) return;
-    } else if (!window.confirm(`Verify ৳${d.amount.toLocaleString()} from ${d.donorName}? Check that ${d.paymentMethod} transaction ${d.transactionRef ?? ""} arrived first.`)) {
+    } else if (!window.confirm(`Verify ${formatCurrencyBDT(d.amount)} from ${d.donorName}? Check that ${d.paymentMethod} transaction ${d.transactionRef ?? ""} arrived first.`)) {
       return;
     }
     setBusyId(d.id);
@@ -98,7 +99,7 @@ export default function AdminDonationsPage() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || "Could not save the decision.");
-      setNotice(action === "VERIFY" ? `Verified ৳${d.amount.toLocaleString()} from ${d.donorName}.` : `Rejected the donation from ${d.donorName}.`);
+      setNotice(action === "VERIFY" ? `Verified ${formatCurrencyBDT(d.amount)} from ${d.donorName}.` : `Rejected the donation from ${d.donorName}.`);
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the decision.");
@@ -162,7 +163,7 @@ export default function AdminDonationsPage() {
               <div key={d.id} className="p-4 flex flex-col lg:flex-row lg:items-center gap-3">
                 <div className="flex-1 min-w-0 space-y-0.5 text-xs">
                   <div className="font-black text-emerald-800 text-sm">
-                    ৳{d.amount.toLocaleString()} <span className="font-semibold text-slate-500 text-xs">by {d.paymentMethod}</span>
+                    {formatCurrencyBDT(d.amount)} <span className="font-semibold text-slate-500 text-xs">by {d.paymentMethod}</span>
                   </div>
                   <div className="font-mono font-bold text-slate-900 break-all">{d.transactionRef ?? "—"}</div>
                   <div className="text-slate-700">
@@ -208,7 +209,7 @@ export default function AdminDonationsPage() {
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Total Funds Collected
           </span>
           <div className="text-2xl font-black text-emerald-800 mt-1">
-            {loading ? "..." : `৳${stats.totalRaised.toLocaleString()}`}
+            {loading ? "..." : `${formatCurrencyBDT(stats.totalRaised)}`}
           </div>
           <span className="text-[10px] text-emerald-600 font-semibold">
             {stats.activeCampaignsCount} open campaign{stats.activeCampaignsCount === 1 ? "" : "s"}
@@ -220,7 +221,7 @@ export default function AdminDonationsPage() {
             <Heart className="w-3.5 h-3.5 text-rose-500" /> Open Campaign Goal
           </span>
           <div className="text-2xl font-black text-slate-900 mt-1">
-            {loading ? "..." : `৳${stats.totalGoal.toLocaleString()}`}
+            {loading ? "..." : `${formatCurrencyBDT(stats.totalGoal)}`}
           </div>
           <span className="text-[10px] text-slate-400">Target across open campaigns</span>
         </div>
@@ -279,7 +280,7 @@ export default function AdminDonationsPage() {
                       {d.donorBatch ? `SSC '${String(d.donorBatch).slice(-2)}` : "—"}
                     </td>
                     <td className="md:table-cell md:py-3.5 md:px-4 text-slate-600">{d.campaignTitle}</td>
-                    <td className="md:table-cell md:py-3.5 md:px-4 font-black text-emerald-800">৳{d.amount.toLocaleString()}</td>
+                    <td className="md:table-cell md:py-3.5 md:px-4 font-black text-emerald-800">{formatCurrencyBDT(d.amount)}</td>
                     <td className="md:table-cell md:py-3.5 md:px-4 text-slate-500 font-medium">{d.paymentMethod}</td>
                     <td className="md:table-cell md:py-3.5 md:px-4 font-mono text-slate-600">{d.transactionRef ?? "—"}</td>
                     <td className="md:table-cell md:py-3.5 md:px-4">

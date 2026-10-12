@@ -1,5 +1,7 @@
 "use client";
 
+import { useEscapeKey } from "@/components/shared/useEscapeKey";
+import { Toast, useToast } from "@/components/admin/Toast";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import type { EventItem } from "@/lib/data";
@@ -29,14 +31,9 @@ export default function AdminEventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PublicEvent | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
-  };
+  useEscapeKey(isModalOpen, () => setIsModalOpen(false));
+  useEscapeKey(Boolean(deleteConfirmId), () => setDeleteConfirmId(null));
+  const { toast, showToast } = useToast();
 
   const load = () =>
     fetch("/api/admin/events", { cache: "no-store" })
@@ -45,7 +42,7 @@ export default function AdminEventsPage() {
         if (!res.ok) throw new Error(body.error);
         setEvents(body.events);
       })
-      .catch((err: Error) => showToast(err.message));
+      .catch((err: Error) => showToast(err.message, "error"));
 
   useEffect(() => {
     load();
@@ -148,7 +145,7 @@ export default function AdminEventsPage() {
       body: JSON.stringify(body),
     });
     const result = await res.json();
-    if (!res.ok) return showToast(result.error || "Could not save the event.");
+    if (!res.ok) return showToast(result.error || "Could not save the event.", "error");
     showToast(editingEvent ? `Event "${formData.title}" updated.` : `Event "${formData.title}" created.`);
     setIsModalOpen(false);
     load();
@@ -159,7 +156,7 @@ export default function AdminEventsPage() {
     const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
     const result = await res.json();
     setDeleteConfirmId(null);
-    if (!res.ok) return showToast(result.error || "Could not delete the event.");
+    if (!res.ok) return showToast(result.error || "Could not delete the event.", "error");
     showToast("Event deleted.");
     load();
   };
@@ -168,7 +165,7 @@ export default function AdminEventsPage() {
   const handleExportCSV = async (event: PublicEvent) => {
     const res = await fetch(`/api/admin/events/${event.id}`, { cache: "no-store" });
     const body = await res.json();
-    if (!res.ok) return showToast(body.error || "Could not export registrations.");
+    if (!res.ok) return showToast(body.error || "Could not export registrations.", "error");
     const rows = (body.registrations as AdminRegistration[]).map((a) =>
       [a.name, a.batch ?? "", a.email, a.phone, a.packageName ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
@@ -208,13 +205,7 @@ export default function AdminEventsPage() {
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-bold animate-bounce-short">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toast toast={toast} />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -223,7 +214,7 @@ export default function AdminEventsPage() {
             Events &amp; Reunions Studio
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage every detail of reunions, golden jubilee milestones, custom packages, agendas, and attendee rosters.
+            Create and edit events: details, packages, agenda and registrations.
           </p>
         </div>
 
@@ -426,7 +417,7 @@ export default function AdminEventsPage() {
       {/* Edit / Create Event Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+          <div role="dialog" aria-modal="true" aria-label={editingEvent ? "Edit event" : "New event"} className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 flex items-center justify-between">
               <div>
@@ -438,7 +429,9 @@ export default function AdminEventsPage() {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
+                aria-label="Close"
                 className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -649,7 +642,7 @@ export default function AdminEventsPage() {
       {/* Delete Confirmation Dialog */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white max-w-sm w-full p-6 rounded-3xl shadow-2xl border border-slate-200 text-center space-y-4">
+          <div role="alertdialog" aria-modal="true" aria-label="Remove event" className="bg-white max-w-sm w-full p-6 rounded-3xl shadow-2xl border border-slate-200 text-center space-y-4">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>

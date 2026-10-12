@@ -127,7 +127,7 @@ export default function MessagesClient({ currentUserId, initialTo }: { currentUs
   const showThread = activeId !== null;
 
   return (
-    <div className="bg-white w-full rounded-3xl border border-slate-200 shadow-sm flex overflow-hidden h-[calc(100vh-11rem)] lg:h-[calc(100vh-8rem)]">
+    <div className="bg-white w-full rounded-3xl border border-slate-200 shadow-sm flex overflow-hidden h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-8rem)]">
       {/* Conversation list (hidden on phones while a conversation is open) */}
       <aside className={`${showThread ? "hidden md:flex" : "flex"} w-full md:w-80 border-r border-slate-200 flex-col shrink-0`}>
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">

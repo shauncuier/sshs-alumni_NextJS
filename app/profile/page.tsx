@@ -472,8 +472,8 @@ export default function ProfilePage() {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Full Name *</label>
-                        <input
+                        <label htmlFor="pf-1" className="block font-bold text-slate-700 mb-1">Full Name *</label>
+                        <input id="pf-1"
                           type="text"
                           value={profileData.fullName}
                           onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
@@ -482,8 +482,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Profession / Designation *</label>
-                        <input
+                        <label htmlFor="pf-2" className="block font-bold text-slate-700 mb-1">Profession / Designation *</label>
+                        <input id="pf-2"
                           type="text"
                           value={profileData.profession}
                           onChange={(e) => setProfileData({ ...profileData, profession: e.target.value })}
@@ -493,8 +493,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Current Organization / Company</label>
-                        <input
+                        <label htmlFor="pf-3" className="block font-bold text-slate-700 mb-1">Current Organization / Company</label>
+                        <input id="pf-3"
                           type="text"
                           value={profileData.company}
                           onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
@@ -503,8 +503,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Industry / Sector</label>
-                        <select
+                        <label htmlFor="pf-4" className="block font-bold text-slate-700 mb-1">Industry / Sector</label>
+                        <select id="pf-4"
                           value={profileData.industry}
                           onChange={(e) => setProfileData({ ...profileData, industry: e.target.value })}
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
@@ -527,8 +527,8 @@ export default function ProfilePage() {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">City / Town *</label>
-                        <input
+                        <label htmlFor="pf-5" className="block font-bold text-slate-700 mb-1">City / Town *</label>
+                        <input id="pf-5"
                           type="text"
                           value={profileData.locationCity}
                           onChange={(e) => setProfileData({ ...profileData, locationCity: e.target.value })}
@@ -538,8 +538,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Country</label>
-                        <input
+                        <label htmlFor="pf-6" className="block font-bold text-slate-700 mb-1">Country</label>
+                        <input id="pf-6"
                           type="text"
                           value={profileData.locationCountry}
                           onChange={(e) => setProfileData({ ...profileData, locationCountry: e.target.value })}
@@ -548,8 +548,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Mobile Phone Number</label>
-                        <input
+                        <label htmlFor="pf-7" className="block font-bold text-slate-700 mb-1">Mobile Phone Number</label>
+                        <input id="pf-7"
                           type="tel"
                           value={profileData.phone}
                           onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
@@ -565,7 +565,7 @@ export default function ProfilePage() {
                             onChange={(e) => setProfileData({ ...profileData, isPhonePublic: e.target.checked })}
                             className="rounded text-emerald-700 border-slate-300 focus:ring-emerald-600"
                           />
-                          <span>Show phone number to verified alumni</span>
+                          <span>Show my phone number in the public directory</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer select-none text-slate-700 font-semibold">
                           <input
@@ -574,7 +574,7 @@ export default function ProfilePage() {
                             onChange={(e) => setProfileData({ ...profileData, isEmailPublic: e.target.checked })}
                             className="rounded text-emerald-700 border-slate-300 focus:ring-emerald-600"
                           />
-                          <span>Show email address in directory</span>
+                          <span>Show my email address in the public directory</span>
                         </label>
                       </div>
                     </div>
@@ -597,8 +597,8 @@ export default function ProfilePage() {
                         <span className="text-[10px] text-slate-400 mt-1 block">Batch year is verified on record</span>
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">School Roll Number</label>
-                        <input
+                        <label htmlFor="pf-8" className="block font-bold text-slate-700 mb-1">School Roll Number</label>
+                        <input id="pf-8"
                           type="text"
                           value={profileData.rollNumber}
                           onChange={(e) => setProfileData({ ...profileData, rollNumber: e.target.value })}
@@ -607,8 +607,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Section / Group</label>
-                        <input
+                        <label htmlFor="pf-9" className="block font-bold text-slate-700 mb-1">Section / Group</label>
+                        <input id="pf-9"
                           type="text"
                           value={profileData.section}
                           onChange={(e) => setProfileData({ ...profileData, section: e.target.value })}
@@ -626,8 +626,8 @@ export default function ProfilePage() {
                     </h4>
                     <div className="space-y-3 text-xs">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Professional Bio / Summary</label>
-                        <textarea
+                        <label htmlFor="pf-10" className="block font-bold text-slate-700 mb-1">Professional Bio / Summary</label>
+                        <textarea id="pf-10"
                           rows={3}
                           value={profileData.bio}
                           onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
@@ -636,10 +636,10 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">
+                        <label htmlFor="pf-11" className="block font-bold text-slate-700 mb-1">
                           Skills &amp; Expertise (comma-separated)
                         </label>
-                        <input
+                        <input id="pf-11"
                           type="text"
                           value={profileData.skillsInput}
                           onChange={(e) => setProfileData({ ...profileData, skillsInput: e.target.value })}
@@ -658,8 +658,8 @@ export default function ProfilePage() {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">LinkedIn Profile URL</label>
-                        <input
+                        <label htmlFor="pf-12" className="block font-bold text-slate-700 mb-1">LinkedIn Profile URL</label>
+                        <input id="pf-12"
                           type="url"
                           value={profileData.linkedin}
                           onChange={(e) => setProfileData({ ...profileData, linkedin: e.target.value })}
@@ -668,8 +668,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Facebook Profile URL</label>
-                        <input
+                        <label htmlFor="pf-13" className="block font-bold text-slate-700 mb-1">Facebook Profile URL</label>
+                        <input id="pf-13"
                           type="url"
                           value={profileData.facebook}
                           onChange={(e) => setProfileData({ ...profileData, facebook: e.target.value })}
@@ -678,8 +678,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">GitHub / Portfolio URL</label>
-                        <input
+                        <label htmlFor="pf-14" className="block font-bold text-slate-700 mb-1">GitHub / Portfolio URL</label>
+                        <input id="pf-14"
                           type="url"
                           value={profileData.github}
                           onChange={(e) => setProfileData({ ...profileData, github: e.target.value })}
@@ -688,8 +688,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Personal / Company Website</label>
-                        <input
+                        <label htmlFor="pf-15" className="block font-bold text-slate-700 mb-1">Personal / Company Website</label>
+                        <input id="pf-15"
                           type="url"
                           value={profileData.website}
                           onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
@@ -707,8 +707,8 @@ export default function ProfilePage() {
                     </h4>
                     <div className="space-y-3 text-xs">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">School Memories &amp; Nostalgia (&apos;সবুজ পদাবলি&apos;)</label>
-                        <textarea
+                        <label htmlFor="pf-16" className="block font-bold text-slate-700 mb-1">School Memories &amp; Nostalgia (&apos;সবুজ পদাবলি&apos;)</label>
+                        <textarea id="pf-16"
                           rows={2}
                           value={profileData.schoolMemories}
                           onChange={(e) => setProfileData({ ...profileData, schoolMemories: e.target.value })}
@@ -717,8 +717,8 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">Contributions to School / Community</label>
-                        <textarea
+                        <label htmlFor="pf-17" className="block font-bold text-slate-700 mb-1">Contributions to School / Community</label>
+                        <textarea id="pf-17"
                           rows={2}
                           value={profileData.contributions}
                           onChange={(e) => setProfileData({ ...profileData, contributions: e.target.value })}

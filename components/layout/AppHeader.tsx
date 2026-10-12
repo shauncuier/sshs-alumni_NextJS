@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 import { useSession, signOut } from "next-auth/react";
 import { Bell, MessageSquare, Search, User, Settings, LogOut, ShieldCheck } from "lucide-react";
@@ -33,7 +34,35 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
       : userStatus === "REJECTED"
         ? "Not approved"
         : "Verification pending";
-  const { items: notifications, unread, refresh } = useNotifications(Boolean(user));
+  const { items: notifications, unread, refresh, markRead } = useNotifications(Boolean(user));
+  const router = useRouter();
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Menus close on a click outside them or on Escape; Ctrl/⌘K opens search.
+  useEffect(() => {
+    const onPointer = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (!notificationsRef.current?.contains(target)) setNotificationsOpen(false);
+      if (!profileRef.current?.contains(target)) setProfileOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setNotificationsOpen(false);
+        setProfileOpen(false);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   return (
     <>
@@ -58,7 +87,9 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Mobile search button */}
           <button
+            type="button"
             onClick={() => setSearchOpen(true)}
+            aria-label="Search"
             className="sm:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
           >
             <Search className="w-5 h-5" />
@@ -69,16 +100,20 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
             href="/messages"
             className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-emerald-800 transition-colors relative"
             title="Messages"
+            aria-label="Messages"
           >
             <MessageSquare className="w-5 h-5" />
           </Link>
 
           {/* Notifications Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={notificationsRef}>
             <button
+              type="button"
+              aria-expanded={notificationsOpen}
               onClick={() => {
                 if (!notificationsOpen) void refresh();
                 setNotificationsOpen(!notificationsOpen);
+                setProfileOpen(false);
               }}
               aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
               className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-emerald-800 transition-colors relative"
@@ -89,10 +124,10 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
             </button>
 
             {notificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 animate-fade-in">
+              <div className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 animate-fade-in">
                 <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-900">Notifications</span>
-                  <Link href="/notifications" className="text-[11px] text-emerald-700 font-semibold hover:underline">
+                  <Link href="/notifications" onClick={() => setNotificationsOpen(false)} className="text-[11px] text-emerald-700 font-semibold hover:underline">
                     View all
                   </Link>
                 </div>
@@ -101,15 +136,21 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
                     <p className="p-3 text-xs text-slate-500">No notifications yet.</p>
                   )}
                   {notifications.slice(0, 6).map((n) => (
-                    <div
+                    <button
+                      type="button"
                       key={n.id}
-                      className={`p-3 text-xs hover:bg-slate-50 transition-colors ${
+                      onClick={() => {
+                        if (!n.isRead) void markRead([n.id]);
+                        setNotificationsOpen(false);
+                        router.push(n.link?.startsWith("/") ? n.link : "/notifications");
+                      }}
+                      className={`w-full text-left p-3 text-xs hover:bg-slate-50 transition-colors cursor-pointer ${
                         !n.isRead ? "bg-emerald-50/50" : ""
                       }`}
                     >
                       <p className="text-slate-800 leading-snug"><span className="font-bold">{n.title}</span> · {n.message}</p>
                       <span className="text-[10px] text-slate-400 mt-1 block">{relativeTime(new Date(n.createdAt))}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -119,9 +160,15 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
           <div className="h-5 w-px bg-slate-200 mx-1" />
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" ref={profileRef}>
             <button
-              onClick={() => setProfileOpen(!profileOpen)}
+              type="button"
+              aria-label="Account menu"
+              aria-expanded={profileOpen}
+              onClick={() => {
+                setProfileOpen(!profileOpen);
+                setNotificationsOpen(false);
+              }}
               className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition-colors"
             >
               {user?.image ? (

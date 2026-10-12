@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useEffect, useRef, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -518,7 +519,7 @@ function VerificationReviewContent() {
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
                             <CreditCard className="w-2.5 h-2.5" />
                             <span>
-                              {r.paymentMethod || "Payment"} {r.totalFee ? `৳${r.totalFee}` : ""}
+                              {r.paymentMethod || "Payment"} {r.totalFee ? formatCurrencyBDT(r.totalFee) : ""}
                             </span>
                           </span>
                         ) : r.paymentStatus === "CONFIRMED" ? (
@@ -681,7 +682,7 @@ function VerificationReviewContent() {
                       {activeApplicant.hasValidPhoto ? (
                         <>
                           <div className="font-bold text-emerald-900">
-                            Portrait image is ready for Diamond Jubilee Directory &amp; PVC ID Card.
+                            Photo is ready for the directory and the ID card.
                           </div>
                           <p className="text-slate-600 text-[11px] leading-relaxed">
                             Web avatar (400×400 px) stored with EXIF orientation corrected.
@@ -975,7 +976,7 @@ function VerificationReviewContent() {
                           </div>
                           <div className="text-sm font-black text-emerald-800 mt-1">
                             {activeApplicant.totalFee !== null && activeApplicant.totalFee !== undefined
-                              ? `৳${activeApplicant.totalFee.toLocaleString("en-BD")}`
+                              ? `${formatCurrencyBDT(activeApplicant.totalFee)}`
                               : "—"}
                           </div>
                         </div>
@@ -1078,13 +1079,13 @@ function VerificationReviewContent() {
                   {activeApplicant.membershipEventId && (
                     <div className="pt-1 flex items-center justify-between text-xs">
                       <span className="text-slate-500">
-                        Linked to Jubilee Membership Event Roster
+                        Linked to the membership event
                       </span>
                       <Link
                         href={`/admin/events/${activeApplicant.membershipEventId}?tab=attendees`}
                         className="text-amber-800 hover:text-amber-950 font-bold underline inline-flex items-center gap-1"
                       >
-                        <span>Open Jubilee Attendee List</span>
+                        <span>Open the registration list</span>
                         <ExternalLink className="w-3 h-3" />
                       </Link>
                     </div>

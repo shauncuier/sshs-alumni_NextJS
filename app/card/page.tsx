@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
+import MobileNav from "@/components/layout/MobileNav";
 import DigitalAlumniCard, { CardData } from "@/components/card/DigitalAlumniCard";
 import { Sparkles, QrCode, ExternalLink, Award } from "lucide-react";
 
@@ -40,7 +41,7 @@ export default function CardPage() {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
           <AppHeader title="Digital Alumni Smart Card" />
-          <main className="flex-1 p-8 max-w-6xl w-full mx-auto">
+          <main className="flex-1 p-4 sm:p-8 max-w-6xl w-full mx-auto">
             <p
               className={`text-sm ${loadError ? "text-rose-700" : "text-slate-500"}`}
               role={loadError ? "alert" : "status"}
@@ -49,6 +50,7 @@ export default function CardPage() {
             </p>
           </main>
         </div>
+        <MobileNav />
       </div>
     );
   }
@@ -221,6 +223,7 @@ export default function CardPage() {
           </div>
         </main>
       </div>
+      <MobileNav />
     </div>
   );
 }

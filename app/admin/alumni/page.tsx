@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import type { VerificationRequestItem } from "@/lib/data";
 import { fetchVerificationRequests } from "@/lib/admin-verifications";
@@ -225,7 +226,7 @@ export default function AdminAlumniPage() {
                           </span>
                           {r.totalFee !== null && r.totalFee !== undefined && (
                             <span className="font-bold text-slate-900 text-xs">
-                              ৳{r.totalFee.toLocaleString("en-BD")}
+                              {formatCurrencyBDT(r.totalFee)}
                             </span>
                           )}
                         </div>

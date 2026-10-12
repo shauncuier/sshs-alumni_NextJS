@@ -89,7 +89,16 @@ export default function GalleryClient({ photos }: { photos: GalleryPhotoItem[] }
             {filteredPhotos.map((photo, index) => (
               <div
                 key={photo.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open photo: ${photo.title}`}
                 onClick={() => handleOpenPhoto(index)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleOpenPhoto(index);
+                  }
+                }}
                 className="group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 bg-slate-900 cursor-pointer h-72"
               >
                 <img

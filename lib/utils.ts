@@ -5,13 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** "৳12,500": the one money format across the site (formatTaka also says "Free" for 0). */
 export function formatCurrencyBDT(amount: number): string {
-  return new Intl.NumberFormat("en-BD", {
-    style: "currency",
-    currency: "BDT",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount).replace("BDT", "৳");
+  return `৳${Math.round(amount).toLocaleString("en-US")}`;
 }
 
 /** "Just now", "5 min ago", "3 h ago", "2 d ago", then a date (Dhaka time). */

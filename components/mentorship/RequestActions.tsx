@@ -67,7 +67,9 @@ export function MentorResponse({ requestId }: { requestId: string }) {
 export function CancelRequest({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
+    <span className="inline-flex flex-col gap-1">
     <button
       type="button"
       disabled={busy}
@@ -78,7 +80,7 @@ export function CancelRequest({ requestId }: { requestId: string }) {
           await patch(requestId, { action: "CANCEL" });
           router.refresh();
         } catch (err) {
-          window.alert((err as Error).message);
+          setError((err as Error).message);
           setBusy(false);
         }
       }}
@@ -86,5 +88,7 @@ export function CancelRequest({ requestId }: { requestId: string }) {
     >
       Cancel request
     </button>
+    {error && <span role="alert" className="text-[11px] font-bold text-rose-700">{error}</span>}
+    </span>
   );
 }

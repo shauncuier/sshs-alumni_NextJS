@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import NextImage from "next/image";
-import { MapPin, Phone, Mail, Globe, ExternalLink, ShieldCheck } from "lucide-react";
+import { MapPin, Phone, Mail, Globe, ExternalLink } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
 
 export default function Footer() {
@@ -71,11 +71,11 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>{schoolInfo.phone}</span>
+                <a href={`tel:${schoolInfo.phone.replace(/[^+\d]/g, "")}`} className="hover:text-emerald-300">{schoolInfo.phone}</a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>{schoolInfo.associationEmail}</span>
+                <a href={`mailto:${schoolInfo.associationEmail}`} className="hover:text-emerald-300 break-all">{schoolInfo.associationEmail}</a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Globe className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -90,42 +90,6 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Social Links with clean SVGs */}
-            <div className="flex items-center gap-3 pt-3">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-emerald-950 hover:bg-emerald-800 text-emerald-300 flex items-center justify-center transition-colors border border-emerald-800/80"
-                aria-label="Facebook"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-emerald-950 hover:bg-emerald-800 text-emerald-300 flex items-center justify-center transition-colors border border-emerald-800/80"
-                aria-label="LinkedIn"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45c-.9 0-1.63.73-1.63 1.63 0 .9.73 1.63 1.63 1.63.9 0 1.63-.73 1.63-1.63 0-.9-.73-1.63-1.63-1.63z"/>
-                </svg>
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-emerald-950 hover:bg-emerald-800 text-emerald-300 flex items-center justify-center transition-colors border border-emerald-800/80"
-                aria-label="YouTube"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </a>
-            </div>
           </div>
 
           {/* Column 2: Alumni Navigation */}
@@ -237,17 +201,11 @@ export default function Footer() {
                   Find Batchmates
                 </Link>
               </li>
-              <li>
-                <Link href="/admin" className="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1.5 transition-colors">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Admin Verification Portal</span>
-                </Link>
-              </li>
             </ul>
 
             <div className="mt-6 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-[11px] text-emerald-300">
-              <span className="font-semibold text-white block mb-0.5">EIIN: 105070</span>
-              Board of Intermediate &amp; Secondary Education, Chattogram
+              <span className="font-semibold text-white block mb-0.5">EIIN: {schoolInfo.eiin}</span>
+              {schoolInfo.board}
             </div>
           </div>
         </div>

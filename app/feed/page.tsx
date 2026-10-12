@@ -14,11 +14,15 @@ export default function FeedPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   useEffect(() => {
     fetch("/api/posts", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : { posts: [] }))
+      .then((res) => {
+        if (!res.ok) throw new Error(`Posts request failed (${res.status})`);
+        return res.json();
+      })
       .then((data) => setPosts(data.posts ?? []))
-      .catch(() => setPosts([]))
+      .catch(() => setLoadError(true))
       .finally(() => setLoaded(true));
   }, []);
   const [filter, setFilter] = useState<"all" | "my-batch" | "official">("all");
@@ -103,7 +107,10 @@ export default function FeedPage() {
 
           {/* Posts List */}
           <div className="space-y-4">
-            {loaded && filteredPosts.length === 0 && (
+            {loadError && (
+              <p role="alert" className="text-center text-xs text-rose-700 bg-white rounded-3xl border border-rose-200 p-10">Couldn&apos;t load posts. Please refresh the page to try again.</p>
+            )}
+            {loaded && !loadError && filteredPosts.length === 0 && (
               <p className="text-center text-xs text-slate-500 bg-white rounded-3xl border border-slate-200 p-10">No posts yet. Be the first to share something.</p>
             )}
             {filteredPosts.map((post) => (

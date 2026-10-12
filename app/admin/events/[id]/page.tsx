@@ -1,5 +1,6 @@
 "use client";
 
+import { Toast, useToast } from "@/components/admin/Toast";
 import React, { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -59,7 +60,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   const [event, setEvent] = useState<PublicEvent | null>(null);
   const [attendees, setAttendees] = useState<AdminRegistration[]>([]);
   const [totals, setTotals] = useState({ confirmedRevenue: 0, pendingRevenue: 0, confirmedDonations: 0, headCount: 0 });
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { toast, showToast } = useToast();
   const [attendeeSearch, setAttendeeSearch] = useState("");
   const [attendeeStatusFilter, setAttendeeStatusFilter] = useState("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -103,7 +104,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   const handleApplyPaymentConfig = () => {
     const formatted = buildPaymentInstructions(paymentConfig);
     setEvent((prev) => (prev ? { ...prev, paymentInstructions: formatted } : null));
-    showToast("Payment accounts compiled and applied to event.");
+    showToast("Payment instructions updated. Save the event to publish them.");
   };
 
   // Fills the instructions from the payment details saved in Admin → Donations.
@@ -125,20 +126,16 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
       setEvent((prev) => (prev ? { ...prev, paymentInstructions: lines.join("\n\n") } : null));
       showToast("The association's payment details are in the instructions. Save the event to publish them.");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Could not load the payment details.");
+      showToast(err instanceof Error ? err.message : "Could not load the payment details.", "error");
     }
   };
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const load = async () => {
     const res = await fetch(`/api/admin/events/${resolvedParams.id}`, { cache: "no-store" });
     const body = await res.json();
     if (res.status === 404) return router.push("/admin/events");
-    if (!res.ok) return showToast(body.error || "Could not load the event.");
+    if (!res.ok) return showToast(body.error || "Could not load the event.", "error");
     setEvent(body.event);
     setAttendees(body.registrations);
     setTotals(body.totals);
@@ -186,7 +183,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
       }),
     });
     const body = await res.json();
-    if (!res.ok) return showToast(body.error || "Could not save.");
+    if (!res.ok) return showToast(body.error || "Could not save.", "error");
     setEvent(body.event);
     showToast(message);
   };
@@ -233,7 +230,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
     });
     const body = await res.json();
     setBusyId(null);
-    if (!res.ok) return showToast(body.error || "Could not update the registration.");
+    if (!res.ok) return showToast(body.error || "Could not update the registration.", "error");
     showToast(`${a.name}: ${body.registration.status.replace("_", " ").toLowerCase()}`);
     load();
   };
@@ -262,13 +259,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-bold animate-bounce-short">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toast toast={toast} />
 
       {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
@@ -1118,6 +1109,8 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-sm text-emerald-950">Add New Delegate Package Tier</h4>
                 <button
+                  type="button"
+                  aria-label="Close"
                   onClick={() => setIsAddingPackage(false)}
                   className="text-slate-400 hover:text-slate-600"
                 >

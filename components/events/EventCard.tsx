@@ -47,9 +47,9 @@ export default function EventCard({ event }: EventCardProps) {
             <Users className="w-3.5 h-3.5 text-emerald-400" />
             <span>{event.attendeesCount} / {event.maxAttendees} Attending</span>
             {event.closedMessage ? (
-              <span className="text-[11px] font-bold text-rose-700">{event.closedMessage}</span>
+              <span className="text-[11px] font-bold text-rose-300">{event.closedMessage}</span>
             ) : typeof event.placesLeft === "number" ? (
-              <span className="text-[11px] font-semibold text-emerald-700">{event.placesLeft} places left</span>
+              <span className="text-[11px] font-semibold text-emerald-300">{event.placesLeft} places left</span>
             ) : null}
           </div>
         </div>

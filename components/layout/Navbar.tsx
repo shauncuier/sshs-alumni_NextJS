@@ -26,10 +26,14 @@ import {
   GraduationCap,
 } from "lucide-react";
 import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
+import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
+  // The admin console link is only for staff; visitors and members never see it.
+  const role = session?.user?.role;
+  const adminHref = role && canUseAdminPanel(role) ? homeForRole(role) : null;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -210,15 +214,18 @@ export default function Navbar() {
                 <span className="hidden sm:inline">Member Portal</span>
               </Link>
 
-              <span className="text-emerald-900 select-none">|</span>
-
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 text-amber-300/90 hover:text-amber-200 transition-colors font-medium"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>Admin Console</span>
-              </Link>
+              {adminHref && (
+                <>
+                  <span className="text-emerald-900 select-none">|</span>
+                  <Link
+                    href={adminHref}
+                    className="inline-flex items-center gap-1.5 text-amber-300/90 hover:text-amber-200 transition-colors font-medium"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Admin Console</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -458,9 +465,6 @@ export default function Navbar() {
               <Search className="w-4 h-4 text-emerald-400" />
               <span>Search alumni, batches, events...</span>
             </span>
-            <kbd className="px-1.5 py-0.5 bg-[#03150f] text-[10px] text-amber-300 rounded font-mono">
-              ⌘K
-            </kbd>
           </button>
 
           {/* Primary Navigation Links */}
@@ -565,14 +569,16 @@ export default function Navbar() {
                 <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Member Portal</span>
               </Link>
-              <Link
-                href="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>Admin Console</span>
-              </Link>
+              {adminHref && (
+                <Link
+                  href={adminHref}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Admin Console</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

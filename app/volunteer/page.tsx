@@ -135,14 +135,23 @@ export default function VolunteerPage() {
             </div>
 
             {/* Subcommittees Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5" role="radiogroup" aria-label="Team">
               {SUBCOMMITTEES.map((sub) => {
                 const Icon = ICONS_MAP[sub.icon] || Users;
                 const isSelected = formData.subcommittee === sub.id;
                 return (
                   <div
                     key={sub.id}
+                    role="radio"
+                    aria-checked={isSelected}
+                    tabIndex={0}
                     onClick={() => setFormData({ ...formData, subcommittee: sub.id })}
+                    onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setFormData({ ...formData, subcommittee: sub.id });
+                  }
+                }}
                     className={`p-4 rounded-2xl border transition-all cursor-pointer text-left ${
                       isSelected
                         ? "bg-emerald-50/90 border-emerald-600 ring-2 ring-emerald-600/30 shadow-sm"
@@ -251,10 +260,10 @@ export default function VolunteerPage() {
 
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="vol-1" className="block font-semibold text-slate-700 mb-1">
                       Full Name *
                     </label>
-                    <input
+                    <input id="vol-1"
                       type="text"
                       required
                       value={formData.fullName}
@@ -266,10 +275,10 @@ export default function VolunteerPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">
+                      <label htmlFor="vol-2" className="block font-semibold text-slate-700 mb-1">
                         Email Address *
                       </label>
-                      <input
+                      <input id="vol-2"
                         type="email"
                         required
                         value={formData.email}
@@ -279,10 +288,10 @@ export default function VolunteerPage() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">
+                      <label htmlFor="vol-3" className="block font-semibold text-slate-700 mb-1">
                         Mobile Phone *
                       </label>
-                      <input
+                      <input id="vol-3"
                         type="tel"
                         required
                         value={formData.phone}
@@ -295,10 +304,10 @@ export default function VolunteerPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">
+                      <label htmlFor="vol-4" className="block font-semibold text-slate-700 mb-1">
                         SSC Batch *
                       </label>
-                      <select
+                      <select id="vol-4"
                         value={formData.sscBatch}
                         onChange={(e) => setFormData({ ...formData, sscBatch: e.target.value })}
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
@@ -312,10 +321,10 @@ export default function VolunteerPage() {
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">
+                      <label htmlFor="vol-5" className="block font-semibold text-slate-700 mb-1">
                         Subcommittee Wing *
                       </label>
-                      <select
+                      <select id="vol-5"
                         value={formData.subcommittee}
                         onChange={(e) => setFormData({ ...formData, subcommittee: e.target.value })}
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
@@ -336,10 +345,10 @@ export default function VolunteerPage() {
                   )}
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="vol-6" className="block font-semibold text-slate-700 mb-1">
                       Professional Background / Skills
                     </label>
-                    <input
+                    <input id="vol-6"
                       type="text"
                       value={formData.skills}
                       onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
@@ -349,10 +358,10 @@ export default function VolunteerPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="vol-7" className="block font-semibold text-slate-700 mb-1">
                       Availability &amp; Shifts
                     </label>
-                    <input
+                    <input id="vol-7"
                       type="text"
                       value={formData.availability}
                       onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
@@ -362,10 +371,10 @@ export default function VolunteerPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label htmlFor="vol-8" className="block font-semibold text-slate-700 mb-1">
                       Prior Organizing Experience / Equipment (optional)
                     </label>
-                    <textarea
+                    <textarea id="vol-8"
                       rows={2}
                       value={formData.experience}
                       onChange={(e) => setFormData({ ...formData, experience: e.target.value })}

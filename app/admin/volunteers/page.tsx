@@ -1,5 +1,6 @@
 "use client";
 
+import { Toast, useToast } from "@/components/admin/Toast";
 import React, { useEffect, useState } from "react";
 import {
   HeartHandshake,
@@ -36,16 +37,12 @@ export default function AdminVolunteersPage() {
   const [volunteers, setVolunteers] = useState<VolunteerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, showToast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [subcommitteeFilter, setSubcommitteeFilter] = useState("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3500);
-  };
 
   const reloadData = async () => {
     setLoading(true);
@@ -103,7 +100,7 @@ export default function AdminVolunteersPage() {
       );
       showToast(`Volunteer status updated to ${status}.`);
     } catch (err) {
-      showToast((err as Error).message);
+      showToast((err as Error).message, "error");
     } finally {
       setBusyId(null);
     }
@@ -133,13 +130,7 @@ export default function AdminVolunteersPage() {
 
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-bold border border-slate-700 animate-slideUp">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toast}</span>
-        </div>
-      )}
+      <Toast toast={toast} />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

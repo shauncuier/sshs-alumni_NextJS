@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -18,6 +19,8 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [postsLoaded, setPostsLoaded] = useState(false);
+  const [postsError, setPostsError] = useState(false);
+  const [widgetsError, setWidgetsError] = useState(false);
   const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const user = session?.user;
@@ -47,9 +50,12 @@ export default function DashboardPage() {
   // Latest posts from the community feed.
   useEffect(() => {
     fetch("/api/posts?limit=5", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : { posts: [] }))
+      .then((res) => {
+        if (!res.ok) throw new Error(`Posts request failed (${res.status})`);
+        return res.json();
+      })
       .then((data) => setPosts(data.posts ?? []))
-      .catch(() => setPosts([]))
+      .catch(() => setPostsError(true))
       .finally(() => setPostsLoaded(true));
   }, []);
 
@@ -71,36 +77,41 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!userBatch) return;
+    const failed = () => setWidgetsError(true);
+    const json = (res: Response) => {
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      return res.json();
+    };
     // 1. Load batch info
     fetch("/api/batches", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
+      .then(json)
       .then((data) => {
         if (data?.batches && Array.isArray(data.batches)) {
           const found = data.batches.find((b: { year: number }) => b.year === userBatch);
           if (found) setDynamicBatch(found);
         }
       })
-      .catch(() => {});
+      .catch(failed);
 
     // 2. Load donation campaign
     fetch("/api/donations", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
+      .then(json)
       .then((data) => {
         if (data?.campaigns && Array.isArray(data.campaigns) && data.campaigns.length > 0) {
           setDonationCampaign(data.campaigns[0]);
         }
       })
-      .catch(() => {});
+      .catch(failed);
 
     // 3. Load classmates from directory
     fetch(`/api/alumni?batch=${userBatch}&limit=6`, { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
+      .then(json)
       .then((data) => {
         if (data?.alumni && Array.isArray(data.alumni)) {
           setClassmates(data.alumni.filter((a: Classmate) => a.userId !== userId));
         }
       })
-      .catch(() => {});
+      .catch(failed);
   }, [userBatch, userId]);
 
   const batchMembers = dynamicBatch?.totalAlumni ?? 0;
@@ -129,6 +140,11 @@ export default function DashboardPage() {
         <AppHeader title="Alumni Dashboard" />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+          {widgetsError && (
+            <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
+              Some parts of your dashboard couldn&apos;t load. Please refresh the page to try again.
+            </p>
+          )}
           {/* Welcome Banner with Profile Strength */}
           <div className="bg-gradient-to-r from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-emerald-800/80 relative overflow-hidden">
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
@@ -240,6 +256,8 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {!postsLoaded ? (
                   <p className="text-xs text-slate-400 text-center py-8">Loading posts…</p>
+                ) : postsError ? (
+                  <p role="alert" className="text-xs text-rose-700 text-center py-8">Couldn&apos;t load posts. Please refresh the page to try again.</p>
                 ) : posts.length === 0 ? (
                   <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-1">
                     <p className="text-sm font-bold text-slate-700">No posts yet</p>
@@ -357,8 +375,8 @@ export default function DashboardPage() {
                 <h4 className="font-bold text-sm leading-snug">{donationCampaign.title}</h4>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-[11px] text-emerald-200">
-                    <span>Raised: ৳{donationCampaign.raisedAmount.toLocaleString()}</span>
-                    <span>Goal: ৳{donationCampaign.goalAmount.toLocaleString()}</span>
+                    <span>Raised: {formatCurrencyBDT(donationCampaign.raisedAmount)}</span>
+                    <span>Goal: {formatCurrencyBDT(donationCampaign.goalAmount)}</span>
                   </div>
                   <div className="w-full h-2 bg-emerald-950 rounded-full overflow-hidden">
                     <div

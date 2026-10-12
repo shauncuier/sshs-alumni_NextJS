@@ -115,9 +115,11 @@ export default function PwaProvider({ children }: { children: React.ReactNode })
         <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-md">
           <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
             <WifiOff className="w-4 h-4 shrink-0" />
-            <span>Campus Offline Mode Active — Cached directories and digital smart cards remain fully accessible.</span>
+            <span>You are offline. Some pages and changes need a connection.</span>
           </div>
           <button
+            type="button"
+            aria-label="Dismiss"
             onClick={() => setShowOfflineBanner(false)}
             className="p-1 hover:bg-amber-600/30 rounded"
           >
