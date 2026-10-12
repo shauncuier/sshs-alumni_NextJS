@@ -9,7 +9,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const found = await getPublicJob((await params).id);
-  return found ? { title: `${found.job.title} at ${found.job.company} | SSGHS Career Hub` } : { title: "Job not found" };
+  return found ? { title: `${found.job.title} at ${found.job.company}` } : { title: "Job not found" };
 }
 
 export default async function JobPage({ params }: Props) {

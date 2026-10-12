@@ -20,12 +20,12 @@ This replaces `docs/PROJECT_MILESTONES_AND_STATUS.md` (last updated 2026-09-26, 
 | Uploads | Local disk under `UPLOADS_DIR` (avatars, proof documents, receipts), served only through authorised API routes |
 | Tests | Vitest against a local `*_test` database that is wiped every run |
 
-Size: 19 Prisma models, 44 pages, 55 API route files.
+Size: 28 Prisma models, 54 pages, 85 API route files (2026-10-12).
 
 ## 2. Local environment
 
 - **One env file:** everything lives in `.env.local` (git-ignored). `.env` was merged into it on 2026-10-11. `.env.example` documents every variable.
-- **One app database:** `sshs_dev` on `127.0.0.1:3306`. `next dev`, `npm run db:push`, `npm run db:seed` and every script read it through `lib/load-env.ts` (`.env.local` first, then `.env`).
+- **One app database:** `sshs_dev` on `127.0.0.1:3306`. `next dev`, `npm run db:push`, `npm run db:seed` and every script read it through `lib/load-env.ts` (`.env.production` with `NODE_ENV=production`, then `.env.local`, then `.env`).
 - **Test database:** `sshs_test` (`TEST_DATABASE_URL`). It stays separate on purpose: each test run truncates every table, and the test setup refuses any database whose name does not end in `_test`.
 
 | Command | What it does |
@@ -62,21 +62,21 @@ The super admin is defined only by env. It is created or restored (role, status,
 | Area | Status | Notes |
 | --- | --- | --- |
 | Joining (Golden Jubilee registration) | Live | Photo, proof of study, payment details, admin approval; creates PENDING account |
-| Contact verification on joining | Live | Phone by SMS code (template `Your {Brand} OTP is XXXX`, `OTP_BRAND_NAME`); if the SMS fails or does not arrive, the member gets the code by email instead. One verified contact is required. **Email needs Resend or SMTP in production** — none is configured yet, so locally the emailed code is printed in the `next dev` console |
-| Payment methods on registration | Live | bKash, Nagad, **Bangla QR**, Bank, Cash — manual: member pays, enters transaction ID, committee approves. Bangla QR shows the image from `NEXT_PUBLIC_BANGLA_QR_IMAGE` |
+| Contact verification on joining | Live | Phone by SMS code (template `Your {Brand} OTP is XXXX`, `OTP_BRAND_NAME`); if the SMS fails or does not arrive, the member gets the code by email instead. One verified contact is required. Email goes through Resend (key set 2026-10-12); until the association's domain is verified, Resend's test sender delivers only to the account owner's address |
+| Payment methods on registration | Live | bKash, Nagad, **Bangla QR**, Bank, Cash — manual: member pays, enters transaction ID, committee approves. Payment numbers and the Bangla QR image are entered in Admin → Donations → Payment details (`NEXT_PUBLIC_BANGLA_QR_*` only as a fallback) |
 | Events, tickets, gate check-in | Live | QR tickets (sealed tokens); `/gate` scans with the phone camera (HTTPS needed), checks in for the chosen event only, live count |
 | Admin verifications queue | Live | Approve/reject payment + membership together |
 | User management (`/admin/users`) | Live | Search, add, role change, reset password, disable/enable; every change signs the user out |
 | Bulk SMS broadcast (`/admin/sms`) | Live | History in the `SmsBroadcast` table with the full recipient list; failed sends recorded |
-| Alumni directory, profiles, ID card, wallet passes | Live | Phone/email shown only when the member made them public |
+| Alumni directory, profiles, ID card | Live | Phone/email shown only when the member made them public |
 | Donations | Live | Manual: donor pays by bKash / Nagad / Bangla QR / bank / cash and submits the transaction ID; admins verify or reject in `/admin/donations`; verified ones count and get an emailed receipt. Admins create, edit, close and delete campaigns there; only open campaigns (active, started, not ended) take donations |
 | Online payments (bKash, Nagad, SSLCommerz APIs) | Off | Decision 2026-10-11: manual payment only. Checkout returns 410 unless `ONLINE_PAYMENTS_ENABLED=true`; code kept for later |
 | Activity log (`/admin/logs`) | Live | Every write action, sign-in and security event: who, what, outcome, IP, browser; secrets never stored; kept `LOG_RETENTION_DAYS` (365) |
 | Messages | Live | Real conversations, `/messages?to=<member>`, live updates, unread counts; only active members can be messaged |
-| Notifications, realtime (SSE), web push | Partial | Header bell and `/notifications` show the member's real notifications (messages, comments on their posts, committee notices), mark as read; web push sending is a stub |
+| Notifications, realtime (SSE) | Live | Header bell and `/notifications` show the member's real notifications (messages, comments on their posts, committee notices); clicking one opens its page and marks it read. The unused web-push stub was removed in the final review |
 | Committee volunteers | Live | `Volunteer` table; admins approve/decline in `/admin/volunteers`; old JSON entries imported with `npm run db:import-volunteers` |
 | Feed / posts | Live | Members only; posts, likes and comments stored; authors delete their own, admins and moderators delete any |
-| Batches | Live | Every SSC year from 1985; member counts from verified profiles; representative, contact, reunion date set in `/admin/batches` |
+| Batches | Live | SSC years from 1977 (school founded 1976); only years with members are listed by default ("Show all years" for the rest); member counts from verified profiles; representative, contact, reunion date set in `/admin/batches` |
 | News | Live | `/admin/news` (write, publish, feature, delete, image upload); `/news` and `/news/[id]` show published articles only |
 | Gallery | Live | `/admin/gallery` (albums, multi-photo upload, captions, cover, publish); `/gallery` and the homepage show published albums only |
 | Stories, achievements | Live | `/admin/stories` (two tabs); `/stories`, `/stories/[id]`, `/achievements`, homepage and sitemap show published entries only |

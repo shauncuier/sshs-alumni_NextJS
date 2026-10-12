@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getMembershipEvent } from "@/lib/events/service";
 import RegisterClientView from "./RegisterClientView";
+
+export const metadata: Metadata = {
+  title: "Join the association",
+  description: "Register as a member of the SSGHS Alumni Association.",
+};
 
 export const dynamic = "force-dynamic";
 

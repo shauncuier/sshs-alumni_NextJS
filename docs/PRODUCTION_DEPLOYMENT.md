@@ -85,8 +85,8 @@ sudo npm install -g pm2
 git clone https://github.com/your-org/sshs-alumni.git /var/www/sshs-alumni
 cd /var/www/sshs-alumni
 npm ci
-cp .env.example .env.production
-# Fill in .env.production (docs/PRODUCTION_ENV.md), then:
+# Write .env.production from the list in docs/PRODUCTION_ENV.md (not a copy of .env.example:
+# that file holds local defaults such as SEED_* accounts that must not reach production), then:
 chmod 600 .env.production
 npm run env:check -- .env.production
 sudo mkdir -p /var/lib/sshs-alumni/uploads && sudo chown "$USER" /var/lib/sshs-alumni/uploads && chmod 700 /var/lib/sshs-alumni/uploads

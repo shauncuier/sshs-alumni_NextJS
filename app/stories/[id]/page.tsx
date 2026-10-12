@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: StoryDetailPageProps): Promise<Metadata> {
   const story = await getPublishedStory((await params).id);
-  return story ? { title: `${story.title} | SSGHS Alumni Stories`, description: story.summary } : { title: "Story not found" };
+  return story ? { title: story.title, description: story.summary } : { title: "Story not found" };
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailPageProps) {

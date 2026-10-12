@@ -14,7 +14,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = await getPublishedNews((await params).id);
   if (!article) return { title: "News not found" };
-  return { title: `${article.title} | SSGHS Alumni News`, description: article.excerpt };
+  return { title: article.title, description: article.excerpt };
 }
 
 export default async function NewsArticlePage({ params }: Props) {

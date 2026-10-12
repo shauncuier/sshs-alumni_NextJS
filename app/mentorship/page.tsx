@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import MentorshipClient from "@/components/mentorship/MentorshipClient";
 import { getOwnMentorProfile, listApprovedMentors, MENTOR_DOMAINS } from "@/lib/mentorship";
 import { getSessionUser } from "@/lib/session-user";
+
+export const metadata: Metadata = {
+  title: "Mentorship",
+  description: "Find an alumni mentor for study and career questions.",
+};
 
 // Approved mentors only; pending or paused profiles never appear here.
 export const dynamic = "force-dynamic";

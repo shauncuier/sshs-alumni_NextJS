@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
 import { GraduationCap, ExternalLink } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "The school",
+  description: "About Sabuj Shikshayatan Government High School, Sitakunda, Chattogram.",
+};
 
 export default function SchoolPage() {
   return (

@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import StoryCard from "@/components/stories/StoryCard";
 import { listPublishedStories } from "@/lib/stories";
 import { BookOpen } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Alumni stories",
+  description: "Stories from former students of Sabuj Shikshayatan Government High School.",
+};
 
 // Published stories from the database; drafts never appear here.
 export const dynamic = "force-dynamic";

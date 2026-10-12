@@ -21,7 +21,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 5 | Decide payments at launch: manual only or online gateways (**You**) | 1 · Decisions | S | ✅ Manual only |
 | 6 | Hide or remove the sections not launching | 2 · Real data | M | ⏭️ Nothing to hide (step 4) |
 | 6a | Donations page: manual payment + committee verification (no gateway) | 2 · Real data | M | ✅ Done 2026-10-11 |
-| 6b | Contact form: email the committee (today it is only kept in the activity log) | 2 · Real data | S | ✅ Code done 2026-10-11 (inbox test in step 17) |
+| 6b | Contact form: email the committee | 2 · Real data | S | ✅ Done 2026-10-12 (the page now really posts; fixed in the final review) |
 | 7 | Volunteers into the database | 2 · Real data | M | ✅ Done 2026-10-11 |
 | 8 | Bulk SMS history into the database | 2 · Real data | S | ✅ Done 2026-10-11 |
 | 9a | News from the database, managed in admin | 2 · Real data | M | ✅ Done 2026-10-12 |
@@ -121,7 +121,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 **Done when:** a test donation by bKash transaction ID shows as pending, an admin verifies it, and the campaign total updates; no gateway screen is reachable.
 
 ### 6b. Contact form reaches the committee · S · ✅ Code done 2026-10-11
-**Result:** messages are emailed to `CONTACT_INBOX_EMAIL` with Reply-To the sender (sender text HTML-escaped), and kept in the activity log; same-origin check and field limits; 3 tests. The real-inbox check moves to step 17, when an email provider exists.
+**Result:** messages are emailed to `CONTACT_INBOX_EMAIL` with Reply-To the sender (sender text HTML-escaped), and kept in the activity log; same-origin check and field limits; 3 tests. **Final review (2026-10-12):** the contact page itself never called the API (it only showed "sent"); it now posts to `/api/contact`, shows errors and the ticket reference, and was checked end to end.
 **Tasks:** send each contact message to the committee email (after step 17), keep the activity-log entry.
 **Done when:** a test message arrives in the committee inbox.
 
@@ -307,10 +307,25 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ---
 
+## Final review of steps 0–27 (2026-10-12)
+
+A read-through of every page and route against the steps above, with a UX/UI eye. Fixed on `prod-readiness`, one commit per batch:
+
+- **Security** (`32ea24d`): `scripts/test-mariadb.ts` held the remote database host, user and password in the public repository; deleted with five other one-off scripts. `tests/no-secrets.test.ts` now fails if a tracked file holds a database URL with a password or a known key pattern. **The password itself must be changed at the host** (it stays in git history).
+- **Home page and batches** (`7df2e35`): every section from the database (counts match the directory; hero from the membership event; latest news, jobs and mentors added; empty sections hidden). School founded **1976** (`schoolInfo.established`), first SSC batch 1977 everywhere. Batches list shows only years with members, with "Show all years".
+- **Broken flows and admin safety** (`25666e1`): contact form sends; login respects `callbackUrl` and role home; dead buttons removed (photo upload, CSV export, wallet passes, fake gate check-in); approve/reject only on the verification screen; confirmations for role changes and paid-ticket decisions; admin bottom bar follows the permission map.
+- **Invented content** (`bffaff9`): committee names, hotlines, fees, agenda days, stats, perks and stock photos replaced by event/database values or removed; `/presentation` admins only; unused web-push routes removed.
+- **Consistency, feedback, accessibility** (`4a4f778`): failed loads say so; shared admin toast; dialogs close on Escape; menus close on outside click; one money format; labelled form fields; 16px fields on phones.
+- **SEO and docs**: titles and descriptions for every public page, event pages from the event, share image at its real size; this file, README, `.env.example`.
+
+**Left for you:** change the remote database password (critical); replace the sample payment numbers saved on the dev membership event ("Use association details" in the event editor); edit the event text that still says "1974"; confirm the school phone in `lib/data.ts` (+880 1745-950025) is real.
+
+---
+
 ## Phase 7 — Deploy
 
 ### 28. Server set-up · M
-**Tasks:** Node 22+, Nginx, PM2 (with log rotation), Certbot SSL; `npm ci` on the server (never copy `node_modules`); `UPLOADS_DIR` outside the web root, owned by the app user, `chmod 700`; `.env.local` with production values; firewall (SSH, HTTP, HTTPS only).
+**Tasks:** Node 22+, Nginx, PM2 (with log rotation), Certbot SSL; `npm ci` on the server (never copy `node_modules`); `UPLOADS_DIR` outside the web root, owned by the app user, `chmod 700`; `.env.production` with production values (start from the list in `docs/PRODUCTION_ENV.md`, check it with `npm run env:check -- .env.production`); firewall (SSH, HTTP, HTTPS only).
 **Done when:** the site loads over HTTPS on the real domain, and `/api/media/...` files are not reachable directly.
 
 ### 29. Production database · M

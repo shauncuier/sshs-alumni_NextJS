@@ -28,7 +28,7 @@ The platform uses **MySQL / MariaDB** via **Prisma ORM 7** (`provider = "mysql"`
 
 ## 🔌 3. Connection String
 
-Set `DATABASE_URL` in `.env` in the project root (never commit this file):
+Set `DATABASE_URL` in the env file (never commit it): `.env.local` for development, `.env.production` on the server. The app, the Prisma CLI (`prisma.config.ts`) and every script (`lib/load-env.ts`) read them in this order: variables already set in the shell, then `.env.production` (only with `NODE_ENV=production`), then `.env.local`, then `.env`. The first value found wins.
 
 ```env
 DATABASE_URL="mysql://<user>:<password>@<host>:3306/<database>"
@@ -66,11 +66,13 @@ npm run db:remove-demo
 
 `npm run db:seed` refuses to run when `NODE_ENV=production`. On the production database use `npm run db:seed:prod`: it also disables any account that still has one of the old published default passwords, and lists test accounts and demo content still present so they can be disabled or removed.
 
-The seed reads its two accounts from `.env`. Passwords are required (each at least 12 characters; there are no defaults). Emails are optional and default to the addresses shown; they are stored lowercased.
+The seed reads one account per role from the env file (the super admin from `SUPER_ADMIN_*`, the others from `SEED_ADMIN_*`, `SEED_MODERATOR_*`, `SEED_ALUMNI_*`). Passwords are required (each at least 12 characters; there are no defaults). Emails are optional and default to the addresses shown; they are stored lowercased.
 
 ```env
 SEED_ADMIN_EMAIL="admin@sabujsghs.edu.bd"
 SEED_ADMIN_PASSWORD="<a long random password>"
+SEED_MODERATOR_EMAIL="moderator@sabujsghs.edu.bd"
+SEED_MODERATOR_PASSWORD="<another long random password>"
 SEED_ALUMNI_EMAIL="jashedul@example.com"
 SEED_ALUMNI_PASSWORD="<another long random password>"
 ```
@@ -95,7 +97,7 @@ npx prisma db push --accept-data-loss
 | :--- | :--- | :--- |
 | **`User`** | Accounts and authentication credentials. | `email`, `role` (`SUPER_ADMIN`, `ADMIN`, `MODERATOR`, `ALUMNI`), `status` |
 | **`AlumniProfile`** | Biographical and school data for each alumnus. | `fullName`, `sscBatch`, `rollNumber`, `profession`, `company`, `locationCity`, `skills` (JSON) |
-| **`Batch`** | SSC batches from 1985 to 2025. | `year`, `name`, `totalMembers`, `reunionCount`, `classRepresentative` |
+| **`Batch`** | SSC batches (first batch 1977; the school was founded in 1976). | `year`, `name`, `totalMembers`, `reunionCount`, `classRepresentative` |
 | **`Event`** / **`EventRegistration`** | Reunions, tournaments, webinars, and RSVPs. | `slug`, `title`, `category`, `date`, `maxAttendees`, `attendeesCount`, `registrationFee` |
 | **`Post`** / **`Comment`** | Community feed posts and comments. | `authorId`, `content`, `images` (JSON), `likesCount`, `batchTag` |
 | **`DonationCampaign`** | Fundraising projects. | `slug`, `title`, `goalAmount`, `raisedAmount`, `donorCount` |
@@ -151,23 +153,16 @@ The push is not prompt-free on a database that already has events and registrati
 
 `AlumniProfile.avatarOriginalUrl` (`VARCHAR(500)`, nullable) holds the print-quality copy of the profile photo given when joining; `avatarUrl` holds the 400 x 400 web avatar. Run `npm run db:push` to add the column. The image files themselves live on the server disk (see the production deployment guide), not in the database.
 
-Joining the association is the Jubilee registration. It stays closed ("Payment details coming soon") until an admin enters the Jubilee's **payment instructions** (bKash/Nagad number) in Admin → Events → Golden Jubilee → Pricing.
+Joining the association is registration for the **membership event** (the event marked "membership" in Admin → Events). It stays closed ("Payment details coming soon") until an admin enters its **payment instructions** in the event editor ("Use association details" copies them from Admin → Donations → Payment details).
 
 ---
 
 ## Local development
 
-`.env.local` (git-ignored) points the app at a local MySQL database — for example `sshs_dev` — and also holds `TEST_DATABASE_URL`, the connection string for a `*_test` database on `localhost` that `npm test` drops and recreates from `prisma/schema.prisma` on every run. Next.js reads `.env.local` over `.env` automatically, so the running app just needs `DATABASE_URL` in `.env.local`.
+Everything local lives in one git-ignored `.env.local`: `DATABASE_URL` for a local database (for example `sshs_dev`) and `TEST_DATABASE_URL` for a `*_test` database that `npm test` empties and rebuilds from `prisma/schema.prisma` on every run (the test setup refuses any database whose name does not end in `_test`). `npm run db:push` and `npm run db:seed` use the same `DATABASE_URL`, so check which database it points to before running them.
 
-The Prisma CLI and `prisma/seed.ts` only load `.env` (`dotenv/config`), which holds the **remote** production `DATABASE_URL`. To push the schema or seed a local database, override `DATABASE_URL` on the command line — dotenv never overrides a variable that is already set:
+Local MySQL 8 needs `?allowPublicKeyRetrieval=true` appended to the local `DATABASE_URL` (`caching_sha2_password` over a non-TLS local connection). Without it the app fails with `pool timeout ... active=0 idle=0` (Prisma error P2039).
 
-```bash
-DATABASE_URL="$(node -e 'require("dotenv").config({path:".env.local",quiet:true});process.stdout.write(process.env.DATABASE_URL)')" npx prisma db push
-DATABASE_URL="$(node -e 'require("dotenv").config({path:".env.local",quiet:true});process.stdout.write(process.env.DATABASE_URL)')" npm run db:seed
-```
-
-This reads the URL out of `.env.local` without ever printing it. Local MySQL 8 needs `?allowPublicKeyRetrieval=true` appended to the local `DATABASE_URL` in `.env.local` (`caching_sha2_password` over a non-TLS local connection). Without it the app fails with `pool timeout ... active=0 idle=0` (Prisma error P2039).
-
-**Never run `db:push` / `db:seed` without an explicit `DATABASE_URL` override** — without one, both fall back to the remote URL in `.env`.
+To run a command against another database (for example the production copy during a rehearsal), set `DATABASE_URL` in the shell for that one command: a variable already set is never overridden by the env files.
 
 > ⚠️ `db:push` adds unique constraints on `EventRegistration` (`[eventId, userId]`, `transactionId`). If a database already has duplicate `(eventId, userId)` registrations or duplicate transaction IDs, `db:push` will fail. Before pushing to the remote database, follow *Upgrading the live (remote) database* above: back up, rehearse on a copy, run the duplicate checks, and seed straight after the push.

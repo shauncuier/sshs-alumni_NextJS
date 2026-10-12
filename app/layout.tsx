@@ -30,10 +30,9 @@ export const metadata: Metadata = {
     "সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়",
     "Chattogram Alumni",
     "Sitakunda School Alumni",
-    "School Reunion 2026",
     "Bangladesh Alumni Network",
   ],
-  authors: [{ name: "SSGHS Alumni Executive Council" }],
+  authors: [{ name: "SSGHS Alumni Association" }],
   icons: {
     icon: "/logo.png",
     shortcut: "/logo.png",
@@ -54,10 +53,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/logo.png",
-        width: 800,
-        height: 600,
-        alt: "SSGHS Alumni Association Crest",
+        url: "/golden-jubilee.jpg",
+        width: 1376,
+        height: 768,
+        alt: "Sabuj Shikshayatan Government High School alumni",
       },
     ],
   },

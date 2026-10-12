@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["sharp", "tesseract.js", "@prisma/client", "mariadb", "bcryptjs", "nodemailer"],
   allowedDevOrigins: [
-    "ungerminant-saran-normatively.ngrok-free.dev",
     "*.ngrok-free.dev",
     "*.ngrok.app",
     "localhost:3000",

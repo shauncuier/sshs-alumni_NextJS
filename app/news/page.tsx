@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import NewsCard from "@/components/news/NewsCard";
 import { listPublishedNews } from "@/lib/news";
 import { Newspaper } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "News",
+  description: "News and announcements from the SSGHS Alumni Association.",
+};
 
 // Published articles from the database; drafts never appear here.
 export const dynamic = "force-dynamic";
