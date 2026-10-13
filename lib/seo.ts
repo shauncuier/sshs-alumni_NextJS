@@ -192,12 +192,14 @@ export function organizationJsonLd() {
     url: origin,
     logo: `${origin}/icon-512.png`,
     email: schoolInfo.associationEmail,
+    sameAs: [schoolInfo.facebookGroup],
     parentOrganization: {
       "@type": "HighSchool",
       name: schoolInfo.name,
       alternateName: [schoolInfo.bengaliName, "Sabuj Shikshayatan High School"],
       foundingDate: String(schoolInfo.established),
       url: schoolInfo.website,
+      sameAs: [schoolInfo.facebookPage],
       address: {
         "@type": "PostalAddress",
         streetAddress: "Hafiz Jute Mills, South Sonaichhari",

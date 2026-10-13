@@ -3,6 +3,7 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { MapPin, Phone, Mail, Globe, ExternalLink } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
+import FacebookIcon from "@/components/shared/FacebookIcon";
 
 // Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
 // on every page costs more than the faster click is worth.
@@ -89,6 +90,17 @@ export default function Footer() {
                 >
                   Official School Website <ExternalLink className="w-3 h-3" />
                 </a>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <FacebookIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="flex flex-wrap gap-x-3 gap-y-1">
+                  <a href={schoolInfo.facebookGroup} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                    Alumni Facebook group
+                  </a>
+                  <a href={schoolInfo.facebookPage} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                    School Facebook page
+                  </a>
+                </span>
               </div>
             </div>
 

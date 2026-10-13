@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
 import { MapPin, Phone, Mail, Send, CheckCircle2, Globe } from "lucide-react";
+import FacebookIcon from "@/components/shared/FacebookIcon";
 
 const SUBJECTS = [
   "General question",
@@ -108,6 +109,19 @@ export default function ContactPage() {
                       <strong className="block text-slate-900 font-semibold">School Web Portal:</strong>
                       <a href={schoolInfo.website} target="_blank" rel="noreferrer" className="text-emerald-700 hover:underline">
                         {schoolInfo.website}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <FacebookIcon className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <strong className="block text-slate-900 font-semibold">On Facebook:</strong>
+                      <a href={schoolInfo.facebookGroup} target="_blank" rel="noopener noreferrer" className="block text-emerald-700 hover:underline">
+                        Alumni association group
+                      </a>
+                      <a href={schoolInfo.facebookPage} target="_blank" rel="noopener noreferrer" className="block text-emerald-700 hover:underline">
+                        School page
                       </a>
                     </div>
                   </div>

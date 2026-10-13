@@ -214,6 +214,9 @@ export const schoolInfo = {
   associationEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sabujshikshayatanalumni@gmail.com",
   phone: "+880 1745-950025",
   website: "https://sabujsghs.edu.bd/",
+  /** The school's Facebook page and the alumni association's Facebook group. */
+  facebookPage: "https://www.facebook.com/ssghschool",
+  facebookGroup: "https://www.facebook.com/groups/sshsalumniassociation",
   tagline: "Connecting Generations, Preserving Heritage, Shaping the Future",
   motto: "Knowledge, Character, and National Dedication",
 };
