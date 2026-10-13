@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { schoolInfo } from "@/lib/data";
 import type { PublicEvent } from "@/lib/events/types";
+import type { AlumniStoryItem, NewsItem } from "@/lib/data";
+import type { JobListing } from "@/lib/career-data";
 
 /**
  * Search and share metadata in one place. People search for the school by name
@@ -56,6 +58,93 @@ export function pageMetadata(p: {
     },
     twitter: { card: "summary_large_image", title: fullTitle, description },
     ...(p.noindex ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+
+const abs = (url: string) => (url.startsWith("http") ? url : `${siteOrigin()}${url}`);
+const association = () => ({ "@id": `${siteOrigin()}/#association` });
+
+/** The site itself, with its Bangla name, so search engines show the right site name. */
+export function websiteJsonLd() {
+  const origin = siteOrigin();
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${origin}/#website`,
+    name: ASSOCIATION_NAME,
+    alternateName: [ASSOCIATION_NAME_BN, SITE_NAME, "SSGHS Alumni"],
+    url: origin,
+    inLanguage: ["en", "bn"],
+    publisher: association(),
+  };
+}
+
+/** Breadcrumbs for a detail page: Home > section > page. */
+export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [{ name: "Home", path: "/" }, ...trail].map((t, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: t.name,
+      item: abs(t.path === "/" ? "" : t.path),
+    })),
+  };
+}
+
+export function newsArticleJsonLd(n: NewsItem) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: clip(n.title, 110),
+    description: clip(n.excerpt, 300),
+    image: [abs(n.featuredImage)],
+    ...(n.publishedAt ? { datePublished: n.publishedAt } : {}),
+    ...(n.updatedAt ? { dateModified: n.updatedAt } : {}),
+    author: { "@type": "Person", name: n.author },
+    publisher: { ...association(), "@type": "Organization", name: ASSOCIATION_NAME, logo: { "@type": "ImageObject", url: abs("/icon-512.png") } },
+    mainEntityOfPage: abs(`/news/${n.id}`),
+    articleSection: n.category,
+  };
+}
+
+export function storyJsonLd(s: AlumniStoryItem) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: clip(s.title, 110),
+    description: clip(s.summary, 300),
+    image: [abs(s.coverImage)],
+    ...(s.publishedAt ? { datePublished: s.publishedAt } : {}),
+    ...(s.updatedAt ? { dateModified: s.updatedAt } : {}),
+    author: { "@type": "Person", name: s.authorName, description: `SSC ${s.batchYear}${s.profession ? `, ${s.profession}` : ""}` },
+    publisher: { ...association(), "@type": "Organization", name: ASSOCIATION_NAME, logo: { "@type": "ImageObject", url: abs("/icon-512.png") } },
+    mainEntityOfPage: abs(`/stories/${s.id}`),
+  };
+}
+
+const EMPLOYMENT: Record<string, string> = { "Full-time": "FULL_TIME", "Part-time": "PART_TIME", Contract: "CONTRACTOR", Internship: "INTERN" };
+
+/** A job for Google's job search: who hires, where, until when. */
+export function jobPostingJsonLd(j: JobListing) {
+  const remote = j.workplaceType === "Remote";
+  return {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: j.title,
+    description: [j.description, j.requirements.length ? `Requirements: ${j.requirements.join("; ")}` : "", j.benefits.length ? `Benefits: ${j.benefits.join("; ")}` : ""]
+      .filter(Boolean)
+      .join("\n\n"),
+    ...(j.postedAt ? { datePosted: j.postedAt } : {}),
+    // Open until the end of the deadline day in Dhaka.
+    validThrough: `${j.deadline}T23:59:59+06:00`,
+    employmentType: EMPLOYMENT[j.jobType] ?? "OTHER",
+    hiringOrganization: { "@type": "Organization", name: j.company },
+    jobLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: j.location, addressCountry: "BD" } },
+    ...(remote ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "Bangladesh" } } : {}),
+    directApply: true,
+    url: abs(`/careers/${j.id}`),
   };
 }
 
@@ -126,7 +215,7 @@ export function eventJsonLd(e: PublicEvent) {
     },
     image: [image],
     url,
-    organizer: { "@type": "Organization", "@id": `${origin}/#association`, name: ASSOCIATION_NAME, url: origin },
+    organizer: { ...association(), "@type": "Organization", name: ASSOCIATION_NAME, url: origin },
     offers: {
       "@type": "Offer",
       url,

@@ -69,6 +69,7 @@ export function toJobListing(job: Job & { _count?: { applications: number } }): 
     requirements: Array.isArray(job.requirements) ? (job.requirements as string[]) : [],
     benefits: Array.isArray(job.benefits) ? (job.benefits as string[]) : [],
     deadline: toDateOnly(job.deadline),
+    postedAt: (job.reviewedAt ?? job.createdAt).toISOString(),
     applicationCount: job._count?.applications ?? 0,
   };
 }

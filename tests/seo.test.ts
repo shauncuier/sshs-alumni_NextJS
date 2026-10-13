@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import JsonLd from "@/components/shared/JsonLd";
-import { clip, eventDescription, eventJsonLd, organizationJsonLd, pageMetadata, SITE_NAME } from "@/lib/seo";
+import { breadcrumbJsonLd, clip, eventDescription, eventJsonLd, jobPostingJsonLd, newsArticleJsonLd, organizationJsonLd, pageMetadata, SITE_NAME, websiteJsonLd } from "@/lib/seo";
+import type { JobListing } from "@/lib/career-data";
+import type { NewsItem } from "@/lib/data";
 import type { PublicEvent } from "@/lib/events/types";
 
 const jubilee = {
@@ -71,5 +73,39 @@ describe("structured data", () => {
     const html = renderToStaticMarkup(JsonLd({ data: { name: "</script><script>alert(1)</script>" } }));
     expect(html).not.toContain("</script><script>");
     expect(html).toContain("\\u003c/script>");
+  });
+});
+
+describe("more structured data", () => {
+  it("names the website in both languages", () => {
+    expect(websiteJsonLd().alternateName).toContain("সবুজ শিক্ষায়তন প্রাক্তন ছাত্র-ছাত্রী পরিষদ");
+  });
+
+  it("builds breadcrumbs from Home with absolute links", () => {
+    const ld = breadcrumbJsonLd([{ name: "News", path: "/news" }, { name: "Jubilee update", path: "/news/abc" }]);
+    expect(ld.itemListElement.map((i) => [i.position, i.name])).toEqual([[1, "Home"], [2, "News"], [3, "Jubilee update"]]);
+    expect(ld.itemListElement[2].item).toMatch(/^https?:\/\/.+\/news\/abc$/);
+  });
+
+  it("dates a news article and names its publisher", () => {
+    const n = { id: "abc", title: "Registration opens", category: "Events", excerpt: "x", content: "y", featuredImage: "/golden-jubilee-art.jpg", date: "12 Oct 2026", publishedAt: "2026-10-12T04:00:00.000Z", author: "Committee" } as NewsItem;
+    expect(newsArticleJsonLd(n)).toMatchObject({ "@type": "NewsArticle", headline: "Registration opens", datePublished: "2026-10-12T04:00:00.000Z", author: { name: "Committee" }, articleSection: "Events" });
+  });
+
+  it("describes a job for job search, open to the end of its deadline day in Dhaka", () => {
+    const j = {
+      id: "j1", title: "Junior Accountant", company: "Example Traders", location: "Chattogram", workplaceType: "Remote", jobType: "Full-time",
+      description: "Bookkeeping.", requirements: ["HSC"], benefits: [], deadline: "2026-11-30", postedAt: "2026-10-10T00:00:00.000Z",
+    } as unknown as JobListing;
+    expect(jobPostingJsonLd(j)).toMatchObject({
+      "@type": "JobPosting",
+      employmentType: "FULL_TIME",
+      validThrough: "2026-11-30T23:59:59+06:00",
+      datePosted: "2026-10-10T00:00:00.000Z",
+      hiringOrganization: { name: "Example Traders" },
+      jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: { name: "Bangladesh" },
+    });
+    expect(jobPostingJsonLd(j).description).toContain("Requirements: HSC");
   });
 });

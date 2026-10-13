@@ -7,6 +7,8 @@ import Footer from "@/components/layout/Footer";
 import { getPublishedStory } from "@/lib/stories";
 import { ArrowLeft, Clock, Calendar, Quote, User } from "lucide-react";
 import { pageMetadata } from "@/lib/seo";
+import JsonLd from "@/components/shared/JsonLd";
+import { breadcrumbJsonLd, storyJsonLd } from "@/lib/seo";
 
 interface StoryDetailPageProps {
   params: Promise<{ id: string }>;
@@ -28,6 +30,8 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+      <JsonLd data={storyJsonLd(story)} />
+      <JsonLd data={breadcrumbJsonLd([{ name: "Stories", path: "/stories" }, { name: story.title, path: `/stories/${story.id}` }])} />
       <Navbar />
 
       <main className="flex-1 pb-24">

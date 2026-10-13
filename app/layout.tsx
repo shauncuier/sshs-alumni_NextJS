@@ -5,7 +5,7 @@ import PwaProvider from "@/components/pwa/PwaProvider";
 import NavigationProgress from "@/components/shared/NavigationProgress";
 import { Suspense } from "react";
 import "./globals.css";
-import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin } from "@/lib/seo";
+import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin, websiteJsonLd } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 
 const geistSans = Geist({
@@ -61,6 +61,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}
         <Suspense fallback={null}>
           <NavigationProgress />

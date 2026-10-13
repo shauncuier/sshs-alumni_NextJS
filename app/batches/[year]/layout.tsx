@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getBatch, isBatchYear } from "@/lib/batches";
-import { pageMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
+import JsonLd from "@/components/shared/JsonLd";
 
 export async function generateMetadata({ params }: { params: Promise<{ year: string }> }): Promise<Metadata> {
   const year = Number((await params).year);
@@ -16,6 +17,12 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
   });
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function Layout({ children, params }: { children: React.ReactNode; params: Promise<{ year: string }> }) {
+  const { year } = await params;
+  return (
+    <>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Batches", path: "/batches" }, { name: `SSC batch ${year}`, path: `/batches/${year}` }])} />
+      {children}
+    </>
+  );
 }

@@ -65,6 +65,8 @@ export function toStoryItem(s: AlumniStory, size: "thumb" | "large" = "thumb"): 
     fullStory: s.fullStory,
     quote: s.quote ?? "",
     publishedDate: s.publishedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "2-digit", timeZone: "Asia/Dhaka" }),
+    publishedAt: s.publishedAt.toISOString(),
+    updatedAt: s.updatedAt.toISOString(),
     readTime: readTime(`${s.summary} ${s.fullStory}`),
   };
 }

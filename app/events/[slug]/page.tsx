@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import EventDetailClient from "@/components/events/EventDetailClient";
 import JsonLd from "@/components/shared/JsonLd";
 import { getPublicEventBySlug } from "@/lib/events/service";
-import { eventJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, eventJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   return (
     <>
       <JsonLd data={eventJsonLd(event)} />
+      <JsonLd data={breadcrumbJsonLd([{ name: "Events", path: "/events" }, { name: event.title, path: `/events/${slug}` }])} />
       <EventDetailClient slug={slug} initialEvent={event} />
     </>
   );

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import JobDetailClient from "@/components/careers/JobDetailClient";
 import { getPublicJob } from "@/lib/jobs";
 import { pageMetadata } from "@/lib/seo";
+import JsonLd from "@/components/shared/JsonLd";
+import { breadcrumbJsonLd, jobPostingJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -24,5 +26,12 @@ export default async function JobPage({ params }: Props) {
   // Pending or rejected jobs, and unknown ids, show the 404 page.
   const found = await getPublicJob((await params).id);
   if (!found) notFound();
-  return <JobDetailClient job={found.job} open={found.open} />;
+  return (
+    <>
+      {/* Only open jobs go to Google's job search; a closed one would count as expired. */}
+      {found.open && <JsonLd data={jobPostingJsonLd(found.job)} />}
+      <JsonLd data={breadcrumbJsonLd([{ name: "Jobs", path: "/careers" }, { name: found.job.title, path: `/careers/${found.job.id}` }])} />
+      <JobDetailClient job={found.job} open={found.open} />
+    </>
+  );
 }

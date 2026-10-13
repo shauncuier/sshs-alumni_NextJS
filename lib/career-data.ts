@@ -23,6 +23,8 @@ export interface JobListing {
   requirements: string[];
   benefits: string[];
   deadline: string;
+  /** ISO timestamp the job went live (structured data). */
+  postedAt?: string;
   applicationCount: number;
   featured?: boolean;
 }

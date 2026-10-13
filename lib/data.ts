@@ -84,6 +84,9 @@ export interface AlumniStoryItem {
   fullStory: string;
   quote: string;
   publishedDate: string;
+  /** ISO timestamps (structured data); the display date is `publishedDate`. */
+  publishedAt?: string;
+  updatedAt?: string;
   readTime: string;
 }
 
@@ -156,6 +159,9 @@ export interface NewsItem {
   content: string;
   featuredImage: string;
   date: string;
+  /** ISO timestamps (structured data); the display date is `date`. */
+  publishedAt?: string;
+  updatedAt?: string;
   author: string;
 }
 

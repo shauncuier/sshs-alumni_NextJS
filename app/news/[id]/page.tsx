@@ -7,6 +7,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getPublishedNews } from "@/lib/news";
 import { pageMetadata } from "@/lib/seo";
+import JsonLd from "@/components/shared/JsonLd";
+import { breadcrumbJsonLd, newsArticleJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,8 @@ export default async function NewsArticlePage({ params }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+      <JsonLd data={newsArticleJsonLd(article)} />
+      <JsonLd data={breadcrumbJsonLd([{ name: "News", path: "/news" }, { name: article.title, path: `/news/${article.id}` }])} />
       <Navbar />
       <main className="flex-1 pb-24">
         <article className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 space-y-6">

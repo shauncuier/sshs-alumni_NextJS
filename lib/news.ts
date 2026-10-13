@@ -52,6 +52,8 @@ export function toNewsItem(a: NewsArticle, size: "thumb" | "large" = "thumb"): N
     content: a.content,
     featuredImage: image || FALLBACK_IMAGE,
     date: formatDate(a.publishedAt),
+    publishedAt: a.publishedAt.toISOString(),
+    updatedAt: a.updatedAt.toISOString(),
     author: a.author,
   };
 }
