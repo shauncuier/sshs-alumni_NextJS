@@ -2,6 +2,18 @@
 
 *13 October 2026. Audited: the site on the local development server (no public domain yet), all 19 public pages in the sitemap plus /login, /register, /contact, /volunteer, /donate. Search landscape: web search (English and Bangla). No SEO tool (Ahrefs / Semrush) is connected, so search volumes are relative estimates, not numbers; connect one for exact volume and difficulty.*
 
+## Progress
+
+**Done 13 October 2026** (re-crawled after the changes):
+- Every title ends with "| Sabuj Shikshayatan Alumni" (home: "Sabuj Shikshayatan Alumni Association, Sitakunda"); all titles ≤ 63 characters, descriptions 116–157 characters, written around the searched names.
+- Canonical URL and full share tags on every page (`lib/seo.ts`); batch pages have their own title and description, and empty years are `noindex`.
+- `Organization` JSON-LD on every page (association, school with both names, EIIN, address); `Event` JSON-LD on event pages (Dhaka start time, place, ৳ price, deadline).
+- **The event page now renders on the server**: the Golden Jubilee page's HTML went from 18 words and no heading to 866 words with an H1.
+- Sitemap adds /careers, /mentorship, /volunteer, news and job pages; /login dropped and `noindex`; member profile pages `noindex` (privacy); members-only pages `noindex`.
+- School page: a facts block (both names, founded 1976, government since July 2025, EIIN, Hafiz Jute Mills, South Sonaichhari) and a Bangla summary marked `lang="bn"`.
+
+**Still to do:** Bangla copy on the home, event and registration pages; the registration guide with FAQ; events list and directory list rendered on the server; Search Console and backlinks once the domain is live.
+
 ---
 
 ## Executive summary

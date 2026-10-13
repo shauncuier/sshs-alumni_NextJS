@@ -16,6 +16,7 @@ import {
   BookOpen,
   Heart,
 } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -31,11 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     select: { fullName: true, profession: true, sscBatch: true },
   });
 
-  if (!profile) return { title: "Alumni Not Found | SSGHS Alumni" };
-  return {
-    title: `${profile.fullName} (SSC '${profile.sscBatch}) | SSGHS Alumni`,
-    description: `${profile.fullName}, ${profile.profession}. SSGHS Batch of ${profile.sscBatch} Alumni Profile.`,
-  };
+  if (!profile) return { title: "Member not found", robots: { index: false } };
+  // Members' pages stay out of search engines: a name search should not lead strangers here.
+  return pageMetadata({
+    path: `/alumni/${id}`,
+    title: `${profile.fullName}, SSC ${profile.sscBatch}`,
+    description: `${profile.fullName}${profile.profession ? `, ${profile.profession}` : ""}. SSC batch ${profile.sscBatch}, Sabuj Shikshayatan Government High School.`,
+    noindex: true,
+  });
 }
 
 function safeHref(url: string | null | undefined): string | undefined {

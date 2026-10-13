@@ -23,15 +23,17 @@ import { formatDate } from "@/lib/utils";
 import prisma from "@/lib/prisma";
 import { schoolInfo, type AlumniMember } from "@/lib/data";
 import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Newspaper, Sparkles, Users } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: { absolute: "SSGHS Alumni Association | Sabuj Shikshayatan Government High School" },
+export const metadata: Metadata = pageMetadata({
+  path: "/",
+  title: "Sabuj Shikshayatan Alumni Association, Sitakunda",
+  absoluteTitle: true,
   description:
-    "The alumni association of Sabuj Shikshayatan Government High School, Sitakunda: find batchmates, join events, mentor juniors and give back to the school.",
-  openGraph: { images: [{ url: "/golden-jubilee-banner.jpg", width: 2752, height: 1536 }] },
-};
+    "Alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন), Sitakunda: find batchmates, join the Golden Jubilee 2026 and give back to the school.",
+});
 
 // Every section below shows real records and hides itself when there are none.
 export default async function HomePage() {

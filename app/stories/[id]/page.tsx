@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getPublishedStory } from "@/lib/stories";
 import { ArrowLeft, Clock, Calendar, Quote, User } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
 
 interface StoryDetailPageProps {
   params: Promise<{ id: string }>;
@@ -14,8 +15,10 @@ interface StoryDetailPageProps {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: StoryDetailPageProps): Promise<Metadata> {
-  const story = await getPublishedStory((await params).id);
-  return story ? { title: story.title, description: story.summary } : { title: "Story not found" };
+  const { id } = await params;
+  const story = await getPublishedStory(id);
+  if (!story) return { title: "Story not found", robots: { index: false } };
+  return pageMetadata({ path: `/stories/${id}`, title: story.title, description: story.summary, type: "article", image: story.coverImage ? { url: story.coverImage } : null });
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailPageProps) {

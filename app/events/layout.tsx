@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  // Keeps the site suffix on event pages below this layout.
-  title: { default: "Events", template: "%s | SSGHS Alumni Association" },
-  description: "Reunions, batch get-togethers and other alumni events. Register online and get your ticket.",
+  ...pageMetadata({ path: "/events", title: "Events and reunions", description: "Golden Jubilee 2026, batch reunions and other events of the Sabuj Shikshayatan alumni. Register online, pay by bKash or Nagad and get your ticket." }),
+  // Event pages below keep the site name in their title.
+  title: { default: "Events and reunions", template: "%s | Sabuj Shikshayatan Alumni" },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -4,11 +4,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getMembershipEvent } from "@/lib/events/service";
 import RegisterClientView from "./RegisterClientView";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Join the association",
-  description: "Register as a member of the SSGHS Alumni Association.",
-};
+export const metadata: Metadata = pageMetadata({ path: "/register", title: "Join the association", description: "Become a member of the Sabuj Shikshayatan alumni association: register for the Golden Jubilee 2026, pay by bKash or Nagad and get your member card." });
 
 export const dynamic = "force-dynamic";
 

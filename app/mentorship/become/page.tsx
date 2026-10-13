@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,9 +8,10 @@ import Footer from "@/components/layout/Footer";
 import MentorProfileForm from "@/components/mentorship/MentorProfileForm";
 import { getOwnMentorProfile, MENTOR_DOMAINS } from "@/lib/mentorship";
 import { getSessionUser } from "@/lib/session-user";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Become a mentor | SSGHS Alumni" };
+export const metadata: Metadata = pageMetadata({ path: "/mentorship/become", title: "Become a mentor", description: "Apply to mentor younger alumni.", noindex: true });
 
 const join = (v: unknown) => (Array.isArray(v) ? v.map(String).join("\n") : "");
 

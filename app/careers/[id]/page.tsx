@@ -2,14 +2,22 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import JobDetailClient from "@/components/careers/JobDetailClient";
 import { getPublicJob } from "@/lib/jobs";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const found = await getPublicJob((await params).id);
-  return found ? { title: `${found.job.title} at ${found.job.company}` } : { title: "Job not found" };
+  const { id } = await params;
+  const found = await getPublicJob(id);
+  if (!found) return { title: "Job not found", robots: { index: false } };
+  const { job } = found;
+  return pageMetadata({
+    path: `/careers/${id}`,
+    title: `${job.title} at ${job.company}`,
+    description: `${job.title} at ${job.company}, ${job.location}. A job shared by a Sabuj Shikshayatan alumnus${found.open ? "; apply through the alumni portal" : " (closed)"}.`,
+  });
 }
 
 export default async function JobPage({ params }: Props) {

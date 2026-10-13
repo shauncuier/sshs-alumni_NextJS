@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import MentorshipClient from "@/components/mentorship/MentorshipClient";
 import { getOwnMentorProfile, listApprovedMentors, MENTOR_DOMAINS } from "@/lib/mentorship";
 import { getSessionUser } from "@/lib/session-user";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Mentorship",
-  description: "Find an alumni mentor for study and career questions.",
-};
+export const metadata: Metadata = pageMetadata({ path: "/mentorship", title: "Mentorship", description: "Ask a senior Sabuj Shikshayatan alumnus for advice on studies, admission tests and careers. Every mentor is a verified member." });
 
 // Approved mentors only; pending or paused profiles never appear here.
 export const dynamic = "force-dynamic";

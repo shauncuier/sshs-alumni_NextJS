@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,9 +8,10 @@ import Footer from "@/components/layout/Footer";
 import CloseJobButton from "@/components/careers/CloseJobButton";
 import { isOpen, listJobsByPoster } from "@/lib/jobs";
 import { getSessionUser } from "@/lib/session-user";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "My jobs | SSGHS Career Hub" };
+export const metadata: Metadata = pageMetadata({ path: "/careers/mine", title: "My jobs", description: "Jobs you posted and their applications.", noindex: true });
 
 const STATUS: Record<string, { label: string; style: string }> = {
   PENDING: { label: "Waiting for review", style: "bg-amber-100 text-amber-800" },

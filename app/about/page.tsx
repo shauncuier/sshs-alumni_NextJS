@@ -1,10 +1,12 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
 import { Target, Eye, Users } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "About the association" };
+export const metadata: Metadata = pageMetadata({ path: "/about", title: "About the association", description: "Who we are: the alumni association (প্রাক্তন ছাত্র-ছাত্রী পরিষদ) of Sabuj Shikshayatan Government High School, Sitakunda, and what it does for its members and the school." });
 
 export default function AboutPage() {
 

@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import { listBatches } from "@/lib/batches";
 import { publishedStoryIds } from "@/lib/stories";
 import { listPublicEvents } from "@/lib/events/service";
+import { listPublishedNews } from "@/lib/news";
+import { listOpenJobs } from "@/lib/jobs";
 
 // Rebuilt at most hourly from the database, not frozen at build time.
 export const revalidate = 3600;
@@ -24,13 +26,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/donate",
     "/news",
     "/contact",
-    "/login",
     "/register",
+    "/careers",
+    "/mentorship",
+    "/volunteer",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
-    priority: route === "" ? 1.0 : 0.8,
+    priority: route === "" ? 1.0 : route === "/events" || route === "/register" ? 0.9 : 0.8,
   }));
 
   // Dynamic Batch pages
@@ -59,5 +63,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...batchPages, ...eventPages, ...storyPages];
+  const newsPages = (await listPublishedNews().catch(() => [])).map((n) => ({
+    url: `${baseUrl}/news/${n.id}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  const jobPages = (await listOpenJobs().catch(() => [])).map((j) => ({
+    url: `${baseUrl}/careers/${j.id}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+
+  return [...staticPages, ...batchPages, ...eventPages, ...storyPages, ...newsPages, ...jobPages];
 }

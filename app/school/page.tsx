@@ -4,11 +4,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
 import { GraduationCap, ExternalLink } from "lucide-react";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "The school",
-  description: "About Sabuj Shikshayatan Government High School, Sitakunda, Chattogram.",
-};
+export const metadata: Metadata = pageMetadata({ path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
 
 export default function SchoolPage() {
   return (
@@ -42,11 +40,33 @@ export default function SchoolPage() {
                 A Legacy of Educational Discipline &amp; Service
               </h2>
               <p className="text-sm text-slate-600 leading-relaxed">
-                {schoolInfo.name} was established in {schoolInfo.established} to provide secondary education under the {schoolInfo.board}.
+                The school was founded in {schoolInfo.established} as Sabuj Shikshayatan High School at Hafiz Jute Mills, Baro Aulia, in South
+                Sonaichhari, Sitakunda. It teaches under the {schoolInfo.board} and became a government school in July 2025; its name is now{" "}
+                {schoolInfo.name}.
               </p>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                From its vibrant quadrangle where students gather each morning for national assembly, to its science laboratories and historic shaded corridors, the school provides an environment where learners cultivate a love for knowledge, critical thinking, and national duty.
+              <p lang="bn" className="text-sm text-slate-600 leading-relaxed">
+                ১৯৭৬ সালে সীতাকুণ্ডের হাফিজ জুট মিলস এলাকায় সবুজ শিক্ষায়তন উচ্চ বিদ্যালয় নামে প্রতিষ্ঠিত বিদ্যালয়টি ২০২৫ সালে সরকারি হয়। এখন এর নাম{" "}
+                {schoolInfo.bengaliName}।
               </p>
+
+              {/* The facts people search for, in one place. */}
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm pt-2">
+                {[
+                  ["Name", schoolInfo.name],
+                  ["বাংলা নাম", schoolInfo.bengaliName],
+                  ["Former name", "Sabuj Shikshayatan High School (সবুজ শিক্ষায়তন উচ্চ বিদ্যালয়)"],
+                  ["Founded", String(schoolInfo.established)],
+                  ["Government school since", "July 2025"],
+                  ["EIIN", schoolInfo.eiin],
+                  ["Education board", schoolInfo.board],
+                  ["Address", "Hafiz Jute Mills, Baro Aulia, South Sonaichhari, Sitakunda, Chattogram"],
+                ].map(([label, value]) => (
+                  <div key={label} className="border-b border-slate-200 pb-2">
+                    <dt className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">{label}</dt>
+                    <dd className="text-slate-800 font-medium">{value}</dd>
+                  </div>
+                ))}
+              </dl>
 
               <div className="pt-2">
                 <a

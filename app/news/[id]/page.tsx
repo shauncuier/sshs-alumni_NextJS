@@ -6,15 +6,17 @@ import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getPublishedNews } from "@/lib/news";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = await getPublishedNews((await params).id);
-  if (!article) return { title: "News not found" };
-  return { title: article.title, description: article.excerpt };
+  const { id } = await params;
+  const article = await getPublishedNews(id);
+  if (!article) return { title: "News not found", robots: { index: false } };
+  return pageMetadata({ path: `/news/${id}`, title: article.title, description: article.excerpt, type: "article", image: article.featuredImage ? { url: article.featuredImage } : null });
 }
 
 export default async function NewsArticlePage({ params }: Props) {

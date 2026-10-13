@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,9 +8,10 @@ import Footer from "@/components/layout/Footer";
 import { CancelRequest, MentorResponse } from "@/components/mentorship/RequestActions";
 import { listMyMentorship } from "@/lib/mentorship";
 import { getSessionUser } from "@/lib/session-user";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "My mentorship | SSGHS Alumni" };
+export const metadata: Metadata = pageMetadata({ path: "/mentorship/mine", title: "My mentorship", description: "Your mentorship requests.", noindex: true });
 
 const BADGE: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-800",

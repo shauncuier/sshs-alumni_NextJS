@@ -5,6 +5,8 @@ import PwaProvider from "@/components/pwa/PwaProvider";
 import NavigationProgress from "@/components/shared/NavigationProgress";
 import { Suspense } from "react";
 import "./globals.css";
+import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin } from "@/lib/seo";
+import JsonLd from "@/components/shared/JsonLd";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,22 +19,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(siteOrigin()),
   title: {
-    default: "SSGHS Alumni Association | Official Community Platform",
-    template: "%s | SSGHS Alumni Association",
+    default: "Sabuj Shikshayatan Alumni Association, Sitakunda",
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Official digital ecosystem and alumni network for Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Chattogram, Bangladesh. EIIN: 105070.",
-  keywords: [
-    "SSGHS Alumni Association",
-    "Sabuj Shikshayatan Government High School",
-    "সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়",
-    "Chattogram Alumni",
-    "Sitakunda School Alumni",
-    "Bangladesh Alumni Network",
-  ],
-  authors: [{ name: "SSGHS Alumni Association" }],
+    "Alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Sitakunda, Chattogram: batchmates, events and the Golden Jubilee 2026.",
+  applicationName: SITE_NAME,
+  authors: [{ name: ASSOCIATION_NAME }],
   icons: {
     icon: "/logo.png",
     shortcut: "/logo.png",
@@ -45,21 +40,13 @@ export const metadata: Metadata = {
     title: "SSGHS Alumni",
   },
   openGraph: {
-    title: "SSGHS Alumni Association | Official Community Platform",
-    description:
-      "One school. Generations of memories. A lifetime of connections. The official platform for Sabuj Shikshayatan Govt. High School alumni.",
-    siteName: "SSGHS Alumni Association",
+    siteName: ASSOCIATION_NAME,
     locale: "en_BD",
+    alternateLocale: ["bn_BD"],
     type: "website",
-    images: [
-      {
-        url: "/golden-jubilee-banner.jpg",
-        width: 2752,
-        height: 1536,
-        alt: "Sabuj Shikshayatan Government High School alumni",
-      },
-    ],
+    images: [DEFAULT_SHARE_IMAGE],
   },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({
@@ -73,6 +60,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={organizationJsonLd()} />
         {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}
         <Suspense fallback={null}>
           <NavigationProgress />
