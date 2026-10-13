@@ -27,6 +27,7 @@ import {
   Briefcase,
   GraduationCap,
   Wallet,
+  IdCard,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -43,6 +44,7 @@ const ADMIN_NAV = [
   { name: "Executive Dashboard", short: "Dashboard", href: "/admin", icon: LayoutDashboard, area: "dashboard" },
   { name: "Verify Payments & Docs", short: "Verify", href: "/admin/verifications", icon: ShieldCheck, area: "verifications" },
   { name: "Alumni Verification", short: "Alumni", href: "/admin/alumni", icon: UserCheck, area: "alumni" },
+  { name: "ID Card Printing", short: "ID Cards", href: "/admin/id-cards", icon: IdCard, area: "alumni" },
   { name: "Bulk SMS Broadcast", short: "SMS", href: "/admin/sms", icon: MessageSquare, area: "sms" },
   { name: "Committee Volunteers", short: "Volunteers", href: "/admin/volunteers", icon: HeartHandshake, area: "volunteers" },
   { name: "Manage Batches", short: "Batches", href: "/admin/batches", icon: Layers, area: "batches" },

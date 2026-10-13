@@ -68,17 +68,18 @@ export function verifyCardToken(token: string): { valid: boolean; payload?: Card
 }
 
 /**
- * Generate QR Code as Data URL (base64 PNG)
+ * Generate QR Code as Data URL (base64 PNG). Printed cards pass "M": the long signed
+ * link then needs far fewer, bigger dots, which scan better at 29 mm on paper.
  */
-export async function generateQrDataUrl(text: string): Promise<string> {
+export async function generateQrDataUrl(text: string, level: "M" | "H" = "H"): Promise<string> {
   return QRCode.toDataURL(text, {
-    errorCorrectionLevel: "H",
+    errorCorrectionLevel: level,
     margin: 1,
     color: {
       dark: "#064e3b", // Forest green
       light: "#ffffff",
     },
-    width: 320,
+    width: 480,
   });
 }
 

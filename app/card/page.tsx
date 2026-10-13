@@ -4,223 +4,122 @@ import React, { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
-import DigitalAlumniCard, { CardData } from "@/components/card/DigitalAlumniCard";
-import { Sparkles, QrCode, ExternalLink, Award } from "lucide-react";
+import { IdCardBack, IdCardFront, siteHost } from "@/components/card/MemberIdCard";
+import IdCardPrintSheet, { printCardSheet } from "@/components/card/IdCardPrintSheet";
+import type { MemberCard } from "@/lib/member-card";
+import { ExternalLink, Printer, QrCode, ShieldCheck } from "lucide-react";
 
 export default function CardPage() {
   const [loading, setLoading] = useState(true);
-  const [cardData, setCardData] = useState<{
-    card: CardData;
-    qrDataUrl: string;
-    signedToken: string;
-    verifyUrl: string;
-  } | null>(null);
-
+  const [data, setData] = useState<{ card: MemberCard; origin: string } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchCard() {
-      try {
-        const res = await fetch("/api/alumni/card", { cache: "no-store" });
-        const data = await res.json();
-        if (!res.ok || !data.card) throw new Error(data.error || "Could not load your digital card.");
-        setCardData(data);
-      } catch (err) {
-        setLoadError((err as Error).message || "Could not load your digital card.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchCard();
+    fetch("/api/alumni/card", { cache: "no-store" })
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok || !body.card) throw new Error(body.error || "Could not load your membership card.");
+        setData({ card: body.card, origin: body.origin });
+      })
+      .catch((err: Error) => setLoadError(err.message || "Could not load your membership card."))
+      .finally(() => setLoading(false));
   }, []);
 
-  // Never fall back to a sample card: an ID card must belong to the signed-in member.
-  if (!cardData) {
-    return (
-      <div className="min-h-screen flex bg-[#f8fafc]">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
-          <AppHeader title="Digital Alumni Smart Card" />
-          <main className="flex-1 p-4 sm:p-8 max-w-6xl w-full mx-auto">
-            <p
-              className={`text-sm ${loadError ? "text-rose-700" : "text-slate-500"}`}
-              role={loadError ? "alert" : "status"}
-            >
-              {loading ? "Loading your digital card…" : loadError}
-            </p>
-          </main>
-        </div>
-        <MobileNav />
-      </div>
-    );
-  }
-
-  const activeCard: CardData = cardData.card;
-  const qrDataUrl = cardData.qrDataUrl;
-  const verifyUrl = cardData.verifyUrl;
-  // The gate only admits verified members, so say so plainly on the card page.
-  const isVerified = activeCard.status === "VERIFIED";
-  const statusBadge = isVerified
-    ? "🟢 Valid at the gate"
-    : activeCard.status === "REJECTED"
-      ? "🔴 Not valid"
-      : "🟡 Pending verification";
-  const validUntil = activeCard.expiresAt
-    ? new Date(activeCard.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-    : null;
+  const card = data?.card;
+  const isVerified = card?.status === "VERIFIED";
+  const site = data ? siteHost(data.origin) : "";
 
   return (
-    <div className="min-h-screen flex bg-[#f8fafc]">
+    <div className="min-h-screen flex bg-[#f4f6f5]">
       <AppSidebar />
 
       <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0 h-screen overflow-y-auto">
-        <AppHeader title="Digital Alumni Smart Card" />
+        <AppHeader title="Membership Card" />
 
-        <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#064e3b] via-[#056049] to-[#043d2e] rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg border border-emerald-700/50">
-            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-400/10 to-transparent pointer-events-none" />
-            <div className="max-w-2xl space-y-2 relative z-10">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold border border-amber-400/30">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{isVerified ? "EIIN 105070 Verified Credential" : "EIIN 105070 Member Credential"}</span>
+        <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          {/* Never a sample card: an ID card must belong to the signed-in member. */}
+          {!card ? (
+            <p className={`text-sm ${loadError ? "text-rose-700" : "text-slate-500"}`} role={loadError ? "alert" : "status"}>
+              {loading ? "Loading your membership card…" : loadError}
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Your membership card</h1>
+                  <p className="text-xs sm:text-sm text-slate-500">Show it on your phone or print it. The QR code on the back is checked at the gate.</p>
+                </div>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    isVerified ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-900 border-amber-200"
+                  }`}
+                >
+                  {isVerified ? "Valid member" : card.status === "REJECTED" ? "Not valid" : "Waiting for approval"}
+                </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Official Digital Alumni ID Card
-              </h1>
-              <p className="text-emerald-100 text-xs sm:text-sm leading-relaxed">
-                Your authenticated digital credential for Sabuj Shikshayatan Government High School. Present this pass at reunion gates, batch seminars, and campus library events for instant check-in.
-              </p>
-            </div>
-          </div>
 
-          {/* Main Grid: Card on Left, Security & Instructions on Right */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left 6 cols: Interactive 3D Card */}
-            <div className="lg:col-span-6 flex flex-col items-center">
-              <div className="w-full bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center">
-                <div className="w-full flex items-center justify-between pb-4 mb-4 border-b border-slate-100 text-xs font-bold">
-                  <span className="text-slate-800 flex items-center gap-2">
-                    <Award className="w-4 h-4 text-emerald-700" />
-                    <span>Smart Pass Preview</span>
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full border ${
-                      isVerified
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-amber-50 text-amber-800 border-amber-200"
-                    }`}
+              {!isVerified && (
+                <p role="status" className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                  {card.status === "REJECTED"
+                    ? "Your membership was not approved, so this card is not accepted at the gate. Please contact the alumni committee."
+                    : "This card is not accepted at the gate until the committee approves your membership."}
+                </p>
+              )}
+
+              {/* The card at its real proportions, scaled up for the screen */}
+              <section className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-8">
+                <div className="flex flex-col xl:flex-row items-center justify-center gap-6 sm:gap-8">
+                  <figure className="space-y-2 text-center">
+                    <div className="[zoom:1.02] min-[400px]:[zoom:1.1] sm:[zoom:1.45] xl:[zoom:1.3] rounded-[3mm] shadow-xl shadow-emerald-950/15">
+                      <IdCardFront card={card} />
+                    </div>
+                    <figcaption className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Front</figcaption>
+                  </figure>
+                  <figure className="space-y-2 text-center">
+                    <div className="[zoom:1.02] min-[400px]:[zoom:1.1] sm:[zoom:1.45] xl:[zoom:1.3] rounded-[3mm] shadow-xl shadow-emerald-950/15">
+                      <IdCardBack card={card} site={site} />
+                    </div>
+                    <figcaption className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Back · gate QR</figcaption>
+                  </figure>
+                </div>
+
+                <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void printCardSheet()}
+                    className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {statusBadge}
-                  </span>
-                </div>
-
-                {!isVerified && (
-                  <p role="status" className="w-full mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
-                    {activeCard.status === "REJECTED"
-                      ? "Your membership verification was not approved, so this pass is not accepted at the gate. Please contact the alumni committee."
-                      : "This pass is not accepted at the gate until the committee verifies your membership."}
-                  </p>
-                )}
-
-                <DigitalAlumniCard
-                  card={activeCard}
-                  qrDataUrl={qrDataUrl}
-                  verifyUrl={verifyUrl}
-                />
-              </div>
-            </div>
-
-            {/* Right 6 cols: Security Features, Gate Instructions & Wallets */}
-            <div className="lg:col-span-6 space-y-6">
-              {/* Gate Pass Instructions */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
-                    <QrCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900">
-                      Reunion Gate Scan Protocol
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      How security volunteers verify your access on campus
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-xs text-slate-600">
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center shrink-0 font-bold text-[11px]">
-                      1
-                    </span>
-                    <p className="pt-0.5">
-                      Open this card on your phone (or print it) before you reach the school gate.
-                    </p>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center shrink-0 font-bold text-[11px]">
-                      2
-                    </span>
-                    <p className="pt-0.5">
-                      Flip to the QR code side. Security volunteers will scan with their mobile portal scanner.
-                    </p>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center shrink-0 font-bold text-[11px]">
-                      3
-                    </span>
-                    <p className="pt-0.5">
-                      Instant green verification badge confirms your batch year, name, and registered delegate kit.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-2">
+                    <Printer className="w-4 h-4" /> Print my card
+                  </button>
                   <a
-                    href={verifyUrl}
+                    href={card.verifyUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors flex items-center justify-center gap-2"
+                    className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-600 text-slate-700 text-sm font-semibold flex items-center justify-center gap-2"
                   >
-                    <span>Test Public Gate Verification Page</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    Check my QR code <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
-              </div>
+              </section>
 
-              {/* Security & Verification Details */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                  Credential Integrity
-                </h4>
-
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl">
-                    <span className="text-slate-400 block text-[10px]">EIIN Code</span>
-                    <span className="font-bold text-slate-800">105070 (Government)</span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl">
-                    <span className="text-slate-400 block text-[10px]">Pass Protection</span>
-                    <span className="font-mono font-bold text-emerald-800">AES-256-GCM</span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl">
-                    <span className="text-slate-400 block text-[10px]">Alumni Tier</span>
-                    <span className="font-bold text-amber-700">{activeCard.membershipTier || "LIFETIME"}</span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl">
-                    <span className="text-slate-400 block text-[10px]">Validity</span>
-                    <span className="font-bold text-slate-800">{validUntil ? `Until ${validUntil}` : "No expiry"}</span>
-                  </div>
+              <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
+                <div className="bg-white rounded-2xl border border-slate-200 p-4 flex gap-3">
+                  <QrCode className="w-5 h-5 text-emerald-700 shrink-0" />
+                  <p>At the gate, open this page or show your printed card. Volunteers scan the QR on the back.</p>
                 </div>
-              </div>
-            </div>
-          </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-4 flex gap-3">
+                  <Printer className="w-5 h-5 text-emerald-700 shrink-0" />
+                  <p>Printing: A4 paper, scale 100% (actual size). Cut out both sides and laminate them back to back.</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-4 flex gap-3">
+                  <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0" />
+                  <p>The QR code is signed by the association and cannot be copied onto another name.</p>
+                </div>
+              </section>
+
+              <IdCardPrintSheet cards={[card]} site={site} mode="pair" />
+            </>
+          )}
         </main>
       </div>
       <MobileNav />
