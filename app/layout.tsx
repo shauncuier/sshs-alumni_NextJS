@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/golden-jubilee.jpg",
+        url: "/golden-jubilee-banner.jpg",
         width: 2752,
         height: 1536,
         alt: "Sabuj Shikshayatan Government High School alumni",

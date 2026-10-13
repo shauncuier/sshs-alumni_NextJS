@@ -62,7 +62,7 @@ export default function SchoolPage() {
             </div>
 
             <div className="lg:col-span-5 rounded-3xl overflow-hidden shadow-xl border border-slate-200">
-              <img loading="lazy" decoding="async" src="/golden-jubilee.jpg" alt={`${schoolInfo.name} golden jubilee`} className="w-full h-80 object-cover" />
+              <img loading="lazy" decoding="async" src="/about-school.jpg" alt={`${schoolInfo.name}: fifty batches since ${schoolInfo.established}`} className="w-full h-80 object-cover object-[center_85%]" />
             </div>
           </div>
 

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   title: { absolute: "SSGHS Alumni Association | Sabuj Shikshayatan Government High School" },
   description:
     "The alumni association of Sabuj Shikshayatan Government High School, Sitakunda: find batchmates, join events, mentor juniors and give back to the school.",
-  openGraph: { images: [{ url: "/golden-jubilee.jpg", width: 2752, height: 1536 }] },
+  openGraph: { images: [{ url: "/golden-jubilee-banner.jpg", width: 2752, height: 1536 }] },
 };
 
 // Every section below shows real records and hides itself when there are none.
@@ -264,7 +264,7 @@ export default async function HomePage() {
             </div>
             <div className="lg:col-span-6">
               <div className="rounded-3xl overflow-hidden shadow-md border border-slate-200">
-                <Image src="/golden-jubilee.jpg" alt={`${schoolInfo.name} golden jubilee`} width={1376} height={768} sizes="(max-width: 1024px) 100vw, 50vw" className="w-full h-64 sm:h-80 object-cover" />
+                <Image src="/about-school.jpg" alt={`${schoolInfo.name}: fifty batches since ${schoolInfo.established}`} width={2752} height={1536} sizes="(max-width: 1024px) 100vw, 50vw" className="w-full h-64 sm:h-80 object-cover object-[center_85%]" />
               </div>
             </div>
           </div>
