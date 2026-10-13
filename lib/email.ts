@@ -8,6 +8,28 @@
  * The emails themselves are in lib/email-templates.ts.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { LOGO_CID } from "@/lib/email-templates";
+
+export { LOGO_CID };
+let logo: Buffer | null | undefined;
+function logoImage(): Buffer | null {
+  if (logo === undefined) {
+    try {
+      logo = readFileSync(join(process.cwd(), "assets/email/logo.png"));
+    } catch {
+      logo = null; // Without the file the email still goes out, just without the crest.
+    }
+  }
+  return logo;
+}
+/** The inline logo, when the email's HTML uses it. */
+function inlineLogo(html: string): Buffer | null {
+  return html.includes(`cid:${LOGO_CID}`) ? logoImage() : null;
+}
+
 export interface EmailPayload {
   to: string;
   subject: string;
@@ -57,6 +79,7 @@ export async function sendEmail(payload: EmailPayload): Promise<{
  */
 async function sendViaResend(payload: EmailPayload) {
   try {
+    const crest = inlineLogo(payload.html);
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -72,6 +95,7 @@ async function sendViaResend(payload: EmailPayload) {
         html: payload.html,
         text: payload.text,
         reply_to: payload.replyTo || replyToAddress(),
+        ...(crest ? { attachments: [{ filename: "logo.png", content: crest.toString("base64"), content_type: "image/png", content_id: LOGO_CID }] } : {}),
       }),
     });
 
@@ -114,6 +138,7 @@ async function sendViaSMTP(payload: EmailPayload) {
       },
     });
 
+    const crest = inlineLogo(payload.html);
     const info = await transporter.sendMail({
       from:
         process.env.SMTP_FROM || `"SSGHS Alumni Association" <${replyToAddress()}>`,
@@ -122,6 +147,7 @@ async function sendViaSMTP(payload: EmailPayload) {
       html: payload.html,
       text: payload.text,
       replyTo: payload.replyTo || replyToAddress(),
+      attachments: crest ? [{ filename: "logo.png", content: crest, contentType: "image/png", cid: LOGO_CID }] : undefined,
     });
 
     return { success: true, messageId: info.messageId };
