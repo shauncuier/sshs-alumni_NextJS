@@ -2,8 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
 import prisma from "@/lib/prisma";
-import { cleanSource, getMemberRegistration, registerForEvent } from "@/lib/events/registrations";
+import { cleanSource, getMemberRegistration, membershipEventStanding, registerForEvent } from "@/lib/events/registrations";
 import { readTicketToken, TICKET_QR_PREFIX } from "@/lib/events/tickets";
+import { decideRegistration } from "@/lib/events/admin";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
 import { verifiedEmailToken, verifiedPhoneToken } from "../helpers/phone";
@@ -401,5 +402,22 @@ describe("where a registration came from", () => {
     await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, source: "facebook/jubilee2026" } });
     const reg = await prisma.eventRegistration.findFirstOrThrow({ where: { eventId: event.id } });
     expect(reg.source).toBe("facebook/jubilee2026");
+  });
+});
+
+describe("membership event standing (the /jubilee page)", () => {
+  it("tells apart nothing yet, payment under review, ticket ready and an approved member", async () => {
+    const event = await membershipEvent();
+    const staff = await makeMember({ role: "MODERATOR", status: "PENDING" });
+    expect(await membershipEventStanding(event.id, staff.id)).toBeNull();
+
+    const { registration } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: paidRsvp });
+    const joiner = await prisma.user.findUniqueOrThrow({ where: { email: "new@example.test" } });
+    expect(await membershipEventStanding(event.id, joiner.id)).toBe("REVIEW");
+    await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "a@x.test" });
+    expect(await membershipEventStanding(event.id, joiner.id)).toBe("TICKET");
+
+    const member = await makeMember(); // approved, but their old registration is gone
+    expect(await membershipEventStanding(event.id, member.id)).toBe("MEMBER");
   });
 });

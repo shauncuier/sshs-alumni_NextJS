@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarDays, Clock, MapPin, ArrowDown } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Hourglass, MapPin, ArrowDown, Ticket } from "lucide-react";
 import RegisterClientView from "@/app/register/RegisterClientView";
 import { getMembershipEvent } from "@/lib/events/service";
 import { formatDeadline, formatTaka } from "@/lib/events/pricing";
-import { cleanSource } from "@/lib/events/registrations";
+import { cleanSource, membershipEventStanding, type MembershipStanding } from "@/lib/events/registrations";
+import { getMemberSession } from "@/lib/session-user";
 import { eventDescription, pageMetadata, shareCard } from "@/lib/seo";
 import { schoolInfo } from "@/lib/data";
 
@@ -47,13 +48,16 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
   const source = cleanSource(tag) ?? "jubilee-link";
   const event = await getMembershipEvent();
 
+  // A signed-in member sees where they stand instead of the "pay and register" pitch.
+  // (Only approved members and staff can hold a session; see getMemberSession.)
+  const session = await getMemberSession();
+  const userId = session?.user?.id ?? null;
+  const standing: MembershipStanding = event && userId ? await membershipEventStanding(event.id, userId).catch(() => null) : null;
+  const paid = standing === "TICKET" || standing === "REVIEW" || standing === "MEMBER";
+
   const date = event
     ? new Date(`${event.date}T12:00:00+06:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" })
     : "";
-  const included = (event?.souvenirDetails ?? "")
-    .split("\n")
-    .map((l) => l.replace(/^[•\-\s]+/, "").trim())
-    .filter((l) => l && !l.endsWith(":"));
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -64,9 +68,15 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             <Image src="/logo.png" alt="" width={32} height={32} loading="eager" className="w-8 h-8 rounded-full bg-white shrink-0" />
             <span className="text-sm font-bold truncate">Sabuj Shikshayatan Alumni</span>
           </Link>
-          <Link href="/login?callbackUrl=/jubilee" className="text-xs font-semibold text-emerald-200 hover:text-white shrink-0">
-            Member? Sign in
-          </Link>
+          {userId ? (
+            <Link href="/dashboard" className="text-xs font-semibold text-emerald-200 hover:text-white shrink-0">
+              My dashboard
+            </Link>
+          ) : (
+            <Link href="/login?callbackUrl=/jubilee" className="text-xs font-semibold text-emerald-200 hover:text-white shrink-0">
+              Member? Sign in
+            </Link>
+          )}
         </div>
       </header>
 
@@ -93,7 +103,9 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
               </ul>
             )}
 
-            {event && event.registrationFeeAmount > 0 && (
+            {paid && <StandingCard standing={standing} />}
+
+            {!paid && event && event.registrationFeeAmount > 0 && (
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-xl bg-white/10 border border-white/15 p-2.5">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Member</div>
@@ -111,10 +123,11 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
               </div>
             )}
 
-            {event?.registrationDeadline && (
+            {!paid && event?.registrationDeadline && (
               <p className="text-xs text-emerald-100/80">Register by {formatDeadline(event.registrationDeadline)}.</p>
             )}
 
+            {!paid && (
             <a
               href="#register"
               className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm shadow-lg"
@@ -124,10 +137,12 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
               <span>Register now</span>
               <ArrowDown className="w-4 h-4" />
             </a>
+            )}
           </div>
         </section>
 
-        {/* How it works, in three steps */}
+        {/* How it works, in three steps (not for someone who has paid) */}
+        {!paid && (
         <section className="max-w-2xl mx-auto px-4 pt-6 space-y-3">
           <h2 lang="bn" className="text-lg font-extrabold text-slate-900">কীভাবে রেজিস্ট্রেশন করবেন</h2>
           <ol className="space-y-2.5">
@@ -146,30 +161,17 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             ))}
           </ol>
         </section>
-
-        {included.length > 0 && (
-          <section className="max-w-2xl mx-auto px-4 pt-6 space-y-2">
-            <h2 className="text-lg font-extrabold text-slate-900">
-              Included with registration <span lang="bn" className="text-slate-500 font-bold text-base">· যা পাবেন</span>
-            </h2>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-slate-700">
-              {included.map((l) => (
-                <li key={l} className="flex gap-2">
-                  <span className="text-emerald-700 font-black">✓</span>
-                  <span>{l}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
         )}
 
-        {/* The form */}
+        {/* The form (someone who has paid sees their standing above instead) */}
+        {!paid && (
         <section id="register" className="max-w-2xl mx-auto px-4 pt-7 pb-10 space-y-3 scroll-mt-4">
           <h2 className="text-lg font-extrabold text-slate-900">
             Registration form <span lang="bn" className="text-slate-500 font-bold text-base">· রেজিস্ট্রেশন ফর্ম</span>
           </h2>
           <RegisterClientView initialEvent={event} source={source} compact />
         </section>
+        )}
       </main>
 
       <footer className="border-t border-slate-200 bg-white">
@@ -183,6 +185,51 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/** Shown at the top to a signed-in member who has paid: what happens next, no payment. */
+function StandingCard({ standing }: { standing: MembershipStanding }) {
+  const card =
+    standing === "TICKET"
+      ? {
+          icon: <Ticket className="w-5 h-5 text-amber-300 shrink-0" />,
+          bn: "আপনার রেজিস্ট্রেশন নিশ্চিত হয়েছে",
+          en: "You are registered. Your ticket is ready: show its QR code at the gate.",
+          link: "View my ticket",
+        }
+      : standing === "REVIEW"
+        ? {
+            icon: <Hourglass className="w-5 h-5 text-amber-300 shrink-0" />,
+            bn: "আপনার পেমেন্ট যাচাই করা হচ্ছে",
+            en: "We have your payment. The committee is checking it; you get an email and your ticket once it is confirmed. Please do not pay again.",
+            link: "See my registration",
+          }
+        : {
+            icon: <CheckCircle2 className="w-5 h-5 text-amber-300 shrink-0" />,
+            bn: "আপনি ইতিমধ্যে সদস্য, আবার ফি দেওয়ার প্রয়োজন নেই",
+            en: "You are already a member, so your Golden Jubilee registration is paid. Please do not pay again.",
+            link: "Go to my dashboard",
+          };
+  return (
+    <div role="status" className="rounded-2xl bg-white/10 border border-amber-300/40 p-4 space-y-2">
+      <p className="flex items-start gap-2.5">
+        {card.icon}
+        <span>
+          <span lang="bn" className="block font-bold text-amber-200">{card.bn}</span>
+          <span className="block text-sm text-emerald-50 mt-0.5">{card.en}</span>
+        </span>
+      </p>
+      <Link href="/dashboard" className="flex items-center justify-center w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm">
+        {card.link}
+      </Link>
+      {standing === "MEMBER" && (
+        <p className="text-xs text-emerald-100/80">
+          Ticket missing from your dashboard? Write to{" "}
+          <a href={`mailto:${schoolInfo.associationEmail}`} className="font-semibold underline break-all">{schoolInfo.associationEmail}</a>.
+        </p>
+      )}
     </div>
   );
 }

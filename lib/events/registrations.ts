@@ -304,6 +304,30 @@ export async function getMemberRegistration(slug: string, userId: string): Promi
   return reg ? toMemberRegistration(reg) : null;
 }
 
+/**
+ * Where a signed-in account stands with the membership (Golden Jubilee) event, for
+ * pages that must not ask someone to pay twice:
+ * - TICKET: registered and confirmed (or already checked in)
+ * - REVIEW: paid, the committee is checking the payment
+ * - MEMBER: an approved alumnus without a registration here; joining was paying
+ *   for this event, so they have paid (same rule as ALREADY_MEMBER above)
+ * - CANCELLED: their registration was cancelled
+ * - null: nothing yet (may register and pay)
+ */
+export type MembershipStanding = "TICKET" | "REVIEW" | "MEMBER" | "CANCELLED" | null;
+
+export async function membershipEventStanding(eventId: string, userId: string): Promise<MembershipStanding> {
+  const [reg, user] = await Promise.all([
+    prisma.eventRegistration.findUnique({ where: { eventId_userId: { eventId, userId } }, select: { status: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { status: true, profile: { select: { verificationStatus: true } } } }),
+  ]);
+  if (reg?.status === "CONFIRMED" || reg?.status === "CHECKED_IN") return "TICKET";
+  if (reg?.status === "PENDING_PAYMENT") return "REVIEW";
+  if (user?.status === "VERIFIED" && user.profile?.verificationStatus === "VERIFIED") return "MEMBER";
+  if (reg?.status === "CANCELLED") return "CANCELLED";
+  return null;
+}
+
 export async function listMemberRegistrations(userId: string): Promise<MemberRegistration[]> {
   const regs = await prisma.eventRegistration.findMany({
     where: { userId },
