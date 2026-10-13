@@ -36,6 +36,8 @@ function VerificationReviewContent() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [newArrivals, setNewArrivals] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const [userSelectedId, setUserSelectedId] = useState<string | null>(null);
   const selectedId = userSelectedId ?? qId ?? null;
@@ -90,8 +92,12 @@ function VerificationReviewContent() {
   const loadRequests = () => {
     setLoading(true);
     setError(null);
+    setNewArrivals(0);
     fetchVerificationRequests("all")
-      .then((data) => setRequests(data))
+      .then((data) => {
+        setRequests(data);
+        setLastUpdated(new Date());
+      })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   };
@@ -110,9 +116,55 @@ function VerificationReviewContent() {
       .finally(() => {
         if (!active) return;
         setLoading(false);
+        setLastUpdated(new Date());
       });
     return () => {
       active = false;
+    };
+  }, []);
+
+  // Live list: new applications appear without a reload. Checks quietly every
+  // 15 seconds while the tab is open, and at once when the admin comes back to it;
+  // waits while a decision is being saved so it never undoes what is on screen.
+  const busyRef = useRef(busyId);
+  const knownIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    busyRef.current = busyId;
+  }, [busyId]);
+  useEffect(() => {
+    if (!loading) knownIdsRef.current = new Set(requests.map((r) => r.id));
+  }, [requests, loading]);
+  useEffect(() => {
+    let active = true;
+    let inFlight = false;
+    const poll = async () => {
+      if (inFlight || busyRef.current !== null || document.visibilityState !== "visible") return;
+      inFlight = true;
+      try {
+        const data = await fetchVerificationRequests("all");
+        if (!active || busyRef.current !== null) return;
+        const known = knownIdsRef.current;
+        const fresh = known ? data.filter((r) => !known.has(r.id)).length : 0;
+        if (fresh > 0) setNewArrivals((n) => n + fresh);
+        setRequests(data);
+        setLastUpdated(new Date());
+      } catch {
+        // A missed check is retried on the next tick; the Refresh button shows errors.
+      } finally {
+        inFlight = false;
+      }
+    };
+    const timer = window.setInterval(poll, 15_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void poll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
     };
   }, []);
 
@@ -298,7 +350,25 @@ function VerificationReviewContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <span className="text-[11px] text-slate-500 flex items-center gap-1.5" title="The list updates by itself every 15 seconds">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
+            Live
+            {lastUpdated ? ` · updated ${lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}
+          </span>
+          {newArrivals > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setNewArrivals(0);
+                setFilterTab("pending_all");
+              }}
+              role="status"
+              className="px-3 py-1.5 rounded-full bg-amber-400 text-slate-950 text-xs font-bold shadow-sm cursor-pointer"
+            >
+              {newArrivals} new application{newArrivals === 1 ? "" : "s"} arrived · show
+            </button>
+          )}
           <button
             onClick={loadRequests}
             disabled={loading}
