@@ -10,6 +10,7 @@ import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_NOTE_MAX, PROOF_TYPES } from "@/li
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 import ContactVerifyField, { type ContactVerification } from "./ContactVerifyField";
 import { FIRST_SSC_BATCH } from "@/lib/data";
+import PasswordInput from "@/components/shared/PasswordInput";
 
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
@@ -384,7 +385,7 @@ export default function RegistrationForm({
           </div>
           <div>
             <label htmlFor="reg-password" className={label}>Password (8+ characters) *</label>
-            <input id="reg-password" type="password" minLength={8} required autoComplete="new-password" className={input} value={account.password} onChange={(e) => setAccount({ ...account, password: e.target.value })} />
+            <PasswordInput id="reg-password" minLength={8} required autoComplete="new-password" className={input} value={account.password} onChange={(e) => setAccount({ ...account, password: e.target.value })} />
           </div>
           <ContactVerifyField
             phone={account.phone}

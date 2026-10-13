@@ -9,6 +9,7 @@ import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 import { schoolInfo } from "@/lib/data";
 import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/account-access";
 import { ArrowRight, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
 
 function LoginForm() {
   const router = useRouter();
@@ -128,11 +129,10 @@ function LoginForm() {
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
+                <PasswordInput
                   id="login-password"
                   autoComplete="current-password"
-                  type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

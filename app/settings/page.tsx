@@ -5,6 +5,7 @@ import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import { Lock, Bell, Eye, CheckCircle2 } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
 
 type Visibility = "public" | "hidden";
 
@@ -196,9 +197,8 @@ export default function SettingsPage() {
                 <label htmlFor="current-password" className="block font-semibold text-slate-700 mb-1">
                   Current Password
                 </label>
-                <input
+                <PasswordInput
                   id="current-password"
-                  type="password"
                   autoComplete="current-password"
                   required
                   value={currentPassword}
@@ -210,9 +210,8 @@ export default function SettingsPage() {
                 <label htmlFor="new-password" className="block font-semibold text-slate-700 mb-1">
                   New Password
                 </label>
-                <input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   autoComplete="new-password"
                   required
                   minLength={8}
@@ -225,9 +224,8 @@ export default function SettingsPage() {
                 <label htmlFor="confirm-password" className="block font-semibold text-slate-700 mb-1">
                   Confirm New Password
                 </label>
-                <input
+                <PasswordInput
                   id="confirm-password"
-                  type="password"
                   autoComplete="new-password"
                   required
                   minLength={8}
