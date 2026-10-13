@@ -46,6 +46,8 @@ next-env.d.ts
 
 # tesseract.js downloads its OCR language model at runtime
 *.traineddata
+# Playwright CLI output (may contain credentials)
+playwright-cli/
 
 # npm run email:preview output
 /email-previews
