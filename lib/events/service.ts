@@ -53,7 +53,7 @@ export function toPublicEvent(
     venue: row.venue,
     locationCity: row.locationCity,
     organizer: row.organizer ?? "SSGHS Alumni Association",
-    bannerImage: row.bannerImage ?? "/golden-jubilee.jpg",
+    bannerImage: row.bannerImage ?? "/golden-jubilee-art.jpg",
     maxAttendees: row.maxAttendees,
     attendeesCount: heads.attending,
     placesLeft: Math.max(0, row.maxAttendees - heads.reserved),

@@ -52,7 +52,7 @@ describe("stories", () => {
 
     await updateStory(draft.id, { isPublished: true }, "boss@example.test");
     const [item] = await listPublishedStories();
-    expect(item).toMatchObject({ id: draft.id, authorName: "Dr. Farhana Akter", readTime: "1 min read", coverImage: "/golden-jubilee.jpg" });
+    expect(item).toMatchObject({ id: draft.id, authorName: "Dr. Farhana Akter", readTime: "1 min read", coverImage: "/golden-jubilee-art.jpg" });
     expect((await getPublishedStory(draft.id))?.fullStory).toContain("cardiac unit");
     expect((await publishedStoryIds()).map((s) => s.id)).toEqual([draft.id]);
   });

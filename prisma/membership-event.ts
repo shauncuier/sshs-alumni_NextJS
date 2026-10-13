@@ -20,7 +20,7 @@ export const membershipEvent: EventItem = {
   venue: "Sabuj Shikshayatan Government High School campus, Sitakunda",
   locationCity: "Chattogram",
   organizer: "SSGHS Alumni Association",
-  bannerImage: "/golden-jubilee.jpg",
+  bannerImage: "/golden-jubilee-art.jpg",
   maxAttendees: 5000,
   attendeesCount: 0,
   isRegistrationOpen: true,

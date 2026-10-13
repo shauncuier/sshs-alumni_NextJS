@@ -50,7 +50,7 @@ describe("news", () => {
     expect(published).toBe(true);
     const list = await listPublishedNews();
     expect(list.map((n) => n.id)).toEqual([draft.id]);
-    expect(list[0].featuredImage).toBe("/golden-jubilee.jpg");
+    expect(list[0].featuredImage).toBe("/golden-jubilee-art.jpg");
     expect((await getPublishedNews(draft.id))?.content).toContain("bKash");
   });
 

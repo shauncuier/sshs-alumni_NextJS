@@ -81,7 +81,7 @@ export default function AdminEventsPage() {
     maxAttendees: 1000,
     registrationEnabled: true,
     description: "",
-    bannerImage: "/golden-jubilee.jpg",
+    bannerImage: "/golden-jubilee-art.jpg",
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -587,7 +587,7 @@ export default function AdminEventsPage() {
                   type="text"
                   value={formData.bannerImage}
                   onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
-                  placeholder="e.g. /golden-jubilee.jpg"
+                  placeholder="e.g. /golden-jubilee-art.jpg"
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 />
               </div>

@@ -12,7 +12,7 @@ import { contentImageId, removeContentImage, thumbUrlFor } from "@/lib/media/con
 
 export const NEWS_CATEGORIES = ["School News", "Alumni News", "Events", "Announcements"] as const;
 export type NewsCategory = (typeof NEWS_CATEGORIES)[number];
-const FALLBACK_IMAGE = "/golden-jubilee.jpg";
+const FALLBACK_IMAGE = "/golden-jubilee-art.jpg";
 
 export interface AdminNewsItem {
   id: string;

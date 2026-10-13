@@ -128,7 +128,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
     totalAlumni: alumni.length,
     classRepresentative: info?.classRepresentative || "",
     representativePhone: info?.representativePhone || "",
-    coverImage: info?.coverImage ?? "/golden-jubilee.jpg",
+    coverImage: info?.coverImage ?? "/golden-jubilee-art.jpg",
     description: info?.description ?? `Sabuj Shikshayatan Government High School graduates of ${yearNum}.`,
   };
 

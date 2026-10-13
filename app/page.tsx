@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   title: { absolute: "SSGHS Alumni Association | Sabuj Shikshayatan Government High School" },
   description:
     "The alumni association of Sabuj Shikshayatan Government High School, Sitakunda: find batchmates, join events, mentor juniors and give back to the school.",
-  openGraph: { images: [{ url: "/golden-jubilee.jpg", width: 1376, height: 768 }] },
+  openGraph: { images: [{ url: "/golden-jubilee.jpg", width: 2752, height: 1536 }] },
 };
 
 // Every section below shows real records and hides itself when there are none.
@@ -158,7 +158,7 @@ export default async function HomePage() {
                     <img src={heroEvent.bannerImage} alt="" loading="eager" fetchPriority="high" decoding="async" className="w-full h-[360px] sm:h-[400px] object-cover" />
                   ) : (
                     <Image
-                      src="/golden-jubilee.jpg"
+                      src="/golden-jubilee-art.jpg"
                       alt={`${schoolInfo.name}, ${yearsSinceFounding} years`}
                       width={1376}
                       height={768}

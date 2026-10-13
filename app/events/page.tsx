@@ -122,7 +122,7 @@ export default function EventsPage() {
                     <img src={jubileeEvent.bannerImage} alt="" loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-90" />
                   ) : (
                     <Image
-                      src="/golden-jubilee.jpg"
+                      src="/golden-jubilee-art.jpg"
                       alt=""
                       fill
                       sizes="(max-width: 1024px) 100vw, 50vw"

@@ -11,7 +11,7 @@ import { contentImageId, removeContentImage, thumbUrlFor } from "@/lib/media/con
  * uploaded through /api/admin/media.
  */
 
-const FALLBACK_COVER = "/golden-jubilee.jpg";
+const FALLBACK_COVER = "/golden-jubilee-art.jpg";
 const WORDS_PER_MINUTE = 200;
 
 export interface AdminStory {

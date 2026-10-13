@@ -10,7 +10,7 @@ import { FIRST_SSC_BATCH, type BatchInfo } from "@/lib/data";
  */
 
 export const FIRST_BATCH = FIRST_SSC_BATCH;
-const DEFAULT_COVER = "/golden-jubilee.jpg";
+const DEFAULT_COVER = "/golden-jubilee-art.jpg";
 
 export function isBatchYear(year: number): boolean {
   return Number.isInteger(year) && year >= FIRST_BATCH && year <= new Date().getFullYear();

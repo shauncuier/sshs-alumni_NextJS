@@ -171,7 +171,8 @@ function EventDetailView({
           <img loading="eager" fetchPriority="high" decoding="async"
             src={event.bannerImage}
             alt={event.title}
-            className="absolute inset-0 w-full h-full object-cover opacity-85"
+            // The jubilee artwork's emblem sits above the title; photos keep the centred crop.
+            className={`absolute inset-0 w-full h-full object-cover opacity-85 ${event.bannerImage.startsWith("/golden-jubilee-art") ? "object-[center_72%]" : ""}`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#041a13] via-[#06281e]/80 to-black/40" />
 
