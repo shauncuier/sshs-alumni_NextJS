@@ -54,6 +54,9 @@ function checkProofDetails(proof: ProofInput | undefined): { type: ProofType; no
   return { type: proof.type, note: note || null, file: proof.file };
 }
 
+export const ALREADY_MEMBER_MESSAGE =
+  "You are already a member, so your Golden Jubilee registration is paid. Please do not pay again. If you cannot find your ticket on your dashboard, write to the committee.";
+
 /** A registration's source tag: lower-case letters, digits and . _ / - only, at most 80 characters. */
 export function cleanSource(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -198,6 +201,20 @@ export async function registerForEvent(args: {
         select: { id: true },
       });
       if (existing) throw new AppError("ALREADY_REGISTERED", 409, "You are already registered for this event.");
+      // Paying the membership event is how someone joins, so an approved member has
+      // paid it already: never take a second payment (even if their old registration
+      // is missing, e.g. after a data clean-up; the committee sorts that out).
+      // Staff accounts are made by admins, not by paying, so only an approved alumni
+      // profile counts as having paid.
+      if (event.isMembershipEvent && args.sessionUserId) {
+        const member = await tx.user.findUnique({
+          where: { id: userId },
+          select: { status: true, profile: { select: { verificationStatus: true } } },
+        });
+        if (member?.status === "VERIFIED" && member.profile?.verificationStatus === "VERIFIED") {
+          throw new AppError("ALREADY_MEMBER", 409, ALREADY_MEMBER_MESSAGE);
+        }
+      }
 
       const price = computeFee(rules, args.rsvp);
       if (event.isMembershipEvent && price.fee <= 0) {

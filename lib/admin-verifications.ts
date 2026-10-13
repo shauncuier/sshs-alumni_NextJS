@@ -19,6 +19,7 @@ interface VerificationRequestRow {
   reviewedBy: string | null;
   status: RequestStatus;
   createdAt: string;
+  updatedAt?: string;
   awaitingPayment?: boolean;
   paymentStatus?: string | null;
   membershipEventId?: string | null;
@@ -73,6 +74,12 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
       timeStyle: "short",
     }),
     status: row.status,
+    reviewedBy: row.status === "PENDING" ? null : row.reviewedBy,
+    // updatedAt records when the review happened (see the PATCH handler).
+    decidedAt:
+      row.status === "PENDING" || !row.updatedAt
+        ? null
+        : new Date(row.updatedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dhaka" }),
     awaitingPayment: row.awaitingPayment ?? false,
     paymentStatus: row.paymentStatus ?? null,
     membershipEventId: row.membershipEventId ?? null,
@@ -105,6 +112,16 @@ export async function fetchVerificationRequests(
 
 // Approving also verifies the member's account and profile; see the PATCH handler.
 // Resolves to the request's proof after the decision (its file is deleted by then).
+/** Confirms a later payment of an already-decided member (their membership event registration). */
+export async function confirmMemberPayment(eventId: string, registrationId: string): Promise<void> {
+  const res = await fetch(`/api/admin/events/${eventId}/registrations/${registrationId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "APPROVE" }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Could not confirm the payment."));
+}
+
 export async function decideVerification(
   requestId: string,
   status: "VERIFIED" | "REJECTED"

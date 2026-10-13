@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import RegistrationForm from "@/components/events/RegistrationForm";
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import AlreadyMemberNotice from "@/components/events/AlreadyMemberNotice";
 
 interface RegisterClientViewProps {
   initialEvent: PublicEvent | null;
@@ -23,6 +24,9 @@ export default function RegisterClientView({ initialEvent, source, compact = fal
     !initialEvent ? "Membership registration opens soon." : null
   );
   const [registration, setRegistration] = useState<MemberRegistration | null>(null);
+  // For signed-in members: whether their own registration has been looked up yet,
+  // so the payment form never flashes up for someone who has already paid.
+  const [checked, setChecked] = useState(false);
 
   // If initialEvent wasn't available from SSR, fetch it on client as fallback
   useEffect(() => {
@@ -46,14 +50,20 @@ export default function RegisterClientView({ initialEvent, source, compact = fal
     fetch(`/api/events/${event.slug}/rsvp`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : { registration: null }))
       .then((body) => setRegistration(body.registration))
-      .catch(() => setRegistration(null));
+      .catch(() => setRegistration(null))
+      .finally(() => setChecked(true));
   }, [event, sessionStatus]);
 
   const isAuthed = sessionStatus === "authenticated" && Boolean(session?.user);
+  // Paying the membership event is how someone joins: an approved member has paid it.
+  // (Staff accounts are made by admins, not by paying, so they may still pay.)
+  const alreadyMember =
+    isAuthed && session?.user?.status === "VERIFIED" && session.user.role === "ALUMNI" && Boolean(event?.isMembershipEvent);
+  const waiting = sessionStatus === "loading" || (isAuthed && !checked);
 
   return (
     <>
-      {event && !registration && !compact && (
+      {event && !registration && !alreadyMember && !waiting && !compact && (
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
           Membership is through the <strong>{event.title}</strong> registration. Fill in your details, pay, and enter your
           transaction ID; the committee confirms your payment and verifies your membership together.
@@ -106,7 +116,11 @@ export default function RegisterClientView({ initialEvent, source, compact = fal
           </div>
         )}
 
-        {event && !registration && (
+        {event && !registration && waiting && <p role="status" className="text-xs text-slate-500">Checking your registration…</p>}
+
+        {event && !registration && !waiting && alreadyMember && <AlreadyMemberNotice />}
+
+        {event && !registration && !waiting && !alreadyMember && (
           <RegistrationForm
             event={event}
             source={source}

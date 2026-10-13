@@ -178,6 +178,9 @@ export interface VerificationRequestItem {
   documentUrl: string;
   submittedAt: string;
   status: "PENDING" | "VERIFIED" | "REJECTED";
+  /** Who approved or rejected it, and when (decided requests only). */
+  reviewedBy?: string | null;
+  decidedAt?: string | null;
   awaitingPayment?: boolean;
   paymentStatus?: "PENDING_PAYMENT" | "CONFIRMED" | "CANCELLED" | string | null;
   membershipEventId?: string | null;

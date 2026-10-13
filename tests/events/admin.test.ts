@@ -8,7 +8,7 @@ import { registerForEvent } from "@/lib/events/registrations";
 import { discardDecidedProofs } from "@/lib/members/proof-retention";
 import { makeImage, makePdf } from "../helpers/images";
 import { verifiedPhoneToken } from "../helpers/phone";
-import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
+import { makeEvent, resetDatabase } from "../helpers/db";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -51,9 +51,9 @@ it("rejecting a new member's registration rejects the membership", async () => {
 });
 
 it("cancelling an already-verified member's registration keeps them verified", async () => {
-  const event = await makeEvent({ slug: "jubilee", isMembershipEvent: true, packages: [{ name: "General", price: 1000 }], paymentInstructions: "x" });
-  const member = await makeMember({ status: "VERIFIED" });
-  const { registration } = await registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { packageName: "General", paymentMethod: "Nagad", transactionId: "NGD1234567" } });
+  const { event, registration } = await join();
+  // Approved some other way while this payment was still waiting.
+  const member = await prisma.user.update({ where: { email: "new@example.test" }, data: { status: "VERIFIED" } });
   await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "CANCEL", adminEmail: "a@x.test" });
   expect((await prisma.user.findUniqueOrThrow({ where: { id: member.id } })).status).toBe("VERIFIED");
 });

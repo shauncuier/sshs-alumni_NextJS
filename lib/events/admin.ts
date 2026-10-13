@@ -141,7 +141,7 @@ export async function decideRegistration(args: {
 
     let memberDecided = false;
     if (reg.event.isMembershipEvent) {
-      if (args.action === "APPROVE") {
+      if (args.action === "APPROVE" && reg.user.status !== "VERIFIED") {
         memberDecided = true;
         await tx.user.update({ where: { id: reg.userId }, data: { status: "VERIFIED" } });
         await tx.alumniProfile.updateMany({ where: { userId: reg.userId }, data: { verificationStatus: "VERIFIED" } });

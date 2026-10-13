@@ -26,6 +26,8 @@ import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, News
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { avatarAt } from "@/lib/avatar";
 import Picture from "@/components/shared/Picture";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,8 @@ export const metadata: Metadata = pageMetadata({
 // Every section below shows real records and hides itself when there are none.
 export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
+  // Anyone signed in has already joined (or applied), so the closing "join" band is for visitors only.
+  const signedIn = Boolean((await getServerSession(authOptions))?.user);
   const yearsSinceFounding = new Date().getFullYear() - schoolInfo.established;
   // Members the public directory lists: verified profiles of accounts that are not disabled.
   const listed = { verificationStatus: "VERIFIED" as const, user: { disabledAt: null } };
@@ -499,7 +503,8 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* 13. JOIN */}
+        {/* 13. JOIN (visitors only) */}
+        {!signedIn && (
         <section className="py-16 lg:py-20 bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white text-center">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center mx-auto shadow-xl">
@@ -519,6 +524,7 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+        )}
       </main>
 
       <Footer />

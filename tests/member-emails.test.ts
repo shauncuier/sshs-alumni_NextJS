@@ -21,6 +21,7 @@ import { decideRegistration } from "@/lib/events/admin";
 import { registerForEvent } from "@/lib/events/registrations";
 import { renderEmail } from "@/lib/email-templates";
 import { EMAIL_SAMPLES } from "@/lib/email-samples";
+import prisma from "@/lib/prisma";
 
 beforeEach(async () => {
   mail.sent = [];
@@ -99,6 +100,28 @@ describe("emails to members", () => {
     const member = await makeMember();
     await registerForEvent({ slug: "picnic", sessionUserId: member.id, rsvp: {} });
     expect(mail.sent.map((m) => m.subject)).toEqual(["You're registered: Batch picnic"]);
+  });
+
+  it("confirming a later payment of an approved member sends only the ticket, not the welcome again", async () => {
+    const { event, registration } = await join();
+    await prisma.user.update({ where: { email: "new@example.test" }, data: { status: "VERIFIED" } });
+    mail.sent = [];
+    await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin@example.test" });
+    expect(mail.sent.map((m) => m.subject)).toEqual(["You're registered: Golden Jubilee"]);
+  });
+
+  it("an approved member is never asked to pay the membership event again", async () => {
+    await makeEvent({ slug: "jubilee", title: "Golden Jubilee", isMembershipEvent: true, registrationFee: 1500, paymentInstructions: "bKash 01XXXXXXXXX" });
+    const member = await makeMember();
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { paymentMethod: "bKash", transactionId: "TRX999999" } })
+    ).rejects.toMatchObject({ code: "ALREADY_MEMBER", status: 409 });
+    expect(await prisma.eventRegistration.count()).toBe(0);
+    expect(mail.sent).toHaveLength(0);
+    // An approved staff account that never joined as an alumnus may still pay.
+    const admin = await makeMember({ role: "ADMIN" });
+    await prisma.alumniProfile.update({ where: { userId: admin.id }, data: { verificationStatus: "PENDING" } });
+    await expect(registerForEvent({ slug: "jubilee", sessionUserId: admin.id, rsvp: { paymentMethod: "bKash", transactionId: "TRX888888" } })).resolves.toBeTruthy();
   });
 
   it("a mail failure never fails the registration", async () => {

@@ -27,6 +27,8 @@ import {
   Flame,
 } from "lucide-react";
 import Picture from "@/components/shared/Picture";
+import { useSession } from "next-auth/react";
+import AlreadyMemberNotice from "@/components/events/AlreadyMemberNotice";
 
 // The page (app/events/[slug]/page.tsx) renders the event on the server and hands
 // it here, so search engines and slow phones get the full content at once; this
@@ -98,6 +100,10 @@ function EventDetailView({
   onRegistered: (r: MemberRegistration) => void;
 }) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
+  const { data: session } = useSession();
+  // Paying the membership event is how someone joins: an approved member has paid it.
+  // (Staff accounts are made by admins, not by paying, so they may still pay.)
+  const alreadyMember = event.isMembershipEvent && session?.user?.status === "VERIFIED" && session.user.role === "ALUMNI";
   const [selectedPackage, setSelectedPackage] = useState<string | undefined>(undefined);
   const [activeDay, setActiveDay] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -572,6 +578,8 @@ function EventDetailView({
                             : "Registered"}
                       </span>
                     </div>
+                  ) : alreadyMember ? (
+                    <AlreadyMemberNotice compact />
                   ) : !event.isRegistrationOpen ? (
                     <p role="status" className="w-full py-4 rounded-2xl text-xs sm:text-sm font-bold text-center bg-rose-50 text-rose-700 border border-rose-200">
                       {event.closedMessage}
@@ -585,11 +593,14 @@ function EventDetailView({
                       <span>{event.isMembershipEvent ? "Join & register" : "Register"}</span>
                     </button>
                   )}
-                  <p className="text-[11px] text-slate-400 text-center mt-2">
-                    {isPaid
-                      ? `Pay by ${event.paymentMethods.length > 0 ? event.paymentMethods.join(", ") : "the methods shown on the form"}, then enter your transaction ID — the committee confirms it`
-                      : "Free — confirmed instantly"}
-                  </p>
+                  {/* How to pay: only for someone who still has to register. */}
+                  {!registration && !alreadyMember && (
+                    <p className="text-[11px] text-slate-400 text-center mt-2">
+                      {isPaid
+                        ? `Pay by ${event.paymentMethods.length > 0 ? event.paymentMethods.join(", ") : "the methods shown on the form"}, then enter your transaction ID — the committee confirms it`
+                        : "Free — confirmed instantly"}
+                    </p>
+                  )}
 
                   {registration && (
                     <div className="mt-3 p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-xs space-y-2">

@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { VerificationRequestItem } from "@/lib/data";
-import { decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
+import { confirmMemberPayment, decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 import { formatTaka } from "@/lib/events/pricing";
 import {
   ShieldCheck,
@@ -201,6 +201,26 @@ function VerificationReviewContent() {
   const handlePrev = () => {
     if (activeIndex > 0) {
       setSelectedId(filteredList[activeIndex - 1].id);
+    }
+  };
+
+  // A member approved earlier who paid again later (e.g. their old registration was
+  // lost): confirming confirms that registration and issues the ticket.
+  const handleConfirmPayment = async (a: VerificationRequestItem) => {
+    if (!a.membershipEventId || !a.registrationId) return;
+    const paid = a.totalFee ? ` of ${formatCurrencyBDT(a.totalFee)}` : "";
+    if (!window.confirm(`Confirm the payment${paid} from ${a.fullName}? Check it arrived in the account first.`)) return;
+    setBusyId(a.id);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      await confirmMemberPayment(a.membershipEventId, a.registrationId);
+      setRequests((prev) => prev.map((r) => (r.id === a.id ? { ...r, awaitingPayment: false, paymentStatus: "CONFIRMED" } : r)));
+      setSuccessMsg(`Payment from ${a.fullName} confirmed; their ticket is ready.`);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -1094,51 +1114,78 @@ function VerificationReviewContent() {
 
                 {/* 4. VERIFICATION ACTION CONTROLS: stays above the bottom nav on phones while the panel is in view */}
                 <div className="sticky bottom-16 lg:static z-10 -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 pb-3 lg:pb-0 bg-white/95 backdrop-blur pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                  <div>
-                    {!isPhotoMandatorySatisfied ? (
-                      <div className="text-xs font-bold text-rose-700 flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 shrink-0" />
-                        <span>Approval locked: Genuine profile picture is mandatory.</span>
+                  {activeApplicant.status !== "PENDING" ? (
+                    <>
+                      {/* Already decided: say who decided, and offer only what is still open. */}
+                      <div className={`text-xs font-bold flex items-center gap-1.5 ${activeApplicant.status === "VERIFIED" ? "text-emerald-800" : "text-rose-700"}`}>
+                        {activeApplicant.status === "VERIFIED" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+                        <span>
+                          {activeApplicant.status === "VERIFIED" ? "Approved" : "Rejected"}
+                          {activeApplicant.reviewedBy ? ` by ${activeApplicant.reviewedBy}` : ""}
+                          {activeApplicant.decidedAt ? ` on ${activeApplicant.decidedAt}` : ""}.
+                          {activeApplicant.status === "VERIFIED" && activeApplicant.awaitingPayment ? " A later payment is waiting." : ""}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 shrink-0" />
-                        <span>All verification checks passed. Ready for approval.</span>
-                      </div>
-                    )}
-                  </div>
+                      {activeApplicant.status === "VERIFIED" && activeApplicant.awaitingPayment && activeApplicant.registrationId && activeApplicant.membershipEventId && (
+                        <button
+                          type="button"
+                          onClick={() => void handleConfirmPayment(activeApplicant)}
+                          disabled={busyId !== null}
+                          className="min-h-[44px] w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white shadow-md flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                          <span>Confirm payment</span>
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                    <div>
+                      {!isPhotoMandatorySatisfied ? (
+                        <div className="text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4 shrink-0" />
+                          <span>Approval locked: Genuine profile picture is mandatory.</span>
+                        </div>
+                      ) : (
+                        <div className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 shrink-0" />
+                          <span>All verification checks passed. Ready for approval.</span>
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="grid grid-cols-2 sm:flex items-center gap-3 w-full sm:w-auto justify-end">
-                    <button
-                      onClick={() => handleDecide(activeApplicant.id, "REJECTED")}
-                      disabled={busyId !== null || activeApplicant.status === "REJECTED"}
-                      className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                    >
-                      Reject Application
-                    </button>
+                    <div className="grid grid-cols-2 sm:flex items-center gap-3 w-full sm:w-auto justify-end">
+                      <button
+                        onClick={() => handleDecide(activeApplicant.id, "REJECTED")}
+                        disabled={busyId !== null}
+                        className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        Reject Application
+                      </button>
 
-                    <button
-                      onClick={() => handleDecide(activeApplicant.id, "VERIFIED")}
-                      disabled={
-                        busyId !== null ||
-                        activeApplicant.status === "VERIFIED" ||
-                        !isPhotoMandatorySatisfied
-                      }
-                      className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                      title={
-                        !isPhotoMandatorySatisfied
-                          ? "Profile picture is mandatory"
-                          : "Approve Alumnus and Confirm Payment"
-                      }
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                      <span>
-                        {activeApplicant.awaitingPayment
-                          ? "Approve & Confirm Payment"
-                          : "Verify & Approve Alumnus"}
-                      </span>
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => handleDecide(activeApplicant.id, "VERIFIED")}
+                        disabled={
+                          busyId !== null ||
+                          !isPhotoMandatorySatisfied
+                        }
+                        className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                        title={
+                          !isPhotoMandatorySatisfied
+                            ? "Profile picture is mandatory"
+                            : "Approve Alumnus and Confirm Payment"
+                        }
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                        <span>
+                          {activeApplicant.awaitingPayment
+                            ? "Approve & Confirm Payment"
+                            : "Verify & Approve Alumnus"}
+                        </span>
+                      </button>
+                    </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

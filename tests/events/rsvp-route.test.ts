@@ -145,10 +145,10 @@ describe("POST /api/events/[slug]/rsvp proof of study", () => {
     expect(await prisma.user.count()).toBe(0);
   });
 
-  it("ignores the files a signed-in member sends", async () => {
+  it("ignores the files a signed-in account sends", async () => {
     await jubilee();
-    const member = await makeMember();
-    session.user = { id: member.id, email: member.email, role: "ALUMNI" };
+    const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
+    session.user = { id: member.id, email: member.email, role: "MODERATOR" };
     const res = await post(multipart(joinPayload(), photo, makePdf()));
     expect(res.status).toBe(201);
     expect(await fs.readdir(path.join(process.env.UPLOADS_DIR!, "proofs")).catch(() => [])).toEqual([]);

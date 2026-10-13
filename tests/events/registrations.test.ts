@@ -103,7 +103,7 @@ describe("joining through the membership event", () => {
     await membershipEvent();
     const { registration } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, paymentMethod: "Bangla QR" } });
     expect(registration.paymentMethod).toBe("Bangla QR");
-    const member = await makeMember();
+    const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
     await expect(
       registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { ...paidRsvp, transactionId: "OTHER123", paymentMethod: "PayPal" } })
     ).rejects.toMatchObject({ status: 400, code: "PAYMENT_REQUIRED" });
@@ -117,7 +117,7 @@ describe("joining through the membership event", () => {
 
   it("treats transaction IDs case- and space-insensitively", async () => {
     await membershipEvent();
-    const member = await makeMember();
+    const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
     await registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: paidRsvp });
     await expect(
       registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, transactionId: "9AB3XK1" } })
@@ -178,9 +178,9 @@ describe("profile photo when joining", () => {
     expect(profile.avatarOriginalUrl).toMatch(/^\/api\/media\/avatars\/[a-f0-9]{32}\/original\.jpg$/);
   });
 
-  it("needs no photo from a signed-in member", async () => {
+  it("needs no photo from a signed-in account", async () => {
     await membershipEvent();
-    const member = await makeMember();
+    const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
     const { registration } = await registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: paidRsvp });
     expect(registration.status).toBe("PENDING_PAYMENT");
     expect(await avatarFolders()).toEqual([]);
@@ -269,9 +269,9 @@ describe("proof of study when joining", () => {
     expect(request.proofFileUrl).toMatch(/^\/api\/media\/proofs\/[a-f0-9]{32}\/document\.pdf$/);
   });
 
-  it("needs no proof from a signed-in member", async () => {
+  it("needs no proof from a signed-in account", async () => {
     await membershipEvent();
-    const member = await makeMember();
+    const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
     await registerForEvent({ slug: "jubilee", sessionUserId: member.id, proof: { type: "SSC_CERTIFICATE", file: makePdf() }, rsvp: paidRsvp });
     expect(await proofFolders()).toEqual([]);
   });
