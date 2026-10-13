@@ -178,9 +178,9 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   };
 
   const handleExportCSV = () => {
-    const header = "Name,Batch,Roll,Section,Email,Phone,Package,Guests,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
+    const header = "Name,Batch,Roll,Section,Email,Phone,Package,Guests,Source,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
     const rows = attendees
-      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map((g) => `${g.name} x${g.count}`).join("; "), a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
+      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map((g) => `${g.name} x${g.count}`).join("; "), a.source ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(","))
       .join("\n");
@@ -985,6 +985,11 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       {a.guests.length > 0 && (
                         <span className="block text-[11px] text-slate-500">
                           {a.guests.map((g) => `${g.name} × ${g.count}`).join(", ")}
+                        </span>
+                      )}
+                      {a.source && (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 text-[10px] font-bold" title="Where this member came from">
+                          via {a.source}
                         </span>
                       )}
                     </td>

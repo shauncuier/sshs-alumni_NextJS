@@ -216,6 +216,8 @@ model EventRegistration {
   extraChildren  Int                @default(0)
   /// [{ name, count, price }]: guests added, with the price each paid
   guests         Json               @default("[]")
+  /// Where the member came from, e.g. "facebook/jubilee2026" (the /jubilee link's utm_source/utm_campaign)
+  source         String?            @db.VarChar(80)
   headCount      Int                @default(1)
   tshirtSize     String?
   totalFee       Float              @default(0)

@@ -64,10 +64,13 @@ function formatSize(bytes: number): string {
 export default function RegistrationForm({
   event,
   initialPackage,
+  source,
   onRegistered,
 }: {
   event: PublicEvent;
   initialPackage?: string;
+  /** Where the visitor came from (the /jubilee link's ad tag), saved with the registration. */
+  source?: string;
   onRegistered: (registration: MemberRegistration, createdAccount: boolean) => void;
 }) {
   const { data: session, status: sessionStatus } = useSession();
@@ -264,6 +267,7 @@ export default function RegistrationForm({
           rsvp: {
             packageName: event.packages.length ? packageName : null,
             guests: guestCounts,
+            source: source ?? null,
             tshirtSize,
             mealPreference: mealPreference || null,
             notes: volunteerNoteFormatted,

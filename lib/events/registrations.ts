@@ -54,6 +54,13 @@ function checkProofDetails(proof: ProofInput | undefined): { type: ProofType; no
   return { type: proof.type, note: note || null, file: proof.file };
 }
 
+/** A registration's source tag: lower-case letters, digits and . _ / - only, at most 80 characters. */
+export function cleanSource(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const tag = raw.trim().toLowerCase().replace(/[^a-z0-9._/-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  return tag || null;
+}
+
 async function toMemberRegistration(reg: EventRegistration & { event: Event }): Promise<MemberRegistration> {
   const hasTicket = reg.status === "CONFIRMED" || reg.status === "CHECKED_IN";
   return {
@@ -228,6 +235,7 @@ export async function registerForEvent(args: {
           extraAdults: price.extraAdults,
           extraChildren: price.extraChildren,
           guests: price.guests as unknown as Prisma.InputJsonValue,
+          source: cleanSource(args.rsvp.source),
           headCount: price.headCount,
           guestCount: price.headCount,
           totalFee: price.fee,

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
 import prisma from "@/lib/prisma";
-import { getMemberRegistration, registerForEvent } from "@/lib/events/registrations";
+import { cleanSource, getMemberRegistration, registerForEvent } from "@/lib/events/registrations";
 import { readTicketToken, TICKET_QR_PREFIX } from "@/lib/events/tickets";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
@@ -384,5 +384,22 @@ describe("guest types (Golden Jubilee 2026 prices)", () => {
       registerForEvent({ slug: "jubilee-2026", sessionUserId: null, account, photo, proof, rsvp: { guests: { Spouse: 2 }, paymentMethod: "bKash", transactionId: "TRX7002" } })
     ).rejects.toMatchObject({ code: "INVALID_GUESTS" });
     expect(await prisma.user.count({ where: { email: "new@example.test" } })).toBe(0);
+  });
+});
+
+describe("where a registration came from", () => {
+  it("keeps a clean tag from the ad link", () => {
+    expect(cleanSource("Facebook/Jubilee2026")).toBe("facebook/jubilee2026");
+    expect(cleanSource("  fb ad <script> ")).toBe("fb-ad-script");
+    expect(cleanSource("x".repeat(200))).toHaveLength(80);
+    expect(cleanSource("")).toBeNull();
+    expect(cleanSource(42)).toBeNull();
+  });
+
+  it("is saved with the registration and shown to admins", async () => {
+    const event = await membershipEvent();
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, source: "facebook/jubilee2026" } });
+    const reg = await prisma.eventRegistration.findFirstOrThrow({ where: { eventId: event.id } });
+    expect(reg.source).toBe("facebook/jubilee2026");
   });
 });

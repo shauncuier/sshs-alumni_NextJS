@@ -33,6 +33,7 @@ function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     extraAdults: reg.extraAdults,
     extraChildren: reg.extraChildren,
     guests: storedGuests(reg),
+    source: reg.source,
     headCount: reg.headCount,
     totalFee: reg.totalFee,
     donationAmount: reg.donationAmount,

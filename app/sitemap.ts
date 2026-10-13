@@ -27,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/news",
     "/contact",
     "/register",
+    "/jubilee",
     "/careers",
     "/mentorship",
     "/volunteer",
@@ -34,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${baseUrl}${route}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
-    priority: route === "" ? 1.0 : route === "/events" || route === "/register" ? 0.9 : 0.8,
+    priority: route === "" ? 1.0 : route === "/events" || route === "/register" || route === "/jubilee" ? 0.9 : 0.8,
   }));
 
   // Dynamic Batch pages

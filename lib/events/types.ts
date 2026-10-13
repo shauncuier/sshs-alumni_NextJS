@@ -46,6 +46,8 @@ export interface RsvpInput {
   packageName?: string | null;
   /** Guest counts by guest-type name. */
   guests?: Record<string, number> | null;
+  /** Where the member came from (an ad's utm_source/utm_campaign); cleaned on the server. */
+  source?: string | null;
   extraAdults?: number;
   extraChildren?: number;
   tshirtSize?: string | null;
@@ -164,6 +166,8 @@ export interface AdminRegistration {
   extraAdults: number;
   extraChildren: number;
   guests: GuestLine[];
+  /** Where the member came from, e.g. "facebook/jubilee2026". */
+  source: string | null;
   headCount: number;
   totalFee: number;
   donationAmount: number;

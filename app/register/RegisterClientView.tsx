@@ -9,9 +9,13 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface RegisterClientViewProps {
   initialEvent: PublicEvent | null;
+  /** Saved with the registration: where the visitor came from (see app/jubilee). */
+  source?: string;
+  /** Hide the explanatory paragraph (the page already explains the steps). */
+  compact?: boolean;
 }
 
-export default function RegisterClientView({ initialEvent }: RegisterClientViewProps) {
+export default function RegisterClientView({ initialEvent, source, compact = false }: RegisterClientViewProps) {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const [event, setEvent] = useState<PublicEvent | null>(initialEvent);
@@ -49,7 +53,7 @@ export default function RegisterClientView({ initialEvent }: RegisterClientViewP
 
   return (
     <>
-      {event && !registration && (
+      {event && !registration && !compact && (
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
           Membership is through the <strong>{event.title}</strong> registration. Fill in your details, pay, and enter your
           transaction ID; the committee confirms your payment and verifies your membership together.
@@ -105,6 +109,7 @@ export default function RegisterClientView({ initialEvent }: RegisterClientViewP
         {event && !registration && (
           <RegistrationForm
             event={event}
+            source={source}
             onRegistered={(r, createdAccount) => {
               if (!createdAccount) setRegistration(r);
             }}
