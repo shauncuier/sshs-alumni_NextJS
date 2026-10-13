@@ -15,6 +15,7 @@ import {
   generateQrDataUrl,
   CardPayload,
 } from "@/lib/id-card";
+import { initialsAvatar } from "@/lib/avatar";
 
 interface AlumnusCardData {
   id: string;
@@ -29,7 +30,6 @@ interface AlumnusCardData {
 }
 
 // No photo yet: the member's initials, never a stranger's face.
-const initialsAvatar = (name: string) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=400&background=06281e&color=fcd34d&bold=true`;
 
 export async function GET(req: NextRequest) {
   try {

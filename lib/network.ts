@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { initialsAvatar } from "@/lib/avatar";
 
 /**
  * The member network: verified members only, searchable by name, profession,
@@ -33,7 +34,6 @@ export interface MemberBasics {
   avatarUrl: string;
 }
 
-const initialsAvatar = (name: string) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=06281e&color=fcd34d&bold=true`;
 const photo = (url: string | null | undefined, name: string) => (url && url !== "/logo.png" ? url : initialsAvatar(name));
 
 /** Members who may appear in the network and receive messages: verified, or staff, and not disabled. */

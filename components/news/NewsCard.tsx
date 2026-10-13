@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Calendar, User, ArrowRight } from "lucide-react";
 import { NewsItem } from "@/lib/data";
+import Picture from "@/components/shared/Picture";
 
 interface NewsCardProps {
   news: NewsItem;
@@ -12,11 +13,7 @@ export default function NewsCard({ news }: NewsCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
       {/* Thumbnail */}
       <div className="relative h-48 overflow-hidden bg-slate-900">
-        <img loading="lazy" decoding="async"
-          src={news.featuredImage}
-          alt={news.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-        />
+        <Picture src={news.featuredImage} alt={news.title} sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
         <div className="absolute top-3 left-3 bg-[#06281e]/90 text-amber-300 font-extrabold px-3 py-1 rounded-xl text-[11px] border border-amber-400/40">

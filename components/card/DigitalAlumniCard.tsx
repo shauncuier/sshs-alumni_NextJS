@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Sparkles, QrCode, RotateCw, Share2, CheckCircle2, School } from "lucide-react";
+import { initialsAvatar } from "@/lib/avatar";
 
 export interface CardData {
   alumniId: string;
@@ -96,7 +97,7 @@ export default function DigitalAlumniCard({
             <div className="relative z-10 flex items-center gap-4 my-auto pt-2">
               <div className="relative shrink-0">
                 <img loading="lazy" decoding="async"
-                  src={card.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(card.fullName)}&size=400&background=06281e&color=fcd34d&bold=true`}
+                  src={card.avatarUrl || initialsAvatar(card.fullName)}
                   alt={card.fullName}
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-md ring-4 ring-emerald-900/50"
                 />

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { avatarAt } from "@/lib/avatar";
 
 export default function JobDetailClient({ job, open }: { job: JobListing; open: boolean }) {
 
@@ -120,7 +121,7 @@ export default function JobDetailClient({ job, open }: { job: JobListing; open: 
               {/* Recruiter Alumnus Mini Badge */}
               <div className="bg-emerald-900/60 p-3.5 rounded-2xl border border-emerald-700/60 flex items-center gap-3">
                 <img loading="lazy" decoding="async"
-                  src={job.postedByAlumnus.avatarUrl}
+                  src={avatarAt(job.postedByAlumnus.avatarUrl, 48, job.postedByAlumnus.name)}
                   alt={job.postedByAlumnus.name}
                   className="w-10 h-10 rounded-full object-cover border border-amber-400"
                 />

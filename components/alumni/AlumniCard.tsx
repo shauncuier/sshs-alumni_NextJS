@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, MapPin, Briefcase, UserPlus, Check } from "lucide-react";
 import { AlumniMember } from "@/lib/data";
+import { avatarAt, initialsAvatar } from "@/lib/avatar";
 
 interface AlumniCardProps {
   alumni: AlumniMember;
@@ -14,10 +15,11 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
   const [connected, setConnected] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.fullName)}&background=06281e&color=fcd34d&bold=true`;
+  const fallbackAvatar = initialsAvatar(alumni.fullName);
   // Members without a photo have an empty avatarUrl; an empty src makes the browser
   // re-request the page and never fires onError, so use the fallback directly.
-  const avatarSrc = imgError || !alumni.avatarUrl ? fallbackAvatar : alumni.avatarUrl;
+  // Cards show the photo at about 72 px: the 192 px copy, not the 400 px original.
+  const avatarSrc = imgError || !alumni.avatarUrl ? fallbackAvatar : avatarAt(alumni.avatarUrl, 96);
 
   if (viewMode === "list") {
     return (

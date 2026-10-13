@@ -25,9 +25,14 @@ import {
   Briefcase,
   GraduationCap,
 } from "lucide-react";
-import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
+import dynamic from "next/dynamic";
+
+// Loaded only when someone opens search: it is not needed to show the page.
+const GlobalSearchModal = dynamic(() => import("@/components/shared/GlobalSearchModal"), { ssr: false });
 import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 
+// Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
+// on every page costs more than the faster click is worth.
 export default function Navbar() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
@@ -206,7 +211,7 @@ export default function Navbar() {
 
             {/* Right: Portal Access & Quick Links */}
             <div className="flex items-center gap-3 sm:gap-4 shrink-0 text-[11px]">
-              <Link
+              <Link prefetch={false}
                 href="/dashboard"
                 className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
               >
@@ -217,7 +222,7 @@ export default function Navbar() {
               {adminHref && (
                 <>
                   <span className="text-emerald-900 select-none">|</span>
-                  <Link
+                  <Link prefetch={false}
                     href={adminHref}
                     className="inline-flex items-center gap-1.5 text-amber-300/90 hover:text-amber-200 transition-colors font-medium"
                   >
@@ -235,7 +240,7 @@ export default function Navbar() {
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-1.5 sm:gap-6">
             
             {/* 1. Official Identity & Crest */}
-            <Link
+            <Link prefetch={false}
               href="/"
               className="flex items-center gap-2 sm:gap-3 group shrink min-w-0 select-none"
               aria-label="SSGHS Alumni Association Home"
@@ -277,7 +282,7 @@ export default function Navbar() {
               {primaryLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
-                  <Link
+                  <Link prefetch={false}
                     key={link.name}
                     href={link.href}
                     className={`px-3 py-2 rounded-lg transition-all duration-150 relative ${
@@ -339,7 +344,7 @@ export default function Navbar() {
                         const Icon = item.icon;
                         const isSubActive = pathname === item.href;
                         return (
-                          <Link
+                          <Link prefetch={false}
                             key={item.name}
                             href={item.href}
                             onClick={() => setMoreDropdownOpen(false)}
@@ -386,7 +391,7 @@ export default function Navbar() {
               {/* Auth Buttons: Logged In vs Logged Out */}
               {isAuthenticated ? (
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <Link
+                  <Link prefetch={false}
                     href="/dashboard"
                     aria-label="My dashboard"
                     className="flex items-center gap-1.5 sm:gap-2 h-10 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
@@ -411,7 +416,7 @@ export default function Navbar() {
                   </button>
                 </div>
               ) : (
-                <Link
+                <Link prefetch={false}
                   href="/login"
                   className="inline-flex items-center gap-1.5 h-10 sm:h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
@@ -472,7 +477,7 @@ export default function Navbar() {
             {primaryLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
-                <Link
+                <Link prefetch={false}
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
@@ -501,7 +506,7 @@ export default function Navbar() {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
                 return (
-                  <Link
+                  <Link prefetch={false}
                     key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
@@ -532,7 +537,7 @@ export default function Navbar() {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <Link
+                  <Link prefetch={false}
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className="py-2.5 text-center bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md"
@@ -549,7 +554,7 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <Link
+              <Link prefetch={false}
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md"
@@ -561,7 +566,7 @@ export default function Navbar() {
 
             {/* Quick Portal & Admin Links in Mobile Drawer */}
             <div className="pt-2 flex items-center justify-between text-xs border-t border-emerald-900/60">
-              <Link
+              <Link prefetch={false}
                 href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white font-semibold"
@@ -570,7 +575,7 @@ export default function Navbar() {
                 <span>Member Portal</span>
               </Link>
               {adminHref && (
-                <Link
+                <Link prefetch={false}
                   href={adminHref}
                   onClick={() => setMobileMenuOpen(false)}
                   className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
@@ -585,7 +590,7 @@ export default function Navbar() {
       )}
 
       {/* Global Search Modal */}
-      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen && <GlobalSearchModal isOpen onClose={() => setSearchOpen(false)} />}
     </>
   );
 }

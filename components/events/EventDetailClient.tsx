@@ -26,6 +26,7 @@ import {
   Gift,
   Flame,
 } from "lucide-react";
+import Picture from "@/components/shared/Picture";
 
 // The page (app/events/[slug]/page.tsx) renders the event on the server and hands
 // it here, so search engines and slow phones get the full content at once; this
@@ -170,9 +171,11 @@ function EventDetailView({
       <main className="flex-1 pb-24">
         {/* Banner Section */}
         <div className="relative min-h-[380px] sm:min-h-[460px] bg-slate-950 overflow-hidden flex flex-col justify-end">
-          <img loading="eager" fetchPriority="high" decoding="async"
+          <Picture
             src={event.bannerImage}
             alt={event.title}
+            sizes="100vw"
+            priority
             // The jubilee artwork's emblem sits above the title; photos keep the centred crop.
             className={`absolute inset-0 w-full h-full object-cover opacity-85 ${event.bannerImage.startsWith("/golden-jubilee-art") ? "object-[center_72%]" : ""}`}
           />

@@ -12,6 +12,7 @@ import CreatePostModal from "@/components/feed/CreatePostModal";
 import MyEvents from "@/components/events/MyEvents";
 import type { AlumniMember, EventItem, PostItem } from "@/lib/data";
 import { Calendar, Users, Heart, BadgeCheck, Plus, ShieldCheck, Radio, MessageSquare } from "lucide-react";
+import { avatarAt } from "@/lib/avatar";
 
 type Classmate = Pick<AlumniMember, "id" | "fullName" | "sscBatch" | "locationCity" | "avatarUrl"> & { userId: string };
 
@@ -344,7 +345,7 @@ export default function DashboardPage() {
                     <div key={alumnus.id} className="flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         <img loading="lazy" decoding="async"
-                          src={alumnus.avatarUrl}
+                          src={avatarAt(alumnus.avatarUrl, 40, alumnus.fullName)}
                           alt={alumnus.fullName}
                           className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
                         />

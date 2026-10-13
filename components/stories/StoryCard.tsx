@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Clock, ArrowRight, Quote } from "lucide-react";
 import { AlumniStoryItem } from "@/lib/data";
+import Picture from "@/components/shared/Picture";
 
 interface StoryCardProps {
   story: AlumniStoryItem;
@@ -12,11 +13,7 @@ export default function StoryCard({ story }: StoryCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
       {/* Cover Image */}
       <div className="relative h-52 overflow-hidden bg-slate-900">
-        <img loading="lazy" decoding="async"
-          src={story.coverImage}
-          alt={story.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95"
-        />
+        <Picture src={story.coverImage} alt={story.title} sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         
         {/* Batch Stamp */}

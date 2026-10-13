@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Heart, Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
 import type { PostItem } from "@/lib/data";
+import { avatarAt } from "@/lib/avatar";
 
 interface FeedComment {
   id: string;
@@ -117,7 +118,7 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <Link href={profileHref} className="shrink-0">
-            <img loading="lazy" decoding="async" src={post.author.avatar} alt={post.author.name} className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-100 hover:border-emerald-600 transition-colors" />
+            <img loading="lazy" decoding="async" src={avatarAt(post.author.avatar, 48, post.author.name)} alt={post.author.name} className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-100 hover:border-emerald-600 transition-colors" />
           </Link>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">

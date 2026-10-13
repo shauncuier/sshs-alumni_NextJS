@@ -8,6 +8,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import { searchMembers } from "@/lib/network";
 import { getSessionUser } from "@/lib/session-user";
+import { avatarAt } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Alumni network | SSGHS Alumni" };
@@ -71,7 +72,7 @@ export default async function NetworkPage({ searchParams }: Props) {
               {members.map((m) => (
                 <div key={m.userId} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between gap-4">
                   <div className="flex items-start gap-3.5">
-                    <img src={m.avatarUrl} alt={m.fullName} className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shrink-0" loading="lazy" />
+                    <img src={avatarAt(m.avatarUrl, 56, m.fullName)} alt={m.fullName} className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shrink-0" loading="lazy" />
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <Link href={`/alumni/${m.profileId}`} className="font-bold text-sm text-slate-900 hover:underline truncate">{m.fullName}</Link>

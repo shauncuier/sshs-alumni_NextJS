@@ -6,6 +6,7 @@ import { MapPin, Clock, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 import { EventItem } from "@/lib/data";
 import type { MemberRegistration, PublicEvent } from "@/lib/events/types";
 import RSVPModal from "./RSVPModal";
+import Picture from "@/components/shared/Picture";
 
 interface EventCardProps {
   event: EventItem;
@@ -24,11 +25,7 @@ export default function EventCard({ event }: EventCardProps) {
       <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
         {/* Banner with overlay */}
         <div className="relative h-48 overflow-hidden bg-slate-900">
-          <img loading="lazy" decoding="async"
-            src={event.bannerImage}
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-          />
+          <Picture src={event.bannerImage} alt={event.title} sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
           {/* Date Stamp Pill */}

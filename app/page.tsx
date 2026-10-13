@@ -24,6 +24,8 @@ import prisma from "@/lib/prisma";
 import { schoolInfo, type AlumniMember } from "@/lib/data";
 import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Newspaper, Sparkles, Users } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { avatarAt } from "@/lib/avatar";
+import Picture from "@/components/shared/Picture";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +90,7 @@ export default async function HomePage() {
     locationCity: p.locationCity,
     locationCountry: p.locationCountry,
     bio: p.bio ?? "",
-    avatarUrl: p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.fullName)}&background=06281e&color=fcd34d&bold=true`,
+    avatarUrl: avatarAt(p.avatarUrl, 48, p.fullName),
     isVerified: true,
     phone: p.isPhonePublic ? p.phone || undefined : undefined,
     email: p.isEmailPublic ? p.user.email : "",
@@ -144,7 +146,7 @@ export default async function HomePage() {
                   <div className="pt-2 flex items-center justify-center lg:justify-start gap-4 text-xs text-emerald-300/90">
                     <div className="flex -space-x-2">
                       {recentMembers.map((a) => (
-                        <img key={a.id} loading="lazy" decoding="async" src={a.avatarUrl} alt="" className="w-8 h-8 rounded-full border-2 border-[#06281e] object-cover" />
+                        <img key={a.id} loading="lazy" decoding="async" src={avatarAt(a.avatarUrl, 32, a.fullName)} alt="" className="w-8 h-8 rounded-full border-2 border-[#06281e] object-cover" />
                       ))}
                     </div>
                     <span>
@@ -158,7 +160,7 @@ export default async function HomePage() {
               <div className="lg:col-span-5">
                 <div className="relative mx-auto max-w-md lg:max-w-none rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-[#041a13]">
                   {heroEvent?.bannerImage && !heroEvent.bannerImage.startsWith("/golden-jubilee") ? (
-                    <img src={heroEvent.bannerImage} alt="" loading="eager" fetchPriority="high" decoding="async" className="w-full h-[360px] sm:h-[400px] object-cover" />
+                    <Picture src={heroEvent.bannerImage} alt="" sizes="(max-width: 1024px) 100vw, 40vw" priority className="w-full h-[360px] sm:h-[400px] object-cover" />
                   ) : (
                     <Image
                       src="/golden-jubilee-art.jpg"
@@ -281,7 +283,7 @@ export default async function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {news.map((n) => (
                   <Link key={n.id} href={`/news/${n.id}`} className="group bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-                    <img src={n.featuredImage} alt="" loading="lazy" decoding="async" className="w-full h-44 object-cover" />
+                    <Picture src={n.featuredImage} alt="" sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="w-full h-44 object-cover" />
                     <div className="p-5 space-y-2 flex-1">
                       <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">{n.category} · {n.date}</p>
                       <h3 className="font-bold text-base text-slate-900 leading-snug group-hover:text-emerald-800">{n.title}</h3>

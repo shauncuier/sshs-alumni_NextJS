@@ -81,7 +81,7 @@ describe("achievements", () => {
     const newer = await createAchievement({ ...achievement, title: "Gold Medal", yearAwarded: 2025, isPublished: true }, "x");
     const list = await listPublishedAchievements();
     expect(list.map((a) => a.id)).toEqual([newer.id, older.id]);
-    expect(list[0].photoUrl).toContain("ui-avatars.com");
+    expect(list[0].photoUrl).toMatch(/^data:image\/svg\+xml/);
     await updateAchievement(hidden.id, { isPublished: true }, "x");
     expect(await listPublishedAchievements()).toHaveLength(3);
   });

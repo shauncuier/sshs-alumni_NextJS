@@ -88,6 +88,6 @@ describe("messaging", () => {
     expect(thread.partner.fullName).toBe("Farhan Kabir");
     expect(thread.messages.map((m: { content: string }) => m.content)).toEqual(["Salam!"]);
 
-    expect((await memberBasics([friend.id])).get(friend.id)?.avatarUrl).toContain("ui-avatars.com");
+    expect((await memberBasics([friend.id])).get(friend.id)?.avatarUrl).toMatch(/^data:image\/svg\+xml/);
   });
 });

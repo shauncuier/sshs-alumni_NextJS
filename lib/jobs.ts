@@ -5,6 +5,7 @@ import { AppError } from "@/lib/app-error";
 import type { JobListing } from "@/lib/career-data";
 import { sendEmail } from "@/lib/email";
 import { can } from "@/lib/permissions";
+import { initialsAvatar } from "@/lib/avatar";
 
 /**
  * The alumni job board. Verified members post jobs; an admin approves each one
@@ -40,7 +41,6 @@ function list(value: unknown): string[] {
   return items.map((v) => String(v).trim().slice(0, 200)).filter(Boolean).slice(0, 20);
 }
 
-const initialsAvatar = (name: string) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=06281e&color=fcd34d&bold=true`;
 
 export function isOpen(job: Pick<Job, "status" | "deadline">, now = new Date()): boolean {
   return job.status === "APPROVED" && job.deadline.getTime() >= now.getTime();

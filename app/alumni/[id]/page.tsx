@@ -17,6 +17,7 @@ import {
   Heart,
 } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { initialsAvatar } from "@/lib/avatar";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -100,10 +101,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
 
   if (!profile) notFound();
 
-  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    profile.fullName
-  )}&background=06281e&color=fcd34d&bold=true&size=256`;
-  const avatarSrc = profile.avatarUrl || fallbackAvatar;
+  const avatarSrc = profile.avatarUrl || initialsAvatar(profile.fullName);
 
   const skillsList = Array.isArray(profile.skills)
     ? profile.skills.filter((s): s is string => typeof s === "string")

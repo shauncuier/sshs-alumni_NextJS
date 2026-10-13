@@ -9,21 +9,14 @@
  */
 
 // Bump on caching changes: activate deletes every cache with another name.
-const CACHE_NAME = "ssghs-alumni-v4";
+const CACHE_NAME = "ssghs-alumni-v5";
 // Shown for pages that are not cached when there is no connection. A static file,
 // not a Next.js page: a Next.js page served under another URL fails to hydrate.
 const OFFLINE_FALLBACK_URL = "/offline.html";
 
-const PRECACHE_ASSETS = [
-  OFFLINE_FALLBACK_URL,
-  "/",
-  "/logo.png",
-  "/manifest.webmanifest",
-  "/card",
-  "/alumni",
-  "/events",
-  "/favicon.ico",
-];
+// Only the small offline page and the icons up front: on mobile data, pages are cached
+// as people open them (below) instead of being downloaded in the background.
+const PRECACHE_ASSETS = [OFFLINE_FALLBACK_URL, "/icon-32.png", "/manifest.webmanifest"];
 
 // Install: Cache critical assets
 self.addEventListener("install", (event) => {
@@ -77,7 +70,8 @@ self.addEventListener("fetch", (event) => {
   // Cache-first for images, fonts, and static assets
   if (
     url.pathname.startsWith("/_next/static") ||
-    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff2|ico)$/)
+    url.pathname.startsWith("/_next/image") ||
+    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|avif|woff2|ico)$/)
   ) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
 import PwaProvider from "@/components/pwa/PwaProvider";
 import NavigationProgress from "@/components/shared/NavigationProgress";
@@ -8,15 +7,8 @@ import "./globals.css";
 import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin, websiteJsonLd } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// No web fonts: the site uses the phone's own fonts (globals.css), so nothing extra
+// is downloaded before text appears on a slow connection.
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
@@ -28,9 +20,9 @@ export const metadata: Metadata = {
     "Alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Sitakunda, Chattogram: batchmates, events and the Golden Jubilee 2026.",
   applicationName: SITE_NAME,
   authors: [{ name: ASSOCIATION_NAME }],
+  // A 1-2 KB tab icon instead of the 32 KB logo.
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
+    icon: [{ url: "/favicon.ico", sizes: "any" }, { url: "/icon-32.png", type: "image/png", sizes: "32x32" }],
     apple: "/icon-192.png",
   },
   manifest: "/manifest.webmanifest",
@@ -57,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col">
         <JsonLd data={organizationJsonLd()} />

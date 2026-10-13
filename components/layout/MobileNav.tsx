@@ -11,6 +11,8 @@ import {
   User
 } from "lucide-react";
 
+// Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
+// on every page costs more than the faster click is worth.
 export default function MobileNav() {
   const pathname = usePathname();
 
@@ -29,7 +31,7 @@ export default function MobileNav() {
           const Icon = tab.icon;
           const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href));
           return (
-            <Link
+            <Link prefetch={false}
               key={tab.name}
               href={tab.href}
               aria-current={isActive ? "page" : undefined}

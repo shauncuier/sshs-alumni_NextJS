@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
   },
   images: {
+    // AVIF where the browser takes it (smallest), else WebP: what matters on mobile data.
+    formats: ["image/avif", "image/webp"],
+    qualities: [75],
+    // The optimizer serves only this site's own files and uploaded content images.
+    localPatterns: [
+      { pathname: "/*", search: "" },
+      { pathname: "/og/**", search: "" },
+      { pathname: "/api/media/content/**", search: "" },
+    ],
+    // Optimized images are kept for 30 days (the default re-checks after 4 hours).
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       {
         protocol: "https",
@@ -46,8 +57,8 @@ const nextConfig: NextConfig = {
       // Next.js inlines its bootstrap scripts; without nonces 'unsafe-inline' is required.
       "script-src 'self' 'unsafe-inline'" + (dev ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
-      // ui-avatars.com draws the initials fallback for members without a photo.
-      "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://ui-avatars.com",
+      // Initials avatars are inline data: SVGs (lib/avatar.ts).
+      "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org",
       "font-src 'self' data:",
       // Live updates use same-origin Server-Sent Events; the dev server also needs its HMR socket.
       "connect-src 'self'" + (dev ? " ws: wss:" : ""),
@@ -69,8 +80,13 @@ const nextConfig: NextConfig = {
     ];
     // HTTPS only in production. No "preload": joining the browsers' preload list is hard to undo.
     if (!dev) headers.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });
+    // Site images and icons in public/ change rarely (a changed design gets a new file
+    // name); a week's cache spares a slow connection a round trip per file per visit.
+    const staticAsset = [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" }];
     return [
       { source: "/:path*", headers },
+      { source: "/:file(.*\\.(?:png|jpg|jpeg|webp|svg|ico))", headers: staticAsset },
+      { source: "/og/:file*", headers: staticAsset },
       // Later rules override earlier ones for the same header: the gate scanner reads QR codes with the camera.
       { source: "/gate", headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" }] },
     ];

@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import type { DonationCampaignItem } from "@/lib/data";
 import { useSession } from "next-auth/react";
 import { Heart, ShieldCheck, CheckCircle2 } from "lucide-react";
+import Picture from "@/components/shared/Picture";
 
 const DONATION_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
 // Where to send money (numbers, bank account), one line each, separated by "|"; set by the committee.
@@ -195,7 +196,7 @@ export default function DonatePage() {
                       }`}
                     >
                       {campaign.bannerImage && (
-                        <img src={campaign.bannerImage} alt="" className="w-full h-36 object-cover rounded-2xl mb-4 border border-slate-100" loading="lazy" />
+                        <Picture src={campaign.bannerImage} alt="" sizes="(max-width: 1024px) 100vw, 55vw" className="w-full h-36 object-cover rounded-2xl mb-4 border border-slate-100" />
                       )}
                       <div className="flex items-start justify-between gap-4">
                         <div>

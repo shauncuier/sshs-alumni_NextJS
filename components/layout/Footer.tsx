@@ -4,6 +4,8 @@ import NextImage from "next/image";
 import { MapPin, Phone, Mail, Globe, ExternalLink } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
 
+// Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
+// on every page costs more than the faster click is worth.
 export default function Footer() {
   return (
     <footer className="bg-[#041a13] text-slate-300 border-t border-emerald-900/80">
@@ -19,13 +21,13 @@ export default function Footer() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link
+            <Link prefetch={false}
               href="/register"
               className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-950/60 transition-transform hover:-translate-y-0.5"
             >
               Register as Alumni
             </Link>
-            <Link
+            <Link prefetch={false}
               href="/alumni"
               className="px-5 py-2.5 rounded-xl bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60 font-semibold text-sm transition-colors"
             >
@@ -99,32 +101,32 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/alumni" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/alumni" className="hover:text-emerald-300 transition-colors">
                   Alumni Directory
                 </Link>
               </li>
               <li>
-                <Link href="/batches" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/batches" className="hover:text-emerald-300 transition-colors">
                   Batch Explorer (1985-2025)
                 </Link>
               </li>
               <li>
-                <Link href="/stories" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/stories" className="hover:text-emerald-300 transition-colors">
                   Alumni Stories &amp; Spotlights
                 </Link>
               </li>
               <li>
-                <Link href="/achievements" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/achievements" className="hover:text-emerald-300 transition-colors">
                   Distinguished Hall of Fame
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/gallery" className="hover:text-emerald-300 transition-colors">
                   Photo Gallery &amp; Nostalgia
                 </Link>
               </li>
               <li>
-                <Link href="/register" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+                <Link prefetch={false} href="/register" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
                   Verification &amp; Registration
                 </Link>
               </li>
@@ -138,37 +140,37 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/about" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/about" className="hover:text-emerald-300 transition-colors">
                   About Association
                 </Link>
               </li>
               <li>
-                <Link href="/school" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/school" className="hover:text-emerald-300 transition-colors">
                   School Heritage &amp; Campus
                 </Link>
               </li>
               <li>
-                <Link href="/news" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/news" className="hover:text-emerald-300 transition-colors">
                   News &amp; Announcements
                 </Link>
               </li>
               <li>
-                <Link href="/events" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/events" className="hover:text-emerald-300 transition-colors">
                   Reunions &amp; Sports Tournaments
                 </Link>
               </li>
               <li>
-                <Link href="/donate" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/donate" className="hover:text-emerald-300 transition-colors">
                   Scholarship &amp; Giving Back
                 </Link>
               </li>
               <li>
-                <Link href="/volunteer" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">
+                <Link prefetch={false} href="/volunteer" className="text-amber-400 hover:text-amber-300 font-bold transition-colors">
                   Volunteer Squad (স্বেচ্ছাসেবী)
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/contact" className="hover:text-emerald-300 transition-colors">
                   Contact Committee
                 </Link>
               </li>
@@ -182,22 +184,22 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/dashboard" className="text-emerald-300 hover:text-white font-medium flex items-center gap-1.5 transition-colors">
+                <Link prefetch={false} href="/dashboard" className="text-emerald-300 hover:text-white font-medium flex items-center gap-1.5 transition-colors">
                   <span>Alumni Dashboard</span>
                 </Link>
               </li>
               <li>
-                <Link href="/feed" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/feed" className="hover:text-emerald-300 transition-colors">
                   Community Social Feed
                 </Link>
               </li>
               <li>
-                <Link href="/messages" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/messages" className="hover:text-emerald-300 transition-colors">
                   Direct Messages
                 </Link>
               </li>
               <li>
-                <Link href="/network" className="hover:text-emerald-300 transition-colors">
+                <Link prefetch={false} href="/network" className="hover:text-emerald-300 transition-colors">
                   Find Batchmates
                 </Link>
               </li>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, X, User, Calendar, Layers, ArrowRight } from "lucide-react";
 import type { EventItem } from "@/lib/data";
+import { avatarAt } from "@/lib/avatar";
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -191,10 +192,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                   >
                     <div className="flex items-center gap-3">
                       <img loading="lazy" decoding="async"
-                        src={
-                          alumnus.avatarUrl ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(alumnus.fullName)}&background=06281e&color=fcd34d&bold=true`
-                        }
+                        src={avatarAt(alumnus.avatarUrl, 40, alumnus.fullName)}
                         alt={alumnus.fullName}
                         className="w-10 h-10 rounded-full object-cover border border-emerald-200"
                       />

@@ -5,6 +5,7 @@ import { AppError } from "@/lib/app-error";
 import type { MentorProfile } from "@/lib/career-data";
 import { sendEmail } from "@/lib/email";
 import { can } from "@/lib/permissions";
+import { initialsAvatar } from "@/lib/avatar";
 
 /**
  * Alumni mentorship. Verified members apply to mentor; an admin approves them
@@ -37,7 +38,6 @@ function list(value: unknown, max: number): string[] {
   return Array.from(new Set(items.map((v) => String(v).trim().slice(0, 80)).filter(Boolean))).slice(0, max);
 }
 
-const initialsAvatar = (name: string) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=06281e&color=fcd34d&bold=true`;
 
 export function toMentorProfile(m: Mentor & { _count?: { requests: number } }): MentorProfile {
   return {

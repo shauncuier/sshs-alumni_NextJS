@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import type { AchievementItem } from "@/lib/data";
 import { contentImageId, removeContentImage, thumbUrlFor } from "@/lib/media/content-images";
+import { initialsAvatar } from "@/lib/avatar";
 
 /**
  * Alumni achievements ("Hall of Distinction"): added and published by admins in
@@ -48,8 +49,6 @@ export interface AchievementInput {
   isPublished?: unknown;
 }
 
-const initialsAvatar = (name: string) =>
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=06281e&color=fcd34d&bold=true`;
 
 export function toAchievementItem(a: Achievement): AchievementItem {
   return {

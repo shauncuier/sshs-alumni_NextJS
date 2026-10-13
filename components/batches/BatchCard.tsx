@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Users, Calendar, ArrowRight, ShieldCheck } from "lucide-react";
 import { BatchInfo } from "@/lib/data";
+import Picture from "@/components/shared/Picture";
 
 interface BatchCardProps {
   batch: BatchInfo;
@@ -12,11 +13,7 @@ export default function BatchCard({ batch }: BatchCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
       {/* Cover Image */}
       <div className="relative h-44 overflow-hidden bg-slate-900">
-        <img loading="lazy" decoding="async"
-          src={batch.coverImage}
-          alt={batch.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-        />
+        <Picture src={batch.coverImage} alt={batch.name} sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         
         {/* Batch Badge */}

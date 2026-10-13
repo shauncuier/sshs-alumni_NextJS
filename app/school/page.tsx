@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
 import { GraduationCap, ExternalLink } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import Picture from "@/components/shared/Picture";
 
 export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
 
@@ -82,7 +83,7 @@ export default function SchoolPage() {
             </div>
 
             <div className="lg:col-span-5 rounded-3xl overflow-hidden shadow-xl border border-slate-200">
-              <img loading="lazy" decoding="async" src="/about-school.jpg" alt={`${schoolInfo.name}: fifty batches since ${schoolInfo.established}`} className="w-full h-80 object-cover object-[center_85%]" />
+              <Picture src="/about-school.jpg" alt={`${schoolInfo.name}: fifty batches since ${schoolInfo.established}`} sizes="(max-width: 1024px) 100vw, 40vw" className="w-full h-80 object-cover object-[center_85%]" />
             </div>
           </div>
 

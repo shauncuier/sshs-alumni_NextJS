@@ -14,6 +14,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { avatarAt } from "@/lib/avatar";
 
 export default function CareersClient({ jobs }: { jobs: JobListing[] }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -213,7 +214,7 @@ export default function CareersClient({ jobs }: { jobs: JobListing[] }) {
                     {/* Posted by Alumnus Badge */}
                     <div className="pt-1 flex items-center gap-2 text-[11px] text-slate-500">
                       <img loading="lazy" decoding="async"
-                        src={job.postedByAlumnus.avatarUrl}
+                        src={avatarAt(job.postedByAlumnus.avatarUrl, 40, job.postedByAlumnus.name)}
                         alt={job.postedByAlumnus.name}
                         className="w-5 h-5 rounded-full object-cover border border-emerald-400"
                       />

@@ -6,9 +6,13 @@ import { useRouter } from "next/navigation";
 import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 import { useSession, signOut } from "next-auth/react";
 import { Bell, MessageSquare, Search, User, Settings, LogOut, ShieldCheck } from "lucide-react";
-import GlobalSearchModal from "@/components/shared/GlobalSearchModal";
+import dynamic from "next/dynamic";
+
+// Loaded only when someone opens search: it is not needed to show the page.
+const GlobalSearchModal = dynamic(() => import("@/components/shared/GlobalSearchModal"), { ssr: false });
 import { useNotifications } from "@/components/notifications/useNotifications";
 import { relativeTime } from "@/lib/utils";
+import { avatarAt } from "@/lib/avatar";
 
 interface AppHeaderProps {
   title?: string;
@@ -173,7 +177,7 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
             >
               {user?.image ? (
                 <img loading="lazy" decoding="async"
-                  src={user.image}
+                  src={avatarAt(user.image, 32, userName)}
                   alt={userName}
                   className="w-8 h-8 rounded-full object-cover border border-emerald-300"
                 />
@@ -236,7 +240,7 @@ export default function AppHeader({ title = "Alumni Portal" }: AppHeaderProps) {
         </div>
       </header>
 
-      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen && <GlobalSearchModal isOpen onClose={() => setSearchOpen(false)} />}
     </>
   );
 }

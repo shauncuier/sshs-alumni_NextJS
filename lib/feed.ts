@@ -4,6 +4,7 @@ import { AppError } from "@/lib/app-error";
 import type { PostItem } from "@/lib/data";
 import { can } from "@/lib/permissions";
 import { relativeTime } from "@/lib/utils";
+import { initialsAvatar } from "@/lib/avatar";
 
 /**
  * The community feed: posts, likes and comments by members, all stored. Authors
@@ -27,7 +28,6 @@ export interface FeedComment {
   canDelete: boolean;
 }
 
-const initialsAvatar = (name: string) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=06281e&color=fcd34d&bold=true`;
 
 const authorSelect = {
   id: true,
