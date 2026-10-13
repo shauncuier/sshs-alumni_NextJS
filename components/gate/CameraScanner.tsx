@@ -12,6 +12,26 @@ type DetectorCtor = new (opts: { formats: string[] }) => Detector;
  * (Safari on iPhone). Calls onCode for each code it reads; the parent decides
  * what to do with repeats. The camera needs HTTPS (or localhost).
  */
+/** Facebook, Messenger, Instagram and similar apps open links in their own browser, which often has no camera. */
+function inAppBrowser(): boolean {
+  return /FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|MicroMessenger/i.test(navigator.userAgent);
+}
+
+function cameraErrorMessage(name: string): string {
+  if (name === "InsecureContext") {
+    return "The camera only works on the secure https:// address of the site. Open the site's https:// link (not an http:// or 192.168… address).";
+  }
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    if (inAppBrowser()) {
+      return "This app's built-in browser cannot use the camera. Tap ⋮ (or the share button) and choose “Open in Chrome” / “Open in Safari”, then start the camera again.";
+    }
+    return "The camera is blocked for this site. Tap the lock or ⓘ icon next to the address, set Camera to Allow, then tap Start camera again. (iPhone: Settings › Safari › Camera › Allow.)";
+  }
+  if (name === "NotFoundError" || name === "OverconstrainedError") return "No camera found on this device.";
+  if (name === "NotReadableError" || name === "AbortError") return "The camera is busy. Close other apps or tabs using it, then try again.";
+  return "The camera could not be started. Close other apps using it and try again.";
+}
+
 export default function CameraScanner({ onCode, paused }: { onCode: (text: string) => void; paused: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -90,16 +110,7 @@ export default function CameraScanner({ onCode, paused }: { onCode: (text: strin
         };
         void tick();
       } catch (err) {
-        const name = (err as Error).name;
-        setError(
-          name === "NotAllowedError"
-            ? "Camera permission was refused. Allow the camera for this site in the browser settings, then try again."
-            : name === "NotFoundError" || name === "OverconstrainedError"
-              ? "No camera found on this device."
-              : name === "InsecureContext"
-                ? "The camera only works on the secure (https://) address of the site."
-                : "The camera could not be started. Close other apps using it and try again."
-        );
+        setError(cameraErrorMessage((err as Error).name));
         stop();
       }
     })();

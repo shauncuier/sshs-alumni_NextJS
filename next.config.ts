@@ -71,8 +71,10 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      // No page may use the camera, except the gate scanner (rule below).
-      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
+      // Camera for this site only (the gate scanner); never for other sites or embeds. It must
+      // be allowed site-wide: the policy belongs to the page first loaded, and the admin menu
+      // and the sign-in redirect open /gate without a reload, so a /gate-only rule never applied.
+      { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
       { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
       // The old XSS auditor is removed from browsers and could be abused; "0" turns it off.
       { key: "X-XSS-Protection", value: "0" },
@@ -87,8 +89,6 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers },
       { source: "/:file(.*\\.(?:png|jpg|jpeg|webp|svg|ico))", headers: staticAsset },
       { source: "/og/:file*", headers: staticAsset },
-      // Later rules override earlier ones for the same header: the gate scanner reads QR codes with the camera.
-      { source: "/gate", headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" }] },
     ];
   },
 };

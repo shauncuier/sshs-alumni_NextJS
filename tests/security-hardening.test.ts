@@ -31,17 +31,19 @@ describe("security headers", () => {
     expect(h["Content-Security-Policy"]).not.toContain("unsafe-eval");
     expect(h["Strict-Transport-Security"]).toBe("max-age=31536000; includeSubDomains");
     expect(h["X-XSS-Protection"]).toBe("0");
-    expect(h["Permissions-Policy"]).toContain("camera=()");
+    expect(h["Permissions-Policy"]).toContain("camera=(self)");
     expect(h["Cross-Origin-Opener-Policy"]).toBe("same-origin");
   });
 
-  it("only the gate scanner may use the camera", async () => {
+  it("the camera is for this site only, on every page (the gate opens without a page reload)", async () => {
+    const h = await load("production");
+    expect(h["Permissions-Policy"]).toMatch(/camera=\(self\)/);
+    expect(h["Permissions-Policy"]).toContain("microphone=()");
     vi.stubEnv("NODE_ENV", "production");
     vi.resetModules();
     const rules = await (await import("../next.config")).default.headers!();
-    const gate = rules.find((r) => r.source === "/gate");
-    expect(rules.indexOf(gate!)).toBeGreaterThan(0); // after the site-wide rule, so it wins
-    expect(gate!.headers).toEqual([{ key: "Permissions-Policy", value: expect.stringContaining("camera=(self)") }]);
+    // No page-specific camera rule: it would not apply after client-side navigation.
+    expect(rules.filter((r) => r.headers.some((x) => x.key === "Permissions-Policy"))).toHaveLength(1);
   });
 
   it("development allows the HMR socket and sends no HSTS", async () => {
