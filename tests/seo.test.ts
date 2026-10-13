@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import JsonLd from "@/components/shared/JsonLd";
-import { breadcrumbJsonLd, clip, eventDescription, eventJsonLd, jobPostingJsonLd, newsArticleJsonLd, organizationJsonLd, pageMetadata, SITE_NAME, websiteJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, clip, ownImageOr, shareCard, eventDescription, eventJsonLd, jobPostingJsonLd, newsArticleJsonLd, organizationJsonLd, pageMetadata, SITE_NAME, websiteJsonLd } from "@/lib/seo";
 import type { JobListing } from "@/lib/career-data";
 import type { NewsItem } from "@/lib/data";
 import type { PublicEvent } from "@/lib/events/types";
@@ -107,5 +107,19 @@ describe("more structured data", () => {
       applicantLocationRequirements: { name: "Bangladesh" },
     });
     expect(jobPostingJsonLd(j).description).toContain("Requirements: HSC");
+  });
+});
+
+describe("share cards", () => {
+  it("uses the section card unless there is a real uploaded photo", () => {
+    expect(ownImageOr("/api/media/content/abc/large.webp", "news")).toEqual({ url: "/api/media/content/abc/large.webp" });
+    expect(ownImageOr("/golden-jubilee-art.jpg", "news")).toEqual(shareCard("news"));
+    expect(ownImageOr(null, "stories")).toMatchObject({ url: "/og/stories.jpg", width: 1200, height: 630 });
+  });
+
+  it("leaves the image to the route's opengraph-image file when asked", () => {
+    const og = pageMetadata({ path: "/batches/2014", title: "SSC batch 2014", description: "x", image: "file" }).openGraph as Record<string, unknown>;
+    expect(og).not.toHaveProperty("images");
+    expect(pageMetadata({ path: "/", title: "t", description: "d" }).openGraph).toMatchObject({ images: [shareCard("home")] });
   });
 });

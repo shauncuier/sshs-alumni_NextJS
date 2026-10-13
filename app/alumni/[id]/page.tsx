@@ -16,7 +16,7 @@ import {
   BookOpen,
   Heart,
 } from "lucide-react";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareCard } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Members' pages stay out of search engines: a name search should not lead strangers here.
   return pageMetadata({
     path: `/alumni/${id}`,
+    image: shareCard("alumni"),
     title: `${profile.fullName}, SSC ${profile.sscBatch}`,
     description: `${profile.fullName}${profile.profession ? `, ${profile.profession}` : ""}. SSC batch ${profile.sscBatch}, Sabuj Shikshayatan Government High School.`,
     noindex: true,

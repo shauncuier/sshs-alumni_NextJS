@@ -23,12 +23,13 @@ import { formatDate } from "@/lib/utils";
 import prisma from "@/lib/prisma";
 import { schoolInfo, type AlumniMember } from "@/lib/data";
 import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Newspaper, Sparkles, Users } from "lucide-react";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareCard } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = pageMetadata({
   path: "/",
+  image: shareCard("home"),
   title: "Sabuj Shikshayatan Alumni Association, Sitakunda",
   absoluteTitle: true,
   description:

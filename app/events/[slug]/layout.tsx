@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPublicEventBySlug } from "@/lib/events/service";
-import { eventDescription, pageMetadata } from "@/lib/seo";
+import { eventDescription, ownImageOr, pageMetadata, shareCard } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // A title that already names the school needs no site suffix.
     absoluteTitle: /shikshayatan|শিক্ষায়তন/i.test(event.title),
     description: eventDescription(event),
-    image: { url: event.bannerImage, alt: event.title },
+    image: event.isMembershipEvent ? shareCard("jubilee") : { ...ownImageOr(event.bannerImage, "events"), alt: event.title },
   });
 }
 

@@ -4,9 +4,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
 import { GraduationCap, ExternalLink } from "lucide-react";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareCard } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({ path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
+export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
 
 export default function SchoolPage() {
   return (

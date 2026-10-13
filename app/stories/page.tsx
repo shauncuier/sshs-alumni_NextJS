@@ -5,9 +5,9 @@ import Footer from "@/components/layout/Footer";
 import StoryCard from "@/components/stories/StoryCard";
 import { listPublishedStories } from "@/lib/stories";
 import { BookOpen } from "lucide-react";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareCard } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({ path: "/stories", title: "Alumni stories", description: "Memories and life stories from former students of Sabuj Shikshayatan Government High School, Sitakunda, in their own words." });
+export const metadata: Metadata = pageMetadata({ image: shareCard("stories"), path: "/stories", title: "Alumni stories", description: "Memories and life stories from former students of Sabuj Shikshayatan Government High School, Sitakunda, in their own words." });
 
 // Published stories from the database; drafts never appear here.
 export const dynamic = "force-dynamic";

@@ -6,7 +6,7 @@ import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getPublishedNews } from "@/lib/news";
-import { pageMetadata } from "@/lib/seo";
+import { ownImageOr, pageMetadata } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 import { breadcrumbJsonLd, newsArticleJsonLd } from "@/lib/seo";
 
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const article = await getPublishedNews(id);
   if (!article) return { title: "News not found", robots: { index: false } };
-  return pageMetadata({ path: `/news/${id}`, title: article.title, description: article.excerpt, type: "article", image: article.featuredImage ? { url: article.featuredImage } : null });
+  return pageMetadata({ path: `/news/${id}`, title: article.title, description: article.excerpt, type: "article", image: ownImageOr(article.featuredImage, "news") });
 }
 
 export default async function NewsArticlePage({ params }: Props) {

@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getPublishedStory } from "@/lib/stories";
 import { ArrowLeft, Clock, Calendar, Quote, User } from "lucide-react";
-import { pageMetadata } from "@/lib/seo";
+import { ownImageOr, pageMetadata } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 import { breadcrumbJsonLd, storyJsonLd } from "@/lib/seo";
 
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: StoryDetailPageProps): Promis
   const { id } = await params;
   const story = await getPublishedStory(id);
   if (!story) return { title: "Story not found", robots: { index: false } };
-  return pageMetadata({ path: `/stories/${id}`, title: story.title, description: story.summary, type: "article", image: story.coverImage ? { url: story.coverImage } : null });
+  return pageMetadata({ path: `/stories/${id}`, title: story.title, description: story.summary, type: "article", image: ownImageOr(story.coverImage, "stories") });
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailPageProps) {

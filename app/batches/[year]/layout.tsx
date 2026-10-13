@@ -10,6 +10,8 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
   const members = batch?.totalAlumni ?? 0;
   return pageMetadata({
     path: `/batches/${year}`,
+    // The card comes from ./opengraph-image.tsx (the year in the emblem).
+    image: "file",
     title: `SSC batch ${year}`,
     description: `Sabuj Shikshayatan SSC batch ${year}: find your classmates, the batch representative and reunion news.${members > 0 ? ` ${members} verified ${members === 1 ? "member" : "members"} so far.` : ""}`,
     // A year with no members yet has nothing for searchers.

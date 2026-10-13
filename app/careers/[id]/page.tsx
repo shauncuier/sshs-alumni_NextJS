@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import JobDetailClient from "@/components/careers/JobDetailClient";
 import { getPublicJob } from "@/lib/jobs";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareCard } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 import { breadcrumbJsonLd, jobPostingJsonLd } from "@/lib/seo";
 
@@ -17,6 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { job } = found;
   return pageMetadata({
     path: `/careers/${id}`,
+    image: shareCard("careers"),
     title: `${job.title} at ${job.company}`,
     description: `${job.title} at ${job.company}, ${job.location}. A job shared by a Sabuj Shikshayatan alumnus${found.open ? "; apply through the alumni portal" : " (closed)"}.`,
   });

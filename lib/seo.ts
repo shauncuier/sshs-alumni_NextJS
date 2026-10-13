@@ -15,7 +15,38 @@ import type { JobListing } from "@/lib/career-data";
 export const SITE_NAME = "Sabuj Shikshayatan Alumni";
 export const ASSOCIATION_NAME = "Sabuj Shikshayatan Alumni Association";
 export const ASSOCIATION_NAME_BN = "সবুজ শিক্ষায়তন প্রাক্তন ছাত্র-ছাত্রী পরিষদ";
-export const DEFAULT_SHARE_IMAGE = { url: "/golden-jubilee-banner.jpg", width: 2752, height: 1536, alt: "Golden Jubilee 2026 of Sabuj Shikshayatan Government High School" };
+/** The 1200x630 share cards in public/og (design/share-cards/make_cards.py), one per section. */
+export const SHARE_CARDS = {
+  home: "Sabuj Shikshayatan Alumni Association",
+  jubilee: "Golden Jubilee 2026 of Sabuj Shikshayatan Government High School",
+  events: "Events and reunions of the Sabuj Shikshayatan alumni",
+  alumni: "Sabuj Shikshayatan alumni directory",
+  batches: "SSC batches of Sabuj Shikshayatan Government High School",
+  school: "Sabuj Shikshayatan Government High School, since 1976",
+  about: "About the Sabuj Shikshayatan Alumni Association",
+  news: "News and notices from the Sabuj Shikshayatan alumni",
+  stories: "Stories from Sabuj Shikshayatan alumni",
+  achievements: "Achievements of Sabuj Shikshayatan alumni",
+  gallery: "Photo gallery of the Sabuj Shikshayatan alumni",
+  donate: "Give back to Sabuj Shikshayatan Government High School",
+  careers: "Jobs shared by Sabuj Shikshayatan alumni",
+  mentorship: "Mentorship from Sabuj Shikshayatan alumni",
+  register: "Join the Sabuj Shikshayatan Alumni Association",
+  contact: "Contact the Sabuj Shikshayatan alumni committee",
+  volunteer: "Volunteer for the Sabuj Shikshayatan alumni",
+} as const;
+export type ShareCard = keyof typeof SHARE_CARDS;
+
+export function shareCard(key: ShareCard) {
+  return { url: `/og/${key}.jpg`, width: 1200, height: 630, alt: SHARE_CARDS[key] };
+}
+
+export const DEFAULT_SHARE_IMAGE = shareCard("home");
+
+/** An uploaded photo, or the section card when there is none (the jubilee artwork is only a stand-in). */
+export function ownImageOr(url: string | null | undefined, fallback: ShareCard) {
+  return url && !url.startsWith("/golden-jubilee") ? { url } : shareCard(fallback);
+}
 
 export function siteOrigin(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -35,7 +66,8 @@ export function pageMetadata(p: {
   description: string;
   /** The title is complete; no " | Sabuj Shikshayatan Alumni" suffix. */
   absoluteTitle?: boolean;
-  image?: { url: string; width?: number; height?: number; alt?: string } | null;
+  /** The share image; "file" leaves it to the segment's opengraph-image file. */
+  image?: { url: string; width?: number; height?: number; alt?: string } | "file" | null;
   type?: "website" | "article";
   /** Pages with nothing for searchers (sign-in, personal pages). */
   noindex?: boolean;
@@ -54,7 +86,7 @@ export function pageMetadata(p: {
       locale: "en_BD",
       alternateLocale: ["bn_BD"],
       type: p.type ?? "website",
-      images: [p.image ?? DEFAULT_SHARE_IMAGE],
+      ...(p.image === "file" ? {} : { images: [p.image ?? DEFAULT_SHARE_IMAGE] }),
     },
     twitter: { card: "summary_large_image", title: fullTitle, description },
     ...(p.noindex ? { robots: { index: false, follow: true } } : {}),
