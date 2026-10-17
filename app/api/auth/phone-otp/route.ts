@@ -9,7 +9,8 @@ import { getSessionUser } from "@/lib/session-user";
 export async function POST(req: Request) {
   try {
     requireSameOrigin(req);
-    requireRateLimit(req, "phone-otp-send", { limit: 10, windowMs: 60 * 60_000 });
+    // Per address (shared by many on mobile data); each number also has its own limit.
+    requireRateLimit(req, "phone-otp-send", { limit: 30, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
     // Signed in (changing the number on the profile): their own number is not "taken".
     const me = await getSessionUser().catch(() => null);

@@ -70,7 +70,9 @@ export async function POST(req: Request, { params }: Params) {
   const me = await getSessionUser();
   try {
     requireSameOrigin(req);
-    requireRateLimit(req, me ? "event-rsvp-member" : "event-rsvp-public", { limit: me ? 20 : 5, windowMs: 60 * 60_000 });
+    // Per internet address. Mobile operators put many people behind one address, so
+    // this only stops floods; one SMS-verified number per account stops mass sign-ups.
+    requireRateLimit(req, me ? "event-rsvp-member" : "event-rsvp-public", { limit: 30, windowMs: 60 * 60_000 });
     let body: Payload;
     let photo: Buffer | undefined;
     let proofFile: Buffer | undefined;

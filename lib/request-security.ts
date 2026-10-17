@@ -35,6 +35,12 @@ export function consumeRateLimit(key: string, { limit, windowMs }: RateLimitOpti
   return true;
 }
 
+/** Milliseconds until `key` may be used again (0 when it may now). */
+export function rateLimitWait(key: string, now = Date.now()): number {
+  const entry = rateLimits.get(key);
+  return entry ? Math.max(0, entry.resetAt - now) : 0;
+}
+
 export function resetRateLimit(key: string): void {
   rateLimits.delete(key);
 }
@@ -51,7 +57,8 @@ export function requireRateLimit(req: Request, scope: string, options: RateLimit
       metadata: { scope, path: new URL(req.url).pathname },
       req,
     });
-    throw new AppError("RATE_LIMITED", 429, "Too many requests. Please try again later.");
+    const minutes = Math.max(1, Math.ceil(rateLimitWait(`${scope}:${clientAddress(req)}`) / 60_000));
+    throw new AppError("RATE_LIMITED", 429, `Too many attempts from your network. Please try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`);
   }
 }
 
