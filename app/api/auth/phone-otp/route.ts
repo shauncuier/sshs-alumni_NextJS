@@ -3,6 +3,7 @@ import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { requestPhoneOtp } from "@/lib/phone-otp";
 import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { getSessionUser } from "@/lib/session-user";
 
 // Texts a one-time code to the phone a new member is registering with.
 export async function POST(req: Request) {
@@ -10,7 +11,9 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     requireRateLimit(req, "phone-otp-send", { limit: 10, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
-    const result = await requestPhoneOtp(body.phone);
+    // Signed in (changing the number on the profile): their own number is not "taken".
+    const me = await getSessionUser().catch(() => null);
+    const result = await requestPhoneOtp(body.phone, Date.now(), { exceptUserId: me?.id });
     await logActivity({ category: "VERIFY", action: "phone_code.sent", summary: `SMS code sent to ${result.phone}`, targetType: "phone", targetId: result.phone, req });
     return NextResponse.json(result);
   } catch (err) {

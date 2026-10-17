@@ -10,7 +10,7 @@ vi.mock("@/lib/email", () => ({
 }));
 
 import { readVerifiedEmail, requestEmailOtp, verifyEmailOtp } from "@/lib/email-otp";
-import { readVerifiedPhone } from "@/lib/phone-otp";
+import { markSmsDown, readVerifiedPhone } from "@/lib/phone-otp";
 import { OTP_LENGTH } from "@/lib/phone-otp-format";
 import { POST as sendRoute } from "@/app/api/auth/email-otp/route";
 import { POST as verifyRoute } from "@/app/api/auth/email-otp/verify/route";
@@ -19,6 +19,8 @@ import { makeMember, resetDatabase } from "./helpers/db";
 beforeEach(async () => {
   mail.sent = [];
   mail.fail = false;
+  // Email codes are only offered while the SMS service is down (tests/phone-registry.test.ts).
+  markSmsDown();
   await resetDatabase();
 });
 

@@ -14,6 +14,7 @@ import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import { eventFeeRules } from "./service";
 import { ticketInfo } from "./tickets";
 import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type ProofInput, type RsvpInput } from "./types";
+import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 
 const ACTIVE_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] as const;
 
@@ -22,9 +23,10 @@ function normalizeTransactionId(value: string | null | undefined): string {
 }
 
 /**
- * A new member must prove a contact: the phone by SMS code, or, when the SMS fails,
- * the email by emailed code. A verified phone replaces the typed one; an email token
- * only counts for the exact address on the form.
+ * A new member must prove a contact: the phone by SMS code, or, only while the SMS
+ * service is down, the email by emailed code (lib/email-otp.ts refuses otherwise). A
+ * verified phone replaces the typed one; an email token only counts for the exact
+ * address on the form, and the typed number must still be a valid mobile number.
  */
 function checkContactVerified(account: AccountInput): AccountInput {
   if (account.phoneVerificationToken) {
@@ -35,7 +37,7 @@ function checkContactVerified(account: AccountInput): AccountInput {
     if (!verified || verified !== account.email?.trim().toLowerCase()) {
       throw new AppError("EMAIL_NOT_VERIFIED", 400, "Please verify your email address with the emailed code.");
     }
-    return account;
+    return { ...account, phone: canonicalPhone(account.phone) };
   }
   throw new AppError("CONTACT_NOT_VERIFIED", 400, "Please verify your phone number with the SMS code (or your email if the SMS does not arrive).");
 }
@@ -176,6 +178,8 @@ export async function registerForEvent(args: {
         // The membership flag was read before the transaction; re-check under the lock.
         if (!account.avatarUrl) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
         if (!account.proofFileUrl) throw proofRequired();
+        // One number, one account (checked again here: the SMS may be minutes old).
+        if (account.phone) await requirePhoneFree(account.phone, { db: tx });
         const created = await createMemberAccount(tx, account, passwordHash);
         userId = created.id;
         createdAccount = { email: created.email };
@@ -271,6 +275,7 @@ export async function registerForEvent(args: {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 15_000 })
     .catch((err: unknown) => {
       // A concurrent insert can still hit the unique constraints; report it clearly.
+      if (isPhoneClash(err)) throw new AppError("PHONE_TAKEN", 409, PHONE_TAKEN_MESSAGE);
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
         // Prisma 7's driver adapters (e.g. @prisma/adapter-mariadb) don't fill
         // meta.target; the offending unique index instead lives on

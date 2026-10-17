@@ -23,6 +23,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
+import ContactVerifyField, { type ContactVerification } from "@/components/events/ContactVerifyField";
 
 interface ProfileRecord {
   id: string;
@@ -147,6 +148,8 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [phoneVerification, setPhoneVerification] = useState<ContactVerification | null>(null);
+  const [phoneNeedsCode, setPhoneNeedsCode] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Avatar upload states
@@ -252,6 +255,13 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileData) return;
+    // A new number must be verified by SMS before it is saved.
+    const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
+    if (profileData.phone.trim() && digits(profileData.phone) !== digits(profile?.phone) && !phoneVerification) {
+      setPhoneNeedsCode(true);
+      setSaveError("Please verify your new mobile number with the SMS code first.");
+      return;
+    }
     setSaving(true);
     setSaveError(null);
 
@@ -269,12 +279,15 @@ export default function ProfilePage() {
         body: JSON.stringify({
           ...profileData,
           skills: parsedSkills,
+          phoneVerificationToken: phoneVerification?.token ?? null,
         }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Could not save your profile.");
       setProfile(body.profile);
       setProfileData(toForm(body.profile));
+      setPhoneVerification(null);
+      setPhoneNeedsCode(false);
       setIsEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -547,16 +560,17 @@ export default function ProfilePage() {
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                         />
                       </div>
-                      <div>
-                        <label htmlFor="pf-7" className="block font-bold text-slate-700 mb-1">Mobile Phone Number</label>
-                        <input id="pf-7"
-                          type="tel"
-                          value={profileData.phone}
-                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                          placeholder="+880 1711-000000"
-                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                        />
-                      </div>
+                      <ContactVerifyField
+                        id="pf-7"
+                        phone={profileData.phone}
+                        onPhoneChange={(v) => setProfileData({ ...profileData, phone: v })}
+                        email=""
+                        verification={phoneVerification}
+                        onVerification={setPhoneVerification}
+                        showRequired={phoneNeedsCode}
+                        allowEmail={false}
+                        currentPhone={profile.phone}
+                      />
                       <div className="flex flex-col justify-center gap-2 pt-2 sm:pt-4">
                         <label className="flex items-center gap-2 cursor-pointer select-none text-slate-700 font-semibold">
                           <input

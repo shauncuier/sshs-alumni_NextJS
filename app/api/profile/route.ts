@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { readVerifiedPhone } from "@/lib/phone-otp";
+import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 
 export async function GET() {
   try {
@@ -57,6 +59,7 @@ export async function PUT(req: Request) {
       section,
       bio,
       phone,
+      phoneVerificationToken,
       skills,
       linkedin,
       facebook,
@@ -102,6 +105,22 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Account not found" }, { status: 404 });
       }
 
+      // A new mobile number must be proved by SMS code and belong to nobody else.
+      // An unchanged number (in any format) and an empty field leave it as it is.
+      const current = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { phone: true } });
+      let newPhone: string | undefined;
+      if (typeof phone === "string" && phone.trim()) {
+        const wanted = canonicalPhone(phone);
+        const before = current?.phone ? current.phone.replace(/\D/g, "").slice(-10) : null;
+        if (before !== wanted.slice(1)) {
+          if (!phoneVerificationToken || readVerifiedPhone(phoneVerificationToken) !== wanted) {
+            throw new AppError("PHONE_NOT_VERIFIED", 400, "Please verify your new mobile number with the SMS code first.");
+          }
+          await requirePhoneFree(wanted, { exceptUserId: user.id });
+          newPhone = wanted;
+        }
+      }
+
       const batchYear = (session.user as unknown as { batchYear?: number })?.batchYear;
       if (!batchYear) {
         const existing = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
@@ -121,7 +140,7 @@ export async function PUT(req: Request) {
           rollNumber: optional(rollNumber),
           section: optional(section),
           bio: optional(bio),
-          phone: optional(phone),
+          phone: newPhone,
           skills: Array.isArray(skills) ? skills : undefined,
           linkedin: safeUrl(linkedin),
           facebook: safeUrl(facebook),
@@ -145,7 +164,7 @@ export async function PUT(req: Request) {
           rollNumber: optional(rollNumber) ?? null,
           section: optional(section) ?? null,
           bio: optional(bio) ?? null,
-          phone: optional(phone) ?? null,
+          phone: newPhone ?? null,
           skills: Array.isArray(skills) ? skills : [],
           linkedin: safeUrl(linkedin) ?? null,
           facebook: safeUrl(facebook) ?? null,
@@ -170,6 +189,8 @@ export async function PUT(req: Request) {
       });
       return NextResponse.json({ message: "Profile updated successfully", profile: updated });
     } catch (dbErr) {
+      if (dbErr instanceof AppError) throw dbErr;
+      if (isPhoneClash(dbErr)) throw new AppError("PHONE_TAKEN", 409, PHONE_TAKEN_MESSAGE);
       console.error("Profile update failed:", dbErr);
       return NextResponse.json({ error: "Could not save your profile. Please try again." }, { status: 503 });
     }

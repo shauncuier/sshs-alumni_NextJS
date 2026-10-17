@@ -4,6 +4,7 @@ import { AppError } from "@/lib/app-error";
 import { hashMemberPassword } from "@/lib/members/create-member";
 import { isEnvSuperAdmin } from "./super-admin";
 import { FIRST_SSC_BATCH } from "@/lib/data";
+import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 
 /**
  * User management for the admin console. Who may do what:
@@ -141,7 +142,7 @@ export async function createUser(actor: Actor, input: CreateUserInput): Promise<
   if (actor.role !== "ADMIN" && actor.role !== "SUPER_ADMIN") throw new AppError("FORBIDDEN", 403, "Only admins can manage users.");
   const fullName = typeof input.fullName === "string" ? input.fullName.trim() : "";
   const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-  const phone = typeof input.phone === "string" ? input.phone.trim() : "";
+  const phone = typeof input.phone === "string" && input.phone.trim() ? canonicalPhone(input.phone) : "";
   const batch = Number(input.sscBatch);
   if (!fullName) throw new AppError("INVALID_USER", 400, "Please enter the full name.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AppError("INVALID_USER", 400, "Please enter a valid email address.");
@@ -153,6 +154,8 @@ export async function createUser(actor: Actor, input: CreateUserInput): Promise<
   if (isEnvSuperAdmin(email)) throw new AppError("EMAIL_EXISTS", 409, "That address belongs to the super admin.");
   const passwordHash = await hashMemberPassword(input.password);
   if (!passwordHash) throw new AppError("INVALID_USER", 400, `The password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+
+  if (phone) await requirePhoneFree(phone);
 
   try {
     const user = await prisma.user.create({
@@ -180,6 +183,7 @@ export async function createUser(actor: Actor, input: CreateUserInput): Promise<
     console.info(`[admin-users] ${actor.email} created ${email} as ${user.role}`);
     return toRow(user);
   } catch (err) {
+    if (isPhoneClash(err)) throw new AppError("PHONE_TAKEN", 409, PHONE_TAKEN_MESSAGE);
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       throw new AppError("EMAIL_EXISTS", 409, "An account with this email already exists.");
     }

@@ -14,17 +14,24 @@ type Channel = ContactVerification["via"];
 
 const ENDPOINTS: Record<Channel, string> = { phone: "/api/auth/phone-otp", email: "/api/auth/email-otp" };
 
+/** Errors that mean the SMS service itself is down (not a wrong or used number). */
+const SMS_DOWN_CODES = ["SMS_FAILED", "SMS_UNAVAILABLE"];
+
 async function post(url: string, body: unknown) {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+  if (!res.ok) throw Object.assign(new Error(data.error || "Something went wrong. Please try again."), { code: data.code as string | undefined });
   return data;
 }
 
 /**
- * Mobile number with SMS code verification, and an email code as the fallback when
- * the SMS fails or never arrives. Reports the verification (or null when it no longer
- * holds) through onVerification; registration needs one of the two.
+ * Mobile number with SMS code verification. Only when the SMS service is down (the
+ * send failed on the server) is an email code offered instead; a wrong number, a
+ * number another account has, or a slow SMS never opens that door. Reports the
+ * verification (or null when it no longer holds) through onVerification.
+ *
+ * `currentPhone` (profile page): the number already on the account; while the field
+ * still shows it, nothing needs verifying.
  */
 export default function ContactVerifyField({
   phone,
@@ -33,6 +40,9 @@ export default function ContactVerifyField({
   verification,
   onVerification,
   showRequired,
+  allowEmail = true,
+  currentPhone,
+  id = "reg-phone",
 }: {
   phone: string;
   onPhoneChange: (phone: string) => void;
@@ -42,6 +52,10 @@ export default function ContactVerifyField({
   onVerification: (v: ContactVerification | null) => void;
   /** Set once the member tried to continue without verifying. */
   showRequired: boolean;
+  /** False where only the phone counts (changing the number on the profile). */
+  allowEmail?: boolean;
+  currentPhone?: string | null;
+  id?: string;
 }) {
   const [channel, setChannel] = useState<Channel>("phone");
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -84,7 +98,7 @@ export default function ContactVerifyField({
       setResendIn(RESEND_SECONDS);
     } catch (err) {
       setError((err as Error).message);
-      if (via === "phone") setSmsFailed(true);
+      if (via === "phone") setSmsFailed(SMS_DOWN_CODES.includes((err as { code?: string }).code ?? ""));
     } finally {
       setBusy(null);
     }
@@ -106,18 +120,20 @@ export default function ContactVerifyField({
     }
   };
 
-  const verified = Boolean(verification);
+  const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
+  const unchanged = Boolean(currentPhone) && digits(phone) === digits(currentPhone);
+  const verified = Boolean(verification) || unchanged;
   const phoneLocked = verification?.via === "phone";
-  // Offer email once the SMS failed, or while waiting for an SMS code that may not come.
-  const offerEmail = !verified && (smsFailed || (challenge !== null && channel === "phone"));
-  const message = error ?? (showRequired && !verified ? "Please verify your mobile number with the SMS code, or by email if the SMS does not arrive." : null);
+  // Email only as a backup for an SMS service that is down.
+  const offerEmail = allowEmail && !verified && smsFailed;
+  const message = error ?? (showRequired && !verified ? "Please verify your mobile number with the SMS code." : null);
 
   return (
     <div className="sm:col-span-2 space-y-2">
-      <label htmlFor="reg-phone" className={label}>Mobile number *</label>
+      <label htmlFor={id} className={label}>Mobile number *</label>
       <div className="flex gap-2">
         <input
-          id="reg-phone"
+          id={id}
           type="tel"
           inputMode="tel"
           autoComplete="tel"
@@ -127,9 +143,9 @@ export default function ContactVerifyField({
           className={`${input} ${phoneLocked ? "bg-emerald-50 border-emerald-300" : ""}`}
           value={phone}
           onChange={(e) => changePhone(e.target.value)}
-          aria-describedby="reg-phone-help"
+          aria-describedby={`${id}-help`}
         />
-        {verified ? (
+        {unchanged && !verification ? null : verified ? (
           <button
             type="button"
             onClick={() => {
@@ -150,25 +166,27 @@ export default function ContactVerifyField({
         )}
       </div>
 
-      {verification ? (
+      {unchanged && !verification ? (
+        <p id={`${id}-help`} className="text-[11px] text-slate-500">Your current number. Type a new one to change it; we text a code to the new number.</p>
+      ) : verification ? (
         <p className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
           {verification.via === "phone" ? "Number verified by SMS" : `Verified by email (${verification.target})`}
         </p>
       ) : (
-        <p id="reg-phone-help" className="text-[11px] text-slate-500">
+        <p id={`${id}-help`} className="text-[11px] text-slate-500">
           A Bangladeshi mobile number. We text you a {OTP_LENGTH}-digit code to confirm it.
         </p>
       )}
 
       {challenge && !verified && (
         <div className="space-y-1.5">
-          <label htmlFor="reg-otp" className={label}>
+          <label htmlFor={`${id}-otp`} className={label}>
             Code sent to {sentTo} {channel === "email" ? "by email" : "by SMS"}
           </label>
           <div className="flex gap-2">
             <input
-              id="reg-otp"
+              id={`${id}-otp`}
               inputMode="numeric"
               autoComplete="one-time-code"
               pattern={`[0-9]{${OTP_LENGTH}}`}
@@ -203,7 +221,7 @@ export default function ContactVerifyField({
 
       {offerEmail && (
         <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
-          <span>{smsFailed ? "SMS could not be sent." : "SMS not arriving?"} Get the code by email{email.trim() ? ` at ${email.trim()}` : " (fill in your email above first)"}.</span>
+          <span>Our SMS service is not working right now. Get the code by email{email.trim() ? ` at ${email.trim()}` : " (fill in your email above first)"} instead.</span>
           <button
             type="button"
             onClick={() => void sendCode("email")}

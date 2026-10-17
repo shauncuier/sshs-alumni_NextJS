@@ -4,12 +4,13 @@ import { AppError } from "@/lib/app-error";
 import { getEmailProvider, sendEmail } from "@/lib/email";
 import { checkChallenge, issueChallenge, issueVerified, newOtpCode, OTP_RESEND_MS, OTP_TTL_MS, readVerified } from "@/lib/otp";
 import { consumeRateLimit } from "@/lib/request-security";
+import { smsDown } from "@/lib/phone-otp";
 
 /**
- * Email verification by one-time code: the fallback when a member's SMS code
- * fails or never arrives (see lib/otp.ts for the token flow). Registration
- * accepts an email token instead of a phone token, and only for the address
- * that was verified.
+ * Email verification by one-time code: the backup for when the SMS service is down
+ * (lib/phone-otp.ts smsDown). Refused while SMS works, so members always verify
+ * their mobile number when they can. Registration accepts an email token instead of
+ * a phone token, and only for the address that was verified.
  */
 
 export const EMAIL_OTP_SITE_HOURLY_LIMIT = 300;
@@ -29,6 +30,9 @@ export function normalizeEmail(raw: unknown): string {
 
 export async function requestEmailOtp(rawEmail: unknown, now = Date.now()): Promise<{ challenge: string; email: string; expiresAt: number }> {
   const email = normalizeEmail(rawEmail);
+  if (!smsDown(now)) {
+    throw new AppError("SMS_WORKING", 409, "Please verify your mobile number with the SMS code. Email codes are only for when SMS is not working.");
+  }
   // Without Resend or SMTP the code is only printed to the server log. Fine while
   // developing, never in production.
   if (getEmailProvider() === "console" && process.env.NODE_ENV === "production") {
