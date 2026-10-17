@@ -7,7 +7,7 @@ import { FIRST_BATCH } from "../lib/batches";
 import { normalizePackages, parseTaka } from "../lib/events/pricing";
 import { ensureSuperAdmin, envSuperAdminEmail, type EnsureResult } from "../lib/admin/super-admin";
 import { backfillEventJsonColumns } from "./backfill-events";
-import { MEMBERSHIP_EVENT_ID, membershipEvent, membershipGuestTypes } from "./membership-event";
+import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGuestTypes } from "./membership-event";
 import { demoEvents } from "./demo-events";
 
 /**
@@ -92,6 +92,7 @@ export async function seedEvent(e: EventItem, opts: { membership?: boolean } = {
       isMegaEvent: e.isMegaEvent ?? false,
       isMembershipEvent: membership,
       guestTypes: (membership ? membershipGuestTypes : []) as unknown as Prisma.InputJsonValue,
+      batchFees: (membership ? membershipBatchFees : []) as unknown as Prisma.InputJsonValue,
       agenda: (e.agenda ?? []) as unknown as Prisma.InputJsonValue,
       highlights: e.highlights ?? [],
       packages: normalizePackages(e.packages ?? []) as unknown as Prisma.InputJsonValue,

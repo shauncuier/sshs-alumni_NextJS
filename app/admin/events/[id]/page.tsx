@@ -1,6 +1,7 @@
 "use client";
 
 import GuestTypesEditor from "@/components/admin/GuestTypesEditor";
+import BatchFeesEditor from "@/components/admin/BatchFeesEditor";
 import { Toast, useToast } from "@/components/admin/Toast";
 import React, { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
@@ -119,6 +120,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
         isMegaEvent: merged.isMegaEvent, isMembershipEvent: merged.isMembershipEvent, registrationFee: merged.registrationFeeAmount,
         // Guest types replace the older extra-adult / child fees once the event is saved.
         guestTypes: merged.guestTypes.filter((g) => g.name.trim()), extraAdultFee: 0, childFee: 0,
+        batchFees: merged.batchFees.filter((r) => r.fromBatch && r.toBatch),
         paymentInstructions: merged.paymentInstructions,
         highlights: merged.highlights, agenda: merged.agenda,
         packages: merged.packages.map((p) => ({ ...p, price: p.priceAmount })),
@@ -523,6 +525,8 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
             </label>
             <p className="text-[11px] text-emerald-700">Used when the event has no packages; the public fee text is generated from it.</p>
           </div>
+
+          <BatchFeesEditor value={event.batchFees} mainFee={event.registrationFeeAmount} onChange={(batchFees) => setEvent({ ...event, batchFees })} />
 
           <GuestTypesEditor value={event.guestTypes} onChange={(guestTypes) => setEvent({ ...event, guestTypes, customGuestTypes: true })} />
 

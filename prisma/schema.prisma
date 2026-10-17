@@ -60,16 +60,16 @@ enum PaymentGateway {
 }
 
 model User {
-  id           String             @id @default(uuid()) @db.VarChar(36)
-  email        String             @unique
-  passwordHash String
-  role         Role               @default(ALUMNI)
-  status       VerificationStatus @default(PENDING)
-  sessionVersion Int               @default(0)
+  id             String             @id @default(uuid()) @db.VarChar(36)
+  email          String             @unique
+  passwordHash   String
+  role           Role               @default(ALUMNI)
+  status         VerificationStatus @default(PENDING)
+  sessionVersion Int                @default(0)
   /// Set when an admin disables the account: it can no longer sign in, staff included.
-  disabledAt   DateTime?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  disabledAt     DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   profile              AlumniProfile?
   posts                Post[]
@@ -194,6 +194,8 @@ model Event {
   extraAdultFee        Float         @default(0)
   childFee             Float         @default(0)
   /// [{ name, price, max }]: guests a member can add (e.g. Spouse, Child). Empty: extraAdultFee / childFee apply.
+  /// The member's fee by SSC batch: [{ fromBatch, toBatch, price }] (lib/events/pricing.ts).
+  batchFees            Json          @default("[]")
   guestTypes           Json          @default("[]")
   paymentInstructions  String?       @db.Text
 
@@ -383,17 +385,17 @@ model Achievement {
 /// published albums are public; rows that existed before isPublished (seeded
 /// samples) become unpublished.
 model GalleryAlbum {
-  id          String   @id @default(uuid()) @db.VarChar(36)
+  id          String  @id @default(uuid()) @db.VarChar(36)
   title       String
   category    String // one of GALLERY_CATEGORIES in lib/gallery.ts
-  description String?  @db.Text
+  description String? @db.Text
   /// Cover photo; defaults to the first photo when empty.
-  coverUrl    String?  @db.VarChar(500)
-  photosCount Int      @default(0)
+  coverUrl    String? @db.VarChar(500)
+  photosCount Int     @default(0)
   year        Int?
-  isPublished Boolean  @default(false)
-  createdBy   String?  @db.VarChar(254)
-  updatedBy   String?  @db.VarChar(254)
+  isPublished Boolean @default(false)
+  createdBy   String? @db.VarChar(254)
+  updatedBy   String? @db.VarChar(254)
 
   photos GalleryPhoto[]
 

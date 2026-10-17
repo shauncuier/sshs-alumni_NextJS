@@ -8,7 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RSVPModal from "@/components/events/RSVPModal";
 import type { PublicEvent, MemberRegistration } from "@/lib/events/types";
-import { formatTaka, formatDeadline } from "@/lib/events/pricing";
+import { formatTaka, formatDeadline, memberFeeLabel, memberFeeLines } from "@/lib/events/pricing";
 import {
   Calendar,
   Clock,
@@ -151,9 +151,11 @@ function EventDetailView({
 
   // With packages the price starts at the cheapest package; otherwise it is the flat fee.
   const lowestPackagePrice = event.packages.length > 0 ? Math.min(...event.packages.map((p) => p.priceAmount)) : null;
+  const feeRules = { registrationFee: event.registrationFeeAmount, batchFees: event.batchFees, extraAdultFee: event.extraAdultFee, childFee: event.childFee, packages: [] };
+  const feeLines = memberFeeLines(feeRules);
   const priceLabel =
     lowestPackagePrice === null
-      ? formatTaka(event.registrationFeeAmount)
+      ? memberFeeLabel(feeRules)
       : lowestPackagePrice > 0
         ? `From ${formatTaka(lowestPackagePrice)}`
         : "Free";
@@ -342,10 +344,19 @@ function EventDetailView({
                 <div className="bg-gradient-to-br from-[#06281e] via-[#0b3d2c] to-[#041a13] text-white p-6 sm:p-7 rounded-3xl border border-emerald-600/40 shadow-xl space-y-4">
                   <h3 className="text-lg sm:text-xl font-black">Registration fees</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
-                      <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Member</span>
-                      <div className="text-2xl font-black">{priceLabel}</div>
-                    </div>
+                    {lowestPackagePrice === null ? (
+                      feeLines.map((l) => (
+                        <div key={l.label} className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                          <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">{l.label}</span>
+                          <div className="text-2xl font-black">{formatTaka(l.price)}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                        <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">Member</span>
+                        <div className="text-2xl font-black">{priceLabel}</div>
+                      </div>
+                    )}
                     {paidGuests.map((g) => (
                       <div key={g.name} className="bg-white/10 p-4 rounded-2xl border border-white/15">
                         <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">

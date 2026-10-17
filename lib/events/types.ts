@@ -30,6 +30,13 @@ export interface GuestTypeDef {
   max: number;
 }
 
+/** The member's own fee for a range of SSC batches (e.g. 1989–2014 ৳1,500), as stored in Event.batchFees. */
+export interface BatchFeeDef {
+  fromBatch: number;
+  toBatch: number;
+  price: number;
+}
+
 /** Guests on one registration, with the price each paid then. */
 export interface GuestLine {
   name: string;
@@ -120,6 +127,8 @@ export type PublicEvent = Omit<EventItem, "packages"> & {
   guestTypes: GuestTypeDef[];
   /** True when the admin defined the guest types (false: the older pair). */
   customGuestTypes: boolean;
+  /** The member's fee by SSC batch; batches outside every range pay registrationFeeAmount. */
+  batchFees: BatchFeeDef[];
   /** Extra payment instructions for this event only; the association's own come from paymentMethods. */
   paymentInstructions: string | null;
   /** Methods members can pay with (Admin → Payment settings). */

@@ -421,3 +421,33 @@ describe("membership event standing (the /jubilee page)", () => {
     expect(await membershipEventStanding(event.id, member.id)).toBe("MEMBER");
   });
 });
+
+describe("fee by SSC batch", () => {
+  it("charges the joiner the fee of the batch on the form, and a signed-in account its profile's batch", async () => {
+    await makeEvent({
+      slug: "jubilee",
+      isMembershipEvent: true,
+      registrationFee: 1500,
+      paymentInstructions: "bKash",
+      batchFees: [
+        { fromBatch: 1989, toBatch: 2014, price: 1500 },
+        { fromBatch: 2015, toBatch: 2026, price: 1250 },
+      ],
+      guestTypes: [{ name: "Spouse", price: 600, max: 1 }],
+    });
+    const { registration } = await registerForEvent({
+      slug: "jubilee",
+      sessionUserId: null,
+      account: { ...account, sscBatch: 2018 },
+      photo,
+      proof,
+      rsvp: { guests: { Spouse: 1 }, paymentMethod: "bKash", transactionId: "TRX20180001" },
+    });
+    expect(registration.totalFee).toBe(1250 + 600);
+
+    const staff = await makeMember({ role: "MODERATOR", status: "PENDING" });
+    await prisma.alumniProfile.update({ where: { userId: staff.id }, data: { sscBatch: 1995 } });
+    const other = await registerForEvent({ slug: "jubilee", sessionUserId: staff.id, rsvp: { paymentMethod: "bKash", transactionId: "TRX19950001" } });
+    expect(other.registration.totalFee).toBe(1500);
+  });
+});

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { CalendarDays, CheckCircle2, Clock, Hourglass, MapPin, ArrowDown, Ticket } from "lucide-react";
 import RegisterClientView from "@/app/register/RegisterClientView";
 import { getMembershipEvent } from "@/lib/events/service";
-import { formatDeadline, formatTaka } from "@/lib/events/pricing";
+import { formatDeadline, formatTaka, memberFeeLines } from "@/lib/events/pricing";
 import { cleanSource, membershipEventStanding, type MembershipStanding } from "@/lib/events/registrations";
 import { getMemberSession } from "@/lib/session-user";
 import { eventDescription, pageMetadata, shareCard } from "@/lib/seo";
@@ -67,6 +67,7 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
   const deadline = event?.registrationDeadline ? new Date(event.registrationDeadline) : null;
   const daysLeft = deadline ? daysUntil(deadline) : null;
   const guestFees = (event?.guestTypes ?? []).filter((g) => g.price > 0);
+  const feeLines = event ? memberFeeLines({ registrationFee: event.registrationFeeAmount, batchFees: event.batchFees, extraAdultFee: event.extraAdultFee, childFee: event.childFee, packages: [] }) : [];
   const steps: [string, string][] = [
     ["তথ্য দিন", "Details, photo and SSC proof"],
     ["ফি দিন", `${listOr(event?.paymentMethods ?? []) || "bKash or Nagad"}, then the transaction ID`],
@@ -142,12 +143,24 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             event && (
               <div className="bg-white rounded-3xl shadow-xl shadow-emerald-950/10 border border-slate-200 p-5 sm:p-6 space-y-4">
                 <div className="flex items-end justify-between gap-4 flex-wrap">
-                  <div>
+                  <div className="w-full">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Registration fee</p>
-                    <p className="text-4xl font-black text-slate-900 leading-none mt-1">
-                      {formatTaka(event.registrationFeeAmount)}
-                      <span className="text-sm font-semibold text-slate-500"> / alumnus</span>
-                    </p>
+                    {feeLines.length === 1 ? (
+                      <p className="text-4xl font-black text-slate-900 leading-none mt-1">
+                        {formatTaka(feeLines[0].price)}
+                        <span className="text-sm font-semibold text-slate-500"> / alumnus</span>
+                      </p>
+                    ) : (
+                      // Different fees by SSC batch: one row each.
+                      <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {feeLines.map((l) => (
+                          <li key={l.label} className="flex items-baseline justify-between gap-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 px-4 py-2.5">
+                            <span className="text-xs font-bold text-emerald-900">{l.label}</span>
+                            <span className="text-2xl font-black text-slate-900">{formatTaka(l.price)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   {guestFees.length > 0 && (
                     <ul className="flex flex-wrap gap-2 text-xs">

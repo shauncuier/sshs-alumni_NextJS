@@ -220,7 +220,9 @@ export async function registerForEvent(args: {
         }
       }
 
-      const price = computeFee(rules, args.rsvp);
+      // The member's fee depends on their SSC batch: the one on the join form, or their profile's.
+      const sscBatch = account?.sscBatch ?? (await tx.alumniProfile.findUnique({ where: { userId }, select: { sscBatch: true } }))?.sscBatch;
+      const price = computeFee(rules, args.rsvp, { sscBatch });
       if (event.isMembershipEvent && price.fee <= 0) {
         throw new AppError("MEMBERSHIP_MUST_BE_PAID", 400, "Membership registration requires a fee.");
       }

@@ -1,5 +1,5 @@
 import { AppError } from "@/lib/app-error";
-import type { GuestLine, GuestTypeDef, PackageDef } from "./types";
+import type { BatchFeeDef, GuestLine, GuestTypeDef, PackageDef } from "./types";
 
 export const MAX_EXTRA_GUESTS = 10;
 const MAX_DONATION = 1_000_000;
@@ -77,8 +77,44 @@ export function normalizeGuestTypes(raw: unknown): GuestTypeDef[] {
   });
 }
 
+/** Cleans admin input or stored JSON into batch fee ranges: whole years, from ≤ to, no overlaps, sorted. */
+export function normalizeBatchFees(raw: unknown): BatchFeeDef[] {
+  if (!Array.isArray(raw)) return [];
+  const ranges = raw.flatMap((item): BatchFeeDef[] => {
+    if (!item || typeof item !== "object") return [];
+    const r = item as Record<string, unknown>;
+    const from = Number(r.fromBatch);
+    const to = Number(r.toBatch);
+    const price = parseTaka(r.price);
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1900 || to > 2200 || Number.isNaN(price)) return [];
+    return [{ fromBatch: Math.min(from, to), toBatch: Math.max(from, to), price }];
+  });
+  ranges.sort((a, b) => a.fromBatch - b.fromBatch);
+  for (let i = 1; i < ranges.length; i++) {
+    if (ranges[i].fromBatch <= ranges[i - 1].toBatch) {
+      throw new AppError(
+        "INVALID_BATCH_FEES",
+        400,
+        `The batch ranges ${ranges[i - 1].fromBatch}–${ranges[i - 1].toBatch} and ${ranges[i].fromBatch}–${ranges[i].toBatch} overlap.`
+      );
+    }
+  }
+  return ranges;
+}
+
+/** Stored batch fees, never throwing (a bad row in the database must not break the event page). */
+export function readBatchFees(raw: unknown): BatchFeeDef[] {
+  try {
+    return normalizeBatchFees(raw);
+  } catch {
+    return [];
+  }
+}
+
 export interface FeeEvent {
   registrationFee: number;
+  /** The member's fee by SSC batch; outside every range the registrationFee applies. */
+  batchFees?: BatchFeeDef[];
   extraAdultFee: number;
   childFee: number;
   packages: PackageDef[];
@@ -96,6 +132,38 @@ export function guestTypesOf(event: FeeEvent): GuestTypeDef[] {
     { name: LEGACY_ADULT, price: event.extraAdultFee, max: MAX_EXTRA_GUESTS },
     { name: LEGACY_CHILD, price: event.childFee, max: MAX_EXTRA_GUESTS },
   ];
+}
+
+/** The member's own fee for an SSC batch (no package): the batch's range, else the main fee. */
+export function memberFee(event: FeeEvent, sscBatch?: number | string | null): number {
+  const batch = Number(sscBatch);
+  const range = Number.isInteger(batch) ? (event.batchFees ?? []).find((r) => batch >= r.fromBatch && batch <= r.toBatch) : undefined;
+  return range ? range.price : event.registrationFee;
+}
+
+/** Lowest and highest member fee (no package), for "৳1,250–৳1,500" style labels. */
+export function memberFeeRange(event: FeeEvent): { min: number; max: number } {
+  const prices = [event.registrationFee, ...(event.batchFees ?? []).map((r) => r.price)];
+  return { min: Math.min(...prices), max: Math.max(...prices) };
+}
+
+/**
+ * The member fees to show: one line per batch range ("Batches 1989–2014", 1500), plus
+ * "Other batches" when the main fee differs from every range. One "Member" line when
+ * the event has no batch ranges.
+ */
+export function memberFeeLines(event: FeeEvent): { label: string; price: number }[] {
+  const ranges = event.batchFees ?? [];
+  if (ranges.length === 0) return [{ label: "Member", price: event.registrationFee }];
+  const lines = ranges.map((r) => ({ label: r.fromBatch === r.toBatch ? `Batch ${r.fromBatch}` : `Batches ${r.fromBatch}–${r.toBatch}`, price: r.price }));
+  if (!ranges.some((r) => r.price === event.registrationFee)) lines.push({ label: "Other batches", price: event.registrationFee });
+  return lines;
+}
+
+/** "৳1,500" or, with batch ranges, "৳1,250–৳1,500". */
+export function memberFeeLabel(event: FeeEvent): string {
+  const { min, max } = memberFeeRange(event);
+  return min === max ? formatTaka(min) : `${formatTaka(min)}–${formatTaka(max)}`;
 }
 
 export interface FeeResult {
@@ -134,7 +202,9 @@ export function computeFee(
     extraAdults?: number;
     extraChildren?: number;
     donationAmount?: number;
-  }
+  },
+  /** The member's SSC batch: picks their fee from the event's batch ranges. */
+  member: { sscBatch?: number | string | null } = {}
 ): FeeResult {
   const types = guestTypesOf(event);
   const custom = Boolean(event.guestTypes && event.guestTypes.length > 0);
@@ -160,7 +230,7 @@ export function computeFee(
     if (!pkg) throw new AppError("UNKNOWN_PACKAGE", 400, "Please choose one of the event's packages.");
   }
 
-  const base = pkg ? pkg.price : event.registrationFee;
+  const base = pkg ? pkg.price : memberFee(event, member.sscBatch);
   const guestFees = pkg?.guestsFree ? 0 : lines.reduce((sum, l) => sum + l.count * l.price, 0);
   const fee = base + guestFees;
   const added = lines.reduce((sum, l) => sum + l.count, 0);

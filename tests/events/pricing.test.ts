@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeFee, formatTaka, isPaidEvent, normalizeGuestTypes, normalizePackages, parseTaka, storedGuests } from "@/lib/events/pricing";
+import { computeFee, formatTaka, isPaidEvent, memberFee, memberFeeLabel, memberFeeLines, normalizeBatchFees, normalizeGuestTypes, normalizePackages, parseTaka, readBatchFees, storedGuests } from "@/lib/events/pricing";
 
 // The Golden Jubilee's real prices ("Jubilee price model").
 const jubilee = {
@@ -116,5 +116,56 @@ describe("guest types", () => {
   it("reads guests stored on registrations, old and new", () => {
     expect(storedGuests({ guests: [{ name: "Spouse", count: 1, price: 700 }], extraAdults: 0, extraChildren: 0 })).toEqual([{ name: "Spouse", count: 1, price: 700 }]);
     expect(storedGuests({ guests: [], extraAdults: 2, extraChildren: 0 })).toEqual([{ name: "Extra adult", count: 2, price: 0 }]);
+  });
+});
+
+describe("member fee by SSC batch", () => {
+  const jubilee = {
+    registrationFee: 1500,
+    extraAdultFee: 0,
+    childFee: 0,
+    packages: [],
+    batchFees: [
+      { fromBatch: 1989, toBatch: 2014, price: 1500 },
+      { fromBatch: 2015, toBatch: 2026, price: 1250 },
+    ],
+    guestTypes: [
+      { name: "Spouse", price: 600, max: 1 },
+      { name: "Child (5 years or older)", price: 600, max: 5 },
+    ],
+  };
+
+  it("charges each batch its range's fee, and the main fee outside every range", () => {
+    expect(memberFee(jubilee, 1989)).toBe(1500);
+    expect(memberFee(jubilee, 2014)).toBe(1500);
+    expect(memberFee(jubilee, "2015")).toBe(1250);
+    expect(memberFee(jubilee, 2026)).toBe(1250);
+    expect(memberFee(jubilee, 1980)).toBe(1500);
+    expect(memberFee(jubilee, null)).toBe(1500);
+  });
+
+  it("adds guests on top of the batch fee", () => {
+    const fee = computeFee(jubilee, { guests: { Spouse: 1, "Child (5 years or older)": 2 } }, { sscBatch: 2018 });
+    expect(fee.fee).toBe(1250 + 600 + 2 * 600);
+    expect(computeFee(jubilee, {}, { sscBatch: 2001 }).total).toBe(1500);
+  });
+
+  it("cleans ranges and refuses overlapping ones", () => {
+    expect(normalizeBatchFees([{ fromBatch: "2026", toBatch: 2015, price: "৳1,250" }, { fromBatch: 1989, toBatch: 2014, price: 1500 }, { fromBatch: "x" }])).toEqual([
+      { fromBatch: 1989, toBatch: 2014, price: 1500 },
+      { fromBatch: 2015, toBatch: 2026, price: 1250 },
+    ]);
+    expect(() => normalizeBatchFees([{ fromBatch: 1989, toBatch: 2015, price: 1 }, { fromBatch: 2015, toBatch: 2026, price: 2 }])).toThrow(/overlap/);
+    expect(readBatchFees("not a list")).toEqual([]);
+  });
+
+  it("labels the fees for the public pages", () => {
+    expect(memberFeeLabel(jubilee)).toBe("৳1,250–৳1,500");
+    expect(memberFeeLines(jubilee)).toEqual([
+      { label: "Batches 1989–2014", price: 1500 },
+      { label: "Batches 2015–2026", price: 1250 },
+    ]);
+    expect(memberFeeLines({ ...jubilee, registrationFee: 2000 }).at(-1)).toEqual({ label: "Other batches", price: 2000 });
+    expect(memberFeeLines({ ...jubilee, batchFees: [] })).toEqual([{ label: "Member", price: 1500 }]);
   });
 });

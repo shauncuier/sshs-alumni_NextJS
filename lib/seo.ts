@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { schoolInfo } from "@/lib/data";
 import type { PublicEvent } from "@/lib/events/types";
+import { memberFeeLabel, memberFeeRange } from "@/lib/events/pricing";
 import type { AlumniStoryItem, NewsItem } from "@/lib/data";
 import type { JobListing } from "@/lib/career-data";
 
@@ -225,7 +226,8 @@ export function eventDescription(e: PublicEvent): string {
   const date = new Date(`${e.date}T12:00:00+06:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" });
   const place = [e.venue, e.locationCity].filter(Boolean).join(", ");
   const guests = e.guestTypes.filter((g) => g.price > 0).map((g) => `${g.name.toLowerCase()} ৳${g.price.toLocaleString("en-US")}`);
-  const price = e.registrationFeeAmount > 0 ? ` Member ৳${e.registrationFeeAmount.toLocaleString("en-US")}${guests.length ? `, ${guests.join(", ")}` : ""}.` : "";
+  const fee = { registrationFee: e.registrationFeeAmount, batchFees: e.batchFees, extraAdultFee: 0, childFee: 0, packages: [] };
+  const price = e.registrationFeeAmount > 0 ? ` Member ${memberFeeLabel(fee)}${guests.length ? `, ${guests.join(", ")}` : ""}.` : "";
   return `${date}, ${place}.${price} Register online.`;
 }
 
@@ -253,7 +255,7 @@ export function eventJsonLd(e: PublicEvent) {
     offers: {
       "@type": "Offer",
       url,
-      price: e.registrationFeeAmount,
+      price: memberFeeRange({ registrationFee: e.registrationFeeAmount, batchFees: e.batchFees, extraAdultFee: 0, childFee: 0, packages: [] }).min,
       priceCurrency: "BDT",
       availability: e.closedReason === "FULL" ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
       ...(e.registrationDeadline ? { validThrough: e.registrationDeadline } : {}),

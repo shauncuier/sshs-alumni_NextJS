@@ -224,6 +224,9 @@ export default function RegistrationForm({
     return <p role="status" className="text-xs font-bold text-rose-700">{event.closedMessage}</p>;
   }
 
+  // The member's fee can depend on their SSC batch: the one picked below, or a signed-in member's.
+  const memberBatch = needsAccount ? account.sscBatch || null : (session?.user as { batchYear?: number } | undefined)?.batchYear ?? null;
+  const batchPriced = event.batchFees.length > 0 && !packageName;
   let total: ReturnType<typeof computeFee> | null = null;
   try {
     total = computeFee(
@@ -233,8 +236,10 @@ export default function RegistrationForm({
         childFee: event.childFee,
         packages: normalizePackages(event.packages.map((p) => ({ ...p, price: p.priceAmount }))),
         guestTypes: event.customGuestTypes ? event.guestTypes : [],
+        batchFees: event.batchFees,
       },
-      { packageName, guests: guestCounts, donationAmount: donation ? Number(donation) : 0 }
+      { packageName, guests: guestCounts, donationAmount: donation ? Number(donation) : 0 },
+      { sscBatch: memberBatch }
     );
   } catch {
     total = null;
@@ -595,11 +600,19 @@ export default function RegistrationForm({
             )}
           </div>
 
-          {total && (
+          {total && batchPriced && !memberBatch && (
+            <p className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+              The fee depends on your SSC batch: choose your batch above to see your total.
+            </p>
+          )}
+          {total && !(batchPriced && !memberBatch) && (
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-              {total.guests.length > 0 ? (
+              {total.guests.length > 0 || batchPriced ? (
                 <>
-                  <div className="flex justify-between"><span>{total.pkg ? total.pkg.name : "Member"}</span><strong>{formatTaka(total.pkg ? total.pkg.price : event.registrationFeeAmount)}</strong></div>
+                  <div className="flex justify-between">
+                    <span>{total.pkg ? total.pkg.name : batchPriced ? `Alumnus (batch ${memberBatch})` : "Member"}</span>
+                    <strong>{formatTaka(total.pkg ? total.pkg.price : total.fee - total.guests.reduce((sum, g) => sum + g.count * g.price, 0))}</strong>
+                  </div>
                   {total.guests.map((g) => (
                     <div key={g.name} className="flex justify-between">
                       <span>{g.name} × {g.count}</span>

@@ -1,5 +1,5 @@
 import type { EventItem } from "../lib/data";
-import type { GuestTypeDef } from "../lib/events/types";
+import type { BatchFeeDef, GuestTypeDef } from "../lib/events/types";
 
 /**
  * The membership event: joining the association is its paid registration. Seeded
@@ -26,7 +26,7 @@ export const membershipEvent: EventItem = {
   isRegistrationOpen: true,
   isMegaEvent: true,
   registrationFee: "৳1,500",
-  registrationDeadline: "2026-12-15",
+  registrationDeadline: "2026-11-30",
   description: [
     "Sabuj Shikshayatan Government High School turns 50. On 26 December 2026 former students of every batch since 1977 come back to the campus, with their families, for one day of celebration: a jubilee rally, flag hoisting, honours for our teachers, batch reunions and a cultural evening.",
     "সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের ৫০ বছর পূর্তি (সুবর্ণ জয়ন্তী) উৎসবে সকল প্রাক্তন শিক্ষার্থীকে সপরিবারে আমন্ত্রণ।",
@@ -65,8 +65,14 @@ export const membershipEvent: EventItem = {
   ].join("\n"),
 };
 
-/** What a member pays for each guest; the member's own fee is registrationFee above. */
+/** The member's own fee by SSC batch; other batches pay registrationFee above. */
+export const membershipBatchFees: BatchFeeDef[] = [
+  { fromBatch: 1989, toBatch: 2014, price: 1500 },
+  { fromBatch: 2015, toBatch: 2026, price: 1250 },
+];
+
+/** What a member pays for each guest. Children under 5 come free and are not registered. */
 export const membershipGuestTypes: GuestTypeDef[] = [
-  { name: "Spouse", price: 700, max: 1 },
-  { name: "Child", price: 500, max: 5 },
+  { name: "Spouse", price: 600, max: 1 },
+  { name: "Child (5 years or older)", price: 600, max: 5 },
 ];

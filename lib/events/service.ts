@@ -2,7 +2,7 @@ import type { Event, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
-import { formatTaka, guestTypesOf, isPaidEvent, normalizeGuestTypes, normalizePackages, parseTaka, type FeeEvent } from "./pricing";
+import { formatTaka, guestTypesOf, isPaidEvent, normalizeBatchFees, normalizeGuestTypes, normalizePackages, parseTaka, readBatchFees, type FeeEvent } from "./pricing";
 import { availableMethods, getPaymentSettings, type PaymentMethodName } from "@/lib/payment-settings";
 import type { AgendaEntry, PublicEvent } from "./types";
 
@@ -17,6 +17,7 @@ export function eventFeeRules(row: Event): Required<FeeEvent> {
     childFee: row.childFee,
     packages: normalizePackages(row.packages),
     guestTypes: normalizeGuestTypes(row.guestTypes),
+    batchFees: readBatchFees(row.batchFees),
   };
 }
 
@@ -74,6 +75,7 @@ export function toPublicEvent(
     childFee: row.childFee,
     guestTypes: guestTypesOf(rules),
     customGuestTypes: (rules.guestTypes ?? []).length > 0,
+    batchFees: rules.batchFees,
     paymentInstructions: row.paymentInstructions,
     paymentMethods,
     agenda: normalizeAgenda(row.agenda),
@@ -221,6 +223,7 @@ function parseEventInput(body: unknown, mode: "create" | "update"): Prisma.Event
   }
   if (b.packages !== undefined) data.packages = normalizePackages(b.packages) as unknown as Prisma.InputJsonValue;
   if (b.guestTypes !== undefined) data.guestTypes = normalizeGuestTypes(b.guestTypes) as unknown as Prisma.InputJsonValue;
+  if (b.batchFees !== undefined) data.batchFees = normalizeBatchFees(b.batchFees) as unknown as Prisma.InputJsonValue;
   if (b.agenda !== undefined) data.agenda = normalizeAgenda(b.agenda) as unknown as Prisma.InputJsonValue;
   if (b.highlights !== undefined) data.highlights = normalizeHighlights(b.highlights);
   return data;
