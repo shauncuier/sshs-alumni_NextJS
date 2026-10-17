@@ -139,6 +139,27 @@ export const authOptions: NextAuthOptions = {
       if (typeof token.sessionVersion !== "number") {
         token.sessionVersion = 0;
       }
+      if (!user) {
+        // Every later read re-checks the account, so a session is either fully valid or
+        // gone: never "signed in" in the menu (this cookie) but refused by pages and APIs
+        // that check the database (getMemberSession). Throwing makes NextAuth clear the
+        // cookie and answer "signed out". A role or status change applies at once.
+        const id = (token.id as string | undefined) ?? token.sub;
+        let current;
+        try {
+          current = id
+            ? await prisma.user.findUnique({ where: { id }, select: { role: true, status: true, sessionVersion: true, disabledAt: true } })
+            : null;
+        } catch {
+          // Database briefly unreachable: keep the session rather than sign everyone out.
+          return token;
+        }
+        if (!current || current.sessionVersion !== token.sessionVersion || accountAccessBlock(current)) {
+          throw new Error("SESSION_REVOKED");
+        }
+        token.role = current.role;
+        token.status = current.status;
+      }
       return token;
     },
     async session({ session, token }) {
