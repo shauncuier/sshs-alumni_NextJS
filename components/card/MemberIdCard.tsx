@@ -12,6 +12,7 @@ export interface IdCardData {
   fullName: string;
   sscBatch: number | string;
   profession?: string;
+  bloodGroup?: string | null;
   avatarUrl?: string;
   expiresAt?: number | string;
   qrDataUrl?: string;
@@ -125,11 +126,17 @@ export function IdCardFront({ card }: { card: IdCardData }) {
               {card.profession}
             </div>
           )}
-          <div style={{ display: "flex", gap: "4mm", marginTop: "2mm" }}>
+          <div style={{ display: "flex", gap: card.bloodGroup ? "3mm" : "4mm", marginTop: "2mm" }}>
             <div>
               <Label>SSC Batch</Label>
               <div style={{ fontSize: "8pt", fontWeight: 800, color: GREEN }}>{card.sscBatch}</div>
             </div>
+            {card.bloodGroup && (
+              <div>
+                <Label>Blood</Label>
+                <div style={{ fontSize: "8pt", fontWeight: 800, color: "#b42318" }}>{card.bloodGroup}</div>
+              </div>
+            )}
             <div style={{ minWidth: 0 }}>
               <Label>Member No.</Label>
               <div style={{ fontSize: "5.9pt", fontWeight: 700, fontFamily: "ui-monospace, monospace", color: GREEN, marginTop: "0.6mm", whiteSpace: "nowrap" }}>

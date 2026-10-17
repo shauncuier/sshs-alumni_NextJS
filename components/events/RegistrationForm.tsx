@@ -11,6 +11,7 @@ import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 import ContactVerifyField, { type ContactVerification } from "./ContactVerifyField";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import PasswordInput from "@/components/shared/PasswordInput";
+import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
 
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
@@ -83,7 +84,7 @@ export default function RegistrationForm({
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
-  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "" });
+  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
@@ -420,6 +421,13 @@ export default function RegistrationForm({
               <option value="Humanities">Humanities (মানবিক বিভাগ)</option>
               <option value="Section A">Section A (Morning Shift)</option>
               <option value="Section B">Section B (Day Shift)</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="reg-blood" className={label}>Blood group <span className="font-normal text-slate-400">(optional · রক্তের গ্রুপ)</span></label>
+            <select id="reg-blood" className={input} value={account.bloodGroup} onChange={(e) => setAccount({ ...account, bloodGroup: e.target.value })}>
+              <option value="">Not given</option>
+              {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
           <fieldset className="sm:col-span-2 min-w-0 p-3 rounded-xl border border-slate-300 bg-slate-50/60 space-y-3" aria-describedby="reg-proof-help">

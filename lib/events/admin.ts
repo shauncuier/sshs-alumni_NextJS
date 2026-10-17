@@ -27,6 +27,7 @@ function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     batch: reg.user.profile?.sscBatch ?? null,
     rollNumber: reg.user.profile?.rollNumber ?? null,
     section: reg.user.profile?.section ?? null,
+    bloodGroup: reg.user.profile?.bloodGroup ?? null,
     avatarUrl: reg.user.profile?.avatarUrl ?? null,
     membershipStatus: reg.user.status,
     packageName: reg.packageName,

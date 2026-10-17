@@ -91,6 +91,8 @@ model AlumniProfile {
   sscBatch           Int // e.g. 2008
   graduationYear     Int // e.g. 2008
   rollNumber         String?
+  /// Optional: A+, A-, B+, B-, AB+, AB-, O+ or O- (lib/members/blood-groups.ts).
+  bloodGroup         String?            @db.VarChar(3)
   section            String?
   gender             String?
   profession         String

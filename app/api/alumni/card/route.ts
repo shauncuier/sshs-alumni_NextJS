@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     try {
       user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { id: true, status: true, profile: { select: { fullName: true, sscBatch: true, profession: true, avatarUrl: true } } },
+        select: { id: true, status: true, profile: { select: { fullName: true, sscBatch: true, profession: true, avatarUrl: true, bloodGroup: true } } },
       });
     } catch (dbErr) {
       console.error("[Card API] Member lookup failed:", dbErr);

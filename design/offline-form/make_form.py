@@ -97,14 +97,14 @@ body {{ margin: 0; font-family: 'Nirmala UI', 'Shonar Bangla', 'Segoe UI', sans-
 .facts {{ margin-top: 1.5mm; font-size: 8.5pt; color: #374740; display: flex; gap: 6mm; flex-wrap: wrap; }}
 .facts b {{ color: {GREEN}; }}
 
-h2 {{ margin: 2.6mm 0 1.3mm; font-size: 10.5pt; color: {GREEN}; border-bottom: 0.3mm solid #c9d6d0; padding-bottom: 0.8mm; display: flex; gap: 2mm; align-items: baseline; }}
+h2 {{ margin: 2.2mm 0 1.1mm; font-size: 10.5pt; color: {GREEN}; border-bottom: 0.3mm solid #c9d6d0; padding-bottom: 0.8mm; display: flex; gap: 2mm; align-items: baseline; }}
 h2 .n {{ display: inline-flex; width: 5mm; height: 5mm; border-radius: 50%; background: {GREEN}; color: #fff; font-size: 8pt; align-items: center; justify-content: center; }}
 h2 .en {{ font-weight: 400; }}
 
 .grid {{ display: grid; grid-template-columns: 1fr 1fr; column-gap: 5mm; }}
 .field {{ margin-bottom: 1.4mm; }}
 .field .lbl {{ font-size: 8.8pt; }}
-.field .write {{ height: 5.6mm; border-bottom: 0.3mm dotted #6f8079; }}
+.field .write {{ height: 5.1mm; border-bottom: 0.3mm dotted #6f8079; }}
 .span2 {{ grid-column: span 2; }}
 
 .top {{ display: grid; grid-template-columns: 1fr 30mm; gap: 5mm; align-items: start; }}
@@ -112,6 +112,7 @@ h2 .en {{ font-weight: 400; }}
 
 .row {{ display: flex; align-items: center; gap: 2mm; flex-wrap: wrap; margin-bottom: 1.6mm; font-size: 8.8pt; }}
 .box {{ display: inline-block; width: 5.2mm; height: 6.2mm; border: 0.3mm solid #6f8079; margin-right: -0.3mm; background: #fff; }}
+.tight .chk {{ margin-right: 1.6mm; }}
 .chk {{ display: inline-flex; align-items: center; gap: 1.2mm; margin-right: 3.5mm; white-space: nowrap; }}
 .tick {{ display: inline-block; width: 3.6mm; height: 3.6mm; border: 0.3mm solid #4b5b54; border-radius: 0.6mm; }}
 
@@ -133,7 +134,7 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 .paycard b {{ color: {GREEN}; font-size: 9.5pt; }}
 
 .declare {{ margin-top: 2mm; padding: 2mm 3mm; background: #f4f7f5; border-radius: 1.5mm; font-size: 8.4pt; line-height: 1.45; }}
-.sign {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 7mm; font-size: 8.4pt; }}
+.sign {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 6mm; font-size: 8.4pt; }}
 .sign div {{ border-top: 0.3mm solid #4b5b54; padding-top: 1mm; }}
 
 .foot {{ margin-top: 3mm; font-size: 7.6pt; color: #5b6b64; text-align: center; }}
@@ -181,6 +182,8 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
         &nbsp;&nbsp;<span class="bn">রোল নং</span> <span class="en">Roll</span> <span class="blank" style="min-width:26mm"></span></div>
       <div class="row"><span class="bn">বিভাগ / শাখা:</span>
         {check("বিজ্ঞান <span class='en'>Science</span>")}{check("ব্যবসায় শিক্ষা <span class='en'>Business</span>")}{check("মানবিক <span class='en'>Humanities</span>")}{check("<span class='en'>Section A / B</span>")}</div>
+      <div class="row tight"><span class="bn">রক্তের গ্রুপ</span> <span class="en">Blood group (optional)</span>
+        {"".join(check(g) for g in ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"])}</div>
     </div>
     <div class="photo">পাসপোর্ট সাইজ ছবি<br>এখানে লাগান<br><br><span class="en">Paste a recent passport-size photo</span></div>
   </div>

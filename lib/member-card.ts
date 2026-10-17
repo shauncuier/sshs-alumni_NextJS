@@ -18,6 +18,7 @@ export interface MemberCard {
   fullName: string;
   sscBatch: number;
   profession: string;
+  bloodGroup: string | null;
   avatarUrl: string;
   hasPhoto: boolean;
   status: string;
@@ -30,7 +31,7 @@ export interface MemberCard {
 type CardUser = {
   id: string;
   status: string;
-  profile: { fullName: string; sscBatch: number; profession: string | null; avatarUrl: string | null } | null;
+  profile: { fullName: string; sscBatch: number; profession: string | null; avatarUrl: string | null; bloodGroup: string | null } | null;
 };
 
 /** One member's card, with a freshly signed gate QR. Null when they have no profile yet. */
@@ -57,6 +58,7 @@ export async function buildMemberCard(user: CardUser, origin: string): Promise<M
     fullName: p.fullName,
     sscBatch: p.sscBatch,
     profession: p.profession ?? "",
+    bloodGroup: p.bloodGroup ?? null,
     avatarUrl: p.avatarUrl || initialsAvatar(p.fullName),
     hasPhoto: Boolean(p.avatarUrl),
     status: user.status,
@@ -70,7 +72,7 @@ export async function buildMemberCard(user: CardUser, origin: string): Promise<M
 const CARD_USER_SELECT = {
   id: true,
   status: true,
-  profile: { select: { fullName: true, sscBatch: true, profession: true, avatarUrl: true } },
+  profile: { select: { fullName: true, sscBatch: true, profession: true, avatarUrl: true, bloodGroup: true } },
 } as const;
 
 /** Members a card may be printed for: approved, with an approved profile, not disabled. */

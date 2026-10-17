@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { AppError } from "@/lib/app-error";
 import type { AccountInput } from "@/lib/events/types";
 import { FIRST_SSC_BATCH } from "@/lib/data";
+import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 
 const MIN_PASSWORD_LENGTH = 8;
 const BCRYPT_COST = 12;
@@ -55,6 +56,8 @@ export async function createMemberAccount(
   }
 
   const rollNumber = input.rollNumber?.trim() || null;
+  const bloodGroup = normalizeBloodGroup(input.bloodGroup);
+  if (bloodGroup === undefined) throw new AppError("INVALID_ACCOUNT", 400, "Please choose a blood group from the list, or leave it empty.");
   const user = await db.user.create({
     data: {
       email,
@@ -72,6 +75,7 @@ export async function createMemberAccount(
           locationCountry: "Bangladesh",
           phone: input.phone?.trim() || null,
           rollNumber,
+          bloodGroup,
           section: input.section?.trim() || null,
           bio: `Alumnus of SSGHS Batch ${batch}`,
           verificationStatus: "PENDING",

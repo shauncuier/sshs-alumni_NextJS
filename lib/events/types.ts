@@ -77,6 +77,8 @@ export interface AccountInput {
   sscBatch: number | string;
   rollNumber?: string | null;
   section?: string | null;
+  /** Optional; see lib/members/blood-groups.ts. */
+  bloodGroup?: string | null;
   profession?: string | null;
   company?: string | null;
   locationCity?: string | null;
@@ -169,6 +171,7 @@ export interface AdminRegistration {
   batch: number | null;
   rollNumber: string | null;
   section: string | null;
+  bloodGroup: string | null;
   avatarUrl: string | null;
   membershipStatus: "PENDING" | "VERIFIED" | "REJECTED";
   packageName: string | null;

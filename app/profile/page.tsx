@@ -24,12 +24,14 @@ import {
   ExternalLink,
 } from "lucide-react";
 import ContactVerifyField, { type ContactVerification } from "@/components/events/ContactVerifyField";
+import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
 
 interface ProfileRecord {
   id: string;
   fullName: string;
   sscBatch: number;
   rollNumber: string | null;
+  bloodGroup: string | null;
   section: string | null;
   profession: string;
   company: string | null;
@@ -76,6 +78,7 @@ interface ProfileForm {
   locationCity: string;
   locationCountry: string;
   rollNumber: string;
+  bloodGroup: string;
   section: string;
   phone: string;
   isPhonePublic: boolean;
@@ -117,6 +120,7 @@ function toForm(profile: ProfileRecord): ProfileForm {
     locationCity: profile.locationCity,
     locationCountry: profile.locationCountry || "Bangladesh",
     rollNumber: profile.rollNumber ?? "",
+    bloodGroup: profile.bloodGroup ?? "",
     section: profile.section ?? "",
     phone: profile.phone ?? "",
     isPhonePublic: Boolean(profile.isPhonePublic),
@@ -629,6 +633,17 @@ export default function ProfilePage() {
                           placeholder="e.g. Section A (Science), Section B"
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                         />
+                      </div>
+                      <div>
+                        <label htmlFor="pf-blood" className="block font-bold text-slate-700 mb-1">Blood Group <span className="font-normal text-slate-400">(optional)</span></label>
+                        <select id="pf-blood"
+                          value={profileData.bloodGroup}
+                          onChange={(e) => setProfileData({ ...profileData, bloodGroup: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        >
+                          <option value="">Not given</option>
+                          {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+                        </select>
                       </div>
                     </div>
                   </div>

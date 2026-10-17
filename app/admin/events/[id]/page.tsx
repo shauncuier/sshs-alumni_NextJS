@@ -180,9 +180,9 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   };
 
   const handleExportCSV = () => {
-    const header = "Name,Batch,Roll,Section,Email,Phone,Package,Guests,Source,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
+    const header = "Name,Batch,Roll,Section,Blood_Group,Email,Phone,Package,Guests,Source,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
     const rows = attendees
-      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map((g) => `${g.name} x${g.count}`).join("; "), a.source ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
+      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.bloodGroup ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map((g) => `${g.name} x${g.count}`).join("; "), a.source ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(","))
       .join("\n");
@@ -978,7 +978,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       </div>
                     </td>
                     <td className="block md:table-cell py-1 md:py-3 md:px-3">
-                      SSC {a.batch ?? "—"}{a.rollNumber ? ` · Roll ${a.rollNumber}` : ""}{a.section ? ` · ${a.section}` : ""}
+                      SSC {a.batch ?? "—"}{a.rollNumber ? ` · Roll ${a.rollNumber}` : ""}{a.section ? ` · ${a.section}` : ""}{a.bloodGroup ? ` · Blood ${a.bloodGroup}` : ""}
                       <div className={a.membershipStatus === "VERIFIED" ? "text-emerald-700" : a.membershipStatus === "REJECTED" ? "text-rose-700" : "text-amber-700"}>
                         Membership: {a.membershipStatus.toLowerCase()}
                       </div>

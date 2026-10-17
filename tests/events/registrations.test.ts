@@ -451,3 +451,18 @@ describe("fee by SSC batch", () => {
     expect(other.registration.totalFee).toBe(1500);
   });
 });
+
+describe("blood group when joining", () => {
+  it("is optional, saved when given, refused when not a real group", async () => {
+    await membershipEvent();
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, bloodGroup: "ab +" }, photo, proof, rsvp: paidRsvp });
+    const p = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(p.bloodGroup).toBe("AB+");
+
+    await resetDatabase();
+    await membershipEvent();
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, bloodGroup: "Z" }, photo, proof, rsvp: paidRsvp })
+    ).rejects.toMatchObject({ status: 400, code: "INVALID_ACCOUNT" });
+  });
+});
