@@ -10,6 +10,7 @@ import {
   Lock,
   Plus,
   RefreshCw,
+  Trash2,
   Search,
   ShieldCheck,
   UserCheck,
@@ -225,6 +226,60 @@ function ResetPasswordDialog({ user, onClose, onDone }: { user: AdminUserRecord;
   );
 }
 
+function DeleteUserDialog({ user, onClose, onDone }: { user: AdminUserRecord; onClose: () => void; onDone: (message: string) => void }) {
+  const [typed, setTyped] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const matches = typed.trim().toLowerCase() === user.email.toLowerCase();
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!matches) return;
+    setError(null);
+    setSaving(true);
+    try {
+      const { deleted } = await send(`/api/admin/users/${user.id}`, "DELETE", { confirmEmail: typed });
+      const extra = [
+        deleted.registrations ? `${deleted.registrations} unconfirmed registration${deleted.registrations === 1 ? "" : "s"} removed` : "",
+        deleted.donationsKept ? `${deleted.donationsKept} donation${deleted.donationsKept === 1 ? "" : "s"} kept without the account` : "",
+      ].filter(Boolean);
+      onDone(`${user.name}'s account was deleted.${extra.length ? ` ${extra.join("; ")}.` : ""}`);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog title={`Delete ${user.name}?`} onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3 text-xs">
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 space-y-1">
+          <p className="font-bold">This cannot be undone.</p>
+          <p>
+            Deletes the account, profile, photo and proof document, posts, comments, messages, unconfirmed registrations, mentor and job posts.
+            Donations are kept as money records. A member with a confirmed paid registration cannot be deleted: disable them instead.
+          </p>
+        </div>
+        <div>
+          <label htmlFor="del-email" className={label}>
+            Type <strong className="font-mono">{user.email}</strong> to confirm
+          </label>
+          <input id="del-email" className={input} value={typed} autoComplete="off" onChange={(e) => setTyped(e.target.value)} />
+        </div>
+        {error && <p role="alert" className="font-bold text-rose-700">{error}</p>}
+        <button
+          type="submit"
+          disabled={saving || !matches}
+          className="w-full px-4 py-2.5 min-h-[44px] bg-rose-700 hover:bg-rose-600 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <Trash2 className="w-3.5 h-3.5" /> {saving ? "Deleting…" : "Delete account permanently"}
+        </button>
+      </form>
+    </Dialog>
+  );
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
   const [stats, setStats] = useState<AdminUserStats | null>(null);
@@ -242,6 +297,7 @@ export default function AdminUsersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [resetting, setResetting] = useState<AdminUserRecord | null>(null);
+  const [deleting, setDeleting] = useState<AdminUserRecord | null>(null);
 
   // Search on the server once typing pauses.
   useEffect(() => {
@@ -434,6 +490,15 @@ export default function AdminUsersPage() {
                   >
                     {u.disabled ? "Enable" : <><Ban className="w-3.5 h-3.5" /> Disable</>}
                   </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setDeleting(u)}
+                    aria-label={`Delete ${u.name}`}
+                    className={`${ghostButton} text-rose-700 border-rose-200 hover:bg-rose-50`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
+                  </button>
                 </div>
               ) : (
                 <span className="text-[11px] text-slate-400 lg:w-48 lg:text-right">
@@ -465,6 +530,17 @@ export default function AdminUsersPage() {
           onCreated={() => {
             setAdding(false);
             setNotice("User added. Share the password with them privately.");
+            void loadUsers();
+          }}
+        />
+      )}
+      {deleting && (
+        <DeleteUserDialog
+          user={deleting}
+          onClose={() => setDeleting(null)}
+          onDone={(message) => {
+            setDeleting(null);
+            setNotice(message);
             void loadUsers();
           }}
         />

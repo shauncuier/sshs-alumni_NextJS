@@ -5,6 +5,8 @@ import { hashMemberPassword } from "@/lib/members/create-member";
 import { isEnvSuperAdmin } from "./super-admin";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
+import path from "node:path";
+import { removeAvatarDir, uploadsRoot } from "@/lib/media/avatars";
 
 /**
  * User management for the admin console. Who may do what:
@@ -232,4 +234,93 @@ export async function updateUser(actor: Actor, targetId: string, change: UserCha
   const detail = change.action === "role" ? ` to ${user.role}` : "";
   console.info(`[admin-users] ${actor.email} ${change.action}${detail}: ${target.email}`);
   return toRow(user);
+}
+
+/** The folder of an uploaded avatar or proof, from its /api/media/... URL; null for anything else. */
+function mediaDir(url: string | null | undefined): string | null {
+  const m = /^\/api\/media\/(avatars|proofs)\/([A-Za-z0-9-]+)\//.exec(url ?? "");
+  return m ? path.join(uploadsRoot(), m[1], m[2]) : null;
+}
+
+export interface DeletedUser {
+  id: string;
+  email: string;
+  name: string;
+  /** Unconfirmed event registrations removed with the account. */
+  registrations: number;
+  /** Donations kept as money records, now without the account. */
+  donationsKept: number;
+}
+
+/**
+ * Deletes an account and everything that is only theirs: profile, photo and proof
+ * files, posts, comments, likes, messages, notifications, unconfirmed registrations,
+ * mentor profile, mentorship requests, job posts and applications, volunteer forms.
+ * Refused while they hold a confirmed paid registration: that payment record must
+ * stay (disable the account instead). Donations are kept, unlinked from the account.
+ * `confirmEmail` must repeat the account's email, against deleting the wrong row.
+ */
+export async function deleteUser(actor: Actor, targetId: string, confirmEmail: unknown): Promise<DeletedUser> {
+  const target = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      profile: { select: { fullName: true, avatarUrl: true, avatarOriginalUrl: true } },
+      verificationRequests: { select: { proofFileUrl: true } },
+    },
+  });
+  if (!target) throw new AppError("USER_NOT_FOUND", 404, "User not found.");
+  if (actor.id === target.id) throw new AppError("FORBIDDEN", 403, "You cannot delete your own account.");
+  const blocked = manageBlock(actor, target);
+  if (blocked) throw new AppError("FORBIDDEN", 403, blocked);
+  if (typeof confirmEmail !== "string" || confirmEmail.trim().toLowerCase() !== target.email.toLowerCase()) {
+    throw new AppError("CONFIRM_EMAIL", 400, "Type the account's email address to confirm the deletion.");
+  }
+
+  const paid = await prisma.eventRegistration.count({
+    where: { userId: target.id, status: { in: ["CONFIRMED", "CHECKED_IN"] }, totalFee: { gt: 0 } },
+  });
+  if (paid > 0) {
+    throw new AppError(
+      "HAS_PAYMENTS",
+      409,
+      "This member has a confirmed paid registration, and that payment record must be kept. Disable the account instead."
+    );
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Likes on other people's posts: take them off those posts' counts.
+    const likes = await tx.postLike.findMany({ where: { userId: target.id }, select: { postId: true } });
+    for (const { postId } of likes) {
+      await tx.post.updateMany({ where: { id: postId, likesCount: { gt: 0 } }, data: { likesCount: { decrement: 1 } } });
+    }
+    await tx.postLike.deleteMany({ where: { userId: target.id } });
+    const comments = await tx.comment.findMany({ where: { authorId: target.id }, select: { postId: true } });
+    for (const { postId } of comments) {
+      await tx.post.updateMany({ where: { id: postId, commentsCount: { gt: 0 } }, data: { commentsCount: { decrement: 1 } } });
+    }
+    await tx.comment.deleteMany({ where: { authorId: target.id } });
+    await tx.post.deleteMany({ where: { authorId: target.id } }); // their comments and likes go with them
+    await tx.message.deleteMany({ where: { OR: [{ senderId: target.id }, { receiverId: target.id }] } });
+    const registrations = await tx.eventRegistration.deleteMany({ where: { userId: target.id } });
+    const donations = await tx.donation.updateMany({ where: { userId: target.id }, data: { userId: null } });
+    await tx.mentor.deleteMany({ where: { userId: target.id } }); // with requests to them
+    await tx.mentorshipRequest.deleteMany({ where: { menteeUserId: target.id } });
+    await tx.job.deleteMany({ where: { postedById: target.id } }); // with applications to them
+    await tx.jobApplication.deleteMany({ where: { applicantUserId: target.id } });
+    await tx.volunteer.deleteMany({ where: { userId: target.id } });
+    await tx.user.delete({ where: { id: target.id } }); // profile, notifications, verification requests
+    return { registrations: registrations.count, donationsKept: donations.count };
+  });
+
+  // Files last: a failed delete above leaves them in place.
+  const dirs = [target.profile?.avatarUrl, target.profile?.avatarOriginalUrl, ...target.verificationRequests.map((v) => v.proofFileUrl)]
+    .map(mediaDir)
+    .filter((d): d is string => d !== null);
+  for (const dir of new Set(dirs)) await removeAvatarDir(dir);
+
+  console.info(`[admin-users] ${actor.email} deleted ${target.email}`);
+  return { id: target.id, email: target.email, name: target.profile?.fullName || target.email, ...result };
 }
