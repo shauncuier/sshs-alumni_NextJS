@@ -3,6 +3,7 @@ import { getBulkSmsConfig, isValidBdMobile, normalizeBdPhoneNumber, sendBulkSms 
 import { checkChallenge, issueChallenge, issueVerified, newOtpCode, OTP_RESEND_MS, readVerified } from "@/lib/otp";
 import { consumeRateLimit } from "@/lib/request-security";
 import { requirePhoneFree } from "@/lib/phone-registry";
+import { smsTestModeOn } from "@/lib/sms-test-mode";
 
 /**
  * Phone verification by SMS one-time code (see lib/otp.ts for the token flow).
@@ -62,10 +63,20 @@ export async function requestPhoneOtp(
   rawPhone: unknown,
   now = Date.now(),
   opts: { exceptUserId?: string | null } = {}
-): Promise<{ challenge: string; phone: string; expiresAt: number }> {
+): Promise<{ challenge: string; phone: string; expiresAt: number; testCode?: string }> {
   const phone = requireBdMobile(rawPhone);
   // One number, one account: say so before spending an SMS.
   await requirePhoneFree(phone, { exceptUserId: opts.exceptUserId });
+
+  // Test mode (Admin → Bulk SMS): no SMS, the code goes back to the form instead.
+  if (await smsTestModeOn(now)) {
+    if (!consumeRateLimit(`phone-otp-cooldown:${phone}`, { limit: 1, windowMs: OTP_RESEND_MS })) {
+      throw new AppError("OTP_TOO_SOON", 429, "Please wait a minute before asking for another code.");
+    }
+    const code = newOtpCode();
+    const { challenge, expiresAt } = issueChallenge("phone", phone, code, now);
+    return { challenge, phone: localBdPhone(phone), expiresAt, testCode: code };
+  }
   const { isConfigured } = getBulkSmsConfig();
   // Without a gateway key the SMS client only simulates sending, so nobody could
   // ever receive the code. That is fine while developing, never in production.

@@ -65,6 +65,8 @@ export default function ContactVerifyField({
   const [error, setError] = useState<string | null>(null);
   const [smsFailed, setSmsFailed] = useState(false);
   const [resendIn, setResendIn] = useState(0);
+  // SMS test mode (Admin → Bulk SMS): the server sends the code back instead of texting it.
+  const [testCode, setTestCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -94,7 +96,8 @@ export default function ContactVerifyField({
       setChannel(via);
       setChallenge(data.challenge);
       setSentTo(via === "phone" ? data.phone : data.email);
-      setCode("");
+      setTestCode(typeof data.testCode === "string" ? data.testCode : null);
+      setCode(typeof data.testCode === "string" ? data.testCode : "");
       setResendIn(RESEND_SECONDS);
     } catch (err) {
       setError((err as Error).message);
@@ -181,6 +184,11 @@ export default function ContactVerifyField({
 
       {challenge && !verified && (
         <div className="space-y-1.5">
+          {testCode && (
+            <p role="status" className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-[11px] font-bold text-amber-900">
+              TEST MODE: no SMS was sent. Your code is {testCode} (filled in below). Tap Verify.
+            </p>
+          )}
           <label htmlFor={`${id}-otp`} className={label}>
             Code sent to {sentTo} {channel === "email" ? "by email" : "by SMS"}
           </label>

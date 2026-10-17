@@ -29,6 +29,7 @@ import {
 import { calculateSmsMetrics, normalizeBdPhoneNumber, isValidBdMobile } from "@/lib/bulksmsbd";
 import type { SmsContactItem } from "@/app/api/admin/sms/contacts/route";
 import type { SmsBroadcastRecord } from "@/lib/sms-history";
+import SmsTestModeSwitch from "@/components/admin/SmsTestModeSwitch";
 
 export interface SmsTemplateItem {
   id: string;
@@ -546,6 +547,8 @@ export default function AdminBulkSmsPage() {
           </div>
         </div>
       </div>
+
+      <SmsTestModeSwitch />
 
       {/* Gateway Information Notice Banner */}
       {!isConfigured && (

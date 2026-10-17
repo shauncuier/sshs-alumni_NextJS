@@ -14,7 +14,14 @@ export async function POST(req: Request) {
     // Signed in (changing the number on the profile): their own number is not "taken".
     const me = await getSessionUser().catch(() => null);
     const result = await requestPhoneOtp(body.phone, Date.now(), { exceptUserId: me?.id });
-    await logActivity({ category: "VERIFY", action: "phone_code.sent", summary: `SMS code sent to ${result.phone}`, targetType: "phone", targetId: result.phone, req });
+    await logActivity({
+      category: "VERIFY",
+      action: result.testCode ? "phone_code.test_mode" : "phone_code.sent",
+      summary: result.testCode ? `Test mode: code for ${result.phone} shown on screen, no SMS` : `SMS code sent to ${result.phone}`,
+      targetType: "phone",
+      targetId: result.phone,
+      req,
+    });
     return NextResponse.json(result);
   } catch (err) {
     await logActivity({ category: "VERIFY", action: "phone_code.send_failed", status: "FAILURE", summary: `SMS code not sent: ${err instanceof Error ? err.message : "error"}`, metadata: { errorCode: (err as { code?: string }).code }, req });
