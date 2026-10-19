@@ -12,12 +12,10 @@ the committee changes them in Admin, then run the script again.
 from __future__ import annotations
 
 import base64
-import subprocess
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 OUT = HERE / "golden-jubilee-offline-registration-form.pdf"
 
 # ---- Event facts (keep in step with Admin -> Events and Admin -> Payment settings)
@@ -98,18 +96,18 @@ body {{ margin: 0; font-family: 'Nirmala UI', 'Shonar Bangla', 'Segoe UI', sans-
 .facts {{ margin-top: 1.5mm; font-size: 8.5pt; color: #374740; display: flex; gap: 6mm; flex-wrap: wrap; }}
 .facts b {{ color: {GREEN}; }}
 
-h2 {{ margin: 1.8mm 0 0.9mm; font-size: 10.5pt; color: {GREEN}; border-bottom: 0.3mm solid #c9d6d0; padding-bottom: 0.8mm; display: flex; gap: 2mm; align-items: baseline; }}
+h2 {{ margin: 1.5mm 0 0.8mm; font-size: 10.5pt; color: {GREEN}; border-bottom: 0.3mm solid #c9d6d0; padding-bottom: 0.8mm; display: flex; gap: 2mm; align-items: baseline; }}
 h2 .n {{ display: inline-flex; width: 5mm; height: 5mm; border-radius: 50%; background: {GREEN}; color: #fff; font-size: 8pt; align-items: center; justify-content: center; }}
 h2 .en {{ font-weight: 400; }}
 
 .grid {{ display: grid; grid-template-columns: 1fr 1fr; column-gap: 5mm; }}
-.field {{ margin-bottom: 1.4mm; }}
+.field {{ margin-bottom: 1.1mm; }}
 .field .lbl {{ font-size: 8.8pt; }}
-.field .write {{ height: 5.1mm; border-bottom: 0.3mm dotted #6f8079; }}
+.field .write {{ height: 4.6mm; border-bottom: 0.3mm dotted #6f8079; }}
 .span2 {{ grid-column: span 2; }}
 
 .top {{ display: grid; grid-template-columns: 1fr 30mm; gap: 5mm; align-items: start; }}
-.photo {{ border: 0.35mm dashed #6f8079; height: 36mm; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 7.5pt; color: #5b6b64; padding: 2mm; }}
+.photo {{ border: 0.35mm dashed #6f8079; height: 34mm; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 7.5pt; color: #5b6b64; padding: 2mm; }}
 
 .row {{ display: flex; align-items: center; gap: 2mm; flex-wrap: wrap; margin-bottom: 1.6mm; font-size: 8.8pt; }}
 .box {{ display: inline-block; width: 5.2mm; height: 6.2mm; border: 0.3mm solid #6f8079; margin-right: -0.3mm; background: #fff; }}
@@ -135,7 +133,7 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 .paycard b {{ color: {GREEN}; font-size: 9.5pt; }}
 
 .declare {{ margin-top: 2mm; padding: 2mm 3mm; background: #f4f7f5; border-radius: 1.5mm; font-size: 8.4pt; line-height: 1.45; }}
-.sign {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 5mm; font-size: 8.4pt; }}
+.sign {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 4mm; font-size: 8.4pt; }}
 .sign div {{ border-top: 0.3mm solid #4b5b54; padding-top: 1mm; }}
 
 .foot {{ margin-top: 3mm; font-size: 7.6pt; color: #5b6b64; text-align: center; }}
@@ -145,10 +143,10 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 .howto {{ margin-top: 2mm; font-size: 8.2pt; line-height: 1.45; color: #374740; }}
 .howto b {{ color: {GREEN}; }}
 .grid4 {{ display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 4mm; }}
-.grid3 {{ display: grid; grid-template-columns: 2fr 1fr 1fr; column-gap: 4mm; }}
+.grid3 {{ display: grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 4mm; }}
 .field.inline {{ display: inline-block; width: 45mm; margin: 0 3mm 0 0; }}
 .office .h {{ font-weight: 700; color: {GREEN}; font-size: 9.5pt; margin-bottom: 1mm; }}
-.cut {{ margin: 4mm 0 3.5mm; border-top: 0.4mm dashed #6f8079; position: relative; }}
+.cut {{ margin: 3mm 0 3mm; border-top: 0.4mm dashed #6f8079; position: relative; }}
 .cut span {{ position: absolute; top: -2.6mm; left: 50%; transform: translateX(-50%); background: #fff; padding: 0 2mm; font-size: 8pt; color: #5b6b64; }}
 .receipt {{ border: 0.5mm solid {GOLD}; border-radius: 2mm; padding: 2mm 3.5mm; break-inside: avoid; }}
 .receipt .h {{ display: flex; align-items: center; gap: 3mm; border-bottom: 0.3mm solid #e2d3a8; padding-bottom: 1.5mm; margin-bottom: 1.5mm; }}
@@ -197,9 +195,13 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
     <div class="photo">পাসপোর্ট সাইজ ছবি<br>এখানে লাগান<br><br><span class="en">Paste a recent passport-size photo</span></div>
   </div>
   <div class="grid3">
-    {line("ইমেইল", "Email (for your account and ticket)")}
     {line("পেশা", "Profession")}
-    {line("বর্তমান ঠিকানা", "City")}
+    {line("পদবী", "Designation")}
+    {line("কোম্পানি", "Company")}
+  </div>
+  <div class="grid">
+    {line("ইমেইল", "Email (for your account and ticket)")}
+    {line("ঠিকানা", "Present address")}
   </div>
 
   <h2><span class="n">২</span> রেজিস্ট্রেশন ফি <span class="en">Registration fee — tick and fill in</span></h2>
@@ -268,15 +270,18 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 
 
 def main() -> None:
+    # Playwright's Chromium: headless Edge silently writes nothing while Edge itself is open.
+    from playwright.sync_api import sync_playwright
+
     src = HERE / "_form.html"
     src.write_text(HTML, encoding="utf-8")
     try:
-        subprocess.run(
-            [EDGE, "--headless=new", "--disable-gpu", "--no-pdf-header-footer", f"--print-to-pdf={OUT}", src.as_uri()],
-            check=True,
-            capture_output=True,
-            timeout=180,
-        )
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            page.goto(src.as_uri(), wait_until="networkidle")
+            page.pdf(path=str(OUT), prefer_css_page_size=True, print_background=True)
+            browser.close()
     finally:
         src.unlink(missing_ok=True)
     print(f"{OUT.name} {OUT.stat().st_size // 1024} KB")
