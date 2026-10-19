@@ -129,7 +129,9 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
+      if (token.revoked && !user) return token; // signed out (see below) until a new sign-in
       if (user) {
+        delete token.revoked;
         token.id = user.id;
         token.role = (user as unknown as { role: string }).role;
         token.status = (user as unknown as { status: string }).status;
@@ -142,8 +144,9 @@ export const authOptions: NextAuthOptions = {
       if (!user) {
         // Every later read re-checks the account, so a session is either fully valid or
         // gone: never "signed in" in the menu (this cookie) but refused by pages and APIs
-        // that check the database (getMemberSession). Throwing makes NextAuth clear the
-        // cookie and answer "signed out". A role or status change applies at once.
+        // that check the database (getMemberSession). A stale one becomes { revoked } and
+        // the session callback answers "signed out" (quietly: no error on every page, as a
+        // thrown error would log). A role or status change applies at once.
         const id = (token.id as string | undefined) ?? token.sub;
         let current;
         try {
@@ -155,7 +158,7 @@ export const authOptions: NextAuthOptions = {
           return token;
         }
         if (!current || current.sessionVersion !== token.sessionVersion || accountAccessBlock(current)) {
-          throw new Error("SESSION_REVOKED");
+          return { revoked: true };
         }
         token.role = current.role;
         token.status = current.status;
@@ -163,6 +166,8 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      // A revoked session (see jwt above) is no session: an empty one reads as signed out.
+      if (token.revoked) return {} as typeof session;
       if (session.user) {
         (session.user as unknown as { id: string }).id = ((token.id as string) || (token.sub as string)) ?? "";
         (session.user as unknown as { role: string }).role = token.role as string;

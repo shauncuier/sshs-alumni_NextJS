@@ -22,13 +22,19 @@ it("a session is either fully valid or gone: stale, disabled and deleted account
 
   // Password changed or signed out elsewhere (sessionVersion bumped): revoked.
   await prisma.user.update({ where: { id: m.id }, data: { sessionVersion: 1 } });
-  await expect(refresh({ ...token })).rejects.toThrow("SESSION_REVOKED");
+  await expect(refresh({ ...token })).resolves.toEqual({ revoked: true });
 
   // Disabled account: revoked.
   await prisma.user.update({ where: { id: m.id }, data: { sessionVersion: 0, disabledAt: new Date() } });
-  await expect(refresh({ ...token })).rejects.toThrow("SESSION_REVOKED");
+  await expect(refresh({ ...token })).resolves.toEqual({ revoked: true });
 
   // Deleted account: revoked.
   await prisma.user.delete({ where: { id: m.id } });
-  await expect(refresh({ ...token })).rejects.toThrow("SESSION_REVOKED");
+  await expect(refresh({ ...token })).resolves.toEqual({ revoked: true });
+
+  // A revoked session reads as signed out (an empty session), and stays revoked.
+  const revoked = { revoked: true } as JWT;
+  await expect(refresh(revoked)).resolves.toEqual({ revoked: true });
+  const session = await authOptions.callbacks!.session!({ session: { user: { email: m.email }, expires: "" }, token: revoked } as never);
+  expect(session).toEqual({});
 });
