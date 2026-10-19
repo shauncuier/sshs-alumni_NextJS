@@ -111,6 +111,8 @@ model AlumniProfile {
   skills             Json               @default("[]")
   /// Education after SSC: [{ level, institution, subject, year }] (lib/members/education.ts).
   education          Json               @default("[]")
+  /// Work experience: [{ title, company, type, location, start, end, current, description }] (lib/members/experience.ts).
+  experience         Json               @default("[]")
   linkedin           String?            @db.VarChar(500)
   facebook           String?            @db.VarChar(500)
   github             String?            @db.VarChar(500)

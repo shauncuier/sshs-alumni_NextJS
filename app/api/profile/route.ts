@@ -9,6 +9,7 @@ import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } f
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import type { Prisma } from "@prisma/client";
 import { normalizeEducation } from "@/lib/members/education";
+import { normalizeExperience } from "@/lib/members/experience";
 
 export async function GET() {
   try {
@@ -61,6 +62,7 @@ export async function PUT(req: Request) {
       rollNumber,
       bloodGroup,
       education,
+      experience,
       section,
       bio,
       phone,
@@ -134,6 +136,10 @@ export async function PUT(req: Request) {
 
       // Education after SSC: undefined leaves it as it is.
       const educationList = education === undefined ? undefined : normalizeEducation(education);
+      // Work experience: the current job (newest "I currently work here") also becomes the
+      // profile's profession and company, which directory cards and the header show.
+      const experienceList = experience === undefined ? undefined : normalizeExperience(experience);
+      const currentJob = experienceList?.find((e) => e.current);
 
       const batchYear = (session.user as unknown as { batchYear?: number })?.batchYear;
       if (!batchYear) {
@@ -146,14 +152,15 @@ export async function PUT(req: Request) {
         where: { userId: user.id },
         update: {
           fullName: required(fullName),
-          profession: required(profession),
+          profession: required(profession) ?? currentJob?.title,
           locationCity: required(locationCity),
           locationCountry: optional(locationCountry) || undefined,
-          company: optional(company),
+          company: optional(company) ?? currentJob?.company,
           industry: optional(industry),
           rollNumber: optional(rollNumber),
           bloodGroup: blood,
           education: educationList as unknown as Prisma.InputJsonValue | undefined,
+          experience: experienceList as unknown as Prisma.InputJsonValue | undefined,
           section: optional(section),
           bio: optional(bio),
           phone: newPhone,
@@ -180,6 +187,7 @@ export async function PUT(req: Request) {
           rollNumber: optional(rollNumber) ?? null,
           bloodGroup: blood ?? null,
           education: (educationList ?? []) as unknown as Prisma.InputJsonValue,
+          experience: (experienceList ?? []) as unknown as Prisma.InputJsonValue,
           section: optional(section) ?? null,
           bio: optional(bio) ?? null,
           phone: newPhone ?? null,

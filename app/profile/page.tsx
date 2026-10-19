@@ -26,6 +26,8 @@ import ContactVerifyField, { type ContactVerification } from "@/components/event
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
 import EducationSection from "@/components/profile/EducationSection";
 import { readEducation } from "@/lib/members/education";
+import ExperienceSection from "@/components/profile/ExperienceSection";
+import { readExperience } from "@/lib/members/experience";
 
 interface ProfileRecord {
   id: string;
@@ -34,6 +36,7 @@ interface ProfileRecord {
   rollNumber: string | null;
   bloodGroup: string | null;
   education?: unknown;
+  experience?: unknown;
   section: string | null;
   profession: string;
   company: string | null;
@@ -897,26 +900,19 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Career & Experience */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-emerald-700" />
-                  <span>Experience &amp; Career Trajectory</span>
-                </h3>
-
-                <div className="space-y-4 divide-y divide-slate-100">
-                  <div className="pt-3 first:pt-0 space-y-1">
-                    <h4 className="font-bold text-sm text-slate-900">{profileData.profession}</h4>
-                    {profileData.company && (
-                      <div className="text-xs text-emerald-800 font-semibold">{profileData.company}</div>
-                    )}
-                    {profile.industry && (
-                      <div className="text-[11px] text-slate-500">{profile.industry}</div>
-                    )}
-                    <div className="text-[11px] text-slate-400">Current Role</div>
-                  </div>
-                </div>
-              </div>
+              {/* Experience, LinkedIn style: a current job also sets the profession and company */}
+              <ExperienceSection
+                initial={readExperience(profile.experience)}
+                fallbackTitle={profileData.profession}
+                fallbackCompany={profileData.company}
+                editable
+                onSaved={(saved) => {
+                  setProfile((p) => (p ? { ...p, ...saved, company: saved.company ?? p.company } as ProfileRecord : p));
+                  setProfileData((d) =>
+                    d ? { ...d, profession: saved.profession ?? d.profession, company: saved.company ?? d.company } : d,
+                  );
+                }}
+              />
 
               {/* Education, LinkedIn style: add and edit right here */}
               <EducationSection

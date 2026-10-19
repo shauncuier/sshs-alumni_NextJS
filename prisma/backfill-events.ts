@@ -14,6 +14,7 @@ const JSON_LIST_COLUMNS = [
   ["Event", "guestTypes"],
   ["Event", "batchFees"],
   ["AlumniProfile", "education"],
+  ["AlumniProfile", "experience"],
   ["EventRegistration", "guests"],
 ] as const;
 
