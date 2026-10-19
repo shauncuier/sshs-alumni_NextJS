@@ -186,8 +186,8 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
       </div>
       <div class="row"><span class="bn">এসএসসি ব্যাচ (পাসের সাল) *</span> <span class="en">SSC batch</span> {boxes(4)}
         &nbsp;&nbsp;<span class="bn">রোল নং</span> <span class="en">Roll</span> <span class="blank" style="min-width:26mm"></span></div>
-      <div class="row"><span class="bn">বিভাগ / শাখা:</span>
-        {check("বিজ্ঞান <span class='en'>Science</span>")}{check("ব্যবসায় শিক্ষা <span class='en'>Business</span>")}{check("মানবিক <span class='en'>Humanities</span>")}{check("<span class='en'>Section A / B</span>")}</div>
+      <div class="row"><span class="bn">বিভাগ:</span>
+        {check("বিজ্ঞান <span class='en'>Science</span>")}{check("ব্যবসায় শিক্ষা <span class='en'>Business</span>")}{check("মানবিক <span class='en'>Humanities</span>")}</div>
       <div class="row tight"><span class="bn">রক্তের গ্রুপ</span> <span class="en">Blood group (optional)</span>
         {"".join(check(g) for g in ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"])}</div>
       <div class="row"><span class="bn">মোবাইল নম্বর *</span> <span class="en">Mobile</span> {boxes(11)}</div>

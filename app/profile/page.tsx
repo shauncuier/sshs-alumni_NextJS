@@ -660,12 +660,12 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="pf-9" className="block font-bold text-slate-700 mb-1">Section / Group</label>
+                        <label htmlFor="pf-9" className="block font-bold text-slate-700 mb-1">Group (বিভাগ)</label>
                         <input id="pf-9"
                           type="text"
                           value={profileData.section}
                           onChange={(e) => setProfileData({ ...profileData, section: e.target.value })}
-                          placeholder="e.g. Section A (Science), Section B"
+                          placeholder="e.g. Science, Business Studies, Humanities"
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                         />
                       </div>

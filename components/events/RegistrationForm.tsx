@@ -413,14 +413,12 @@ export default function RegistrationForm({
             <input id="reg-roll" inputMode="numeric" className={input} value={account.rollNumber} onChange={(e) => setAccount({ ...account, rollNumber: e.target.value })} />
           </div>
           <div>
-            <label htmlFor="reg-section" className={label}>Section / Discipline</label>
+            <label htmlFor="reg-section" className={label}>Group <span className="font-normal text-slate-400">(বিভাগ)</span></label>
             <select id="reg-section" className={input} value={account.section} onChange={(e) => setAccount({ ...account, section: e.target.value })}>
-              <option value="">— Select Section or Discipline —</option>
+              <option value="">— Select your group —</option>
               <option value="Science">Science (বিজ্ঞান বিভাগ)</option>
               <option value="Business Studies">Business Studies (ব্যবসায় শিক্ষা / বাণিজ্য)</option>
               <option value="Humanities">Humanities (মানবিক বিভাগ)</option>
-              <option value="Section A">Section A (Morning Shift)</option>
-              <option value="Section B">Section B (Day Shift)</option>
             </select>
           </div>
           <div>
