@@ -14,18 +14,14 @@ const INVALID = "Please upload your proof as a JPEG, PNG, WebP or PDF file.";
 
 describe("proof types", () => {
   it("lists the accepted documents with labels", () => {
-    expect(PROOF_TYPES.map((t) => t.value)).toEqual([
-      "SSC_CERTIFICATE",
-      "SSC_MARKSHEET",
-      "SSC_ADMIT_OR_REGISTRATION",
-      "SCHOOL_TESTIMONIAL",
-      "SCHOOL_ID_CARD",
-      "OTHER",
-    ]);
-    expect(proofTypeLabel("SSC_MARKSHEET")).toBe("SSC marksheet / transcript");
+    expect(PROOF_TYPES.map((t) => t.value)).toEqual(["SSC_CERTIFICATE", "SCHOOL_TESTIMONIAL", "SSC_MARKSHEET"]);
+    expect(proofTypeLabel("SSC_MARKSHEET")).toBe("SSC marksheet (মার্কশিট)");
+    // Requests stored before the list was cut keep a readable label.
+    expect(proofTypeLabel("SCHOOL_ID_CARD")).toBe("Old school ID card");
     expect(proofTypeLabel("NOPE")).toBe("NOPE");
     expect(proofTypeLabel(null)).toBe("");
-    expect(isProofType("OTHER")).toBe(true);
+    expect(isProofType("SCHOOL_TESTIMONIAL")).toBe(true);
+    expect(isProofType("OTHER")).toBe(false);
     expect(isProofType("other")).toBe(false);
     expect(isProofType(undefined)).toBe(false);
   });

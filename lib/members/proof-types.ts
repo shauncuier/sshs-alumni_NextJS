@@ -2,17 +2,21 @@
 // Browser-safe: used by the join form, the admin views and the server.
 
 export const PROOF_TYPES = [
-  { value: "SSC_CERTIFICATE", label: "SSC certificate" },
-  { value: "SSC_MARKSHEET", label: "SSC marksheet / transcript" },
-  { value: "SSC_ADMIT_OR_REGISTRATION", label: "SSC admit or registration card" },
-  { value: "SCHOOL_TESTIMONIAL", label: "School testimonial / leaving certificate" },
-  { value: "SCHOOL_ID_CARD", label: "Old school ID card" },
-  { value: "OTHER", label: "Other (explain)" },
+  { value: "SSC_CERTIFICATE", label: "SSC certificate (এসএসসি সনদ)" },
+  { value: "SCHOOL_TESTIMONIAL", label: "Testimonial (প্রশংসাপত্র)" },
+  { value: "SSC_MARKSHEET", label: "SSC marksheet (মার্কশিট)" },
 ] as const;
+
+/** Types accepted before the list was cut to three; requests already stored may still use them. */
+const LEGACY_LABELS: Record<string, string> = {
+  SSC_ADMIT_OR_REGISTRATION: "SSC admit or registration card",
+  SCHOOL_ID_CARD: "Old school ID card",
+  OTHER: "Other",
+};
 
 export type ProofType = (typeof PROOF_TYPES)[number]["value"];
 
-/** OTHER needs a short description of the document, up to this many characters. */
+/** An optional note about the document, up to this many characters. */
 export const PROOF_NOTE_MAX = 200;
 
 /** Proof files: JPEG, PNG or WebP image, or PDF, at most 10 MB. */
@@ -26,7 +30,7 @@ export function isProofType(value: unknown): value is ProofType {
 /** The label for a stored type; unknown values are shown as they are. */
 export function proofTypeLabel(value: string | null | undefined): string {
   if (!value) return "";
-  return PROOF_TYPES.find((t) => t.value === value)?.label ?? value;
+  return PROOF_TYPES.find((t) => t.value === value)?.label ?? LEGACY_LABELS[value] ?? value;
 }
 
 /** What the admin views show about a member's proof (the file URL is null once deleted). */

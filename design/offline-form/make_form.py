@@ -223,8 +223,7 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
   <div class="row"><span class="bn">ট্রানজেকশন আইডি</span> <span class="en">Transaction ID (Bangla QR)</span> {boxes(14)}</div>
 
   <h2><span class="n">৪</span> প্রমাণপত্র <span class="en">Proof that you studied at the school — attach a photocopy</span></h2>
-  <div class="row">{check("এসএসসি সনদ <span class='en'>SSC certificate</span>")}{check("মার্কশিট <span class='en'>Marksheet</span>")}{check("প্রবেশপত্র / রেজিস্ট্রেশন কার্ড <span class='en'>Admit / registration card</span>")}</div>
-  <div class="row">{check("প্রশংসাপত্র <span class='en'>Testimonial</span>")}{check("স্কুলের আইডি কার্ড <span class='en'>School ID card</span>")}{check("অন্যান্য <span class='en'>Other:</span>")}<span class="blank" style="min-width:45mm"></span></div>
+  <div class="row">{check("এসএসসি সনদ <span class='en'>SSC certificate</span>")}{check("প্রশংসাপত্র <span class='en'>Testimonial</span>")}{check("মার্কশিট <span class='en'>Marksheet</span>")}</div>
 
   <div class="declare">
     আমি ঘোষণা করছি যে উপরের সব তথ্য সত্য এবং আমি সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের প্রাক্তন শিক্ষার্থী। কমিটি পেমেন্ট ও প্রমাণপত্র যাচাই করে আমার রেজিস্ট্রেশন নিশ্চিত করবে; এই রেজিস্ট্রেশনের মাধ্যমে আমি পরিষদের সদস্য হব।

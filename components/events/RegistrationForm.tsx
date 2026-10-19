@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
 import { PAYMENT_METHODS, type MemberRegistration, type PublicEvent } from "@/lib/events/types";
-import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_NOTE_MAX, PROOF_TYPES } from "@/lib/members/proof-types";
+import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_TYPES } from "@/lib/members/proof-types";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 import ContactVerifyField, { type ContactVerification } from "./ContactVerifyField";
 import { FIRST_SSC_BATCH } from "@/lib/data";
@@ -102,7 +102,6 @@ export default function RegistrationForm({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [proofType, setProofType] = useState("");
-  const [proofNote, setProofNote] = useState("");
   const [proof, setProof] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [proofError, setProofError] = useState<string | null>(null);
@@ -179,7 +178,6 @@ export default function RegistrationForm({
   /** The first problem with the proof section, or null when it is complete. */
   const proofProblem = (): string | null => {
     if (!proofType) return "Please choose the type of document.";
-    if (proofType === "OTHER" && !proofNote.trim()) return "Please describe the document.";
     if (!proof) return proofError ?? PROOF_MISSING;
     return null;
   };
@@ -270,7 +268,7 @@ export default function RegistrationForm({
                 emailVerificationToken: contactVerification?.via === "email" ? contactVerification.token : null,
               }
             : undefined,
-          proof: needsAccount ? { type: proofType, note: proofType === "OTHER" ? proofNote.trim() : null } : undefined,
+          proof: needsAccount ? { type: proofType, note: null } : undefined,
           rsvp: {
             packageName: event.packages.length ? packageName : null,
             guests: guestCounts,
@@ -456,20 +454,6 @@ export default function RegistrationForm({
                 {PROOF_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
-            {proofType === "OTHER" && (
-              <div>
-                <label htmlFor="reg-proof-note" className={label}>Describe the document *</label>
-                <input
-                  id="reg-proof-note"
-                  required
-                  maxLength={PROOF_NOTE_MAX}
-                  className={input}
-                  value={proofNote}
-                  onChange={(e) => setProofNote(e.target.value)}
-                  placeholder="e.g. Letter from the headmistress"
-                />
-              </div>
-            )}
             <div>
               <label htmlFor="reg-proof-file" className={label}>Document *</label>
               <input

@@ -205,24 +205,17 @@ describe("proof of study when joining", () => {
     expect(await proofFolders()).toEqual([]);
   });
 
-  it("needs a known document type, and a description for OTHER", async () => {
+  it("needs one of the three documents, and keeps any note short", async () => {
     await membershipEvent();
     const file = makePdf();
-    for (const type of ["", "PASSPORT", undefined]) {
+    for (const type of ["", "PASSPORT", "OTHER", "SCHOOL_ID_CARD", undefined]) {
       await expect(registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof: { type: type as string, file }, rsvp: paidRsvp })).rejects.toMatchObject({
         status: 400,
         code: "INVALID_PROOF",
         message: "Please choose the type of document.",
       });
     }
-    for (const note of [undefined, "", "   "]) {
-      await expect(registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof: { type: "OTHER", note, file }, rsvp: paidRsvp })).rejects.toMatchObject({
-        status: 400,
-        code: "INVALID_PROOF",
-        message: "Please describe the document.",
-      });
-    }
-    await expect(registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof: { type: "OTHER", note: "x".repeat(201), file }, rsvp: paidRsvp })).rejects.toMatchObject({
+    await expect(registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof: { type: "SSC_MARKSHEET", note: "x".repeat(201), file }, rsvp: paidRsvp })).rejects.toMatchObject({
       status: 400,
       code: "INVALID_PROOF",
     });
@@ -251,12 +244,12 @@ describe("proof of study when joining", () => {
     expect((await fs.readFile(file)).equals(makePdf())).toBe(true);
   });
 
-  it("stores an image proof as JPEG with the member's description", async () => {
+  it("stores an image proof as JPEG with the member's note", async () => {
     await membershipEvent();
-    const note = "  Letter from the headmistress  ";
-    await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof: { type: "OTHER", note, file: await makeImage(500, 700, "png") }, rsvp: paidRsvp });
+    const note = "  Signed by the headmistress  ";
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof: { type: "SCHOOL_TESTIMONIAL", note, file: await makeImage(500, 700, "png") }, rsvp: paidRsvp });
     const request = await verification();
-    expect(request).toMatchObject({ proofType: "OTHER", proofNote: "Letter from the headmistress", proofMime: "image/jpeg" });
+    expect(request).toMatchObject({ proofType: "SCHOOL_TESTIMONIAL", proofNote: "Signed by the headmistress", proofMime: "image/jpeg" });
     expect(request.proofFileUrl).toMatch(/^\/api\/media\/proofs\/[a-f0-9]{32}\/document\.jpg$/);
   });
 

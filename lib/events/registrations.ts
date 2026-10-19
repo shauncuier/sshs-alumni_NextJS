@@ -50,7 +50,6 @@ function checkProofDetails(proof: ProofInput | undefined): { type: ProofType; no
   if (!proof?.file || proof.file.length === 0) throw proofRequired();
   if (!isProofType(proof.type)) throw new AppError("INVALID_PROOF", 400, "Please choose the type of document.");
   const note = typeof proof.note === "string" ? proof.note.trim() : "";
-  if (proof.type === "OTHER" && !note) throw new AppError("INVALID_PROOF", 400, "Please describe the document.");
   if (note.length > PROOF_NOTE_MAX) {
     throw new AppError("INVALID_PROOF", 400, `Please keep the description to ${PROOF_NOTE_MAX} characters or fewer.`);
   }
