@@ -97,6 +97,10 @@ model AlumniProfile {
   gender             String?
   profession         String
   company            String?
+  /// Job title / designation (পদবী), e.g. "Assistant Professor".
+  designation        String?            @db.VarChar(100)
+  /// Present address (ঠিকানা). Shown only to the member and the committee, never publicly.
+  address            String?            @db.VarChar(255)
   industry           String?
   locationCity       String // e.g. Dhaka
   locationCountry    String // e.g. Bangladesh

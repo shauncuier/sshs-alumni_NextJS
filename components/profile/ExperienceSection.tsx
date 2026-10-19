@@ -11,8 +11,8 @@ import {
   type ExperienceEntry,
 } from "@/lib/members/experience";
 
-/** What the profile looks like after a save (profession and company follow the current job). */
-export type SavedProfile = { profession?: string; company?: string | null; experience?: unknown };
+/** What the profile looks like after a save (designation and company follow the current job). */
+export type SavedProfile = { designation?: string | null; company?: string | null; experience?: unknown };
 
 /**
  * Work experience, LinkedIn style: title, company and type, dates with the duration,
@@ -279,7 +279,7 @@ function ExperienceDialog({
               {form.description.length}/{EXPERIENCE_LIMITS.description}
             </p>
           </div>
-          {form.current && <p className="text-[11px] text-slate-500">Your current job also becomes the profession and company shown on your profile and in the directory.</p>}
+          {form.current && <p className="text-[11px] text-slate-500">Your current job also becomes the designation and company shown on your profile and in the directory.</p>}
           {error && <p role="alert" className="text-xs font-bold text-rose-700">{error}</p>}
           <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
             {!isNew ? (

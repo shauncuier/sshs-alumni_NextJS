@@ -37,6 +37,9 @@ interface VerificationRequestRow {
       avatarUrl: string | null;
       avatarOriginalUrl?: string | null;
       profession: string;
+      designation?: string | null;
+      company?: string | null;
+      address?: string | null;
       locationCity: string;
       locationCountry: string;
     } | null;
@@ -61,6 +64,8 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     sscBatch: row.sscBatch,
     rollNumber: row.rollNumber ?? "",
     profession: profile?.profession ?? "",
+    work: [profile?.designation, profile?.company].filter(Boolean).join(" at "),
+    address: profile?.address ?? "",
     location: profile ? `${profile.locationCity}, ${profile.locationCountry}` : "",
     documentType: row.proofType
       ? proofTypeLabel(row.proofType)

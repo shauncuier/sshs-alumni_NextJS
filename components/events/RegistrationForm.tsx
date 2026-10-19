@@ -84,7 +84,7 @@ export default function RegistrationForm({
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
-  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "" });
+  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "", profession: "", designation: "", company: "", address: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
@@ -429,6 +429,22 @@ export default function RegistrationForm({
               <option value="">Not given</option>
               {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
+          </div>
+          <div>
+            <label htmlFor="reg-profession" className={label}>Profession <span className="font-normal text-slate-400">(পেশা)</span></label>
+            <input id="reg-profession" maxLength={100} autoComplete="off" placeholder="e.g. Doctor, Engineer, Business, Student" className={input} value={account.profession} onChange={(e) => setAccount({ ...account, profession: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="reg-designation" className={label}>Designation <span className="font-normal text-slate-400">(পদবী)</span></label>
+            <input id="reg-designation" maxLength={100} autoComplete="organization-title" placeholder="e.g. Assistant Professor, Manager" className={input} value={account.designation} onChange={(e) => setAccount({ ...account, designation: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="reg-company" className={label}>Company / organisation <span className="font-normal text-slate-400">(কোম্পানি)</span></label>
+            <input id="reg-company" maxLength={150} autoComplete="organization" className={input} value={account.company} onChange={(e) => setAccount({ ...account, company: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="reg-address" className={label}>Present address <span className="font-normal text-slate-400">(ঠিকানা)</span></label>
+            <input id="reg-address" maxLength={255} autoComplete="street-address" placeholder="House, road, area, city" className={input} value={account.address} onChange={(e) => setAccount({ ...account, address: e.target.value })} />
           </div>
           <fieldset className="sm:col-span-2 min-w-0 p-3 rounded-xl border border-slate-300 bg-slate-50/60 space-y-3" aria-describedby="reg-proof-help">
             <legend className="px-1 text-xs font-bold text-slate-800">Proof you studied at SSGHS *</legend>

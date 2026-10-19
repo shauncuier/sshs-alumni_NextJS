@@ -40,6 +40,8 @@ interface ProfileRecord {
   section: string | null;
   profession: string;
   company: string | null;
+  designation: string | null;
+  address: string | null;
   industry: string | null;
   locationCity: string;
   locationCountry: string;
@@ -79,6 +81,8 @@ interface ProfileForm {
   fullName: string;
   profession: string;
   company: string;
+  designation: string;
+  address: string;
   industry: string;
   locationCity: string;
   locationCountry: string;
@@ -121,6 +125,8 @@ function toForm(profile: ProfileRecord): ProfileForm {
     fullName: profile.fullName,
     profession: profile.profession,
     company: profile.company ?? "",
+    designation: profile.designation ?? "",
+    address: profile.address ?? "",
     industry: profile.industry ?? "",
     locationCity: profile.locationCity,
     locationCountry: profile.locationCountry || "Bangladesh",
@@ -504,18 +510,29 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="pf-2" className="block font-bold text-slate-700 mb-1">Profession / Designation *</label>
+                        <label htmlFor="pf-2" className="block font-bold text-slate-700 mb-1">Profession (পেশা) *</label>
                         <input id="pf-2"
                           type="text"
                           value={profileData.profession}
                           onChange={(e) => setProfileData({ ...profileData, profession: e.target.value })}
-                          placeholder="e.g. Lead Software Architect, Consultant Cardiologist"
+                          placeholder="e.g. Doctor, Engineer, Banker, Business, Teacher"
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="pf-3" className="block font-bold text-slate-700 mb-1">Current Organization / Company</label>
+                        <label htmlFor="pf-designation" className="block font-bold text-slate-700 mb-1">Designation (পদবী)</label>
+                        <input id="pf-designation"
+                          type="text"
+                          maxLength={100}
+                          value={profileData.designation}
+                          onChange={(e) => setProfileData({ ...profileData, designation: e.target.value })}
+                          placeholder="e.g. Assistant Professor, Senior Manager"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="pf-3" className="block font-bold text-slate-700 mb-1">Company / Organisation (কোম্পানি)</label>
                         <input id="pf-3"
                           type="text"
                           value={profileData.company}
@@ -568,6 +585,19 @@ export default function ProfilePage() {
                           placeholder="e.g. Bangladesh, United Kingdom, Canada"
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                         />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label htmlFor="pf-address" className="block font-bold text-slate-700 mb-1">Present address (ঠিকানা)</label>
+                        <input id="pf-address"
+                          type="text"
+                          maxLength={255}
+                          autoComplete="street-address"
+                          value={profileData.address}
+                          onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                          placeholder="House, road, area, city"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        />
+                        <p className="text-[11px] text-slate-500 mt-1">Only you and the alumni committee can see your address.</p>
                       </div>
                       <ContactVerifyField
                         id="pf-7"
@@ -800,8 +830,9 @@ export default function ProfilePage() {
                   <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>
-                      {profileData.profession}
+                      {profileData.designation || profileData.profession}
                       {profileData.company ? ` at ${profileData.company}` : ""}
+                      {profileData.designation && profileData.profession !== "Alumnus" ? ` · ${profileData.profession}` : ""}
                       {profile.industry ? ` (${profile.industry})` : ""}
                     </span>
                   </p>
@@ -900,16 +931,16 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Experience, LinkedIn style: a current job also sets the profession and company */}
+              {/* Experience, LinkedIn style: a current job also sets the designation and company */}
               <ExperienceSection
                 initial={readExperience(profile.experience)}
-                fallbackTitle={profileData.profession}
+                fallbackTitle={profileData.designation || profileData.profession}
                 fallbackCompany={profileData.company}
                 editable
                 onSaved={(saved) => {
                   setProfile((p) => (p ? { ...p, ...saved, company: saved.company ?? p.company } as ProfileRecord : p));
                   setProfileData((d) =>
-                    d ? { ...d, profession: saved.profession ?? d.profession, company: saved.company ?? d.company } : d,
+                    d ? { ...d, designation: saved.designation ?? d.designation, company: saved.company ?? d.company } : d,
                   );
                 }}
               />

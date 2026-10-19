@@ -49,11 +49,12 @@ describe("work experience", () => {
     expect(readExperience("broken")).toEqual([]);
   });
 
-  it("a member saves it from the profile page, and the current job becomes the profession and company", async () => {
+  it("a member saves it from the profile page, and the current job becomes the designation and company", async () => {
     const m = await makeMember();
     session.user = { id: m.id, email: m.email, role: "ALUMNI", status: "VERIFIED" };
     const put = (body: unknown) =>
       PUT(new Request("http://x/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
+    const before = await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: m.id } });
     const res = await put({
       experience: [
         { ...job, start: "2018-01", end: "2021-06", current: false },
@@ -66,13 +67,14 @@ describe("work experience", () => {
       { ...job, title: "Head of IT", company: "bKash", start: "2021-07", end: "", current: true },
       { ...job, start: "2018-01", end: "2021-06", current: false },
     ]);
-    expect(p.profession).toBe("Head of IT");
+    expect(p.designation).toBe("Head of IT");
     expect(p.company).toBe("bKash");
+    expect(p.profession).toBe(before.profession); // the profession (পেশা) is the member's own
 
-    // Past jobs only: the profession the member typed stays.
+    // Past jobs only: the designation stays as it was.
     expect((await put({ experience: [{ ...job, start: "2018-01", end: "2021-06" }] })).status).toBe(200);
     const after = await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: m.id } });
-    expect(after.profession).toBe("Head of IT");
+    expect(after.designation).toBe("Head of IT");
 
     const bad = await put({ experience: [{ ...job, start: "2020-01" }] });
     expect(bad.status).toBe(400);

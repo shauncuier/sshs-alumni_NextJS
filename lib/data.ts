@@ -173,6 +173,10 @@ export interface VerificationRequestItem {
   sscBatch: number;
   rollNumber: string;
   profession: string;
+  /** "Designation at Company", either part may be missing. */
+  work?: string;
+  /** Present address (committee only). */
+  address?: string;
   location: string;
   documentType: string;
   documentUrl: string;

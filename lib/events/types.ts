@@ -82,6 +82,10 @@ export interface AccountInput {
   bloodGroup?: string | null;
   profession?: string | null;
   company?: string | null;
+  /** পদবী, e.g. "Assistant Professor". */
+  designation?: string | null;
+  /** Present address; never shown publicly. */
+  address?: string | null;
   locationCity?: string | null;
   /** Set by the server after the profile photo is saved; never read from the request. */
   avatarUrl?: string | null;

@@ -56,6 +56,8 @@ export async function PUT(req: Request) {
       fullName,
       profession,
       company,
+      designation,
+      address,
       industry,
       locationCity,
       locationCountry,
@@ -83,6 +85,7 @@ export async function PUT(req: Request) {
       value === undefined ? undefined : typeof value === "string" && value.trim() ? value.trim() : null;
     const required = (value: unknown) =>
       typeof value === "string" && value.trim() ? value.trim() : undefined;
+    const clip = (value: string | null | undefined, max: number) => (typeof value === "string" ? value.slice(0, max) : value);
 
     // Strict URL validator: prevents javascript:, data:, and malicious protocol schemes
     const safeUrl = (value: unknown): string | null | undefined => {
@@ -137,7 +140,7 @@ export async function PUT(req: Request) {
       // Education after SSC: undefined leaves it as it is.
       const educationList = education === undefined ? undefined : normalizeEducation(education);
       // Work experience: the current job (newest "I currently work here") also becomes the
-      // profile's profession and company, which directory cards and the header show.
+      // profile's designation and company, which directory cards and the header show.
       const experienceList = experience === undefined ? undefined : normalizeExperience(experience);
       const currentJob = experienceList?.find((e) => e.current);
 
@@ -152,10 +155,12 @@ export async function PUT(req: Request) {
         where: { userId: user.id },
         update: {
           fullName: required(fullName),
-          profession: required(profession) ?? currentJob?.title,
+          profession: required(profession),
           locationCity: required(locationCity),
           locationCountry: optional(locationCountry) || undefined,
           company: optional(company) ?? currentJob?.company,
+          designation: clip(optional(designation), 100) ?? currentJob?.title,
+          address: clip(optional(address), 255),
           industry: optional(industry),
           rollNumber: optional(rollNumber),
           bloodGroup: blood,
@@ -183,6 +188,8 @@ export async function PUT(req: Request) {
           locationCity: required(locationCity) || "Chattogram",
           locationCountry: optional(locationCountry) || "Bangladesh",
           company: optional(company) ?? null,
+          designation: clip(optional(designation), 100) ?? null,
+          address: clip(optional(address), 255) ?? null,
           industry: optional(industry) ?? null,
           rollNumber: optional(rollNumber) ?? null,
           bloodGroup: blood ?? null,

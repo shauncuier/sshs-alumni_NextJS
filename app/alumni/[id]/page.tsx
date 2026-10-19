@@ -79,6 +79,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
       section: true,
       profession: true,
       company: true,
+      designation: true,
       industry: true,
       locationCity: true,
       locationCountry: true,
@@ -178,9 +179,12 @@ export default async function AlumniIndividualPage({ params }: Props) {
 
                     <p className="text-emerald-800 font-semibold text-base sm:text-lg flex items-center justify-center sm:justify-start gap-1.5">
                       <Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{profile.profession}</span>
+                      <span>{profile.designation || profile.profession}</span>
                       {profile.company && (
                         <span className="text-slate-500 font-normal">at {profile.company}</span>
+                      )}
+                      {profile.designation && profile.profession !== "Alumnus" && (
+                        <span className="text-slate-500 font-normal">· {profile.profession}</span>
                       )}
                     </p>
 
@@ -347,7 +351,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
               {/* Experience and education, LinkedIn style (read-only here) */}
               <ExperienceSection
                 initial={readExperience(profile.experience)}
-                fallbackTitle={profile.profession}
+                fallbackTitle={profile.designation || profile.profession}
                 fallbackCompany={profile.company}
               />
               <EducationSection initial={readEducation(profile.education)} sscBatch={profile.sscBatch} />

@@ -466,3 +466,25 @@ describe("blood group when joining", () => {
     ).rejects.toMatchObject({ status: 400, code: "INVALID_ACCOUNT" });
   });
 });
+
+describe("work and address when joining", () => {
+  it("saves profession, designation, company and address; all optional", async () => {
+    await membershipEvent();
+    await registerForEvent({
+      slug: "jubilee",
+      sessionUserId: null,
+      account: { ...account, profession: " Doctor ", designation: "Assistant Professor", company: "Chittagong Medical College", address: "House 5, Road 2, Sitakunda, Chattogram" },
+      photo,
+      proof,
+      rsvp: paidRsvp,
+    });
+    const p = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(p).toMatchObject({ profession: "Doctor", designation: "Assistant Professor", company: "Chittagong Medical College", address: "House 5, Road 2, Sitakunda, Chattogram" });
+
+    await resetDatabase();
+    await membershipEvent();
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: paidRsvp });
+    const q = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(q).toMatchObject({ profession: "Alumnus", designation: null, company: null, address: null });
+  });
+});

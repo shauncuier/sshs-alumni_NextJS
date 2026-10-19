@@ -684,6 +684,8 @@ function VerificationReviewContent() {
                       {activeApplicant.profession && (
                         <span>• {activeApplicant.profession}</span>
                       )}
+                      {activeApplicant.work && <span>• {activeApplicant.work}</span>}
+                      {activeApplicant.address && <span>• {activeApplicant.address}</span>}
                     </div>
                   </div>
                 </div>
