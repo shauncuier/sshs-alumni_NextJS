@@ -109,6 +109,8 @@ model AlumniProfile {
   isPhonePublic      Boolean            @default(false)
   isEmailPublic      Boolean            @default(false)
   skills             Json               @default("[]")
+  /// Education after SSC: [{ level, institution, subject, year }] (lib/members/education.ts).
+  education          Json               @default("[]")
   linkedin           String?            @db.VarChar(500)
   facebook           String?            @db.VarChar(500)
   github             String?            @db.VarChar(500)

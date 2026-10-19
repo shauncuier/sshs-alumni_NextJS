@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { initialsAvatar } from "@/lib/avatar";
+import { readEducation } from "@/lib/members/education";
+import EducationSection from "@/components/profile/EducationSection";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -70,6 +72,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
       sscBatch: true,
       graduationYear: true,
       rollNumber: true,
+      education: true,
       section: true,
       profession: true,
       company: true,
@@ -337,6 +340,9 @@ export default async function AlumniIndividualPage({ params }: Props) {
                   )}
                 </div>
               </div>
+
+              {/* Education, LinkedIn style (read-only here) */}
+              <EducationSection initial={readEducation(profile.education)} sscBatch={profile.sscBatch} />
 
               {/* Skills Card */}
               {skillsList.length > 0 && (

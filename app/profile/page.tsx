@@ -9,7 +9,6 @@ import MobileNav from "@/components/layout/MobileNav";
 import {
   BadgeCheck,
   Briefcase,
-  GraduationCap,
   MapPin,
   Phone,
   Globe,
@@ -25,6 +24,8 @@ import {
 } from "lucide-react";
 import ContactVerifyField, { type ContactVerification } from "@/components/events/ContactVerifyField";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
+import EducationSection from "@/components/profile/EducationSection";
+import { readEducation } from "@/lib/members/education";
 
 interface ProfileRecord {
   id: string;
@@ -32,6 +33,7 @@ interface ProfileRecord {
   sscBatch: number;
   rollNumber: string | null;
   bloodGroup: string | null;
+  education?: unknown;
   section: string | null;
   profession: string;
   company: string | null;
@@ -916,29 +918,13 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Education */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-emerald-700" />
-                  <span>Education</span>
-                </h3>
-
-                <div className="space-y-3 divide-y divide-slate-100">
-                  <div className="pt-2 first:pt-0">
-                    <h4 className="font-bold text-sm text-slate-900">
-                      Secondary School Certificate (SSC)
-                    </h4>
-                    <div className="text-xs text-emerald-800 font-semibold">
-                      Sabuj Shikshayatan Government High School
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      Class of {userBatch}
-                      {profile.section ? ` • Section: ${profile.section}` : ""}
-                      {profile.rollNumber ? ` • Roll: ${profile.rollNumber}` : ""}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Education, LinkedIn style: add and edit right here */}
+              <EducationSection
+                initial={readEducation(profile.education)}
+                sscBatch={userBatch}
+                sscDetail={[profile.section ? `Section: ${profile.section}` : "", profile.rollNumber ? `Roll: ${profile.rollNumber}` : ""].filter(Boolean).join(" · ")}
+                editable
+              />
 
               {/* Skills */}
               {profileData.skills.length > 0 && (

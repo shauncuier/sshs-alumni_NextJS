@@ -7,6 +7,8 @@ import { AppError } from "@/lib/app-error";
 import { readVerifiedPhone } from "@/lib/phone-otp";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
+import type { Prisma } from "@prisma/client";
+import { normalizeEducation } from "@/lib/members/education";
 
 export async function GET() {
   try {
@@ -58,6 +60,7 @@ export async function PUT(req: Request) {
       locationCountry,
       rollNumber,
       bloodGroup,
+      education,
       section,
       bio,
       phone,
@@ -129,6 +132,9 @@ export async function PUT(req: Request) {
         throw new AppError("INVALID_BLOOD_GROUP", 400, "Please choose a blood group from the list, or leave it empty.");
       }
 
+      // Education after SSC: undefined leaves it as it is.
+      const educationList = education === undefined ? undefined : normalizeEducation(education);
+
       const batchYear = (session.user as unknown as { batchYear?: number })?.batchYear;
       if (!batchYear) {
         const existing = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
@@ -147,6 +153,7 @@ export async function PUT(req: Request) {
           industry: optional(industry),
           rollNumber: optional(rollNumber),
           bloodGroup: blood,
+          education: educationList as unknown as Prisma.InputJsonValue | undefined,
           section: optional(section),
           bio: optional(bio),
           phone: newPhone,
@@ -172,6 +179,7 @@ export async function PUT(req: Request) {
           industry: optional(industry) ?? null,
           rollNumber: optional(rollNumber) ?? null,
           bloodGroup: blood ?? null,
+          education: (educationList ?? []) as unknown as Prisma.InputJsonValue,
           section: optional(section) ?? null,
           bio: optional(bio) ?? null,
           phone: newPhone ?? null,
