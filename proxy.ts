@@ -78,5 +78,7 @@ export const config = {
     "/network/:path*",
     "/settings/:path*",
     "/card/:path*",
+    "/slip/:path*",
+    "/print/:path*",
   ],
 };

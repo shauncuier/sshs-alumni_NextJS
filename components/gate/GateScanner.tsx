@@ -5,7 +5,8 @@ import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import CameraScanner from "@/components/gate/CameraScanner";
-import { CheckCircle2, Clock, Keyboard, ShieldCheck, Users, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Keyboard, ShieldCheck, Users, UtensilsCrossed, XCircle } from "lucide-react";
+import { TOKEN_KINDS, TOKEN_QR_PREFIX, isTokenKind, tokenKind, type TokenKind } from "@/lib/events/token-kinds";
 
 interface GateEvent {
   id: string;
@@ -28,6 +29,9 @@ interface ScanLog {
 }
 
 const EVENT_KEY = "gate.eventId";
+// What this phone is doing: the entrance (tickets) or one food / kit counter (tokens).
+const COUNTER_KEY = "gate.counter";
+type Counter = "ENTRANCE" | TokenKind;
 const REPEAT_MS = 4000; // the same code held in front of the camera is read many times a second
 const RESUME_MS = 1500; // pause after each scan so the result can be read
 
@@ -57,6 +61,8 @@ export default function GateScanner() {
   const [eventsError, setEventsError] = useState(false);
   const [eventId, setEventIdState] = useState<string>("");
   const [counts, setCounts] = useState<{ checkedIn: number; expected: number; people: number } | null>(null);
+  const [counter, setCounterState] = useState<Counter>("ENTRANCE");
+  const [tokenStats, setTokenStats] = useState<Record<TokenKind, { used: number; total: number }> | null>(null);
   const [manual, setManual] = useState("");
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -70,6 +76,20 @@ export default function GateScanner() {
       localStorage.setItem(EVENT_KEY, id);
     } catch {}
   };
+
+  const setCounter = (c: Counter) => {
+    setCounterState(c);
+    try {
+      localStorage.setItem(COUNTER_KEY, c);
+    } catch {}
+  };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(COUNTER_KEY);
+      if (saved && isTokenKind(saved)) setCounterState(saved); // eslint-disable-line react-hooks/set-state-in-effect
+    } catch {}
+  }, []);
 
   useEffect(() => {
     fetch("/api/events/verify-ticket", { cache: "no-store" })
@@ -95,9 +115,19 @@ export default function GateScanner() {
     if (res?.ok) setCounts(await res.json());
   }, []);
 
+  const refreshTokenStats = useCallback(async (id: string) => {
+    if (!id) return setTokenStats(null);
+    const res = await fetch(`/api/events/redeem-token?eventId=${encodeURIComponent(id)}`, { cache: "no-store" }).catch(() => null);
+    if (res?.ok) setTokenStats(await res.json());
+  }, []);
+
   useEffect(() => {
     void refreshCounts(eventId); // eslint-disable-line react-hooks/set-state-in-effect
   }, [eventId, refreshCounts]);
+
+  useEffect(() => {
+    if (counter !== "ENTRANCE") void refreshTokenStats(eventId); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [eventId, counter, refreshTokenStats]);
 
   const record = (r: ScanResult) => {
     setResult(r);
@@ -111,7 +141,32 @@ export default function GateScanner() {
     setBusy(true);
     setPaused(true);
     try {
-      if (code.startsWith("SSGHS-TICKET:")) {
+      if (code.startsWith(TOKEN_QR_PREFIX)) {
+        // A food or kit token: only at a food counter, and only the counter's own kind.
+        if (counter === "ENTRANCE") {
+          record({ ok: false, title: "Food token", detail: "This is a food / kit token, not an entry ticket. Switch this phone to that food counter to serve it." });
+        } else {
+          const res = await fetch("/api/events/redeem-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, eventId: eventId || undefined, kind: counter }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.ok) {
+            const k = tokenKind(data.kind);
+            record({
+              ok: true,
+              title: data.name,
+              detail: `${data.batch ? `SSC ${data.batch} · ` : ""}${k?.en ?? data.kind}${k?.perPerson ? ` · person ${data.person} of ${data.people}` : ""}`,
+            });
+            void refreshTokenStats(eventId);
+          } else {
+            record({ ok: false, title: "Do not serve", detail: data.message || data.error || "Token check failed." });
+          }
+        }
+      } else if (code.startsWith("SSGHS-TICKET:") && counter !== "ENTRANCE") {
+        record({ ok: false, title: "Entry ticket", detail: "This is the entry ticket, not a food token. Ask for the printed food token." });
+      } else if (code.startsWith("SSGHS-TICKET:")) {
         const res = await fetch("/api/events/verify-ticket", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -184,7 +239,34 @@ export default function GateScanner() {
                 ))}
               </select>
             )}
-            {counts && selected && (
+            <div>
+              <label htmlFor="gate-counter" className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1.5">
+                <UtensilsCrossed className="w-4 h-4 text-emerald-700" /> This phone is at
+              </label>
+              <select
+                id="gate-counter"
+                value={counter}
+                onChange={(e) => setCounter(e.target.value as Counter)}
+                className="w-full px-3 py-3 min-h-[48px] bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-sm font-semibold"
+              >
+                <option value="ENTRANCE">Entrance · tickets (প্রবেশপথ)</option>
+                {TOKEN_KINDS.map((k) => (
+                  <option key={k.key} value={k.key}>
+                    {k.en} counter · tokens ({k.bn})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {counter !== "ENTRANCE" && tokenStats && selected && (
+              <div className="flex items-center gap-2 text-xs">
+                <UtensilsCrossed className="w-4 h-4 text-emerald-700" />
+                <span className="font-black text-emerald-800 text-base">{tokenStats[counter].used}</span>
+                <span className="text-slate-500">
+                  of {tokenStats[counter].total} {tokenKind(counter)?.en.toLowerCase()} tokens served
+                </span>
+              </div>
+            )}
+            {counter === "ENTRANCE" && counts && selected && (
               <div className="flex items-center gap-2 text-xs">
                 <Users className="w-4 h-4 text-emerald-700" />
                 <span className="font-black text-emerald-800 text-base">{counts.checkedIn}</span>
@@ -200,7 +282,9 @@ export default function GateScanner() {
                 <div role="status" className={`p-4 rounded-2xl border-2 flex items-start gap-3 ${result.ok ? "bg-emerald-50 border-emerald-500 text-emerald-950" : "bg-rose-50 border-rose-500 text-rose-950"}`}>
                   {result.ok ? <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" /> : <XCircle className="w-8 h-8 text-rose-600 shrink-0" />}
                   <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-wider">{result.ok ? "Let in" : "Stop"}</p>
+                    <p className="text-[11px] font-black uppercase tracking-wider">
+                      {counter === "ENTRANCE" ? (result.ok ? "Let in" : "Stop") : result.ok ? "Serve" : "Don't serve"}
+                    </p>
                     <p className="text-lg font-black leading-tight break-words">{result.title}</p>
                     <p className="text-xs mt-0.5">{result.detail}</p>
                   </div>
@@ -226,7 +310,7 @@ export default function GateScanner() {
                       id="gate-manual"
                       value={manual}
                       onChange={(e) => setManual(e.target.value)}
-                      placeholder="SSGHS-TICKET:…"
+                      placeholder={counter === "ENTRANCE" ? "SSGHS-TICKET:…" : "SSGHS-TOKEN:…"}
                       autoComplete="off"
                       className="flex-1 min-w-0 px-3 py-3 min-h-[48px] bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     />

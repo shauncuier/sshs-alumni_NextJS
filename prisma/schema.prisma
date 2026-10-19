@@ -233,11 +233,30 @@ model EventRegistration {
   confirmedBy    String?
   confirmedAt    DateTime?
   checkedInAt    DateTime?
+  /// Single-use food and kit tokens printed for this registration (lib/events/tokens.ts).
+  tokens         EventToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([eventId, userId])
+}
+
+/// One printed food or kit token: a meal for one person (BREAKFAST, LUNCH, DINNER;
+/// person 1..headCount) or the T-shirt and gift kit (KIT, person 1). Scanned once
+/// at a food counter in the gate app (lib/events/tokens.ts).
+model EventToken {
+  id             String            @id @default(uuid()) @db.VarChar(36)
+  registrationId String            @db.VarChar(36)
+  registration   EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  kind           String            @db.VarChar(20)
+  person         Int
+  usedAt         DateTime?
+  usedBy         String?           @db.VarChar(254)
+  createdAt      DateTime          @default(now())
+
+  @@unique([registrationId, kind, person])
+  @@index([registrationId])
 }
 
 model DonationCampaign {

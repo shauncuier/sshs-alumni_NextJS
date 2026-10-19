@@ -6,6 +6,7 @@ import {
   membershipRejectedEmail,
   registrationConfirmedEmail,
   registrationReceivedEmail,
+  siteUrl,
   type RegistrationEmailInput,
   type RenderedEmail,
 } from "@/lib/email-templates";
@@ -51,6 +52,7 @@ export async function emailRegistration(registrationId: string, kind: "received"
       donationAmount: reg.donationAmount,
       paymentMethod: reg.paymentMethod,
       transactionId: reg.transactionId,
+      slipUrl: kind === "confirmed" && reg.totalFee + reg.donationAmount > 0 ? siteUrl(`/slip/${reg.id}`) : null,
     };
     const email = kind === "received" ? registrationReceivedEmail(input) : registrationConfirmedEmail(input);
     return deliver(reg.user.email, email, `registration ${kind}`);

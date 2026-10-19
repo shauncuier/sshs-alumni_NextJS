@@ -106,6 +106,11 @@ export default function RegisterClientView({ initialEvent, source, compact = fal
             {registration.ticket && (
               <img loading="lazy" decoding="async" src={registration.ticket.qrDataUrl} alt="Event ticket QR code" className="w-40 h-40 bg-white rounded-xl border" />
             )}
+            {registration.ticket && registration.totalFee + registration.donationAmount > 0 && (
+              <a href={`/slip/${registration.id}`} className="block text-xs font-bold text-emerald-800 underline">
+                Print or save your payment slip
+              </a>
+            )}
             <button
               type="button"
               onClick={() => router.push("/dashboard")}

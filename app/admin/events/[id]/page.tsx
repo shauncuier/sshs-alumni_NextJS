@@ -25,7 +25,10 @@ import {
   ListOrdered,
   Search,
   Layers,
+  Printer,
+  UtensilsCrossed,
 } from "lucide-react";
+import { TOKEN_KINDS } from "@/lib/events/token-kinds";
 
 interface AdminEventStudioProps {
   params: Promise<{ id: string }>;
@@ -875,6 +878,22 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               >
                 <Download className="w-4 h-4" /> Export Roster (CSV)
               </button>
+              <a
+                href={`/print/event/${event.id}?what=slips`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200"
+              >
+                <Printer className="w-4 h-4" /> Print payment slips
+              </a>
+              <a
+                href={`/print/event/${event.id}?what=tokens`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
+              >
+                <UtensilsCrossed className="w-4 h-4" /> Print food tokens
+              </a>
             </div>
           </div>
 
@@ -1001,7 +1020,16 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       {formatTaka(a.totalFee)}{a.donationAmount > 0 && <> + {formatTaka(a.donationAmount)} donation</>}
                       <div className="text-slate-500 font-mono">{a.paymentMethod ?? "—"} {a.transactionId ?? ""}</div>
                     </td>
-                    <td className="block md:table-cell py-1 md:py-3 md:px-3 font-bold">{a.status.replace("_", " ")}</td>
+                    <td className="block md:table-cell py-1 md:py-3 md:px-3 font-bold">
+                      {a.status.replace("_", " ")}
+                      {a.tokenUsage && Object.keys(a.tokenUsage).length > 0 && (
+                        <span className="block font-normal text-[10px] text-slate-500 mt-0.5">
+                          {TOKEN_KINDS.filter((k) => a.tokenUsage?.[k.key])
+                            .map((k) => `${k.en.split(" ")[0]} ${a.tokenUsage![k.key]!.used}/${a.tokenUsage![k.key]!.total}`)
+                            .join(" · ")}
+                        </span>
+                      )}
+                    </td>
                     <td className="flex flex-wrap gap-2 pt-2 md:pt-3 md:table-cell md:py-3 md:px-3 md:text-right md:space-x-1 md:whitespace-nowrap">
                       {a.status === "PENDING_PAYMENT" && (
                         <button disabled={busyId === a.id} onClick={() => decide(a, "APPROVE")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-emerald-800 text-white font-bold disabled:opacity-50">
@@ -1013,6 +1041,16 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       )}
                       {a.status === "CHECKED_IN" && (
                         <button disabled={busyId === a.id} onClick={() => decide(a, "UNDO_CHECK_IN")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-100 font-bold disabled:opacity-50">Undo check-in</button>
+                      )}
+                      {(a.status === "CONFIRMED" || a.status === "CHECKED_IN") && (
+                        <>
+                          <a href={`/print/event/${event.id}?what=slips&reg=${a.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-100 font-bold">
+                            Slip
+                          </a>
+                          <a href={`/print/event/${event.id}?what=tokens&reg=${a.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-100 font-bold">
+                            Tokens
+                          </a>
+                        </>
                       )}
                       {(a.status === "PENDING_PAYMENT" || a.status === "CONFIRMED") && (
                         <button disabled={busyId === a.id} onClick={() => decide(a, "CANCEL")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold disabled:opacity-50">

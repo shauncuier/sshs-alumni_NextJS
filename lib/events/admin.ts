@@ -7,6 +7,8 @@ import { toProofSummary } from "@/lib/members/proof-types";
 import { storedGuests } from "./pricing";
 import { getPublicEventBySlug } from "./service";
 import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./types";
+import { smsRegistrationConfirmed } from "@/lib/member-sms";
+import { tokenUsageByRegistration } from "./tokens";
 
 type RegWithUser = EventRegistration & {
   user: User & { profile: AlumniProfile | null; verificationRequests: VerificationRequest[] };
@@ -66,7 +68,13 @@ export async function getAdminEvent(id: string): Promise<{
     include: WITH_USER,
     orderBy: { createdAt: "desc" },
   });
-  const registrations = regs.map(toAdminRegistration);
+  // Token counts are extra: the attendee list must still load if they cannot be read
+  // (e.g. the token table is not in this database yet).
+  const usage = await tokenUsageByRegistration(id).catch((err: unknown) => {
+    console.warn(`[events-admin] Could not read token usage (${(err as Error)?.message ?? "error"}).`);
+    return {} as Awaited<ReturnType<typeof tokenUsageByRegistration>>;
+  });
+  const registrations = regs.map((r) => ({ ...toAdminRegistration(r), tokenUsage: usage[r.id] ?? {} }));
   const paid = (r: AdminRegistration) => r.totalFee + r.donationAmount;
   const attending = registrations.filter((r) => r.status === "CONFIRMED" || r.status === "CHECKED_IN");
   return {
@@ -176,6 +184,7 @@ export async function decideRegistration(args: {
   if (args.action === "APPROVE") {
     if (memberDecided) await emailMembershipDecision(userId, "VERIFIED");
     await emailRegistration(regId, "confirmed");
+    await smsRegistrationConfirmed(regId);
   } else if (args.action === "CANCEL" && memberDecided) {
     await emailMembershipDecision(userId, "REJECTED");
   }

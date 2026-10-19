@@ -178,6 +178,8 @@ export interface RegistrationEmailInput {
   donationAmount: number;
   paymentMethod: string | null;
   transactionId: string | null;
+  /** Link to the printable payment slip (confirmed paid registrations). */
+  slipUrl?: string | null;
 }
 
 function registrationRows(r: RegistrationEmailInput): [string, string][] {
@@ -221,6 +223,7 @@ export function registrationConfirmedEmail(r: RegistrationEmailInput): RenderedE
     paragraphs: [
       `Dear ${r.name},`,
       `Your registration for ${r.eventTitle} is confirmed. Show the ticket QR code from your dashboard at the entrance; one ticket covers everyone on your registration.`,
+      ...(r.slipUrl ? [`Your payment slip is ready to print or save: ${r.slipUrl}`] : []),
     ],
     rows: registrationRows(r),
     button: { label: "Open my ticket", url: siteUrl("/dashboard") },

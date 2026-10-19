@@ -64,6 +64,11 @@ export default function MyEvents() {
                 {openTicket === r.id ? "Hide ticket" : "Show ticket"}
               </button>
             )}
+            {r.ticket && r.totalFee + r.donationAmount > 0 && (
+              <a href={`/slip/${r.id}`} className="ml-3 text-emerald-800 font-bold underline">
+                Payment slip
+              </a>
+            )}
             {r.ticket && openTicket === r.id && (
               <img loading="lazy" decoding="async" src={r.ticket.qrDataUrl} alt={`Ticket for ${r.eventTitle}`} className="w-44 h-44 bg-white border rounded-xl" />
             )}

@@ -15,6 +15,7 @@ import { eventFeeRules } from "./service";
 import { ticketInfo } from "./tickets";
 import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type ProofInput, type RsvpInput } from "./types";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
+import { smsRegistrationConfirmed } from "@/lib/member-sms";
 
 const ACTIVE_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] as const;
 
@@ -303,6 +304,8 @@ export async function registerForEvent(args: {
   const registration = await toMemberRegistration(result.registration);
   // Never fails the registration: a mail problem is only logged.
   await emailRegistration(registration.id, registration.status === "PENDING_PAYMENT" ? "received" : "confirmed");
+  // Confirmed at once (a free event): tell them by SMS too. Paid ones get it when the committee confirms.
+  if (registration.status !== "PENDING_PAYMENT") await smsRegistrationConfirmed(registration.id);
   return { registration, createdAccount: result.createdAccount };
 }
 

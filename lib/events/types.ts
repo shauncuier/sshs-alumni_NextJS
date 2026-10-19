@@ -1,6 +1,7 @@
 import type { EventItem } from "@/lib/data";
 import type { ProofSummary } from "@/lib/members/proof-types";
 import type { ClosedReason } from "./availability";
+import type { TokenKind } from "./token-kinds";
 
 // "Bangla QR" is Bangladesh Bank's interoperable QR: any bank or MFS app can pay it.
 export const PAYMENT_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
@@ -195,4 +196,6 @@ export interface AdminRegistration {
   createdAt: string;
   /** The member's proof of study (latest verification request), if they uploaded one when joining. */
   proof: ProofSummary | null;
+  /** Food and kit tokens printed for it, and how many were served (lib/events/tokens.ts). */
+  tokenUsage?: Partial<Record<TokenKind, { used: number; total: number }>>;
 }
