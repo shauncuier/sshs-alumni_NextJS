@@ -53,7 +53,8 @@ npm run db:generate
 # Create or update tables to match prisma/schema.prisma
 npm run db:push
 
-# LOCAL ONLY: demo users (one per role), batches, events, campaigns, announcements, news and posts
+# The super admin (SUPER_ADMIN_* in the env file), the SSC batch years and the real
+# membership event (Golden Jubilee). No test accounts and no sample content. Safe to re-run.
 npm run db:seed
 
 # PRODUCTION: batches, the super admin (SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD) and the

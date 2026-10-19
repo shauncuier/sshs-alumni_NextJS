@@ -12,7 +12,7 @@
     "db:generate": "prisma generate",
     "db:backfill-legacy": "tsx prisma/backfill-legacy-columns.ts",
     "db:push": "npm run db:backfill-legacy && prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx prisma/seed-prod.ts",
     "db:seed:prod": "tsx prisma/seed-prod.ts",
     "db:remove-demo": "tsx prisma/remove-demo.ts",
     "db:super-admin": "tsx scripts/ensure-super-admin.ts",

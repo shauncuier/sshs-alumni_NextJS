@@ -2,7 +2,9 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
 /**
- * The one super admin, defined by SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD.
+ * The one super admin, defined by SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD, with an
+ * alumni profile from SUPER_ADMIN_NAME and SUPER_ADMIN_SSC_BATCH (created once if missing;
+ * the profile is then the member's own to edit).
  * The environment is the source of truth: ensureSuperAdmin (run at every server
  * start and by `npm run db:super-admin`) creates the account, or restores its role,
  * status and password to match. Changing SUPER_ADMIN_PASSWORD and restarting
@@ -24,6 +26,23 @@ export function isEnvSuperAdmin(email: string | null | undefined): boolean {
 
 export type EnsureResult = "skipped" | "created" | "updated" | "unchanged";
 
+/** The profile the super admin starts with, from SUPER_ADMIN_NAME / SUPER_ADMIN_SSC_BATCH. */
+function envProfile(email: string) {
+  const name = process.env.SUPER_ADMIN_NAME?.trim() || email.split("@")[0];
+  const batch = Number(process.env.SUPER_ADMIN_SSC_BATCH);
+  const sscBatch = Number.isInteger(batch) && batch > 1900 && batch <= new Date().getFullYear() ? batch : 0;
+  return {
+    fullName: name,
+    sscBatch,
+    graduationYear: sscBatch,
+    profession: "Alumnus",
+    locationCity: "Chattogram",
+    locationCountry: "Bangladesh",
+    avatarUrl: "/logo.png",
+    verificationStatus: "VERIFIED" as const,
+  };
+}
+
 export async function ensureSuperAdmin(): Promise<EnsureResult> {
   const email = envSuperAdminEmail();
   if (!email) return "skipped";
@@ -39,10 +58,20 @@ export async function ensureSuperAdmin(): Promise<EnsureResult> {
   });
   if (!existing) {
     await prisma.user.create({
-      data: { email, passwordHash: await bcrypt.hash(password, BCRYPT_COST), role: "SUPER_ADMIN", status: "VERIFIED" },
+      data: {
+        email,
+        passwordHash: await bcrypt.hash(password, BCRYPT_COST),
+        role: "SUPER_ADMIN",
+        status: "VERIFIED",
+        profile: { create: envProfile(email) },
+      },
     });
     return "created";
   }
+
+  // An older super admin account without a profile gets one (never overwrites edits).
+  const hasProfile = await prisma.alumniProfile.findUnique({ where: { userId: existing.id }, select: { id: true } });
+  if (!hasProfile) await prisma.alumniProfile.create({ data: { userId: existing.id, ...envProfile(email) } });
 
   const passwordChanged = !(await bcrypt.compare(password, existing.passwordHash));
   const accessChanged = existing.role !== "SUPER_ADMIN" || existing.status !== "VERIFIED" || existing.disabledAt !== null;

@@ -31,12 +31,15 @@ describe("production seed", () => {
       prisma.newsArticle.count(),
       prisma.announcement.count(),
       prisma.donationCampaign.count(),
-      prisma.alumniProfile.count(),
     ])) {
       expect(n).toBe(0);
     }
-    // No invented representatives on any batch.
-    expect((await listBatches()).every((b) => b.classRepresentative === "" && b.totalAlumni === 0)).toBe(true);
+    // The only profile is the super admin's own (SUPER_ADMIN_NAME / SUPER_ADMIN_SSC_BATCH).
+    expect(await prisma.alumniProfile.findMany({ select: { user: { select: { email: true } } } })).toEqual([{ user: { email: "chief@example.test" } }]);
+    // No invented representatives on any batch; the only member counted is the super admin.
+    const batches = await listBatches();
+    expect(batches.every((b) => b.classRepresentative === "")).toBe(true);
+    expect(batches.reduce((n, b) => n + b.totalAlumni, 0)).toBeLessThanOrEqual(1);
   });
 
   it("is safe to run again and never replaces an existing membership event", async () => {

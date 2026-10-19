@@ -19,9 +19,9 @@ Needs Node 22+ and a MariaDB/MySQL database.
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in DATABASE_URL, NEXTAUTH_SECRET, SUPER_ADMIN_*, SEED_*_PASSWORD
+cp .env.example .env.local   # then fill in DATABASE_URL, NEXTAUTH_SECRET, SUPER_ADMIN_*
 npm run db:push              # create the tables
-npm run db:seed              # local accounts per role and sample data (never in production)
+npm run db:seed              # the super admin (from .env.local), SSC batch years and the Golden Jubilee event; no sample data
 npm run dev                  # http://localhost:3000
 ```
 
