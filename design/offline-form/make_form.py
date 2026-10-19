@@ -1,5 +1,6 @@
 """
-Golden Jubilee 2026 offline (paper) registration form, A4, Bangla + English.
+Golden Jubilee 2026 offline (paper) registration form: one Legal page (8.5 x 14 in),
+Bangla + English, with an office-use box and a tear-off money receipt at the bottom.
 
 Run:  python design/offline-form/make_form.py
 Out:  design/offline-form/golden-jubilee-offline-registration-form.pdf
@@ -31,7 +32,7 @@ EVENT_DATE = "শনিবার, ২৬ ডিসেম্বর ২০২৬"
 VENUE = "বিদ্যালয় প্রাঙ্গণ, সীতাকুণ্ড, চট্টগ্রাম"
 # Bangla QR: put the association's QR image here (PNG/JPG) and it is printed on the
 # form; without it the form says to scan the QR at the registration desk.
-BANGLA_QR = HERE / "bangla-qr.png"
+BANGLA_QR = next((HERE / f"bangla-qr.{ext}" for ext in ("png", "jpg", "jpeg") if (HERE / f"bangla-qr.{ext}").exists()), HERE / "bangla-qr.png")
 QR_MERCHANT = "PRAKTAN CHATRO CHATRI PORISHAD SABUJ SHIKSHAYATAN"
 QR_BANK = "ONE Bank · OK Wallet"
 QR_ACCOUNT = "01819172910"
@@ -74,7 +75,7 @@ fee_rows = "".join(
 
 HTML = f"""<!doctype html><html lang="bn"><head><meta charset="utf-8">
 <style>
-@page {{ size: A4; margin: 10mm 11mm; }}
+@page {{ size: legal; margin: 9mm 11mm; }}
 * {{ box-sizing: border-box; }}
 body {{ margin: 0; font-family: 'Nirmala UI', 'Shonar Bangla', 'Segoe UI', sans-serif; color: #1c2b25; font-size: 9.6pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
 .bn {{ font-family: 'Nirmala UI', 'Shonar Bangla', sans-serif; }}
@@ -97,7 +98,7 @@ body {{ margin: 0; font-family: 'Nirmala UI', 'Shonar Bangla', 'Segoe UI', sans-
 .facts {{ margin-top: 1.5mm; font-size: 8.5pt; color: #374740; display: flex; gap: 6mm; flex-wrap: wrap; }}
 .facts b {{ color: {GREEN}; }}
 
-h2 {{ margin: 2.2mm 0 1.1mm; font-size: 10.5pt; color: {GREEN}; border-bottom: 0.3mm solid #c9d6d0; padding-bottom: 0.8mm; display: flex; gap: 2mm; align-items: baseline; }}
+h2 {{ margin: 1.8mm 0 0.9mm; font-size: 10.5pt; color: {GREEN}; border-bottom: 0.3mm solid #c9d6d0; padding-bottom: 0.8mm; display: flex; gap: 2mm; align-items: baseline; }}
 h2 .n {{ display: inline-flex; width: 5mm; height: 5mm; border-radius: 50%; background: {GREEN}; color: #fff; font-size: 8pt; align-items: center; justify-content: center; }}
 h2 .en {{ font-weight: 400; }}
 
@@ -128,25 +129,30 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 
 .pay {{ display: grid; grid-template-columns: 1fr 1.6fr; gap: 3mm; margin-bottom: 1.6mm; }}
 .qrcard {{ display: flex; gap: 3mm; align-items: center; }}
-.qr {{ width: 22mm; height: 22mm; flex-shrink: 0; border: 0.3mm solid #b9c9c2; border-radius: 1mm; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 6.8pt; color: #5b6b64; }}
+.qr {{ width: 26mm; height: 26mm; flex-shrink: 0; border: 0.3mm solid #b9c9c2; border-radius: 1mm; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 6.8pt; color: #5b6b64; }}
 .qr img {{ width: 100%; height: 100%; object-fit: contain; }}
 .paycard {{ border: 0.3mm solid #b9c9c2; border-radius: 1.5mm; padding: 1.8mm 2.5mm; font-size: 8.4pt; }}
 .paycard b {{ color: {GREEN}; font-size: 9.5pt; }}
 
 .declare {{ margin-top: 2mm; padding: 2mm 3mm; background: #f4f7f5; border-radius: 1.5mm; font-size: 8.4pt; line-height: 1.45; }}
-.sign {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 6mm; font-size: 8.4pt; }}
+.sign {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 5mm; font-size: 8.4pt; }}
 .sign div {{ border-top: 0.3mm solid #4b5b54; padding-top: 1mm; }}
 
 .foot {{ margin-top: 3mm; font-size: 7.6pt; color: #5b6b64; text-align: center; }}
 
 /* page 2 */
-.office {{ border: 0.5mm solid {GREEN}; border-radius: 2mm; padding: 3mm 4mm; margin-top: 3mm; }}
-.office .h {{ font-weight: 700; color: {GREEN}; font-size: 10.5pt; margin-bottom: 2mm; }}
-.cut {{ margin: 6mm 0 4mm; border-top: 0.4mm dashed #6f8079; position: relative; }}
+.office {{ border: 0.5mm solid {GREEN}; border-radius: 2mm; padding: 1.5mm 3.5mm 0.5mm; margin-top: 2mm; }}
+.howto {{ margin-top: 2mm; font-size: 8.2pt; line-height: 1.45; color: #374740; }}
+.howto b {{ color: {GREEN}; }}
+.grid4 {{ display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 4mm; }}
+.grid3 {{ display: grid; grid-template-columns: 2fr 1fr 1fr; column-gap: 4mm; }}
+.field.inline {{ display: inline-block; width: 45mm; margin: 0 3mm 0 0; }}
+.office .h {{ font-weight: 700; color: {GREEN}; font-size: 9.5pt; margin-bottom: 1mm; }}
+.cut {{ margin: 4mm 0 3.5mm; border-top: 0.4mm dashed #6f8079; position: relative; }}
 .cut span {{ position: absolute; top: -2.6mm; left: 50%; transform: translateX(-50%); background: #fff; padding: 0 2mm; font-size: 8pt; color: #5b6b64; }}
-.receipt {{ border: 0.5mm solid {GOLD}; border-radius: 2mm; padding: 3mm 4mm; }}
-.receipt .h {{ display: flex; align-items: center; gap: 3mm; border-bottom: 0.3mm solid #e2d3a8; padding-bottom: 2mm; margin-bottom: 2.5mm; }}
-.receipt .h img {{ width: 11mm; height: 11mm; }}
+.receipt {{ border: 0.5mm solid {GOLD}; border-radius: 2mm; padding: 2mm 3.5mm; break-inside: avoid; }}
+.receipt .h {{ display: flex; align-items: center; gap: 3mm; border-bottom: 0.3mm solid #e2d3a8; padding-bottom: 1.5mm; margin-bottom: 1.5mm; }}
+.receipt .h img {{ width: 9mm; height: 9mm; }}
 .receipt .h .t {{ font-weight: 700; color: {GREEN}; font-size: 11pt; }}
 .steps {{ margin: 0; padding-left: 5mm; font-size: 8.8pt; line-height: 1.55; }}
 </style></head><body>
@@ -176,27 +182,29 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
   <h2><span class="n">১</span> ব্যক্তিগত তথ্য <span class="en">Personal details (please write in CAPITAL letters)</span></h2>
   <div class="top">
     <div>
-      {line("পূর্ণ নাম (বাংলায়)", "Full name in Bangla")}
-      {line("পূর্ণ নাম (ইংরেজিতে)", "Full name in English *")}
+      <div class="grid">
+        {line("পূর্ণ নাম (বাংলায়)", "Name in Bangla")}
+        {line("পূর্ণ নাম (ইংরেজিতে) *", "Name in English")}
+      </div>
       <div class="row"><span class="bn">এসএসসি ব্যাচ (পাসের সাল) *</span> <span class="en">SSC batch</span> {boxes(4)}
         &nbsp;&nbsp;<span class="bn">রোল নং</span> <span class="en">Roll</span> <span class="blank" style="min-width:26mm"></span></div>
       <div class="row"><span class="bn">বিভাগ / শাখা:</span>
         {check("বিজ্ঞান <span class='en'>Science</span>")}{check("ব্যবসায় শিক্ষা <span class='en'>Business</span>")}{check("মানবিক <span class='en'>Humanities</span>")}{check("<span class='en'>Section A / B</span>")}</div>
       <div class="row tight"><span class="bn">রক্তের গ্রুপ</span> <span class="en">Blood group (optional)</span>
         {"".join(check(g) for g in ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"])}</div>
+      <div class="row"><span class="bn">মোবাইল নম্বর *</span> <span class="en">Mobile</span> {boxes(11)}</div>
     </div>
     <div class="photo">পাসপোর্ট সাইজ ছবি<br>এখানে লাগান<br><br><span class="en">Paste a recent passport-size photo</span></div>
   </div>
-  <div class="row"><span class="bn">মোবাইল নম্বর *</span> <span class="en">Mobile (one account per number)</span> {boxes(11)}</div>
-  <div class="grid">
-    {line("ইমেইল", "Email (for your online account and ticket)", "span2")}
-    {line("পেশা ও প্রতিষ্ঠান", "Profession and workplace")}
-    {line("বর্তমান ঠিকানা (শহর)", "Present address (city)")}
+  <div class="grid3">
+    {line("ইমেইল", "Email (for your account and ticket)")}
+    {line("পেশা", "Profession")}
+    {line("বর্তমান ঠিকানা", "City")}
   </div>
 
   <h2><span class="n">২</span> রেজিস্ট্রেশন ফি <span class="en">Registration fee — tick and fill in</span></h2>
   <table class="fee">
-    <tr><th></th><th>বিবরণ <span class="en">Item</span></th><th class="c">সংখ্যা <span class="en">No.</span></th><th class="r">হার <span class="en">Rate</span></th><th class="amt">টাকা <span class="en">Amount</span></th></tr>
+    <tr><th></th><th>বিবরণ <span class="en">Item</span></th><th class="c">সংখ্যা</th><th class="r">হার</th><th class="amt">টাকা</th></tr>
     {fee_rows}
     <tr><td>{check('')}</td><td><span class="bn">স্বামী / স্ত্রী</span> <span class="en">Spouse (max 1)</span> — নাম: <span class="blank" style="min-width:45mm"></span></td><td class="c"><span class="blank"></span></td><td class="r">৳{SPOUSE_FEE}</td><td class="amt"></td></tr>
     <tr><td>{check('')}</td><td><span class="bn">সন্তান (৫ বছর বা তদূর্ধ্ব)</span> <span class="en">Children aged 5+ (under 5: free)</span></td><td class="c"><span class="blank"></span></td><td class="r">৳{CHILD_FEE}</td><td class="amt"></td></tr>
@@ -207,7 +215,7 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 
   <h2><span class="n">৩</span> পেমেন্ট <span class="en">Payment — cash or Bangla QR</span></h2>
   <div class="pay">
-    <div class="paycard">{check("<b>নগদ টাকা · Cash</b>")}<br>কমিটির সদস্যের কাছে টাকা দিয়ে পেছনের পাতার রসিদ নিন।<br><span class="en">Pay a committee member and take the receipt on page 2.</span></div>
+    <div class="paycard">{check("<b>নগদ টাকা · Cash</b>")}<br>কমিটির সদস্যের কাছে টাকা দিয়ে নিচের রসিদ নিন।<br><span class="en">Pay a committee member and take the receipt at the bottom.</span></div>
     <div class="paycard qrcard"><div class="qr">{QR_BOX}</div><div>{check("<b>বাংলা QR · Bangla QR</b>")}<br>যেকোনো ব্যাংক / MFS অ্যাপ দিয়ে স্ক্যান করে পেমেন্ট করুন, তারপর ট্রানজেকশন আইডি লিখুন।<br><span class="en">{QR_MERCHANT}<br>{QR_BANK} · {QR_ACCOUNT}</span></div></div>
   </div>
   <div class="row"><span class="bn">ট্রানজেকশন আইডি</span> <span class="en">Transaction ID (Bangla QR)</span> {boxes(14)}</div>
@@ -217,44 +225,23 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
   <div class="row">{check("প্রশংসাপত্র <span class='en'>Testimonial</span>")}{check("স্কুলের আইডি কার্ড <span class='en'>School ID card</span>")}{check("অন্যান্য <span class='en'>Other:</span>")}<span class="blank" style="min-width:45mm"></span></div>
 
   <div class="declare">
-    আমি ঘোষণা করছি যে উপরের সব তথ্য সত্য এবং আমি সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের প্রাক্তন শিক্ষার্থী। কমিটি পেমেন্ট ও প্রমাণপত্র যাচাই করে আমার রেজিস্ট্রেশন নিশ্চিত করবে; এই রেজিস্ট্রেশনের মাধ্যমে আমি পরিষদের সদস্য হব।<br>
-    <span class="en">I declare these details are true and that I studied at the school. The committee checks payment and proof before confirming; this also makes me a member.</span>
+    আমি ঘোষণা করছি যে উপরের সব তথ্য সত্য এবং আমি সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের প্রাক্তন শিক্ষার্থী। কমিটি পেমেন্ট ও প্রমাণপত্র যাচাই করে আমার রেজিস্ট্রেশন নিশ্চিত করবে; এই রেজিস্ট্রেশনের মাধ্যমে আমি পরিষদের সদস্য হব।
   </div>
   <div class="sign"><div>স্বাক্ষর <span class="en">Signature</span></div><div>তারিখ <span class="en">Date</span></div></div>
 
-</div>
 
-<!-- ================= PAGE 2: OFFICE USE AND RECEIPT ================= -->
-<div class="page">
-  <div class="head">
-    <img src="{LOGO}" alt="">
-    <div>
-      <div class="t1">সুবর্ণ জয়ন্তী ২০২৬ · জমা দেওয়ার নিয়ম</div>
-      <div class="t2">How to submit this form</div>
-    </div>
-  </div>
-  <ol class="steps">
-    <li>ফর্মের প্রথম পাতা পূরণ করে একটি পাসপোর্ট সাইজ ছবি লাগান। <span class="en">Fill in page 1 and paste a photo.</span></li>
-    <li>এসএসসি সনদ, মার্কশিট বা অন্য প্রমাণপত্রের ফটোকপি সংযুক্ত করুন। <span class="en">Attach a photocopy of your proof of study.</span></li>
-    <li>নগদ টাকা কমিটির সদস্যের কাছে দিয়ে নিচের রসিদ নিন, অথবা বাংলা QR স্ক্যান করে পেমেন্ট করে ট্রানজেকশন আইডি লিখুন। <span class="en">Pay cash to a committee member and take the receipt below, or pay by Bangla QR and write the transaction ID.</span></li>
-    <li>ফর্মটি কমিটির সদস্যের কাছে {DEADLINE}-এর মধ্যে জমা দিন। কমিটি অনলাইনে আপনার রেজিস্ট্রেশন তুলে দেবে; নিশ্চিত হলে টিকিটের QR কোড পাবেন। <span class="en">Hand the form to a committee member by {DEADLINE}. The committee enters it online; once confirmed you get your ticket QR code.</span></li>
-    <li>একটি মোবাইল নম্বরে একটিই রেজিস্ট্রেশন হয়। <span class="en">One registration per mobile number.</span></li>
-  </ol>
+  <div class="howto"><b>জমা দেওয়ার নিয়ম:</b> ছবি লাগান, প্রমাণপত্রের ফটোকপি সংযুক্ত করুন, পেমেন্ট করুন এবং {DEADLINE}-এর মধ্যে ফর্মটি কমিটির সদস্যের কাছে জমা দিন। নিশ্চিত হলে টিকিটের QR কোড পাবেন। একটি মোবাইল নম্বরে একটিই রেজিস্ট্রেশন। <span class="en">{EMAIL}</span></div>
 
-  <p class="foot" style="text-align:left">অনলাইনেও রেজিস্ট্রেশন করা যায় (ওয়েবসাইটের {SITE} পাতা) · প্রশ্ন: {EMAIL}</p>
   <div class="office">
     <div class="h">অফিস কর্তৃক পূরণীয় · For office use only</div>
-    <div class="grid">
-      {line("ফর্ম গ্রহণকারী", "Received by")}
-      {line("গ্রহণের তারিখ", "Date received")}
-      {line("প্রাপ্ত টাকা", "Amount received (৳)")}
+    <div class="grid4">
+      {line("গ্রহণকারী", "Received by")}
+      {line("তারিখ", "Date")}
+      {line("প্রাপ্ত টাকা", "Amount (৳)")}
       {line("রসিদ নং", "Receipt no.")}
     </div>
-    <div class="row">{check("পেমেন্ট যাচাই হয়েছে <span class='en'>Payment checked</span>")}{check("প্রমাণপত্র যাচাই হয়েছে <span class='en'>Proof checked</span>")}{check("ছবি আছে <span class='en'>Photo attached</span>")}</div>
-    <div class="grid">
-      {line("অনলাইনে এন্ট্রি দিয়েছেন", "Entered online by")}
-      {line("এন্ট্রির তারিখ", "Date entered")}
-    </div>
+    <div class="row">{check("পেমেন্ট যাচাই <span class='en'>Payment checked</span>")}{check("প্রমাণপত্র যাচাই <span class='en'>Proof checked</span>")}{check("ছবি আছে <span class='en'>Photo</span>")}
+      <span class="bn">অনলাইনে এন্ট্রি</span> <span class="en">Entered online by / date</span> <span class="blank" style="min-width:52mm"></span></div>
   </div>
 
   <div class="cut"><span>✂ এখান থেকে কেটে সদস্যকে দিন · cut and give to the member</span></div>
@@ -268,15 +255,13 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
       </div>
       <div class="formno">রসিদ নং / Receipt no.<br><span class="b"></span></div>
     </div>
-    <div class="grid">
-      {line("নাম", "Name", "span2")}
+    <div class="grid3">
+      {line("নাম", "Name")}
       {line("এসএসসি ব্যাচ", "SSC batch")}
       {line("মোবাইল", "Mobile")}
-      {line("প্রাপ্ত টাকা (অঙ্কে)", "Amount received (৳)")}
-      <div class="row span2">{check("নগদ <span class='en'>Cash</span>")}{check("বাংলা QR <span class='en'>Bangla QR</span>")} <span class="en">TrxID</span> <span class="blank" style="min-width:60mm"></span></div>
     </div>
+    <div class="row">{line("প্রাপ্ত টাকা", "Amount (৳)", "inline")}{check("নগদ <span class='en'>Cash</span>")}{check("বাংলা QR <span class='en'>Bangla QR</span>")} <span class="en">TrxID</span> <span class="blank" style="min-width:48mm"></span></div>
     <div class="sign"><div>গ্রহণকারীর স্বাক্ষর <span class="en">Received by (signature)</span></div><div>তারিখ <span class="en">Date</span></div></div>
-    <div class="foot">রেজিস্ট্রেশন নিশ্চিত হলে টিকিটের QR কোড ড্যাশবোর্ডে ও ইমেইলে পাবেন। প্রশ্ন: {EMAIL}</div>
   </div>
 </div>
 </body></html>"""
