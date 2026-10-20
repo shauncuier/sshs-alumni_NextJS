@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { Download, FileText, HelpCircle, ArrowRight } from "lucide-react";
+import { schoolInfo } from "@/lib/data";
 
 export const metadata: Metadata = pageMetadata({
   image: shareCard("events"),
@@ -66,7 +67,7 @@ export default function GuidePage() {
               </span>
               <div>
                 <h2 className="text-base sm:text-lg font-bold">Watch Video Walkthrough</h2>
-                <p className="text-xs text-slate-400">ধাপভিত্তিক ভিডিও টিউটোরিয়াল (Full HD · 44 sec)</p>
+                <p className="text-xs text-slate-400">ধাপভিত্তিক ভিডিও টিউটোরিয়াল (মোবাইল স্ক্রিন · ১ মিনিট ১৩ সেকেন্ড)</p>
               </div>
             </div>
             <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30">
@@ -75,7 +76,7 @@ export default function GuidePage() {
           </div>
 
           <div className="p-3 sm:p-6 bg-black flex justify-center">
-            <div className="w-full max-w-3xl aspect-video rounded-2xl overflow-hidden border border-slate-800 shadow-inner bg-slate-950">
+            <div className="w-full max-w-[340px] aspect-[9/16] rounded-2xl overflow-hidden border border-slate-800 shadow-inner bg-slate-950">
               <video
                 controls
                 playsInline
@@ -97,27 +98,39 @@ export default function GuidePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
               <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
                 <span className="font-mono text-amber-400 font-bold shrink-0">0:00</span>
-                <span>Overview & Jubilee</span>
+                <span>Overview · শুরু</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
-                <span className="font-mono text-amber-400 font-bold shrink-0">0:06</span>
-                <span>Step 1: Personal & Batch Info</span>
+                <span className="font-mono text-amber-400 font-bold shrink-0">0:04</span>
+                <span>Open the link & check your fee</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
                 <span className="font-mono text-amber-400 font-bold shrink-0">0:13</span>
-                <span>Step 2: Photo & Proof Upload</span>
+                <span>Photo, name, email & password</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
                 <span className="font-mono text-amber-400 font-bold shrink-0">0:21</span>
-                <span>Step 3 & 4: bKash/Nagad Pay</span>
+                <span>Mobile number & SMS code</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
-                <span className="font-mono text-amber-400 font-bold shrink-0">0:30</span>
-                <span>Step 5: Digital ID Card & Ticket</span>
+                <span className="font-mono text-amber-400 font-bold shrink-0">0:33</span>
+                <span>SSC batch & proof document</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
-                <span className="font-mono text-amber-400 font-bold shrink-0">0:38</span>
-                <span>Helpline & Support</span>
+                <span className="font-mono text-amber-400 font-bold shrink-0">0:43</span>
+                <span>Family members & T-shirt size</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
+                <span className="font-mono text-amber-400 font-bold shrink-0">0:48</span>
+                <span>Pay with Bangla QR</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
+                <span className="font-mono text-amber-400 font-bold shrink-0">0:54</span>
+                <span>Transaction ID & submit</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-start gap-2">
+                <span className="font-mono text-amber-400 font-bold shrink-0">1:06</span>
+                <span>What happens next</span>
               </div>
             </div>
           </div>
@@ -132,7 +145,7 @@ export default function GuidePage() {
             </div>
             <h2 className="text-xl font-extrabold text-white">Download Printable Registration Guide (PDF)</h2>
             <p className="text-xs sm:text-sm text-emerald-100">
-              ৪ পাতার পূর্ণাঙ্গ রঙিন নির্দেশিকা ডাউনলোড করুন। এতে রয়েছে প্রতিটি ধাপের বিস্তারিত ব্যাখ্যা, ছবির সাইজ, বিকাশ/নগদে ফি পাঠানোর নিয়ম এবং কিউআর কোড।
+              ৪ পাতার পূর্ণাঙ্গ রঙিন নির্দেশিকা ডাউনলোড করুন। এতে রয়েছে প্রতিটি ধাপের বিস্তারিত ব্যাখ্যা, ছবির সাইজ এবং বাংলা QR বা নগদ টাকায় ফি দেওয়ার নিয়ম।
             </p>
           </div>
           <a
@@ -141,7 +154,7 @@ export default function GuidePage() {
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-emerald-50 text-emerald-950 font-extrabold text-sm shadow-md transition-all shrink-0 cursor-pointer"
           >
             <Download className="w-4 h-4 text-emerald-800" />
-            <span>Download PDF (1.5 MB)</span>
+            <span>Download PDF</span>
           </a>
         </section>
 
@@ -165,11 +178,11 @@ export default function GuidePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 pt-2 border-t border-slate-100">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
                 <p className="font-bold text-slate-800">নাম ও এসএসসি ব্যাচ</p>
-                <p>সার্টিফিকেট অনুযায়ী আপনার পূর্ণ নাম ইংরেজিতে লিখুন এবং ১৯৭৭ থেকে ২০২৬ পর্যন্ত তালিকার মধ্য থেকে আপনার এসএসসি পাশের বছর বাছাই করুন।</p>
+                <p>সার্টিফিকেট অনুযায়ী আপনার পূর্ণ নাম ইংরেজিতে লিখুন এবং তালিকা থেকে আপনার এসএসসি পাশের বছর বাছাই করুন। ফি আপনার ব্যাচ অনুযায়ী: ১৯৮৯–২০১৪ ব্যাচ ৳১,৫০০, ২০১৫–২০২৬ ব্যাচ ৳১,২৫০।</p>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
-                <p className="font-bold text-slate-800">মোবাইল নম্বর ও পাসওয়ার্ড</p>
-                <p>আপনার সচল ফোন নম্বর ও ন্যূনতম ৬ অক্ষরের পাসওয়ার্ড দিন। এই নম্বর ও পাসওয়ার্ড দিয়েই পরবর্তীতে লগইন করে মেম্বার কার্ড দেখতে পারবেন।</p>
+                <p className="font-bold text-slate-800">ইমেইল, পাসওয়ার্ড ও মোবাইল নম্বর</p>
+                <p>ইমেইল ও ন্যূনতম ৮ অক্ষরের পাসওয়ার্ড দিন; এগুলো দিয়েই পরে লগইন করে টিকিট ও মেম্বার কার্ড দেখবেন। মোবাইল নম্বর লিখে Send code চাপুন এবং SMS-এ আসা ৪ সংখ্যার কোড দিন। একটি মোবাইল নম্বরে একটিই রেজিস্ট্রেশন।</p>
               </div>
             </div>
           </div>
@@ -196,10 +209,9 @@ export default function GuidePage() {
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1.5">
                 <p className="font-bold text-slate-800">২. শিক্ষার্থী প্রমাণপত্র (যেকোনো একটি)</p>
                 <ul className="list-disc pl-4 space-y-0.5">
-                  <li>এসএসসি মূল সনদ (SSC Certificate)</li>
-                  <li>এসএসসি মার্কশিট বা একাডেমিক ট্রান্সক্রিপ্ট</li>
-                  <li>এসএসসি রেজিস্ট্রেশন বা এডমিট কার্ড</li>
-                  <li>স্কুল ত্যাগের প্রশংসাপত্র (Testimonial)</li>
+                  <li>এসএসসি সনদ (SSC Certificate)</li>
+                  <li>প্রশংসাপত্র (Testimonial)</li>
+                  <li>এসএসসি মার্কশিট (Marksheet)</li>
                 </ul>
                 <p className="text-slate-500 text-[11px]">ফরম্যাট: PDF বা স্পষ্ট ছবি (সর্বোচ্চ ১০ MB)।</p>
               </div>
@@ -213,18 +225,18 @@ export default function GuidePage() {
                 03
               </span>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Step 3 & 4: Package, Sizes & Payment (প্যাকেজ, সাইজ ও পেমেন্ট)</h3>
-                <p className="text-xs text-slate-500">টি-শার্টের সাইজ নির্বাচন এবং বিকাশ/নগদে ফি পরিশোধ</p>
+                <h3 className="text-base font-bold text-slate-900">Step 3: Family, T-shirt & Payment (পরিবার, টি-শার্ট ও পেমেন্ট)</h3>
+                <p className="text-xs text-slate-500">টি-শার্টের সাইজ নির্বাচন এবং বাংলা QR বা নগদ টাকায় ফি পরিশোধ</p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 pt-2 border-t border-slate-100">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
-                <p className="font-bold text-slate-800">টি-শার্ট সাইজ ও অতিথি</p>
-                <p>আপনার উপযোগী টি-শার্ট সাইজ (S: 38&quot;, M: 40&quot;, L: 42&quot;, XL: 44&quot;, XXL: 46&quot;) বাছাই করুন। সাথে পরিবার বা অতিথি থাকলে তাদের টিকিট সংখ্যা যুক্ত করুন।</p>
+                <p className="font-bold text-slate-800">টি-শার্ট সাইজ ও পরিবারের সদস্য</p>
+                <p>আপনার টি-শার্ট সাইজ (S থেকে XXL) বাছাই করুন। স্বামী/স্ত্রী (৳৬০০) এবং ৫ বছর বা তার বেশি বয়সী সন্তান (প্রতিজন ৳৬০০) সাথে এলে তাদের সংখ্যা দিন; ৫ বছরের কম বয়সীরা বিনামূল্যে। মোট টাকা নিজে থেকেই হিসাব হয়।</p>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
-                <p className="font-bold text-slate-800">বিকাশ / নগদ পেমেন্ট ও TrxID</p>
-                <p>প্রদর্শিত নম্বরে ফি পাঠিয়ে এসএমএস থেকে Transaction ID (TrxID) ফর্মে লিখুন। পেমেন্টের স্ক্রিনশট আপলোড করলে আমাদের স্মার্ট OCR সিস্টেম স্বয়ংক্রিয়ভাবে ট্রানজেকশন মিলিয়ে নেবে।</p>
+                <p className="font-bold text-slate-800">বাংলা QR বা নগদ টাকা</p>
+                <p>বাংলা QR: ফর্মে দেখানো QR কোডটি যেকোনো ব্যাংক বা মোবাইল ব্যাংকিং অ্যাপ (বিকাশ, নগদ, রকেট, উপায় ইত্যাদি) দিয়ে স্ক্যান করে মোট টাকা দিন, তারপর রসিদের Transaction ID (TrxID) ফর্মে লিখুন। চাইলে পেমেন্টের স্ক্রিনশটও দিতে পারেন। নগদ টাকা: কমিটির সদস্যকে টাকা দিয়ে রসিদ নিন এবং রসিদ নম্বর লিখুন।</p>
               </div>
             </div>
           </div>
@@ -236,13 +248,13 @@ export default function GuidePage() {
                 04
               </span>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Step 5: Verification & Digital Alumni Card (অনুমোদন ও টিকিট সংগ্রহ)</h3>
+                <h3 className="text-base font-bold text-slate-900">Step 4: Confirmation, Ticket & Alumni Card (অনুমোদন ও টিকিট সংগ্রহ)</h3>
                 <p className="text-xs text-slate-500">কমিটি কর্তৃক যাচাই শেষে আপনার ডিজিটাল মেম্বার কার্ড ও কিউআর এন্ট্রি টিকিট প্রাপ্তি</p>
               </div>
             </div>
             <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-emerald-950 space-y-1.5">
-              <p className="font-bold">যাচাইকরণ সময়কাল: ২৪ থেকে ৪৮ ঘণ্টা</p>
-              <p>কমিটি তথ্য ও পেমেন্ট নিশ্চিত করলেই আপনার মোবাইল নম্বরে নিশ্চিতকরণ এসএমএস যাবে। এরপর আপনি ওয়েবসাইটে লগইন করে ড্যাশবোর্ড থেকে আপনার <strong>অফিসিয়াল ডিজিটাল আইডি কার্ড</strong> এবং <strong>গোল্ডেন জুবিলি কিউআর এন্ট্রি টিকিট</strong> সংগ্রহ করতে পারবেন।</p>
+              <p className="font-bold">কমিটি আপনার পেমেন্ট ও প্রমাণপত্র যাচাই করবে</p>
+              <p>যাচাই শেষে রেজিস্ট্রেশন নিশ্চিত হলেই আপনার মোবাইলে এসএমএস এবং ইমেইলে নিশ্চিতকরণ বার্তা যাবে। এরপর আপনি ওয়েবসাইটে লগইন করে ড্যাশবোর্ড থেকে আপনার <strong>অফিসিয়াল ডিজিটাল আইডি কার্ড</strong> এবং <strong>গোল্ডেন জুবিলি কিউআর এন্ট্রি টিকিট</strong> সংগ্রহ করতে পারবেন।</p>
             </div>
           </div>
         </section>
@@ -263,53 +275,53 @@ export default function GuidePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {/* Screenshot 1 */}
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-2 p-3">
               <div className="flex items-center justify-between px-2 pt-1">
-                <span className="text-xs font-bold text-slate-800">ধাপ ১: ব্যক্তিগত তথ্য ও ব্যাচ নির্বাচন</span>
+                <span className="text-xs font-bold text-slate-800">ধাপ ১: ছবি, নাম, ইমেইল ও পাসওয়ার্ড</span>
                 <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">Step 1 UI</span>
               </div>
               <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
                 <img
-                  src="/docs/ui-screenshots/ui_step1_account.png"
-                  alt="Step 1 Account Details Form"
+                  src="/docs/ui-screenshots/guide-details.jpg"
+                  alt="Registration form: photo, name, email and password"
                   className="w-full h-auto object-cover max-h-[380px] object-top hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <p className="text-[11px] text-slate-500 px-2">নাম, এসএসসি ব্যাচ, রোল, রক্তের গ্রুপ এবং পাসওয়ার্ড ইনপুট স্ক্রিন।</p>
+              <p className="text-[11px] text-slate-500 px-2">ছবি, নাম, ইমেইল, পাসওয়ার্ড ও মোবাইল নম্বরের অংশ (নমুনা তথ্য)।</p>
             </div>
 
             {/* Screenshot 2 */}
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-2 p-3">
               <div className="flex items-center justify-between px-2 pt-1">
-                <span className="text-xs font-bold text-slate-800">ধাপ ৩ ও ৪: টি-শার্ট ও বিকাশ/নগদ পেমেন্ট</span>
+                <span className="text-xs font-bold text-slate-800">ধাপ ৩: বাংলা QR দিয়ে পেমেন্ট</span>
                 <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">Payment UI</span>
               </div>
               <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
                 <img
-                  src="/docs/ui-screenshots/ui_step2_payment.png"
-                  alt="Step 2 Payment and TrxID Form"
+                  src="/docs/ui-screenshots/guide-bangla-qr.jpg"
+                  alt="Payment: Bangla QR code and transaction ID"
                   className="w-full h-auto object-cover max-h-[380px] object-top hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <p className="text-[11px] text-slate-500 px-2">প্যাকেজ নির্বাচন, টি-শার্টের সাইজ ও TrxID প্রদান স্ক্রিন।</p>
+              <p className="text-[11px] text-slate-500 px-2">মোট টাকা, বাংলা QR কোড ও Transaction ID লেখার অংশ।</p>
             </div>
 
             {/* Screenshot 3 */}
-            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-2 p-3 sm:col-span-2">
+            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs space-y-2 p-3">
               <div className="flex items-center justify-between px-2 pt-1">
-                <span className="text-xs font-bold text-slate-800">ধাপ ৫: ডিজিটাল মেম্বারশিপ আইডি কার্ড ও কিউআর টিকিট প্রিভিউ</span>
-                <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">Digital ID Card</span>
+                <span className="text-xs font-bold text-slate-800">রেজিস্ট্রেশন জমা হয়েছে</span>
+                <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">Done</span>
               </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-900">
+              <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
                 <img
-                  src="/docs/ui-screenshots/ui_card_preview.png"
-                  alt="Digital Alumni ID Card Preview"
-                  className="w-full h-auto max-h-[320px] object-cover object-top hover:scale-105 transition-transform duration-300"
+                  src="/docs/ui-screenshots/guide-done.jpg"
+                  alt="Registration submitted"
+                  className="w-full h-auto object-cover max-h-[380px] object-top hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <p className="text-[11px] text-slate-500 px-2">অনুমোদনের পর ড্যাশবোর্ডে প্রদর্শিত অফিসিয়াল ডিজিটাল কার্ড ও ভেন্যু এন্ট্রি টিকিটের আসল রূপ।</p>
+              <p className="text-[11px] text-slate-500 px-2">জমা দেওয়ার পর এই বার্তা দেখবেন। কমিটি নিশ্চিত করলে এসএমএস ও ইমেইল পাবেন।</p>
             </div>
           </div>
         </section>
@@ -323,11 +335,11 @@ export default function GuidePage() {
           <div className="space-y-3 text-xs sm:text-sm text-slate-700">
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
               <p className="font-bold text-slate-900">প্রশ্ন: ভুলবশত ভুল তথ্য বা ভুল TrxID সাবমিট করলে কী করণীয়?</p>
-              <p className="text-slate-600">উত্তর: আপনি যদি পেমেন্টের স্পষ্ট স্ক্রিনশট আপলোড করে থাকেন, তবে কমিটি স্ক্রিনশট দেখে ম্যানুয়ালি যাচাই করে দেবে। প্রয়োজনে কমিটির হেল্পলাইন নম্বরে যোগাযোগ করতে পারেন।</p>
+              <p className="text-slate-600">উত্তর: আপনি যদি পেমেন্টের স্ক্রিনশট দিয়ে থাকেন, কমিটি তা দেখে যাচাই করবে। না হলে সঠিক TrxID ও আপনার মোবাইল নম্বর লিখে ইমেইল করুন: {schoolInfo.associationEmail}, অথবা ফেসবুক গ্রুপে জানান।</p>
             </div>
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
               <p className="font-bold text-slate-900">প্রশ্ন: আমি কি একই ফোনে একাধিক ব্যাচমেটের রেজিস্ট্রেশন করে দিতে পারব?</p>
-              <p className="text-slate-600">উত্তর: হ্যাঁ, একটি রেজিস্ট্রেশন সম্পন্ন করার পর পুনরায় <code>/register</code> এ গিয়ে নতুন সদস্যের ফোন নম্বর ও তথ্য দিয়ে আরেকটি অ্যাকাউন্ট নিবন্ধন করা যাবে।</p>
+              <p className="text-slate-600">উত্তর: হ্যাঁ, তবে প্রত্যেকের নিজের মোবাইল নম্বর লাগবে, কারণ একটি নম্বরে একটিই রেজিস্ট্রেশন হয় এবং SMS কোড সেই নম্বরেই যায়। স্মার্টফোন না থাকলে কমিটির কাছে কাগজের ফর্মেও রেজিস্ট্রেশন করা যায়।</p>
             </div>
           </div>
         </section>
