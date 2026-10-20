@@ -38,6 +38,10 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 import { enterOfflineRegistration, NO_EMAIL_DOMAIN } from "@/lib/events/offline-entry";
 import { POST } from "@/app/api/admin/events/[id]/offline-entry/route";
 import { sendEmail } from "@/lib/email";
+import { slipsForEvent } from "@/lib/events/slips";
+import { slipNumber, tokensForPrint } from "@/lib/events/tokens";
+import { OFFLINE_SOURCE } from "@/lib/events/types";
+import { readOfflineNote, registrationListForPrint } from "@/lib/events/registration-list";
 
 beforeEach(async () => {
   sms.sent = [];
@@ -147,5 +151,38 @@ describe("paper forms entered by the committee", () => {
     expect(res.status).toBe(201);
     const log = await prisma.activityLog.findFirst({ where: { action: "registration.offline_entered" } });
     expect(log?.actorEmail).toBe(admin.email);
+  });
+  it("bulk printing can take only the paper forms", async () => {
+    const event = await jubilee();
+    const paper = await enterOfflineRegistration({ eventId: event.id, staff, member, proofType: "SSC_CERTIFICATE", paymentMethod: "Cash", guests: {} });
+    const online = await makeMember();
+    await prisma.eventRegistration.create({ data: { eventId: event.id, userId: online.id, status: "CONFIRMED", headCount: 1, guestCount: 1, totalFee: 1500, paymentMethod: "bKash", transactionId: "ONLINE123" } });
+
+    expect((await slipsForEvent(event.id)).length).toBe(2);
+    const slips = await slipsForEvent(event.id, { source: OFFLINE_SOURCE });
+    expect(slips.map((s) => s.registrationId)).toEqual([paper.registrationId]);
+    const tokens = await tokensForPrint(event.id, { source: OFFLINE_SOURCE });
+    expect(new Set(tokens.map((t) => t.slipNo))).toEqual(new Set([slipNumber(paper.registrationId)]));
+    expect(tokens).toHaveLength(4); // breakfast, lunch, dinner for one person + the kit
+  });
+  it("the printed entries list shows form and receipt numbers, who entered it and the totals' parts", async () => {
+    const event = await jubilee();
+    const paper = await enterOfflineRegistration({ eventId: event.id, staff, member, proofType: "SSC_CERTIFICATE", paymentMethod: "Cash", formNo: "17", receiptNo: "R-9" });
+    const rows = await registrationListForPrint(event.id, { source: OFFLINE_SOURCE });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      registrationId: paper.registrationId,
+      name: "Paper Member",
+      batch: 1995,
+      phone: "01711000222",
+      email: null,
+      formNo: "17",
+      receiptNo: "R-9",
+      enteredBy: staff.email,
+      totalFee: 1500,
+      paymentMethod: "Cash",
+    });
+    expect(readOfflineNote("[Offline form, entered by a@b.test]")).toEqual({ formNo: null, receiptNo: null, enteredBy: "a@b.test" });
+    expect(readOfflineNote("paid online")).toEqual({ formNo: null, receiptNo: null, enteredBy: null });
   });
 });

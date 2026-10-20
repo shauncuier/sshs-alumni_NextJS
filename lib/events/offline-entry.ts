@@ -87,7 +87,8 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
   const receiptNo = text(input.receiptNo, 30);
 
   // The member never types a password here; they can set one later with "Forgot password".
-  const passwordHash = await hashMemberPassword(randomBytes(24).toString("base64url"));
+  const randomPassword = randomBytes(24).toString("base64url");
+  const passwordHash = await hashMemberPassword(randomPassword);
 
   let photoDir: string | null = null;
   let avatar: { avatarUrl: string; originalUrl: string } | null = null;
@@ -119,7 +120,7 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
             fullName,
             email,
             phone,
-            password: "offline-entry", // checked for length only; the hash above is what is stored
+            password: randomPassword, // never shown to anyone; the member resets it to sign in
             sscBatch: m.sscBatch,
             rollNumber: m.rollNumber,
             section: m.section,

@@ -93,7 +93,7 @@ export async function slipFor(registrationId: string, viewer: { id: string; isAd
 /** Slips of an event's confirmed registrations (or one, or one batch), by batch then name, for admin printing. */
 export async function slipsForEvent(
   eventId: string,
-  opts: { registrationId?: string | null; batch?: number | null } = {}
+  opts: { registrationId?: string | null; batch?: number | null; source?: string | null } = {}
 ): Promise<PaymentSlipData[]> {
   const regs = await prisma.eventRegistration.findMany({
     where: {
@@ -101,6 +101,7 @@ export async function slipsForEvent(
       status: { in: [...PAID] },
       ...(opts.registrationId ? { id: opts.registrationId } : {}),
       ...(opts.batch ? { user: { profile: { is: { sscBatch: opts.batch } } } } : {}),
+      ...(opts.source ? { source: opts.source } : {}),
     },
     include: SLIP_INCLUDE,
   });

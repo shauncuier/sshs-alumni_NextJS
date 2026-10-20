@@ -66,7 +66,7 @@ export function slipNumber(registrationId: string): string {
  */
 export async function tokensForPrint(
   eventId: string,
-  opts: { registrationId?: string | null; batch?: number | null } = {}
+  opts: { registrationId?: string | null; batch?: number | null; source?: string | null } = {}
 ): Promise<PrintableToken[]> {
   const regs = await prisma.eventRegistration.findMany({
     where: {
@@ -74,6 +74,7 @@ export async function tokensForPrint(
       status: { in: ["CONFIRMED", "CHECKED_IN"] },
       ...(opts.registrationId ? { id: opts.registrationId } : {}),
       ...(opts.batch ? { user: { profile: { is: { sscBatch: opts.batch } } } } : {}),
+      ...(opts.source ? { source: opts.source } : {}),
     },
     select: { id: true, headCount: true, user: { select: { email: true, profile: { select: { fullName: true, sscBatch: true } } } } },
   });

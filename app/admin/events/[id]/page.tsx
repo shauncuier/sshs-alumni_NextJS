@@ -906,6 +906,20 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               >
                 <UtensilsCrossed className="w-4 h-4" /> Print food tokens
               </a>
+              {event.isMembershipEvent && (
+                <span className="flex items-center gap-1 px-2 py-1 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-amber-900">
+                  <Printer className="w-4 h-4" /> Paper forms:
+                  <a href={`/print/event/${event.id}?what=slips&source=offline`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded-lg bg-white border border-amber-300 hover:bg-amber-100">
+                    Slips
+                  </a>
+                  <a href={`/print/event/${event.id}?what=tokens&source=offline`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded-lg bg-white border border-amber-300 hover:bg-amber-100">
+                    Tokens
+                  </a>
+                  <a href={`/print/event/${event.id}?what=list&source=offline`} target="_blank" rel="noreferrer" className="px-2 py-1 rounded-lg bg-white border border-amber-300 hover:bg-amber-100">
+                    List
+                  </a>
+                </span>
+              )}
             </div>
           </div>
 

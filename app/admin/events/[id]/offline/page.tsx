@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireArea } from "@/lib/admin/require-admin";
 import { getPublicEventBySlug } from "@/lib/events/service";
@@ -19,9 +19,23 @@ export default async function OfflineEntryPage({ params }: { params: Promise<{ i
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      <Link href={`/admin/events/${id}?tab=attendees`} className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800 hover:underline">
-        <ArrowLeft className="w-4 h-4" /> Back to attendees
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Link href={`/admin/events/${id}?tab=attendees`} className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800 hover:underline">
+          <ArrowLeft className="w-4 h-4" /> Back to attendees
+        </Link>
+        <span className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-600">
+          <Printer className="w-4 h-4" /> Print all paper forms:
+          <a href={`/print/event/${id}?what=slips&source=offline`} target="_blank" rel="noreferrer" className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50">
+            Payment slips
+          </a>
+          <a href={`/print/event/${id}?what=tokens&source=offline`} target="_blank" rel="noreferrer" className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50">
+            Food tokens
+          </a>
+          <a href={`/print/event/${id}?what=list&source=offline`} target="_blank" rel="noreferrer" className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50">
+            Entries list
+          </a>
+        </span>
+      </div>
       <div>
         <h1 className="text-2xl font-black text-slate-900">Enter a paper form</h1>
         <p className="text-sm text-slate-600 mt-1">
