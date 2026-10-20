@@ -20,6 +20,9 @@ interface AdminStats {
   activeDrivesCount: number;
   reunionRsvpCount: number;
   reunionTitle: string;
+  paperFormCount: number;
+  paperFormFees: number;
+  membershipEventId: string | null;
 }
 
 export default function AdminDashboardPage() {
@@ -95,7 +98,7 @@ export default function AdminDashboardPage() {
         </p>
       )}
       {/* Figures from the database (see /api/admin/stats) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-slate-400 text-xs font-medium">Total Registered</div>
           <div className="text-2xl font-black text-slate-900 mt-1">
@@ -148,6 +151,21 @@ export default function AdminDashboardPage() {
           <span className="text-[10px] text-emerald-600 font-semibold truncate block" title={stats?.reunionTitle}>
             {stats ? stats.reunionTitle : "—"}
           </span>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+          <a href={stats?.membershipEventId ? `/admin/events/${stats.membershipEventId}?tab=attendees` : "/admin/events"} className="block text-slate-400 text-xs font-medium hover:underline">
+            Paper Forms
+          </a>
+          <div className="text-2xl font-black text-slate-900 mt-1">
+            {stats ? stats.paperFormCount.toLocaleString() : "—"}
+          </div>
+          <span className="text-[10px] text-amber-700 font-semibold">
+            {stats ? `৳${stats.paperFormFees.toLocaleString("en-IN")} collected` : "—"}
+          </span>
+          <Link href="/admin/events/offline" className="mt-2 inline-flex items-center px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 text-[11px] font-bold hover:bg-amber-200">
+            + Add offline form
+          </Link>
         </div>
       </div>
 

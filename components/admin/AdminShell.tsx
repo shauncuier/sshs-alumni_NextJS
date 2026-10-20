@@ -28,6 +28,7 @@ import {
   GraduationCap,
   Wallet,
   IdCard,
+  FilePlus2,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -49,6 +50,7 @@ const ADMIN_NAV = [
   { name: "Committee Volunteers", short: "Volunteers", href: "/admin/volunteers", icon: HeartHandshake, area: "volunteers" },
   { name: "Manage Batches", short: "Batches", href: "/admin/batches", icon: Layers, area: "batches" },
   { name: "Events & Reunions", short: "Events", href: "/admin/events", icon: Calendar, area: "events" },
+  { name: "Add Offline Form", short: "Paper form", href: "/admin/events/offline", icon: FilePlus2, area: "events" },
   { name: "Gate Scanner", short: "Gate", href: "/gate", icon: QrCode, area: "gate" },
   { name: "Donations & Funds", short: "Donations", href: "/admin/donations", icon: Heart, area: "donations" },
   { name: "Payment Settings", short: "Payments", href: "/admin/payments", icon: Wallet, area: "payments" },

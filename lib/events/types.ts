@@ -5,6 +5,9 @@ import type { TokenKind } from "./token-kinds";
 
 // "Bangla QR" is Bangladesh Bank's interoperable QR: any bank or MFS app can pay it.
 export const PAYMENT_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
+
+/** Registration source of paper forms typed in by the committee (lib/events/offline-entry.ts). */
+export const OFFLINE_SOURCE = "offline-form";
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type RegistrationStatusValue = "PENDING_PAYMENT" | "CONFIRMED" | "CHECKED_IN" | "CANCELLED";

@@ -61,6 +61,10 @@ export async function sendEmail(payload: EmailPayload): Promise<{
   messageId?: string;
   error?: string;
 }> {
+  // Members entered from a paper form without an email get a placeholder address in
+  // the reserved .invalid domain (lib/events/offline-entry.ts); never mail it.
+  if (/\.invalid$/i.test(payload.to.trim())) return { success: false, error: "No real email address" };
+
   const provider = getEmailProvider();
 
   switch (provider) {

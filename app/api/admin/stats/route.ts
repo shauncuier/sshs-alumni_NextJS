@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
+import { OFFLINE_SOURCE } from "@/lib/events/types";
 
 export async function GET() {
   try {
@@ -22,6 +23,7 @@ export async function GET() {
       donationDrives,
       completedDonationAgg,
       jubileeEvent,
+      paperForms,
     ] = await Promise.all([
       // Total registered users
       prisma.user.count(),
@@ -78,6 +80,13 @@ export async function GET() {
             select: { id: true, headCount: true },
           },
         },
+      }),
+
+      // Paper registration forms typed in by the committee (membership event, not cancelled)
+      prisma.eventRegistration.aggregate({
+        where: { source: OFFLINE_SOURCE, status: { in: ["CONFIRMED", "CHECKED_IN"] }, event: { isMembershipEvent: true } },
+        _count: { _all: true },
+        _sum: { totalFee: true },
       }),
     ]);
 
@@ -144,6 +153,9 @@ export async function GET() {
         activeDrivesCount: donationDrives.length,
         reunionRsvpCount,
         reunionTitle,
+        paperFormCount: paperForms._count._all,
+        paperFormFees: paperForms._sum.totalFee ?? 0,
+        membershipEventId: jubileeEvent?.id ?? null,
       },
     });
   } catch (error) {
