@@ -23,7 +23,8 @@ GOLD, GOLD_LIGHT, CREAM, MINT = cards.GOLD, cards.GOLD_LIGHT, cards.CREAM, cards
 BN = "'Shonar Bangla', 'Nirmala UI', sans-serif"
 
 # ---- facts
-DATE = "শনিবার, ২৬ ডিসেম্বর ২০২৬"
+# The day is not fixed yet: always "about".
+DATE = "আনুমানিক ২৬ ডিসেম্বর ২০২৬"
 VENUE = "বিদ্যালয় প্রাঙ্গণ, সীতাকুণ্ড"
 DEADLINE = "৩০ নভেম্বর ২০২৬"
 LINK_LINE = "রেজিস্ট্রেশন লিংক কমেন্টে · ফেসবুক গ্রুপ: SSHS Alumni Association"
@@ -123,7 +124,7 @@ def whats_included(story: bool) -> str:
     grid = lambda items: '<div class="grid">' + "".join(f"<div>{x}</div>" for x in items) + "</div>"
     return f"""{HEAD}
 <div class="title">যা থাকছে</div>
-<div class="en">One day, fifty years · {DATE.split(", ")[1]}</div>
+<div class="en">One day, fifty years · {DATE}</div>
 <div class="card">
   <div class="label">অনুষ্ঠানসূচি</div>{grid(programme)}
   <div class="label" style="margin-top:{26 if story else 16}px">রেজিস্ট্রেশনে পাচ্ছেন</div>{grid(kit)}

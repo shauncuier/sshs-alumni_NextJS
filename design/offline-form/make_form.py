@@ -26,7 +26,7 @@ FEES = [
 SPOUSE_FEE = "৬০০"
 CHILD_FEE = "৬০০"
 DEADLINE = "৩০ নভেম্বর ২০২৬"
-EVENT_DATE = "শনিবার, ২৬ ডিসেম্বর ২০২৬"
+EVENT_DATE = "আনুমানিক ২৬ ডিসেম্বর ২০২৬"
 VENUE = "বিদ্যালয় প্রাঙ্গণ, সীতাকুণ্ড, চট্টগ্রাম"
 # Bangla QR: put the association's QR image here (PNG/JPG) and it is printed on the
 # form; without it the form says to scan the QR at the registration desk.

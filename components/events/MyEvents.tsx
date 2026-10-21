@@ -1,5 +1,6 @@
 "use client";
 
+import { eventDateShort } from "@/lib/events/date-label";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import type { MemberRegistration } from "@/lib/events/types";
@@ -42,7 +43,7 @@ export default function MyEvents() {
               {r.eventTitle}
             </Link>
             <div className="text-slate-500">
-              {r.eventDate} · {r.headCount} {r.headCount === 1 ? "person" : "people"} · {formatTaka(r.totalFee + r.donationAmount)}
+              {eventDateShort(r.eventDate, r.eventDateTentative)} · {r.headCount} {r.headCount === 1 ? "person" : "people"} · {formatTaka(r.totalFee + r.donationAmount)}
             </div>
             <div
               className={

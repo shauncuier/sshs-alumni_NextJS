@@ -183,6 +183,8 @@ model Event {
   category             EventCategory @default(REUNION)
   description          String        @db.Text
   date                 DateTime
+  /// The date is not fixed yet: shown as "Around 26 December 2026 (date to be confirmed)".
+  dateTentative        Boolean       @default(false)
   time                 String?
   venue                String        @db.VarChar(500)
   locationCity         String        @default("Dhaka")

@@ -1,5 +1,6 @@
 "use client";
 
+import { eventDateShort } from "@/lib/events/date-label";
 import React, { use, useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -77,7 +78,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
 
   const [alumni, setAlumni] = useState<AlumniMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [nextEvent, setNextEvent] = useState<{ title: string; date: string } | null>(null);
+  const [nextEvent, setNextEvent] = useState<{ title: string; date: string; dateTentative?: boolean } | null>(null);
   const [info, setInfo] = useState<BatchInfo | null>(null);
 
   useEffect(() => {
@@ -102,7 +103,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
     // Fetch upcoming events to display real next gathering
     fetch("/api/events")
       .then((res) => (res.ok ? res.json() : { events: [] }))
-      .then((data: { events?: Array<{ title: string; date: string }> }) => {
+      .then((data: { events?: Array<{ title: string; date: string; dateTentative?: boolean }> }) => {
         const upcoming = (data.events || []).find(
           (e) => new Date(e.date).getTime() >= Date.now() - 86400000
         );
@@ -116,7 +117,7 @@ export default function BatchDetailPage({ params }: BatchPageProps) {
   // Representative, contact and description as set by admins; nothing is invented.
   const nextGatheringTitle = nextEvent ? nextEvent.title : "No event scheduled";
   const nextGatheringDate = nextEvent
-    ? new Date(nextEvent.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    ? eventDateShort(nextEvent.date, Boolean(nextEvent.dateTentative))
     : info?.reunionDate
       ? `Batch reunion: ${info.reunionDate}`
       : "Watch the events page";

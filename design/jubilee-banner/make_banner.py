@@ -72,7 +72,7 @@ def page(with_text: bool) -> str:
     <div class="title-en">Golden Jubilee</div>
     <div class="rule"></div>
     <div class="years">1976 <span>—</span> 2026</div>
-    <div class="when">Saturday, 26 December 2026</div>
+    <div class="when">Around 26 December 2026 · date to be confirmed</div>
     <div class="where">School campus · Sitakunda, Chattogram</div>
   </div>""" if with_text else ""
     return f"""<!doctype html>

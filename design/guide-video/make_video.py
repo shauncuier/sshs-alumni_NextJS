@@ -82,7 +82,7 @@ body {{ font-family: 'Shonar Bangla', 'Nirmala UI', 'Segoe UI', sans-serif; colo
             ("১", "কমিটি পেমেন্ট যাচাই করবে", "The committee checks your payment and proof"),
             ("২", "SMS ও ইমেইলে নিশ্চিতকরণ", "You get an SMS and an email when it is confirmed"),
             ("৩", "ড্যাশবোর্ডে টিকিট ও পেমেন্ট স্লিপ", "Sign in: your ticket QR and payment slip are on the dashboard"),
-            ("৪", "২৬ ডিসেম্বর টিকিট দেখিয়ে প্রবেশ", "On 26 December show the ticket at the gate"),
+            ("৪", "অনুষ্ঠানের দিন টিকিট দেখিয়ে প্রবেশ", "On the day, show the ticket at the gate"),
         ]
         rows = "".join(f'<div class="item"><div class="n">{n}</div><div><div class="t">{t}</div><div class="d">{d}</div></div></div>' for n, t, d in items)
         body = f"""<div class="top"><div class="bn" style="font-size:76px">{bn}</div><div class="en">What happens next</div></div>
@@ -95,7 +95,7 @@ body {{ font-family: 'Shonar Bangla', 'Nirmala UI', 'Segoe UI', sans-serif; colo
 <div class="en" style="font-size:36px">Sabuj Shikshayatan Government High School</div>
 <div class="badge" style="margin-top:70px;font-size:44px;padding:16px 40px">{bn}</div>
 <div class="en" style="margin-top:28px;font-size:34px">{en}</div>
-<div class="en" style="margin-top:60px;font-size:34px">শনিবার, ২৬ ডিসেম্বর ২০২৬ · বিদ্যালয় প্রাঙ্গণ, সীতাকুণ্ড</div></div>{foot}"""
+<div class="en" style="margin-top:60px;font-size:34px">আনুমানিক ২৬ ডিসেম্বর ২০২৬ · বিদ্যালয় প্রাঙ্গণ, সীতাকুণ্ড</div></div>{foot}"""
     return f"<!doctype html><html><head><meta charset='utf-8'>{style}</head><body>{body}</body></html>"
 
 

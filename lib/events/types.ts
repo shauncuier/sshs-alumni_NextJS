@@ -121,7 +121,8 @@ export interface PublicPackage {
 }
 
 /** Event as returned by the public APIs; a superset of the EventItem pages already use. */
-export type PublicEvent = Omit<EventItem, "packages"> & {
+export type PublicEvent = Omit<EventItem, "packages" | "dateTentative"> & {
+  dateTentative: boolean;
   slug: string;
   packages: PublicPackage[];
   placesLeft: number;
@@ -157,6 +158,7 @@ export interface MemberRegistration {
   eventSlug: string;
   eventTitle: string;
   eventDate: string;
+  eventDateTentative: boolean;
   status: RegistrationStatusValue;
   isMembershipEvent: boolean;
   packageName: string | null;

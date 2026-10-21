@@ -32,6 +32,7 @@ export default function EventCard({ event }: EventCardProps) {
           <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md rounded-xl p-2 text-center shadow-lg border border-emerald-100 min-w-[50px]">
             <span className="block text-lg font-black text-emerald-900 leading-none">{day}</span>
             <span className="block text-[10px] font-bold uppercase text-emerald-700 tracking-wider mt-0.5">{month}</span>
+            {event.dateTentative && <span className="block text-[9px] font-bold text-amber-700 mt-0.5">approx.</span>}
           </div>
 
           {/* Category Tag */}

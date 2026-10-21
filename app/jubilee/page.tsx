@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { eventDateLabel } from "@/lib/events/date-label";
 import Link from "next/link";
 import Image from "next/image";
 import { CalendarDays, CheckCircle2, Clock, Hourglass, MapPin, ArrowDown, Ticket } from "lucide-react";
@@ -61,9 +62,7 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
   const standing: MembershipStanding = event && userId ? await membershipEventStanding(event.id, userId).catch(() => null) : null;
   const paid = standing === "TICKET" || standing === "REVIEW" || standing === "MEMBER";
 
-  const date = event
-    ? new Date(`${event.date}T12:00:00+06:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" })
-    : "";
+  const date = event ? eventDateLabel(event.date, event.dateTentative) : "";
   const deadline = event?.registrationDeadline ? new Date(event.registrationDeadline) : null;
   const daysLeft = deadline ? daysUntil(deadline) : null;
   const guestFees = (event?.guestTypes ?? []).filter((g) => g.price > 0);

@@ -493,7 +493,7 @@ html_content = f"""<!doctype html>
         <div class="hero-grid">
           <div class="hero-stat">
             <div class="hero-stat-label">ইভেন্টের তারিখ / Date</div>
-            <div class="hero-stat-val">শনিবার, ২৬ ডিসেম্বর ২০২৬</div>
+            <div class="hero-stat-val">আনুমানিক ২৬ ডিসেম্বর ২০২৬ (চূড়ান্ত নয়)</div>
           </div>
           <div class="hero-stat">
             <div class="hero-stat-label">স্থান / Venue</div>

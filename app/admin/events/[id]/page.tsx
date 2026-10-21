@@ -442,6 +442,17 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                 onChange={(e) => setEvent({ ...event, date: e.target.value })}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
+              <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-emerald-700"
+                  checked={event.dateTentative}
+                  onChange={(e) => setEvent({ ...event, dateTentative: e.target.checked })}
+                />
+                <span className="text-slate-700">
+                  Date not fixed yet: show it as approximate (&quot;Around 26 December 2026, date to be confirmed&quot;)
+                </span>
+              </label>
             </div>
 
             <div className="space-y-1">

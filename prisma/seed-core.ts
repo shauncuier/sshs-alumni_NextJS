@@ -77,6 +77,8 @@ export async function seedEvent(e: EventItem, opts: { membership?: boolean } = {
       category: e.category,
       description: e.description,
       date: new Date(`${e.date}T09:00:00+06:00`),
+      // The Golden Jubilee's day is not fixed yet; admins untick this in /admin/events once it is.
+      dateTentative: membership,
       time: e.time || null,
       venue: e.venue,
       locationCity: e.locationCity,

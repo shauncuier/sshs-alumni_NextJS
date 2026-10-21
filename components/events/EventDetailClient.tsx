@@ -1,5 +1,6 @@
 "use client";
 
+import { eventDateLabel } from "@/lib/events/date-label";
 import React, { useState, useEffect } from "react";
 import { schoolInfo } from "@/lib/data";
 import { notFound } from "next/navigation";
@@ -245,7 +246,7 @@ function EventDetailView({
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-amber-300 shrink-0" />
                 <strong className="text-white">
-                  {new Date(`${event.date}T12:00:00+06:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" })}
+                  {eventDateLabel(event.date, event.dateTentative)}
                 </strong>
               </span>
               <span>•</span>
@@ -274,6 +275,9 @@ function EventDetailView({
                   <div className="font-black text-sm uppercase tracking-wider">
                     Countdown to {event.title}
                   </div>
+                  {event.dateTentative && (
+                    <div className="text-[11px] font-bold text-slate-900">Approximate: the date is not fixed yet</div>
+                  )}
                   <div className="text-xs text-slate-900 font-medium">
                     {event.subtitle || `${event.venue}${event.locationCity ? `, ${event.locationCity}` : ""}`}
                   </div>

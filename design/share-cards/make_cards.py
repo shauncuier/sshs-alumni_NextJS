@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # The Golden Jubilee: "50" in the emblem, the date and place.
     if not only or "jubilee" in only:
         render("jubilee", page('<div class="num">50</div><div class="sub">YEARS</div>',
-                           block("Golden Jubilee", "সুবর্ণ জয়ন্তী ২০২৬", "Saturday, 26 December 2026 · School campus, Sitakunda. Register online.")),
+                           block("Golden Jubilee", "সুবর্ণ জয়ন্তী ২০২৬", "Around 26 December 2026 (date to be confirmed) · School campus, Sitakunda. Register online.")),
                OUT / "jubilee.jpg")
     # Batch cards: the emblem and footer only; app/batches/[year]/opengraph-image.tsx adds the year and the text.
     if only and "batch-bg" not in only:

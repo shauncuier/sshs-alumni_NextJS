@@ -48,6 +48,8 @@ export interface EventItem {
   title: string;
   category: "REUNION" | "SPORTS" | "WEBINAR" | "CULTURAL" | "COMMUNITY";
   date: string;
+  /** The date is not fixed yet; shown as approximate (lib/events/date-label.ts). */
+  dateTentative?: boolean;
   time: string;
   venue: string;
   locationCity: string;

@@ -25,6 +25,7 @@ export interface PaymentSlipData {
   bloodGroup: string | null;
   eventTitle: string;
   eventDate: string;
+  eventDateTentative: boolean;
   venue: string;
   headCount: number;
   lines: SlipLine[];
@@ -39,7 +40,7 @@ export interface PaymentSlipData {
 }
 
 const SLIP_INCLUDE = {
-  event: { select: { title: true, date: true, venue: true, locationCity: true } },
+  event: { select: { title: true, date: true, dateTentative: true, venue: true, locationCity: true } },
   user: { select: { email: true, profile: { select: { fullName: true, sscBatch: true, phone: true, bloodGroup: true } } } },
 } satisfies Prisma.EventRegistrationInclude;
 
@@ -63,6 +64,7 @@ async function toSlip(reg: SlipReg): Promise<PaymentSlipData> {
     bloodGroup: p?.bloodGroup ?? null,
     eventTitle: reg.event.title,
     eventDate: reg.event.date.toISOString(),
+    eventDateTentative: reg.event.dateTentative,
     venue: [reg.event.venue, reg.event.locationCity].filter(Boolean).join(", "),
     headCount: reg.headCount,
     lines,

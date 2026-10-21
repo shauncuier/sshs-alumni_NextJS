@@ -51,6 +51,7 @@ export function toPublicEvent(
     category: row.category,
     date: row.date.toISOString().slice(0, 10),
     time: row.time ?? "",
+    dateTentative: row.dateTentative,
     venue: row.venue,
     locationCity: row.locationCity,
     organizer: row.organizer ?? "SSGHS Alumni Association",
@@ -190,6 +191,7 @@ function parseEventInput(body: unknown, mode: "create" | "update"): Prisma.Event
   const date = dateValue(b.date, "The event date");
   if (date) data.date = date;
   if (mode === "create" && !date) throw new AppError("INVALID_EVENT", 400, "The event date is required.");
+  if (typeof b.dateTentative === "boolean") data.dateTentative = b.dateTentative;
 
   if (b.category !== undefined) {
     if (!EVENT_CATEGORIES.includes(b.category as (typeof EVENT_CATEGORIES)[number])) {

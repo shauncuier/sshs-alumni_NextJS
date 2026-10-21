@@ -87,3 +87,14 @@ it("keeps the stored registration switch separate from the computed open state",
   expect(updated.registrationEnabled).toBe(true);
   expect(updated.isRegistrationOpen).toBe(true);
 });
+
+it("an admin marks the date as not fixed yet, and the public event says so", async () => {
+  const e = await makeEvent({ slug: "jubilee-date", date: new Date("2026-12-26T09:00:00+06:00") });
+  expect((await getPublicEventBySlug("jubilee-date"))?.dateTentative).toBe(false);
+  await updateEvent(e.id, { dateTentative: true });
+  expect((await getPublicEventBySlug("jubilee-date"))?.dateTentative).toBe(true);
+  await updateEvent(e.id, { dateTentative: "yes" }); // only a real true/false changes it
+  expect((await getPublicEventBySlug("jubilee-date"))?.dateTentative).toBe(true);
+  await updateEvent(e.id, { dateTentative: false });
+  expect((await getPublicEventBySlug("jubilee-date"))?.dateTentative).toBe(false);
+});

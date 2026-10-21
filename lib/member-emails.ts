@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { storedGuests } from "@/lib/events/pricing";
+import { eventDateLabel } from "@/lib/events/date-label";
 import {
   membershipApprovedEmail,
   membershipRejectedEmail,
@@ -43,7 +44,7 @@ export async function emailRegistration(registrationId: string, kind: "received"
     const input: RegistrationEmailInput = {
       name: reg.user.profile?.fullName ?? "Alumnus",
       eventTitle: reg.event.title,
-      eventDate: `${dhakaDate(reg.event.date)}${reg.event.time ? `, ${reg.event.time}` : ""}`,
+      eventDate: `${reg.event.dateTentative ? eventDateLabel(reg.event.date, true) : dhakaDate(reg.event.date)}${reg.event.time ? `, ${reg.event.time}` : ""}`,
       venue: [reg.event.venue, reg.event.locationCity].filter(Boolean).join(", "),
       isMembershipEvent: reg.event.isMembershipEvent,
       headCount: reg.headCount,

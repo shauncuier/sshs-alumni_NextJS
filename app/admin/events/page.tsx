@@ -311,6 +311,7 @@ export default function AdminEventsPage() {
                   <span className="text-[10px] uppercase tracking-wider text-emerald-700">
                     {new Date(e.date).toLocaleString("default", { month: "short" }) || "Dec"}
                   </span>
+                  {e.dateTentative && <span className="text-[9px] text-amber-700">approx.</span>}
                 </div>
 
                 <div className="space-y-1">

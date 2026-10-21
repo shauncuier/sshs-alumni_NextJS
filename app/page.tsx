@@ -20,6 +20,7 @@ import { listApprovedMentors } from "@/lib/mentorship";
 import { listBatches } from "@/lib/batches";
 import { formatTaka } from "@/lib/events/pricing";
 import { formatDate } from "@/lib/utils";
+import { eventDateShort } from "@/lib/events/date-label";
 import prisma from "@/lib/prisma";
 import { schoolInfo, type AlumniMember } from "@/lib/data";
 import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Newspaper, Sparkles, Users } from "lucide-react";
@@ -191,7 +192,7 @@ export default async function HomePage() {
                           </p>
                           <p className="font-bold text-sm text-white line-clamp-2">{heroEvent.title}</p>
                           <p className="text-xs text-emerald-200 mt-0.5">
-                            {formatDate(heroEvent.date)}
+                            {heroEvent.dateTentative ? eventDateShort(heroEvent.date, true) : formatDate(heroEvent.date)}
                             {heroEvent.locationCity ? ` · ${heroEvent.locationCity}` : ""}
                           </p>
                         </div>

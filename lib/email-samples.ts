@@ -17,7 +17,7 @@ import {
 const registration: RegistrationEmailInput = {
   name: "Rahim Uddin",
   eventTitle: "Golden Jubilee: 50 Years of Sabuj Shikshayatan (সুবর্ণ জয়ন্তী)",
-  eventDate: "Saturday, 26 December 2026, 8:00 AM – 9:00 PM",
+  eventDate: "Around 26 December 2026 (date to be confirmed), 8:00 AM – 9:00 PM",
   venue: "Sabuj Shikshayatan Government High School campus, Sitakunda, Chattogram",
   isMembershipEvent: true,
   headCount: 4,

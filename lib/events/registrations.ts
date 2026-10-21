@@ -74,6 +74,7 @@ async function toMemberRegistration(reg: EventRegistration & { event: Event }): 
     eventSlug: reg.event.slug,
     eventTitle: reg.event.title,
     eventDate: reg.event.date.toISOString().slice(0, 10),
+    eventDateTentative: reg.event.dateTentative,
     status: reg.status,
     isMembershipEvent: reg.event.isMembershipEvent,
     packageName: reg.packageName,

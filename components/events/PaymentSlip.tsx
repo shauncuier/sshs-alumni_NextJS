@@ -3,6 +3,7 @@
 import type { PaymentSlipData } from "@/lib/events/slips";
 import { formatTaka } from "@/lib/events/pricing";
 import { schoolInfo } from "@/lib/data";
+import { eventDateShort } from "@/lib/events/date-label";
 
 const GREEN = "#06281e";
 const GOLD = "#b8892a";
@@ -82,7 +83,7 @@ export default function PaymentSlip({ slip }: { slip: PaymentSlipData }) {
               <tr><td style={key}>নাম · Name</td><td style={{ ...cell, fontWeight: 800, color: GREEN }}>{slip.name}</td></tr>
               <tr><td style={key}>এসএসসি ব্যাচ</td><td style={cell}>{slip.batch ?? "—"}{slip.bloodGroup ? ` · Blood ${slip.bloodGroup}` : ""}</td></tr>
               <tr><td style={key}>মোবাইল · Mobile</td><td style={cell}>{slip.phone ?? "—"}</td></tr>
-              <tr><td style={key}>অনুষ্ঠান · Event</td><td style={cell}>{slip.eventTitle}<br /><span style={{ color: "#5b6b64" }}>{dhaka(slip.eventDate)} · {slip.venue}</span></td></tr>
+              <tr><td style={key}>অনুষ্ঠান · Event</td><td style={cell}>{slip.eventTitle}<br /><span style={{ color: "#5b6b64" }}>{slip.eventDateTentative ? eventDateShort(slip.eventDate, true) : dhaka(slip.eventDate)} · {slip.venue}</span></td></tr>
               <tr><td style={key}>জন · People</td><td style={cell}>{slip.headCount}</td></tr>
             </tbody>
           </table>
