@@ -7,6 +7,7 @@
     "dev": "next dev -H 0.0.0.0",
     "dev:https": "next dev --experimental-https -H 0.0.0.0 -p 3443",
     "build": "next build",
+    "build:hostinger": "prisma generate && npm run db:push && npm run db:seed:prod && NEXT_BUILD_CPUS=2 TOKIO_WORKER_THREADS=2 RAYON_NUM_THREADS=2 next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",

@@ -35,6 +35,21 @@ function notReady(reason: string): { client: PrismaClient; ready: false } {
 // The adapter takes the URL as-is: it rewrites mysql:// to mariadb://, unwraps
 // bracketed IPv6 hosts, and passes query parameters (e.g. ?ssl=true,
 // ?connectionLimit=5, ?connectTimeout=10000) through as MariaDB pool options.
+// MariaDB 11 (Hostinger) binds string parameters as utf8mb4_general_ci while literals
+// follow the connection collation, so Prisma's `LIKE CONCAT(?, '%')` (startsWith,
+// contains) fails with "Illegal mix of collations". Giving the session the same
+// collation as the parameters fixes it; column collations still decide comparisons.
+// Both options are appended as text: if the adapter has to add prepareCacheLength
+// itself it re-encodes the query with '+' for spaces, which the driver does not decode.
+const SESSION_SQL = "SET NAMES utf8mb4 COLLATE utf8mb4_general_ci";
+export function withSessionCollation(databaseUrl: string): string {
+  const params = new URL(databaseUrl).searchParams;
+  if (params.has("initSql")) return databaseUrl;
+  const extra = [`initSql=${encodeURIComponent(SESSION_SQL)}`];
+  if (!params.has("prepareCacheLength")) extra.push("prepareCacheLength=0");
+  return databaseUrl + (databaseUrl.includes("?") ? "&" : "?") + extra.join("&");
+}
+
 function createClient(): { client: PrismaClient; ready: boolean } {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) return notReady("DATABASE_URL is not set.");
@@ -51,7 +66,7 @@ function createClient(): { client: PrismaClient; ready: boolean } {
 
   try {
     const client = new PrismaClient({
-      adapter: new PrismaMariaDb(databaseUrl),
+      adapter: new PrismaMariaDb(withSessionCollation(databaseUrl)),
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     });
     return { client, ready: true };

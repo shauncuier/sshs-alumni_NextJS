@@ -51,7 +51,8 @@ async function main() {
   }
 
   const user = await columnsOf("User");
-  if (!user.has("sessionVersion")) {
+  // No columns means no User table yet (fresh database): `prisma db push` creates it.
+  if (user.size > 0 && !user.has("sessionVersion")) {
     await prisma.$executeRawUnsafe(
       "ALTER TABLE `User` ADD COLUMN `sessionVersion` INT NOT NULL DEFAULT 0 AFTER `status`"
     );
