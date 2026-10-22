@@ -119,7 +119,7 @@ export interface GalleryPhotoItem {
 export interface DonationCampaignItem {
   id: string;
   title: string;
-  category: "Scholarship" | "STEM Lab" | "Library" | "Emergency Aid" | "Sports" | "Campus Development";
+  category: "Scholarship" | "STEM Lab" | "Library" | "Emergency Aid" | "Campus Development" | "Reunion" | "Sports" | "Cultural Program";
   description: string;
   goalAmount: number;
   raisedAmount: number;

@@ -134,7 +134,7 @@ export default function DonatePage() {
       <main className="flex-1 pb-24">
         {/* Header */}
         <section className="bg-[#06281e] text-white py-16 border-b border-emerald-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="max-w-3xl space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold border border-amber-400/30">
                 <Heart className="w-3.5 h-3.5 fill-amber-300" />
@@ -144,9 +144,24 @@ export default function DonatePage() {
                 Give Back to the School That Shaped You
               </h1>
               <p className="text-emerald-100 text-sm leading-relaxed">
-                Support scholarships for needy students, finance our cutting-edge STEM laboratory, and provide emergency relief to teachers in need. Transparent, audited, and impactful.
+                Support scholarships, the STEM lab and library, reunions, sports and cultural programmes, and emergency help for students and teachers. The committee checks every payment and every taka goes to the campaign you choose.
               </p>
             </div>
+
+            {/* The association's Bangla QR, so a donor can pay straight away */}
+            {payment?.banglaQrImage && donationMethods.includes("Bangla QR") && (
+              <div className="bg-white text-slate-900 rounded-3xl p-4 shadow-2xl ring-4 ring-amber-300/40 w-full max-w-[18rem] mx-auto lg:mx-0 shrink-0 text-center space-y-2">
+                <p className="text-xs font-black text-[#006a4e] uppercase tracking-wider">Scan to donate · বাংলা QR</p>
+                <img src={payment.banglaQrImage} alt="Bangla QR code for donating to the association" className="w-56 h-56 mx-auto object-contain" />
+                {payment.banglaQrMerchant && <p className="text-[11px] font-semibold text-slate-700">{payment.banglaQrMerchant}</p>}
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Scan with any bank or mobile banking app (bKash, Nagad, Rocket…), then choose a campaign below and enter the transaction ID.
+                </p>
+                <a href={payment.banglaQrImage} download="SSGHS-Alumni-Bangla-QR" className="inline-block text-[11px] font-bold text-emerald-800 hover:underline">
+                  Save the QR image
+                </a>
+              </div>
+            )}
           </div>
         </section>
 
@@ -438,7 +453,7 @@ export default function DonatePage() {
                         )}
                         {paymentMethod === "Bangla QR" && payment?.banglaQrImage && (
                           <div className="flex items-center gap-3 pt-1">
-                            <img loading="lazy" decoding="async" src={payment.banglaQrImage} alt="Bangla QR code for donations" className="w-36 h-36 bg-white rounded-xl border object-contain p-1.5" />
+                            <img loading="lazy" decoding="async" src={payment.banglaQrImage} alt="Bangla QR code for donations" className="w-48 h-48 shrink-0 bg-white rounded-xl border object-contain p-2" />
                             <span>Scan with any bank or mobile banking app{payment.banglaQrMerchant ? ` (${payment.banglaQrMerchant})` : ""}.</span>
                           </div>
                         )}

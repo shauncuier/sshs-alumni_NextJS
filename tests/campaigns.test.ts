@@ -8,7 +8,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
   return { ...actual, getSessionUser: async () => session.user };
 });
 
-import { campaignStatus, createCampaign, deleteCampaign, listAdminCampaigns, listOpenCampaigns, updateCampaign } from "@/lib/campaigns";
+import { CATEGORY_LABELS, campaignStatus, createCampaign, deleteCampaign, listAdminCampaigns, listOpenCampaigns, updateCampaign } from "@/lib/campaigns";
 import { createManualDonation } from "@/lib/donations";
 import { GET as listRoute, POST as createRoute } from "@/app/api/admin/campaigns/route";
 import { DELETE as deleteRoute, PATCH as patchRoute } from "@/app/api/admin/campaigns/[id]/route";
@@ -35,9 +35,17 @@ describe("campaigns", () => {
     await expect(donate(c.id)).resolves.toBeTruthy();
   });
 
+  it("accepts reunion, sports and cultural programme campaigns", async () => {
+    for (const category of ["REUNION", "SPORTS", "CULTURAL"]) {
+      const c = await createCampaign({ ...fund, title: `Fund ${category}`, category });
+      expect(c.category).toBe(category);
+    }
+    expect(CATEGORY_LABELS.CULTURAL).toBe("Cultural Program");
+  });
+
   it("validates title, category, goal, dates and banner image", async () => {
     await expect(createCampaign({ ...fund, title: "x" })).rejects.toMatchObject({ status: 400 });
-    await expect(createCampaign({ ...fund, category: "SPORTS" })).rejects.toMatchObject({ status: 400 });
+    await expect(createCampaign({ ...fund, category: "WIZARDRY" })).rejects.toMatchObject({ status: 400 });
     await expect(createCampaign({ ...fund, goalAmount: 0 })).rejects.toMatchObject({ status: 400 });
     await expect(createCampaign({ ...fund, startDate: day(5), endDate: day(1) })).rejects.toMatchObject({ status: 400 });
     await expect(createCampaign({ ...fund, endDate: "31/12/2027" })).rejects.toMatchObject({ status: 400 });

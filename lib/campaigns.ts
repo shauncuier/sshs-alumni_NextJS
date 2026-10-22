@@ -18,6 +18,9 @@ export const CATEGORY_LABELS: Record<CampaignCategory, DonationCampaignItem["cat
   LIBRARY: "Library",
   EMERGENCY_AID: "Emergency Aid",
   CAMPUS_DEV: "Campus Development",
+  REUNION: "Reunion",
+  SPORTS: "Sports",
+  CULTURAL: "Cultural Program",
 };
 export const CAMPAIGN_CATEGORIES = Object.keys(CATEGORY_LABELS) as CampaignCategory[];
 export const MAX_GOAL = 1_000_000_000;

@@ -40,6 +40,9 @@ enum CampaignCategory {
   LIBRARY
   EMERGENCY_AID
   CAMPUS_DEV
+  REUNION
+  SPORTS
+  CULTURAL
 }
 
 enum PaymentStatus {
