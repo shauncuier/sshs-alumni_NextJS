@@ -91,19 +91,22 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             </Link>
           </header>
 
-          <div className="relative -mt-14 h-56 sm:h-72 sm:max-w-2xl sm:mx-auto [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_72%)]">
-            <Image
-              src="/golden-jubilee-art.jpg"
-              alt="50 years emblem"
-              fill
-              priority
-              sizes="(max-width: 640px) 100vw, 672px"
-              className="object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#072a1f]/70 via-transparent to-[#072a1f]" />
+          {/* The jubilee's own logo: "৫০ বছর · গৌরবের পথচলা" */}
+          <div className="relative max-w-3xl mx-auto px-4 pt-4 flex justify-center">
+            <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[2rem] bg-white p-2 shadow-2xl shadow-black/40 ring-4 ring-amber-300/40">
+              <Image
+                src="/golden-jubilee-logo.webp"
+                alt="সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়, ৫০ বছর: গৌরবের পথচলা (Golden Jubilee logo)"
+                width={800}
+                height={800}
+                priority
+                sizes="(max-width: 640px) 208px, 256px"
+                className="w-full h-full object-contain"
+              />
+            </div>
           </div>
 
-          <div className="relative max-w-3xl mx-auto px-4 -mt-6 pb-20 text-center space-y-3">
+          <div className="relative max-w-3xl mx-auto px-4 mt-6 pb-20 text-center space-y-3">
             <p className="text-[11px] font-bold tracking-[0.25em] text-amber-300/90">
               {schoolInfo.established} — {event?.date.slice(0, 4) ?? "2026"}
             </p>

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { schoolInfo } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import RSVPModal from "@/components/events/RSVPModal";
@@ -220,6 +221,19 @@ function EventDetailView({
 
           {/* Title Area */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24 text-white w-full">
+            {event.isMembershipEvent && (
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-white p-1.5 shadow-2xl shadow-black/40 ring-2 ring-amber-300/60 mb-4">
+                <Image
+                  src="/golden-jubilee-logo.webp"
+                  alt="সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়, ৫০ বছর: গৌরবের পথচলা (Golden Jubilee logo)"
+                  width={800}
+                  height={800}
+                  priority
+                  sizes="144px"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow">
                 {event.category}
