@@ -261,8 +261,9 @@ export default function Navbar() {
               <div className="flex flex-col justify-center min-w-0">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="font-extrabold text-sm sm:text-lg text-white leading-tight truncate">
-                    <span className="sm:hidden">সবুজিয়ান পরিষদ</span>
-                    <span className="hidden sm:inline">প্রাক্তন সবুজিয়ান পরিষদ</span>
+                    {/* Short name on phones and where the desktop menu leaves little room (lg). */}
+                    <span className="sm:hidden lg:inline xl:hidden">সবুজিয়ান পরিষদ</span>
+                    <span className="hidden sm:inline lg:hidden xl:inline">প্রাক্তন সবুজিয়ান পরিষদ</span>
                   </span>
                 </div>
                 {/* Hidden on phones: with the header controls it would overflow the screen. */}
