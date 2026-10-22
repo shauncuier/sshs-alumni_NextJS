@@ -8,6 +8,7 @@ import math
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -133,7 +134,7 @@ def render(name: str, html: str, png_out: Path, jpg: bool = True) -> None:
     src = HERE / f"_{name}.html"
     shot = HERE / f"_{name}.png"
     src.write_text(html, encoding="utf-8")
-    subprocess.run([EDGE, "--headless=new", f"--user-data-dir={HERE / '_edge-profile'}", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
+    subprocess.run([EDGE, "--headless=new", f"--user-data-dir={Path(tempfile.gettempdir()) / 'sshs-edge-profile'}", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
                     f"--window-size={W},{H}", f"--screenshot={shot}", src.as_uri()], check=True, capture_output=True, timeout=120)
     # Edge can return before the screenshot is on disk; give it a moment.
     for _ in range(60):

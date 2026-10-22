@@ -1,4 +1,4 @@
-"""The site's logo files, from the association's logo (alumni-council-logo.png in this folder).
+"""The site's logo files, from the association's logo (alumni-council-logo.jpg in this folder).
 
 The site shows the logo in round white frames (header, footer, login), so public/logo.png
 and the small icons get enough white margin to keep the ribbon inside the circle.
@@ -15,7 +15,7 @@ PUBLIC = HERE.parents[1] / "public"
 
 
 def artwork() -> Image.Image:
-    src = Image.open(HERE / "alumni-council-logo.png").convert("RGB")
+    src = Image.open(HERE / "alumni-council-logo.jpg").convert("RGB")
     ink = ImageChops.difference(src, Image.new("RGB", src.size, (255, 255, 255))).convert("L")
     return src.crop(ink.point(lambda v: 255 if v > 18 else 0).getbbox())
 

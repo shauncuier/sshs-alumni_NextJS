@@ -53,13 +53,22 @@ SS_STEP1 = get_optimized_image_b64(UI_DIR / "guide-details.jpg", max_w=720)
 SS_STEP2 = get_optimized_image_b64(UI_DIR / "guide-bangla-qr.jpg", max_w=720)
 SS_CARD = get_optimized_image_b64(UI_DIR / "guide-done.jpg", max_w=720)
 
-# Logo
-logo_path = ROOT / "public" / "logo.png"
-if logo_path.exists():
-    with open(logo_path, "rb") as f:
-        LOGO_DATA_URL = f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
-else:
-    LOGO_DATA_URL = ""
+# Logo: the association's logo cropped close (public/logo.png has margin for the site's round frames)
+def logo_data_url() -> str:
+    from PIL import ImageChops
+    path = ROOT / "design" / "brand" / "alumni-council-logo.jpg"
+    if not path.exists():
+        return ""
+    src = Image.open(path).convert("RGB")
+    ink = ImageChops.difference(src, Image.new("RGB", src.size, (255, 255, 255))).convert("L")
+    art = src.crop(ink.point(lambda v: 255 if v > 18 else 0).getbbox())
+    art.thumbnail((360, 360), Image.Resampling.LANCZOS)
+    buf = io.BytesIO()
+    art.save(buf, format="JPEG", quality=88)
+    return f"data:image/jpeg;base64,{base64.b64encode(buf.getvalue()).decode('utf-8')}"
+
+
+LOGO_DATA_URL = logo_data_url()
 
 # Thumbnail
 thumb_path = ROOT / "public" / "videos" / "registration-guide-thumb.jpg"
@@ -477,7 +486,7 @@ html_content = f"""<!doctype html>
           {f'<img src="{LOGO_DATA_URL}" class="header-logo" alt="Logo">' if LOGO_DATA_URL else ''}
           <div class="header-text">
             <h1>প্রাক্তন সবুজিয়ান পরিষদ</h1>
-            <p>Sabuj Shikshayatan Govt. High School Alumni Association · Established 1976</p>
+            <p>Praktan Sabujian Parishad · alumni of Sabuj Shikshayatan Govt. High School</p>
           </div>
         </div>
         <div class="header-badge">

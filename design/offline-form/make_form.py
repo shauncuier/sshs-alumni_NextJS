@@ -45,7 +45,20 @@ def data_uri(path: Path, mime: str) -> str:
     return f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode()
 
 
-LOGO = data_uri(ROOT / "public" / "logo.png", "image/png")
+def logo_uri() -> str:
+    """The association's logo cropped close (public/logo.png has margin for the site's round frames)."""
+    import io
+    from PIL import Image, ImageChops
+    src = Image.open(ROOT / "design" / "brand" / "alumni-council-logo.jpg").convert("RGB")
+    ink = ImageChops.difference(src, Image.new("RGB", src.size, (255, 255, 255))).convert("L")
+    art = src.crop(ink.point(lambda v: 255 if v > 18 else 0).getbbox())
+    art.thumbnail((480, 480), Image.LANCZOS)
+    buf = io.BytesIO()
+    art.save(buf, format="JPEG", quality=88)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+LOGO = logo_uri()
 QR = data_uri(BANGLA_QR, "image/jpeg" if BANGLA_QR.suffix.lower() in (".jpg", ".jpeg") else "image/png") if BANGLA_QR.exists() else None
 QR_BOX = (
     f'<img src="{QR}" alt="Bangla QR">'
@@ -82,7 +95,7 @@ body {{ margin: 0; font-family: 'Nirmala UI', 'Shonar Bangla', 'Segoe UI', sans-
 .page:last-child {{ page-break-after: auto; }}
 
 .head {{ display: flex; align-items: center; gap: 4mm; border-bottom: 1mm solid {GREEN}; padding-bottom: 2.5mm; }}
-.head img {{ width: 16mm; height: 16mm; }}
+.head img {{ width: 18mm; height: 18mm; object-fit: contain; }}
 .head .t1 {{ font-size: 11.5pt; white-space: nowrap; font-weight: 700; color: {GREEN}; line-height: 1.2; }}
 .head .t2 {{ font-size: 9pt; color: #374740; }}
 .head .t3 {{ font-size: 8pt; color: #5b6b64; }}
@@ -150,7 +163,7 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
 .cut span {{ position: absolute; top: -2.6mm; left: 50%; transform: translateX(-50%); background: #fff; padding: 0 2mm; font-size: 8pt; color: #5b6b64; }}
 .receipt {{ border: 0.5mm solid {GOLD}; border-radius: 2mm; padding: 2mm 3.5mm; break-inside: avoid; }}
 .receipt .h {{ display: flex; align-items: center; gap: 3mm; border-bottom: 0.3mm solid #e2d3a8; padding-bottom: 1.5mm; margin-bottom: 1.5mm; }}
-.receipt .h img {{ width: 9mm; height: 9mm; }}
+.receipt .h img {{ width: 11mm; height: 11mm; object-fit: contain; }}
 .receipt .h .t {{ font-weight: 700; color: {GREEN}; font-size: 11pt; }}
 .steps {{ margin: 0; padding-left: 5mm; font-size: 8.8pt; line-height: 1.55; }}
 </style></head><body>
@@ -160,8 +173,8 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
   <div class="head">
     <img src="{LOGO}" alt="">
     <div>
-      <div class="t1">সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় প্রাক্তন শিক্ষার্থী পরিষদ</div>
-      <div class="t2">Sabuj Shikshayatan Government High School Alumni Association</div>
+      <div class="t1">প্রাক্তন সবুজিয়ান পরিষদ</div>
+      <div class="t2">Praktan Sabujian Parishad · alumni of Sabuj Shikshayatan Government High School</div>
       <div class="t3">সীতাকুণ্ড, চট্টগ্রাম · EIIN 105070 · প্রতিষ্ঠা ১৯৭৬</div>
     </div>
     <div class="formno">ফর্ম নং / Form no. (অফিস)<br><span class="b"></span></div>
@@ -252,7 +265,7 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
       <img src="{LOGO}" alt="">
       <div>
         <div class="t">প্রাপ্তি রসিদ · Money receipt</div>
-        <div class="en">সুবর্ণ জয়ন্তী ২০২৬ · Sabuj Shikshayatan Alumni Association</div>
+        <div class="en">সুবর্ণ জয়ন্তী ২০২৬ · প্রাক্তন সবুজিয়ান পরিষদ</div>
       </div>
       <div class="formno">রসিদ নং / Receipt no.<br><span class="b"></span></div>
     </div>

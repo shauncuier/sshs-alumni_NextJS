@@ -2,12 +2,14 @@
 import math
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 from PIL import Image
 
 HERE = Path(__file__).parent
-FONTS = "file:///C:/Users/jashe/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/fd07ac21-6927-4e3b-8f8f-12c0d642b22b/b2063275-7648-4cf3-b2b4-922aeb95eb28/skills/canvas-design/canvas-fonts/"
+FONTS = "file:///C:/Users/jashe/.claude/skills/synced/fd07ac21-6927-4e3b-8f8f-12c0d642b22b_b2063275-7648-4cf3-b2b4-922aeb95eb28/canvas-design/canvas-fonts/"
 PUBLIC = Path("D:/SaaS Project/sshs-alumni/public")
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 W, H = 1376, 768
@@ -66,7 +68,7 @@ def page(with_text: bool) -> str:
     CX = 1010 if with_text else W // 2
     text = f"""
   <div class="block">
-    <div class="assoc"><img src="file:///{(PUBLIC / 'logo.png').as_posix()}" alt=""><span>SSGHS ALUMNI ASSOCIATION</span></div>
+    <div class="assoc"><img src="file:///{(PUBLIC / 'logo.png').as_posix()}" alt=""><span>প্রাক্তন সবুজিয়ান পরিষদ</span></div>
     <div class="school-bn">সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়</div>
     <div class="title-bn">সুবর্ণ জয়ন্তী</div>
     <div class="title-en">Golden Jubilee</div>
@@ -106,8 +108,8 @@ svg {{ position: absolute; inset: 0; }}
 .block {{ position: absolute; left: 112px; top: 0; height: {H}px; width: 640px; z-index: 2;
   display: flex; flex-direction: column; justify-content: center; }}
 .assoc {{ display: flex; align-items: center; gap: 14px; margin-bottom: 34px; }}
-.assoc img {{ width: 46px; height: 46px; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 0 0 1px rgba(201,162,78,.6); }}
-.assoc span {{ font-family: Jura; font-size: 14px; letter-spacing: 5px; color: {MINT}; }}
+.assoc img {{ width: 64px; height: 64px; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 0 0 1px rgba(201,162,78,.6); }}
+.assoc span {{ font-family: 'Shonar Bangla', 'Nirmala UI', sans-serif; font-weight: 700; font-size: 22px; color: {MINT}; }}
 .school-bn {{ font-family: 'Shonar Bangla', 'Nirmala UI', sans-serif; font-size: 24px; color: #d7ebe1; margin-bottom: 6px; }}
 .title-bn {{ font-family: 'Shonar Bangla', 'Nirmala UI', sans-serif; font-weight: 700; font-size: 84px; line-height: 1.12;
   background: linear-gradient(180deg, {GOLD_LIGHT} 10%, {GOLD} 70%, #a7832f 100%);
@@ -137,17 +139,27 @@ def render(name: str, with_text: bool) -> None:
     png = HERE / f"{name}.png"
     html.write_text(page(with_text), encoding="utf-8")
     subprocess.run(
-        [EDGE, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
+        [EDGE, "--headless=new", f"--user-data-dir={Path(tempfile.gettempdir()) / 'sshs-edge-profile'}", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
          f"--window-size={W},{H}", f"--screenshot={png}", html.as_uri()],
         check=True, capture_output=True, timeout=120,
     )
+    # Edge can return before the screenshot is on disk; give it a moment.
+    for _ in range(60):
+        if png.exists() and png.stat().st_size > 0:
+            break
+        time.sleep(0.5)
+    time.sleep(0.5)
     im = Image.open(png).convert("RGB")
     assert im.size == (W * 2, H * 2), im.size
     out = (PUBLIC if "--publish" in sys.argv else HERE) / f"{name}.jpg"
     im.save(out, quality=90, optimize=True, progressive=True)
+    html.unlink()
+    png.unlink()
     print(name, im.size, out, out.stat().st_size // 1024, "KB")
 
 
 if __name__ == "__main__":
-    render("golden-jubilee-banner", True)
-    render("golden-jubilee-art", False)
+    only = [a for a in sys.argv[1:] if not a.startswith("--")]
+    for name, with_text in (("golden-jubilee-banner", True), ("golden-jubilee-art", False)):
+        if not only or name in only:
+            render(name, with_text)
