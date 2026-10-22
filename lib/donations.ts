@@ -3,7 +3,9 @@ import { donationReceiptEmail } from "@/lib/email-templates";
 import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
-import {sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
+import { smsDonationReceived } from "@/lib/member-sms";
+import { paymentNoticesOn } from "@/lib/payment-notices";
 import { openCampaignOrThrow } from "@/lib/campaigns";
 
 /**
@@ -105,7 +107,7 @@ export type DonationDecision = "VERIFY" | "REJECT";
 /**
  * Verifies or rejects a pending manual donation. Verifying adds it to the campaign
  * total exactly once (the status check and the update happen together), then emails
- * the donor a receipt.
+ * and texts the donor a receipt (unless turned off in Admin → Payments).
  */
 export async function decideDonation(args: { donationId: string; decision: DonationDecision; reason?: unknown; adminEmail: string }) {
   if (args.decision !== "VERIFY" && args.decision !== "REJECT") throw new AppError("INVALID_REQUEST", 400, "Unknown action.");
@@ -135,7 +137,7 @@ export async function decideDonation(args: { donationId: string; decision: Donat
     return tx.donation.findUniqueOrThrow({ where: { id: current.id }, include: { campaign: { select: { title: true } } } });
   });
 
-  if (args.decision === "VERIFY" && donation.donorEmail) {
+  if (args.decision === "VERIFY" && donation.donorEmail && (await paymentNoticesOn()).email) {
     const receipt = donationReceiptEmail({
       donorName: donation.donorName,
       amount: donation.amount,
@@ -147,5 +149,6 @@ export async function decideDonation(args: { donationId: string; decision: Donat
     const sent = await sendEmail({ to: donation.donorEmail, ...receipt });
     if (!sent.success) console.warn("[donations] Receipt email failed:", sent.error);
   }
+  if (args.decision === "VERIFY") await smsDonationReceived(donation.id);
   return donation;
 }

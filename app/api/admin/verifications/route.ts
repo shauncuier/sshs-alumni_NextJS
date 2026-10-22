@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
+import { smsRegistrationConfirmed } from "@/lib/member-sms";
 import { logActivity } from "@/lib/activity-log";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
@@ -204,7 +205,10 @@ export async function PATCH(req: Request) {
       });
       // Tell the member (never fails the decision).
       await emailMembershipDecision(result.updated.userId, decision);
-      if (result.confirmedRegistrationId) await emailRegistration(result.confirmedRegistrationId, "confirmed");
+      if (result.confirmedRegistrationId) {
+        await emailRegistration(result.confirmedRegistrationId, "confirmed");
+        await smsRegistrationConfirmed(result.confirmedRegistrationId);
+      }
       return NextResponse.json({
         message: `Verification request ${status.toLowerCase()} successfully`,
         request: updated,

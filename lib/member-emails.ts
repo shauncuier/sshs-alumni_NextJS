@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { paymentNoticesOn } from "@/lib/payment-notices";
 import { storedGuests } from "@/lib/events/pricing";
 import { eventDateLabel } from "@/lib/events/date-label";
 import {
@@ -15,7 +16,8 @@ import {
 /**
  * Emails to members about their registrations and membership. Sent after the
  * change is saved and never throw: a mail problem is logged and must not undo or
- * fail the registration or the committee's decision.
+ * fail the registration or the committee's decision. The "confirmed" email is not sent
+ * while the admin has turned confirmation emails off (Admin → Payments).
  */
 
 async function deliver(to: string, email: RenderedEmail, what: string): Promise<boolean> {
@@ -36,6 +38,7 @@ function dhakaDate(d: Date): string {
 /** "received" right after a paid registration; "confirmed" once it is confirmed (or at once for free events). */
 export async function emailRegistration(registrationId: string, kind: "received" | "confirmed"): Promise<boolean> {
   try {
+    if (kind === "confirmed" && !(await paymentNoticesOn()).email) return false;
     const reg = await prisma.eventRegistration.findUnique({
       where: { id: registrationId },
       include: { event: true, user: { include: { profile: true } } },
