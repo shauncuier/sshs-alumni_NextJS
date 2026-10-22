@@ -7,7 +7,9 @@ import { OTP_LENGTH } from "@/lib/phone-otp-format";
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
 const smallButton = "shrink-0 px-3.5 min-h-[46px] rounded-xl bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold cursor-pointer flex items-center gap-1.5";
-const RESEND_SECONDS = 60;
+// Matches the server: an SMS every 2 minutes, an email every minute (lib/otp.ts).
+const RESEND_SECONDS: Record<Channel, number> = { phone: 120, email: 60 };
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 export type ContactVerification = { via: "phone" | "email"; token: string; target: string };
 type Channel = ContactVerification["via"];
@@ -98,7 +100,7 @@ export default function ContactVerifyField({
       setSentTo(via === "phone" ? data.phone : data.email);
       setTestCode(typeof data.testCode === "string" ? data.testCode : null);
       setCode(typeof data.testCode === "string" ? data.testCode : "");
-      setResendIn(RESEND_SECONDS);
+      setResendIn(RESEND_SECONDS[via]);
     } catch (err) {
       setError((err as Error).message);
       if (via === "phone") setSmsFailed(SMS_DOWN_CODES.includes((err as { code?: string }).code ?? ""));
@@ -222,7 +224,7 @@ export default function ContactVerifyField({
             disabled={busy !== null || resendIn > 0}
             className="text-[11px] font-bold text-emerald-800 disabled:text-slate-400 cursor-pointer disabled:cursor-not-allowed"
           >
-            {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+            {resendIn > 0 ? `Resend code in ${mmss(resendIn)}` : "Resend code"}
           </button>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { AppError } from "@/lib/app-error";
 import { getBulkSmsConfig, isValidBdMobile, normalizeBdPhoneNumber, sendBulkSms } from "@/lib/bulksmsbd";
-import { checkChallenge, issueChallenge, issueVerified, newOtpCode, OTP_RESEND_MS, readVerified } from "@/lib/otp";
+import { checkChallenge, issueChallenge, issueVerified, newOtpCode, readVerified, SMS_OTP_RESEND_MS } from "@/lib/otp";
 import { consumeRateLimit } from "@/lib/request-security";
 import { requirePhoneFree } from "@/lib/phone-registry";
 import { smsTestModeOn } from "@/lib/sms-test-mode";
@@ -12,7 +12,7 @@ import { smsTestModeOn } from "@/lib/sms-test-mode";
  * failed, or SMS is not set up) may members verify by email instead (lib/email-otp.ts).
  */
 
-export { OTP_MAX_ATTEMPTS, OTP_RESEND_MS, OTP_TTL_MS, VERIFIED_TTL_MS } from "@/lib/otp";
+export { OTP_MAX_ATTEMPTS, OTP_RESEND_MS, OTP_TTL_MS, SMS_OTP_RESEND_MS, VERIFIED_TTL_MS } from "@/lib/otp";
 export const OTP_SITE_HOURLY_LIMIT = 200;
 
 /** How long after a failed SMS the email code stays on offer. */
@@ -74,8 +74,8 @@ export async function requestPhoneOtp(
 
   // Test mode (Admin → Bulk SMS): no SMS, the code goes back to the form instead.
   if (await smsTestModeOn(now)) {
-    if (!consumeRateLimit(`phone-otp-cooldown:${phone}`, { limit: 1, windowMs: OTP_RESEND_MS })) {
-      throw new AppError("OTP_TOO_SOON", 429, "Please wait a minute before asking for another code.");
+    if (!consumeRateLimit(`phone-otp-cooldown:${phone}`, { limit: 1, windowMs: SMS_OTP_RESEND_MS })) {
+      throw new AppError("OTP_TOO_SOON", 429, "Please wait 2 minutes before asking for another code.");
     }
     const code = newOtpCode();
     const { challenge, expiresAt } = issueChallenge("phone", phone, code, now);
@@ -89,9 +89,9 @@ export async function requestPhoneOtp(
   }
 
   // Every SMS costs money and could be used to pester a stranger's phone: one code
-  // per number per minute, and at most five an hour.
-  if (!consumeRateLimit(`phone-otp-cooldown:${phone}`, { limit: 1, windowMs: OTP_RESEND_MS })) {
-    throw new AppError("OTP_TOO_SOON", 429, "Please wait a minute before asking for another code.");
+  // per number every two minutes, and at most five an hour.
+  if (!consumeRateLimit(`phone-otp-cooldown:${phone}`, { limit: 1, windowMs: SMS_OTP_RESEND_MS })) {
+    throw new AppError("OTP_TOO_SOON", 429, "Please wait 2 minutes before asking for another code.");
   }
   if (!consumeRateLimit(`phone-otp-hourly:${phone}`, { limit: 5, windowMs: 60 * 60_000 })) {
     throw new AppError("RATE_LIMITED", 429, "Too many codes sent to this number. Please try again in an hour.");

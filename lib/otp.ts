@@ -21,6 +21,8 @@ export const OTP_TTL_MS = 5 * 60_000;
 export const VERIFIED_TTL_MS = 30 * 60_000;
 export const OTP_MAX_ATTEMPTS = 5;
 export const OTP_RESEND_MS = 60_000;
+/** An SMS costs money and can be slow to arrive: two minutes before another one. */
+export const SMS_OTP_RESEND_MS = 2 * 60_000;
 
 type Challenge = { id: string; subject: string; code: string; exp: number };
 type Verified = { subject: string; exp: number };
