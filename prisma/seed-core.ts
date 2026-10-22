@@ -203,10 +203,47 @@ export async function removeDemoContent(): Promise<Record<string, number>> {
   };
 }
 
+/** Old names of the association, longest first ("the X" reads as plain "Praktan Sabujian Parishad"). */
+const OLD_ASSOCIATION_NAMES = [
+  "the SSGHS Alumni Association",
+  "SSGHS Alumni Association",
+  "the Sabuj Shikshayatan Alumni Association",
+  "Sabuj Shikshayatan Alumni Association",
+];
+const ASSOCIATION_NAME = "Praktan Sabujian Parishad";
+
+/**
+ * Rows written before the association took its new name (2026-10-22): seeded event text,
+ * default news authors and gallery credits. Safe to re-run: only rows that still carry an
+ * old name change. Returns the number of rows changed.
+ */
+export async function renameAssociationInRows(): Promise<number> {
+  const columns: [table: string, column: string][] = [
+    ["Event", "organizer"],
+    ["Event", "description"],
+    ["Event", "subtitle"],
+    ["NewsArticle", "author"],
+    ["GalleryPhoto", "uploadedBy"],
+  ];
+  let changed = 0;
+  for (const [table, column] of columns) {
+    for (const old of OLD_ASSOCIATION_NAMES) {
+      changed += await prisma.$executeRawUnsafe(
+        `UPDATE \`${table}\` SET \`${column}\` = REPLACE(\`${column}\`, ?, ?) WHERE \`${column}\` LIKE CONCAT('%', ?, '%')`,
+        old,
+        ASSOCIATION_NAME,
+        old
+      );
+    }
+  }
+  return changed;
+}
+
 export interface ProductionSeedResult {
   superAdmin: EnsureResult;
   batchesCreated: number;
   membershipEventCreated: boolean;
+  renamedRows: number;
   repaired: { eventJson: number; registrations: number };
   lockedLegacyAccounts: string[];
   warnings: string[];
@@ -221,7 +258,8 @@ export async function runProductionSeed(env: Env = process.env): Promise<Product
   const batchesCreated = await seedBatches();
   const repaired = await repairLegacyRows();
   const membershipEventCreated = await seedMembershipEvent();
+  const renamedRows = await renameAssociationInRows();
   const lockedLegacyAccounts = await lockLegacyAccounts();
   const warnings = await findDemoLeftovers(env);
-  return { superAdmin, batchesCreated, membershipEventCreated, repaired, lockedLegacyAccounts, warnings };
+  return { superAdmin, batchesCreated, membershipEventCreated, renamedRows, repaired, lockedLegacyAccounts, warnings };
 }

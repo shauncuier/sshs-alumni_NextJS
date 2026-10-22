@@ -50,6 +50,17 @@ describe("production seed", () => {
     expect(await prisma.event.findMany({ select: { title: true } })).toEqual([{ title: "Edited by the committee" }]);
   });
 
+  it("gives rows written under the old association name the new one", async () => {
+    await runProductionSeed({});
+    await prisma.event.updateMany({ data: { organizer: "SSGHS Alumni Association", description: "You become a member of the SSGHS Alumni Association: welcome." } });
+    const again = await runProductionSeed({});
+    expect(again.renamedRows).toBe(2);
+    expect(await prisma.event.findMany({ select: { organizer: true, description: true } })).toEqual([
+      { organizer: "Praktan Sabujian Parishad", description: "You become a member of Praktan Sabujian Parishad: welcome." },
+    ]);
+    expect((await runProductionSeed({})).renamedRows).toBe(0);
+  });
+
   it("refuses to run without a super admin in the environment", async () => {
     vi.stubEnv("SUPER_ADMIN_EMAIL", "");
     await expect(runProductionSeed({})).rejects.toThrow(/SUPER_ADMIN_EMAIL/);
