@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Offline Directory Storage
+ * Praktan Sabujian Parishad — Offline Directory Storage
  * 
  * Stores batch directories and member cards in local storage / IndexedDB
  * for offline availability during campus visits and reunions.

@@ -8,6 +8,7 @@ import math
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from PIL import Image
@@ -16,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).parent
 OUT = ROOT / "public" / "og"
 ICONS = ROOT / "node_modules" / "lucide-react" / "dist" / "esm" / "icons"
-FONTS = "file:///C:/Users/jashe/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/fd07ac21-6927-4e3b-8f8f-12c0d642b22b/b2063275-7648-4cf3-b2b4-922aeb95eb28/skills/canvas-design/canvas-fonts/"
+FONTS = "file:///C:/Users/jashe/.claude/skills/synced/fd07ac21-6927-4e3b-8f8f-12c0d642b22b_b2063275-7648-4cf3-b2b4-922aeb95eb28/canvas-design/canvas-fonts/"
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 W, H = 1200, 630
 CX, CY = 945, 315        # the emblem (its ticks end 15 px inside the right edge)
@@ -25,7 +26,7 @@ GOLD, GOLD_LIGHT, CREAM, MINT = "#c9a24e", "#ecd391", "#f4eddb", "#a9d8c2"
 
 CARDS = [
     # key, English title, Bangla title, one line, icon
-    ("home", "Alumni Association", "প্রাক্তন ছাত্র-ছাত্রী পরিষদ", "Find your batchmates, join our events and give back to the school that taught us.", "users"),
+    ("home", "Praktan Sabujian Parishad", "প্রাক্তন সবুজিয়ান পরিষদ", "Find your batchmates, join our events and give back to the school that taught us.", "users"),
     ("events", "Events & reunions", "অনুষ্ঠান ও পুনর্মিলনী", "Register online, pay by bKash or Nagad and get your ticket.", "calendar-days"),
     ("alumni", "Alumni directory", "প্রাক্তন শিক্ষার্থীদের তালিকা", "Find verified former students by name, SSC batch, profession or city.", "search"),
     ("batches", "SSC batches", "ব্যাচসমূহ", "Every batch since 1977: classmates, representatives and reunions.", "layers"),
@@ -124,7 +125,7 @@ svg.bg {{ position: absolute; inset: 0; }}
 
 
 def block(en: str, bn: str, line: str) -> str:
-    return f"""<div class="block"><div class="eyebrow">SABUJ SHIKSHAYATAN ALUMNI</div>
+    return f"""<div class="block"><div class="eyebrow">PRAKTAN SABUJIAN PARISHAD</div>
 <div class="en">{en}</div><div class="bn">{bn}</div><div class="rule"></div><div class="line">{line}</div></div>"""
 
 
@@ -132,8 +133,14 @@ def render(name: str, html: str, png_out: Path, jpg: bool = True) -> None:
     src = HERE / f"_{name}.html"
     shot = HERE / f"_{name}.png"
     src.write_text(html, encoding="utf-8")
-    subprocess.run([EDGE, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
+    subprocess.run([EDGE, "--headless=new", f"--user-data-dir={HERE / '_edge-profile'}", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
                     f"--window-size={W},{H}", f"--screenshot={shot}", src.as_uri()], check=True, capture_output=True, timeout=120)
+    # Edge can return before the screenshot is on disk; give it a moment.
+    for _ in range(60):
+        if shot.exists() and shot.stat().st_size > 0:
+            break
+        time.sleep(0.5)
+    time.sleep(0.5)
     im = Image.open(shot).convert("RGB").resize((W, H), Image.LANCZOS)
     if jpg:
         im.save(png_out, quality=88, optimize=True, progressive=True)
@@ -160,5 +167,5 @@ if __name__ == "__main__":
     if only and "batch-bg" not in only:
         raise SystemExit
     # The eyebrow sits where it does on the other cards; the generated title starts at y = 236.
-    render("batch-bg", page("", '<div class="block" style="justify-content:flex-start;padding-top:172px;box-sizing:border-box"><div class="eyebrow">SABUJ SHIKSHAYATAN ALUMNI</div></div>'),
+    render("batch-bg", page("", '<div class="block" style="justify-content:flex-start;padding-top:172px;box-sizing:border-box"><div class="eyebrow">PRAKTAN SABUJIAN PARISHAD</div></div>'),
            OUT / "batch-bg.png", jpg=False)

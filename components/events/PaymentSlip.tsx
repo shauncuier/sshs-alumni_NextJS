@@ -47,7 +47,7 @@ export default function PaymentSlip({ slip }: { slip: PaymentSlipData }) {
         <img src="/logo.png" alt="" style={{ width: "13mm", height: "13mm" }} />
         <div style={{ lineHeight: 1.2 }}>
           <div style={{ fontWeight: 800, fontSize: "11pt", color: GREEN }}>সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় প্রাক্তন শিক্ষার্থী পরিষদ</div>
-          <div style={{ fontSize: "8pt", color: "#5b6b64" }}>Sabuj Shikshayatan Government High School Alumni Association · EIIN {schoolInfo.eiin}</div>
+          <div style={{ fontSize: "8pt", color: "#5b6b64" }}>Praktan Sabujian Parishad · Sabuj Shikshayatan Government High School · EIIN {schoolInfo.eiin}</div>
         </div>
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
           <div style={{ fontWeight: 800, fontSize: "12pt", color: GREEN }}>পেমেন্ট স্লিপ</div>

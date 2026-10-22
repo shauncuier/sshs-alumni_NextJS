@@ -11,7 +11,7 @@ import { getSessionUser } from "@/lib/session-user";
 import { avatarAt } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Alumni network | SSGHS Alumni" };
+export const metadata = { title: "Alumni network | Praktan Sabujian Parishad" };
 
 type Props = { searchParams: Promise<{ q?: string; batch?: string; page?: string }> };
 

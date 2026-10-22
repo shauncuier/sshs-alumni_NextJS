@@ -35,7 +35,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = pageMetadata({
   path: "/",
   image: shareCard("home"),
-  title: "Sabuj Shikshayatan Alumni Association, Sitakunda",
+  title: "Praktan Sabujian Parishad, Sitakunda",
   absoluteTitle: true,
   description:
     "Alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন), Sitakunda: find batchmates, join the Golden Jubilee 2026 and give back to the school.",
@@ -125,7 +125,7 @@ export default async function HomePage() {
               <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-xs font-semibold">
                   <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  <span>Alumni Association · EIIN {schoolInfo.eiin}</span>
+                  <span>প্রাক্তন সবুজিয়ান পরিষদ · EIIN {schoolInfo.eiin}</span>
                 </div>
 
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]">

@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — SSLCommerz Cancel Handler
+ * Praktan Sabujian Parishad — SSLCommerz Cancel Handler
  * POST /api/payments/sslcommerz/cancel
  */
 

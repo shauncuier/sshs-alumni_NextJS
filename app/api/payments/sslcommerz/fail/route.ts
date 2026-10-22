@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — SSLCommerz Fail Handler
+ * Praktan Sabujian Parishad — SSLCommerz Fail Handler
  * POST /api/payments/sslcommerz/fail
  */
 

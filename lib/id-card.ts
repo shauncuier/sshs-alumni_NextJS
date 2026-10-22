@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Digital Smart ID Card & Gate Verification Utility
+ * Praktan Sabujian Parishad — Digital Smart ID Card & Gate Verification Utility
  * 
  * Provides:
  * 1. Encrypted, tamper-proof tokens for Gate Check-in QR Codes
@@ -29,7 +29,7 @@ const CARD_TOKEN_PURPOSE = "ssghs-alumni-card-token-v2";
 const SCHOOL_EIIN = "105070";
 
 /**
- * The member's SSGHS Alumni Identification Number.
+ * The member's Praktan Sabujian Parishad Identification Number.
  * Format: SSGHS-ALM-{BATCH}-{6 HEX}. The suffix is derived from the account id,
  * so a member keeps the same number every time their card is issued.
  */
@@ -108,8 +108,8 @@ export function buildAppleWalletPassManifest(payload: CardPayload, qrData: strin
     serialNumber: payload.alumniId,
     teamIdentifier: "BD_SSGHS_ASSOC",
     organizationName: "Sabuj Shikshayatan Govt High School Alumni",
-    description: `SSGHS Alumni Identity Pass — ${payload.fullName}`,
-    logoText: "SSGHS Alumni",
+    description: `Praktan Sabujian Parishad Identity Pass — ${payload.fullName}`,
+    logoText: "Praktan Sabujian Parishad",
     foregroundColor: "rgb(255, 255, 255)",
     backgroundColor: "rgb(6, 78, 59)", // #064e3b
     labelColor: "rgb(251, 191, 36)", // #fbbf24
@@ -154,7 +154,7 @@ export function buildAppleWalletPassManifest(payload: CardPayload, qrData: strin
         {
           key: "terms",
           label: "Gate Security Terms",
-          value: "This digital credential is the official property of the SSGHS Alumni Association. Present at official reunions and campus gates for verification.",
+          value: "This digital credential is the official property of Praktan Sabujian Parishad. Present at official reunions and campus gates for verification.",
         },
       ],
     },
@@ -193,7 +193,7 @@ export function buildGoogleWalletPassPayload(payload: CardPayload, verifyUrl: st
           cardTitle: {
             defaultValue: {
               language: "en-US",
-              value: "SSGHS Alumni Association",
+              value: "Praktan Sabujian Parishad",
             },
           },
           header: {

@@ -71,15 +71,15 @@ export default function AppSidebar() {
           <div className="w-10 h-10 rounded-full p-0.5 ring-2 ring-amber-400/50 bg-white shadow flex items-center justify-center overflow-hidden shrink-0">
             <NextImage
               src="/logo.png"
-              alt="SSGHS Crest"
+              alt="Praktan Sabujian Parishad crest"
               width={40}
               height={40}
               className="w-full h-full object-contain rounded-full"
             />
           </div>
           <div>
-            <div className="font-extrabold text-sm text-white tracking-tight leading-tight">
-              SSGHS Alumni
+            <div className="font-extrabold text-sm text-white leading-tight">
+              প্রাক্তন সবুজিয়ান পরিষদ
             </div>
             <div className="text-[10px] text-emerald-300 font-semibold tracking-wide">
               Official Association Portal

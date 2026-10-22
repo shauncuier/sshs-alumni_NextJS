@@ -193,7 +193,7 @@ export function IdCardBack({ card, site }: { card: IdCardData; site: string }) {
         <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
           <div style={{ fontSize: "6.6pt", fontWeight: 800, color: GREEN }}>Membership card</div>
           <p style={{ fontSize: "5pt", color: "#334155", marginTop: "0.8mm" }}>
-            This card identifies a verified member of the Sabuj Shikshayatan Government High School Alumni Association. It is personal and not transferable.
+            This card identifies a verified member of Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School. It is personal and not transferable.
           </p>
           <p style={{ fontSize: "5pt", color: "#334155", marginTop: "1.2mm" }}>
             <span style={{ fontWeight: 700 }}>If found, please return to</span>

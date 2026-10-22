@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — React Hook for Real-Time SSE Events
+ * Praktan Sabujian Parishad — React Hook for Real-Time SSE Events
  * 
  * Usage in any client component:
  * 

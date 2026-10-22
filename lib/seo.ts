@@ -13,18 +13,19 @@ import type { JobListing } from "@/lib/career-data";
  * instead of merging it.
  */
 
-export const SITE_NAME = "Sabuj Shikshayatan Alumni";
-export const ASSOCIATION_NAME = "Sabuj Shikshayatan Alumni Association";
-export const ASSOCIATION_NAME_BN = "সবুজ শিক্ষায়তন প্রাক্তন ছাত্র-ছাত্রী পরিষদ";
+export const SITE_NAME = "Praktan Sabujian Parishad";
+export const ASSOCIATION_NAME = "Praktan Sabujian Parishad";
+export const ASSOCIATION_NAME_BN = "প্রাক্তন সবুজিয়ান পরিষদ";
+export const ASSOCIATION_SHORT_NAME_BN = "সবুজিয়ান পরিষদ";
 /** The 1200x630 share cards in public/og (design/share-cards/make_cards.py), one per section. */
 export const SHARE_CARDS = {
-  home: "Sabuj Shikshayatan Alumni Association",
+  home: "Praktan Sabujian Parishad",
   jubilee: "Golden Jubilee 2026 of Sabuj Shikshayatan Government High School",
   events: "Events and reunions of the Sabuj Shikshayatan alumni",
   alumni: "Sabuj Shikshayatan alumni directory",
   batches: "SSC batches of Sabuj Shikshayatan Government High School",
   school: "Sabuj Shikshayatan Government High School, since 1976",
-  about: "About the Sabuj Shikshayatan Alumni Association",
+  about: "About Praktan Sabujian Parishad",
   news: "News and notices from the Sabuj Shikshayatan alumni",
   stories: "Stories from Sabuj Shikshayatan alumni",
   achievements: "Achievements of Sabuj Shikshayatan alumni",
@@ -32,7 +33,7 @@ export const SHARE_CARDS = {
   donate: "Give back to Sabuj Shikshayatan Government High School",
   careers: "Jobs shared by Sabuj Shikshayatan alumni",
   mentorship: "Mentorship from Sabuj Shikshayatan alumni",
-  register: "Join the Sabuj Shikshayatan Alumni Association",
+  register: "Join Praktan Sabujian Parishad",
   contact: "Contact the Sabuj Shikshayatan alumni committee",
   volunteer: "Volunteer for the Sabuj Shikshayatan alumni",
 } as const;
@@ -65,7 +66,7 @@ export function pageMetadata(p: {
   path: string;
   title: string;
   description: string;
-  /** The title is complete; no " | Sabuj Shikshayatan Alumni" suffix. */
+  /** The title is complete; no " | Praktan Sabujian Parishad" suffix. */
   absoluteTitle?: boolean;
   /** The share image; "file" leaves it to the segment's opengraph-image file. */
   image?: { url: string; width?: number; height?: number; alt?: string } | "file" | null;
@@ -105,7 +106,7 @@ export function websiteJsonLd() {
     "@type": "WebSite",
     "@id": `${origin}/#website`,
     name: ASSOCIATION_NAME,
-    alternateName: [ASSOCIATION_NAME_BN, SITE_NAME, "SSGHS Alumni"],
+    alternateName: [ASSOCIATION_NAME_BN, ASSOCIATION_SHORT_NAME_BN],
     url: origin,
     inLanguage: ["en", "bn"],
     publisher: association(),
@@ -189,7 +190,7 @@ export function organizationJsonLd() {
     "@type": "Organization",
     "@id": `${origin}/#association`,
     name: ASSOCIATION_NAME,
-    alternateName: [ASSOCIATION_NAME_BN, "SSGHS Alumni Association"],
+    alternateName: [ASSOCIATION_NAME_BN, ASSOCIATION_SHORT_NAME_BN],
     url: origin,
     logo: `${origin}/icon-512.png`,
     email: schoolInfo.associationEmail,

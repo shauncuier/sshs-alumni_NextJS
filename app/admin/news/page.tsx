@@ -21,7 +21,7 @@ interface Article {
 
 type Draft = Omit<Article, "id" | "publishedAt" | "updatedAt" | "updatedBy"> & { id?: string };
 
-const EMPTY: Draft = { title: "", category: "Alumni News", excerpt: "", content: "", featuredImage: null, author: "SSGHS Alumni Association", isPublished: false, isFeatured: false };
+const EMPTY: Draft = { title: "", category: "Alumni News", excerpt: "", content: "", featuredImage: null, author: "Praktan Sabujian Parishad", isPublished: false, isFeatured: false };
 const input = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600";
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
 const primary = "px-4 py-2.5 min-h-[44px] bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer";

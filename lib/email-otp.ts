@@ -5,6 +5,7 @@ import { getEmailProvider, sendEmail } from "@/lib/email";
 import { checkChallenge, issueChallenge, issueVerified, newOtpCode, OTP_RESEND_MS, OTP_TTL_MS, readVerified } from "@/lib/otp";
 import { consumeRateLimit } from "@/lib/request-security";
 import { smsDown } from "@/lib/phone-otp";
+import { ASSOCIATION_NAME } from "@/lib/seo";
 
 /**
  * Email verification by one-time code: the backup for when the SMS service is down
@@ -16,8 +17,9 @@ import { smsDown } from "@/lib/phone-otp";
 export const EMAIL_OTP_SITE_HOURLY_LIMIT = 300;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// OTP_BRAND_NAME is for the SMS template the gateway approved; email has no template.
 function brand(): string {
-  return process.env.OTP_BRAND_NAME?.trim() || "SSGHS Alumni";
+  return ASSOCIATION_NAME;
 }
 
 export function normalizeEmail(raw: unknown): string {

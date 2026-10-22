@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Notifications API with Real-Time SSE Push
+ * Praktan Sabujian Parishad — Notifications API with Real-Time SSE Push
  * 
  * GET   /api/notifications   — The signed-in member's notifications
  * POST  /api/notifications   — Create and push a notification for a member (admins only)

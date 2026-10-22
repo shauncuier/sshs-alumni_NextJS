@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Target, Eye, Users } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({ image: shareCard("about"), path: "/about", title: "About the association", description: "Who we are: the alumni association (প্রাক্তন ছাত্র-ছাত্রী পরিষদ) of Sabuj Shikshayatan Government High School, Sitakunda, and what it does for its members and the school." });
+export const metadata: Metadata = pageMetadata({ image: shareCard("about"), path: "/about", title: "About the association", description: "Who we are: Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ), the alumni association of Sabuj Shikshayatan Government High School, Sitakunda, and what it does for its members and the school." });
 
 export default function AboutPage() {
 
@@ -24,7 +24,7 @@ export default function AboutPage() {
                 <span>Executive Council &amp; Constitution</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                About the Alumni Association
+                About Praktan Sabujian Parishad
               </h1>
               <p className="text-emerald-100 text-sm leading-relaxed">
                 Founded to unite generations of former students of Sabuj Shikshayatan Government High School, uphold the school&apos;s educational prestige, and foster lifelong solidarity.

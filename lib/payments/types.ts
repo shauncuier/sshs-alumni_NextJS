@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni Association — Payment Gateway Type Definitions
+ * Praktan Sabujian Parishad — Payment Gateway Type Definitions
  * Shared types used across bKash, Nagad, SSLCommerz payment integrations.
  */
 

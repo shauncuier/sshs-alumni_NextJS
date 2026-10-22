@@ -73,7 +73,7 @@ html_content = f"""<!doctype html>
 <html lang="bn">
 <head>
 <meta charset="utf-8">
-<title>SSGHS Alumni Association - Registration Guide</title>
+<title>Praktan Sabujian Parishad - Registration Guide</title>
 <style>
   @page {{
     size: A4 portrait;
@@ -476,7 +476,7 @@ html_content = f"""<!doctype html>
         <div class="header-left">
           {f'<img src="{LOGO_DATA_URL}" class="header-logo" alt="Logo">' if LOGO_DATA_URL else ''}
           <div class="header-text">
-            <h1>সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় প্রাক্তন ছাত্র-ছাত্রী পরিষদ</h1>
+            <h1>প্রাক্তন সবুজিয়ান পরিষদ</h1>
             <p>Sabuj Shikshayatan Govt. High School Alumni Association · Established 1976</p>
           </div>
         </div>
@@ -563,7 +563,7 @@ html_content = f"""<!doctype html>
     </div>
 
     <div class="page-footer">
-      <div>Sabuj Shikshayatan Alumni Association · Official Registration Manual 2026</div>
+      <div>Praktan Sabujian Parishad · Official Registration Manual 2026</div>
       <div class="footer-links">Facebook group: <a href="{FACEBOOK_GROUP}">facebook.com/groups/sshsalumniassociation</a></div>
       <div>Page 1 of 4</div>
     </div>
@@ -675,7 +675,7 @@ html_content = f"""<!doctype html>
     </div>
 
     <div class="page-footer">
-      <div>Sabuj Shikshayatan Alumni Association · Official Registration Manual 2026</div>
+      <div>Praktan Sabujian Parishad · Official Registration Manual 2026</div>
       <div class="footer-links">Email: <a href="mailto:{ASSOCIATION_EMAIL}">{ASSOCIATION_EMAIL}</a></div>
       <div>Page 2 of 4</div>
     </div>
@@ -761,7 +761,7 @@ html_content = f"""<!doctype html>
     </div>
 
     <div class="page-footer">
-      <div>Sabuj Shikshayatan Alumni Association · Official Registration Manual 2026</div>
+      <div>Praktan Sabujian Parishad · Official Registration Manual 2026</div>
       <div class="footer-links">Facebook page: <a href="{FACEBOOK_PAGE}">facebook.com/ssghschool</a></div>
       <div>Page 3 of 4</div>
     </div>
@@ -847,7 +847,7 @@ html_content = f"""<!doctype html>
     </div>
 
     <div class="page-footer">
-      <div>Sabuj Shikshayatan Alumni Association · Official Registration Manual 2026</div>
+      <div>Praktan Sabujian Parishad · Official Registration Manual 2026</div>
       <div class="footer-links">Email: <a href="mailto:{ASSOCIATION_EMAIL}">{ASSOCIATION_EMAIL}</a></div>
       <div>Page 4 of 4</div>
     </div>

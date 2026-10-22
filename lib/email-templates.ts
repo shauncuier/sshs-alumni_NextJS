@@ -111,7 +111,7 @@ export function renderEmail(c: EmailContent): RenderedEmail {
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
       <td style="padding-right:14px;vertical-align:middle"><img src="cid:${LOGO_CID}" width="48" height="48" alt="SSGHS" style="display:block;border-radius:50%;background:#ffffff"></td>
       <td style="vertical-align:middle">
-        <div style="font:800 18px/1.2 ${FONT};color:#ffffff">SSGHS Alumni Association</div>
+        <div style="font:800 18px/1.2 ${FONT};color:#ffffff">Praktan Sabujian Parishad</div>
         <div style="font:12px/1.4 ${FONT};color:#a7f3d0">${escapeHtml(schoolInfo.bengaliName)}</div>
       </td>
     </tr></table>
@@ -125,7 +125,7 @@ export function renderEmail(c: EmailContent): RenderedEmail {
       Questions? Reply to this email or write to <a href="mailto:${escapeHtml(contactEmail())}" style="color:${C.green};font-weight:700">${escapeHtml(contactEmail())}</a>.
     </p>
     <p style="margin:0;font:11px/1.6 ${FONT};color:#94a3b8">
-      ${escapeHtml(schoolInfo.name)} Alumni Association · ${escapeHtml(schoolInfo.location)} · <a href="${siteUrl()}" style="color:#94a3b8">${escapeHtml(siteUrl().replace(/^https?:\/\//, ""))}</a>
+      Praktan Sabujian Parishad · ${escapeHtml(schoolInfo.name)} · ${escapeHtml(schoolInfo.location)} · <a href="${siteUrl()}" style="color:#94a3b8">${escapeHtml(siteUrl().replace(/^https?:\/\//, ""))}</a>
     </p>
   </td></tr>
 </table>
@@ -145,7 +145,7 @@ export function renderEmail(c: EmailContent): RenderedEmail {
     ...(c.button ? [`${c.button.label}: ${c.button.url}`, ""] : []),
     ...(c.note ? [c.note, ""] : []),
     "—",
-    `SSGHS Alumni Association · ${contactEmail()} · ${siteUrl()}`,
+    `Praktan Sabujian Parishad · ${contactEmail()} · ${siteUrl()}`,
   ].join("\n");
 
   return { subject: c.subject, html, text };
@@ -155,7 +155,7 @@ const taka = (n: number) => `৳${Math.round(n).toLocaleString("en-US")}`;
 
 // ── The emails ─────────────────────────────────────────────────────────
 
-export function verificationCodeEmail(code: string, minutes: number, brand = "SSGHS Alumni"): RenderedEmail {
+export function verificationCodeEmail(code: string, minutes: number, brand = "Praktan Sabujian Parishad"): RenderedEmail {
   return renderEmail({
     subject: `Your ${brand} verification code: ${code}`,
     preheader: `Your code is ${code}. It expires in ${minutes} minutes.`,
@@ -206,7 +206,7 @@ export function registrationReceivedEmail(r: RegistrationEmailInput): RenderedEm
     paragraphs: [
       `Dear ${r.name},`,
       r.isMembershipEvent
-        ? `Thank you for registering for ${r.eventTitle} and for joining the SSGHS Alumni Association. The committee will check your payment and your details, then confirm both your registration and your membership.`
+        ? `Thank you for registering for ${r.eventTitle} and for joining Praktan Sabujian Parishad. The committee will check your payment and your details, then confirm both your registration and your membership.`
         : `Thank you for registering for ${r.eventTitle}. The committee will check your payment and confirm your registration.`,
     ],
     rows: registrationRows(r),
@@ -232,12 +232,12 @@ export function registrationConfirmedEmail(r: RegistrationEmailInput): RenderedE
 
 export function membershipApprovedEmail(name: string, batch: number | null): RenderedEmail {
   return renderEmail({
-    subject: "Welcome to the SSGHS Alumni Association",
+    subject: "Welcome to Praktan Sabujian Parishad",
     preheader: "Your membership is approved.",
     heading: "Your membership is approved",
     paragraphs: [
       `Dear ${name}${batch ? ` (SSC ${batch})` : ""},`,
-      "Welcome to the SSGHS Alumni Association. The committee has checked your details, and your membership is approved.",
+      "Welcome to Praktan Sabujian Parishad. The committee has checked your details, and your membership is approved.",
       "You can now find your batchmates in the alumni directory, use your digital alumni card, post in the community feed, and register for events.",
     ],
     button: { label: "Open my dashboard", url: siteUrl("/dashboard") },
@@ -246,7 +246,7 @@ export function membershipApprovedEmail(name: string, batch: number | null): Ren
 
 export function membershipRejectedEmail(name: string): RenderedEmail {
   return renderEmail({
-    subject: "About your SSGHS Alumni membership application",
+    subject: "About your Praktan Sabujian Parishad membership application",
     preheader: "The committee could not approve your application.",
     heading: "Your application was not approved",
     paragraphs: [

@@ -129,7 +129,7 @@ function validate(input: NewsInput, partial: boolean) {
     data.featuredImage = url || null;
   }
   if (!partial || input.author !== undefined) {
-    const author = str(input.author) || "SSGHS Alumni Association";
+    const author = str(input.author) || "Praktan Sabujian Parishad";
     if (author.length > 120) throw bad("The author name is too long.");
     data.author = author;
   }

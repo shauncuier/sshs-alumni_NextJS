@@ -172,7 +172,7 @@ export default function VerifyTokenPage() {
 
       {/* Footer */}
       <div className="max-w-md w-full mx-auto text-center text-[10px] text-slate-500 border-t border-slate-800 pt-4">
-        <span>Sabuj Shikshayatan Government High School Alumni Association</span>
+        <span>Praktan Sabujian Parishad · Sabuj Shikshayatan Government High School</span>
         <div className="mt-1">
           <Link href="/card" className="text-emerald-400 hover:underline">
             View My Digital Card

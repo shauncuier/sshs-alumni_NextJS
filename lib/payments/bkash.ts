@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni Association — bKash Tokenized Checkout Integration
+ * Praktan Sabujian Parishad — bKash Tokenized Checkout Integration
  * 
  * bKash Tokenized Checkout API v1.2.0-beta
  * Documentation: https://developer.bka.sh/docs/checkout-process-overview

@@ -19,6 +19,6 @@ for (const [name, build] of Object.entries(EMAIL_SAMPLES)) {
 }
 fs.writeFileSync(
   path.join(dir, "index.html"),
-  `<!doctype html><meta charset="utf-8"><title>Email previews</title><body style="font-family:sans-serif;padding:24px"><h1>SSGHS Alumni emails</h1><ul>${links.join("")}</ul></body>`
+  `<!doctype html><meta charset="utf-8"><title>Email previews</title><body style="font-family:sans-serif;padding:24px"><h1>Praktan Sabujian Parishad emails</h1><ul>${links.join("")}</ul></body>`
 );
 console.log(`Wrote ${links.length} emails to ${dir}. Open index.html in a browser.`);

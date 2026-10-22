@@ -41,7 +41,7 @@ const asAdmin = async () => {
 describe("news", () => {
   it("drafts are hidden; publishing makes an article public", async () => {
     const draft = await createNews(article, "boss@example.test");
-    expect(draft).toMatchObject({ isPublished: false, author: "SSGHS Alumni Association" });
+    expect(draft).toMatchObject({ isPublished: false, author: "Praktan Sabujian Parishad" });
     expect(draft.excerpt).toBe("Registration for the Golden Jubilee reunion is now open.");
     expect(await listPublishedNews()).toEqual([]);
     expect(await getPublishedNews(draft.id)).toBeNull();

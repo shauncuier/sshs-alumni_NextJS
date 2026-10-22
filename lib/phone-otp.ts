@@ -40,7 +40,11 @@ function smsOutage(now: number, err: AppError): AppError {
   return err;
 }
 
-/** The brand in the SMS; must match the name on the OTP template registered with the gateway. */
+/**
+ * The brand in the SMS; must match the name on the OTP template registered with the gateway.
+ * The registered template still says "SSGHS Alumni": switch to Praktan Sabujian Parishad only
+ * after BulkSMSBD approves a template with the new name (then set OTP_BRAND_NAME).
+ */
 function otpBrand(): string {
   return process.env.OTP_BRAND_NAME?.trim() || "SSGHS Alumni";
 }

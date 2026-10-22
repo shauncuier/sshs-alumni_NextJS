@@ -776,7 +776,7 @@ export default function RegistrationForm({
               {submitting ? (
                 <span>Submitting RSVP…</span>
               ) : event.isMembershipEvent && needsAccount ? (
-                <span>Join Alumni Association &amp; Register</span>
+                <span>Join Praktan Sabujian Parishad &amp; Register</span>
               ) : (
                 <span>Complete Registration &amp; RSVP</span>
               )}

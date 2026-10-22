@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Google Wallet Pass API
+ * Praktan Sabujian Parishad — Google Wallet Pass API
  * GET /api/alumni/card/wallet/google?token=xxx
  * 
  * Generates Google Wallet save pass payload.

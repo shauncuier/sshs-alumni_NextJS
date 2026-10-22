@@ -13,11 +13,11 @@ import JsonLd from "@/components/shared/JsonLd";
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
   title: {
-    default: "Sabuj Shikshayatan Alumni Association, Sitakunda",
+    default: "Praktan Sabujian Parishad, Sitakunda",
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Sitakunda, Chattogram: batchmates, events and the Golden Jubilee 2026.",
+    "Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ), the alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Sitakunda, Chattogram: batchmates, events and the Golden Jubilee 2026.",
   applicationName: SITE_NAME,
   authors: [{ name: ASSOCIATION_NAME }],
   // A 1-2 KB tab icon instead of the 32 KB logo.
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SSGHS Alumni",
+    title: "সবুজিয়ান পরিষদ",
   },
   openGraph: {
     siteName: ASSOCIATION_NAME,

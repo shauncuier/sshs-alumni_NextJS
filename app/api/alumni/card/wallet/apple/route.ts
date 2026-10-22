@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Apple Wallet Pass API
+ * Praktan Sabujian Parishad — Apple Wallet Pass API
  * GET /api/alumni/card/wallet/apple?token=xxx
  * 
  * Generates an Apple Wallet pass definition for iOS Passbook / Wallet.

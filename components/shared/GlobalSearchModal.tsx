@@ -285,7 +285,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
         {/* Footer info */}
         <div className="p-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-400">
           <span>Press <kbd className="px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px]">ESC</kbd> to exit</span>
-          <span className="text-emerald-700 font-medium">Sabuj Shikshayatan Alumni Global Search</span>
+          <span className="text-emerald-700 font-medium">Praktan Sabujian Parishad Global Search</span>
         </div>
       </div>
     </div>

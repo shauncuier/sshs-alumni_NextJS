@@ -48,9 +48,9 @@ export default function PresentationPage() {
       id: 1,
       tag: "Executive Overview",
       title: "Connecting Generations",
-      subtitle: "The Official SSGHS Alumni Digital Platform (EIIN: 105070)",
+      subtitle: "The Official Praktan Sabujian Parishad Digital Platform (EIIN: 105070)",
       speakerNotes:
-        "Good morning/afternoon everyone. Today, I'm proud to present the complete digital platform built for the Sabuj Shikshayatan Government High School Alumni Association. Over our development cycle, we have unified over 40 graduation batches (1985–2025) into a single, secure, and modern digital ecosystem. The application is now in Release Candidate status with 63 compiled routes and zero technical debt.",
+        "Good morning/afternoon everyone. Today, I'm proud to present the complete digital platform built for Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School. Over our development cycle, we have unified over 40 graduation batches (1985–2025) into a single, secure, and modern digital ecosystem. The application is now in Release Candidate status with 63 compiled routes and zero technical debt.",
       demoUrl: "/",
       demoLabel: "Launch Live Homepage",
       content: (
@@ -751,7 +751,7 @@ export default function PresentationPage() {
             <div className="w-7 h-7 rounded-md bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-xs font-serif font-black">
               SS
             </div>
-            <span>SSGHS Alumni</span>
+            <span>Praktan Sabujian Parishad</span>
           </Link>
           <span className="text-slate-600">|</span>
           <span className="text-xs text-slate-300 font-medium hidden sm:inline">

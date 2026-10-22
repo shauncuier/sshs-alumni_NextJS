@@ -84,7 +84,7 @@ export default function NewJobForm() {
             </Link>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Post a Career Opportunity for SSGHS Alumni
+              Post a Career Opportunity for Praktan Sabujian Parishad
             </h1>
             <p className="text-emerald-100 text-xs sm:text-sm">
               Empower your alma mater by hiring talented graduates and undergraduates directly from the SSGHS alumni pool.

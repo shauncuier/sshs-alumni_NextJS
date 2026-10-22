@@ -19,10 +19,10 @@ async function main() {
   const email = name
     ? EMAIL_SAMPLES[name]()
     : renderEmail({
-        subject: "SSGHS Alumni: test email",
+        subject: "Praktan Sabujian Parishad: test email",
         preheader: "If you can read this, email sending works.",
         heading: "Test email",
-        paragraphs: ["This is a test email from the SSGHS Alumni website. If you can read it, email sending works."],
+        paragraphs: ["This is a test email from the Praktan Sabujian Parishad website. If you can read it, email sending works."],
       });
   const result = await sendEmail({ to, ...email });
   console.log(result.success ? `Sent "${email.subject}" (id ${result.messageId}).` : `Not sent: ${result.error}`);

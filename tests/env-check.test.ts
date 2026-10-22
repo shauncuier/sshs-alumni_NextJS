@@ -9,7 +9,7 @@ const good = {
   SUPER_ADMIN_EMAIL: "chief@example.org",
   SUPER_ADMIN_PASSWORD: "Long-Enough-Pw-1",
   RESEND_API_KEY: "re_x",
-  RESEND_FROM_EMAIL: "SSGHS Alumni <noreply@alumni.example.org>",
+  RESEND_FROM_EMAIL: "Praktan Sabujian Parishad <noreply@alumni.example.org>",
   BULKSMSBD_API_KEY: "k",
   BULKSMSBD_SENDER_ID: "8800000000000",
   CONTACT_INBOX_EMAIL: "committee@example.org",
@@ -46,7 +46,7 @@ describe("production environment check", () => {
   });
 
   it("warns when Resend would send from an unverified free-mail or test address", () => {
-    for (const from of ["SSGHS Alumni <onboarding@resend.dev>", "SSGHS <someone@gmail.com>", ""]) {
+    for (const from of ["Praktan Sabujian Parishad <onboarding@resend.dev>", "SSGHS <someone@gmail.com>", ""]) {
       expect(checkProductionEnv({ ...good, RESEND_FROM_EMAIL: from }).warnings).toEqual([expect.stringContaining("not on a domain verified in Resend")]);
     }
   });

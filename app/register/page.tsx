@@ -46,7 +46,7 @@ export default async function RegisterPage() {
         </div>
 
         <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-          Join the SSGHS Alumni Association
+          Join Praktan Sabujian Parishad
         </h1>
         <RegisterClientView initialEvent={event} />
       </main>

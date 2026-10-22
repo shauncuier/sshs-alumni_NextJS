@@ -29,7 +29,7 @@ export const demoEvents: EventItem[] = [
   },
   {
     id: "evt-2",
-    title: "SSGHS Alumni Inter-Batch Cricket Carnival Season 5",
+    title: "Praktan Sabujian Parishad Inter-Batch Cricket Carnival Season 5",
     category: "SPORTS",
     date: "2026-10-14",
     time: "08:30 AM - 05:30 PM",

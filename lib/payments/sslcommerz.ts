@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni Association — SSLCommerz Payment Gateway Integration
+ * Praktan Sabujian Parishad — SSLCommerz Payment Gateway Integration
  * 
  * SSLCommerz is Bangladesh's largest payment aggregator.
  * Supports: Visa, Mastercard, AMEX, DBBL Nexus, Rocket, Upay, bKash, Nagad, Internet Banking.
@@ -68,7 +68,7 @@ export async function initiateSession(
       cancel_url: `${appUrl}/api/payments/sslcommerz/cancel`,
       ipn_url: `${appUrl}/api/payments/sslcommerz/ipn`,
       shipping_method: "NO",
-      product_name: "SSGHS Alumni Donation",
+      product_name: "Praktan Sabujian Parishad Donation",
       product_category: "Donation",
       product_profile: "non-physical-goods",
       cus_name: req.donorName,

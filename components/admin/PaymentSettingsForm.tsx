@@ -175,7 +175,7 @@ export default function PaymentSettingsForm() {
           </div>
           <div>
             <label htmlFor="ps-merchant" className={label}>Merchant name printed with the QR</label>
-            <input id="ps-merchant" className={input} value={form.banglaQrMerchant} maxLength={120} onChange={(e) => set("banglaQrMerchant", e.target.value)} placeholder="SSGHS Alumni Association" />
+            <input id="ps-merchant" className={input} value={form.banglaQrMerchant} maxLength={120} onChange={(e) => set("banglaQrMerchant", e.target.value)} placeholder="Praktan Sabujian Parishad" />
           </div>
         </div>
       ))}
@@ -183,7 +183,7 @@ export default function PaymentSettingsForm() {
       {card("Bank", "Bank transfer / deposit", "Members pay into the account and enter the transaction reference.", (
         <div>
           <label htmlFor="ps-bank" className={label}>Bank account <span className="font-normal text-slate-400">(one item per line)</span></label>
-          <textarea id="ps-bank" rows={3} className={input} value={form.bankDetails} maxLength={1000} onChange={(e) => set("bankDetails", e.target.value)} placeholder={"Account name: SSGHS Alumni Association\nA/C 0000000000000, Sonali Bank, Sitakunda branch\nRouting 000000000"} />
+          <textarea id="ps-bank" rows={3} className={input} value={form.bankDetails} maxLength={1000} onChange={(e) => set("bankDetails", e.target.value)} placeholder={"Account name: Praktan Sabujian Parishad\nA/C 0000000000000, Sonali Bank, Sitakunda branch\nRouting 000000000"} />
         </div>
       ))}
 

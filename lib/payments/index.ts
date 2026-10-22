@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni Association — Unified Payment Service
+ * Praktan Sabujian Parishad — Unified Payment Service
  * 
  * Orchestrates payment initiation across all supported gateways:
  * - bKash Tokenized Checkout

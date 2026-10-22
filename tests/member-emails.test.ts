@@ -46,7 +46,7 @@ describe("email layout", () => {
     for (const [name, build] of Object.entries(EMAIL_SAMPLES)) {
       const email = build();
       expect(email.subject, name).toBeTruthy();
-      expect(email.html, name).toContain("SSGHS Alumni Association");
+      expect(email.html, name).toContain("Praktan Sabujian Parishad");
       expect(email.text.length, name).toBeGreaterThan(40);
     }
   });
@@ -86,13 +86,13 @@ describe("emails to members", () => {
     const { event, registration } = await join();
     mail.sent = [];
     await decideRegistration({ eventId: event.id, registrationId: registration.id, action: "APPROVE", adminEmail: "admin@example.test" });
-    expect(mail.sent.map((m) => m.subject)).toEqual(["Welcome to the SSGHS Alumni Association", "You're registered: Golden Jubilee"]);
+    expect(mail.sent.map((m) => m.subject)).toEqual(["Welcome to Praktan Sabujian Parishad", "You're registered: Golden Jubilee"]);
 
     await resetDatabase();
     const again = await join();
     mail.sent = [];
     await decideRegistration({ eventId: again.event.id, registrationId: again.registration.id, action: "CANCEL", adminEmail: "admin@example.test" });
-    expect(mail.sent.map((m) => m.subject)).toEqual(["About your SSGHS Alumni membership application"]);
+    expect(mail.sent.map((m) => m.subject)).toEqual(["About your Praktan Sabujian Parishad membership application"]);
   });
 
   it("a free event confirms at once", async () => {

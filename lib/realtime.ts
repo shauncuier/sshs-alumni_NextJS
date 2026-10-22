@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Real-Time Event Emitter
+ * Praktan Sabujian Parishad — Real-Time Event Emitter
  * 
  * Lightweight server-side event system for real-time updates.
  * Uses Server-Sent Events (SSE) as the transport layer.

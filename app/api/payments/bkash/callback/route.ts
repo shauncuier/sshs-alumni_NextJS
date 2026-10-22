@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — bKash Payment Callback Handler
+ * Praktan Sabujian Parishad — bKash Payment Callback Handler
  * GET /api/payments/bkash/callback
  * 
  * bKash redirects user here after payment completion.

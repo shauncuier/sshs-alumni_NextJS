@@ -60,7 +60,7 @@ export default function CareersClient({ jobs }: { jobs: JobListing[] }) {
                   <span>Alumni Professional Network</span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                  SSGHS Alumni Career Hub
+                  Praktan Sabujian Parishad Career Hub
                 </h1>
                 <p className="text-emerald-100 text-sm leading-relaxed">
                   Discover career opportunities, internships, and executive openings posted exclusively by Sabuj Shikshayatan graduates across Bangladesh and global tech hubs.

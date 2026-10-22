@@ -51,7 +51,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Event registration open",
     category: "Reunion",
-    text: `SSGHS Alumni: Dear Alumnus, event registration is now open! Get your Digital ID pass & register at ${SITE}/events - SSGHS Alumni`,
+    text: `Praktan Sabujian Parishad: Dear Alumnus, event registration is now open! Get your Digital ID pass & register at ${SITE}/events - Praktan Sabujian Parishad`,
     isCostSaver: true,
   },
   {
@@ -59,7 +59,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Digital Smart ID Card Pass Ready",
     category: "ID Card",
-    text: `Dear Alumnus, your Digital Smart ID Card is ready. Login to download your gate pass: ${SITE}/card - SSGHS Alumni Association`,
+    text: `Dear Alumnus, your Digital Smart ID Card is ready. Login to download your gate pass: ${SITE}/card - Praktan Sabujian Parishad`,
     isCostSaver: true,
   },
   {
@@ -67,7 +67,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Alumni Profile Verified Welcome",
     category: "Verification",
-    text: `Congratulations! Your SSGHS Alumni profile has been verified. Connect with teachers & batchmates at ${SITE} - SSGHS Alumni`,
+    text: `Congratulations! Your Praktan Sabujian Parishad profile has been verified. Connect with teachers & batchmates at ${SITE} - Praktan Sabujian Parishad`,
     isCostSaver: true,
   },
   {
@@ -91,7 +91,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Urgent Campus Notice",
     category: "Notice",
-    text: `Notice: Sabuj Shikshayatan Alumni General Meeting announcement has been published. Read details at ${SITE} - Executive Committee`,
+    text: `Notice: Praktan Sabujian Parishad General Meeting announcement has been published. Read details at ${SITE} - Executive Committee`,
     isCostSaver: true,
   },
 
@@ -109,7 +109,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "banglish",
     title: "Digital ID Card Ready (Banglish)",
     category: "ID Card",
-    text: `Apnar Digital Smart ID Card prostut hoyeche. Digital gate pass download korte login korun: ${SITE}/card - SSGHS Alumni`,
+    text: `Apnar Digital Smart ID Card prostut hoyeche. Digital gate pass download korte login korun: ${SITE}/card - Praktan Sabujian Parishad`,
     isCostSaver: true,
   },
   {
@@ -117,7 +117,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "banglish",
     title: "Profile Verified (Banglish)",
     category: "Verification",
-    text: `Abhinandan! SSGHS Alumni Association-e apnar profile verified hoyeche. Shokol shikkhok o bondhuder shathe jukto thakun: ${SITE}`,
+    text: `Abhinandan! Praktan Sabujian Parishad-e apnar profile verified hoyeche. Shokol shikkhok o bondhuder shathe jukto thakun: ${SITE}`,
     isCostSaver: true,
   },
   {

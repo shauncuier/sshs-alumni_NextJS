@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni Association — Nagad Payment Gateway Integration
+ * Praktan Sabujian Parishad — Nagad Payment Gateway Integration
  * 
  * Nagad Merchant API Integration
  * Supports both sandbox and production environments.

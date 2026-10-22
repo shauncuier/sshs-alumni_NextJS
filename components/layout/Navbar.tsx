@@ -243,13 +243,13 @@ export default function Navbar() {
             <Link prefetch={false}
               href="/"
               className="flex items-center gap-2 sm:gap-3 group shrink min-w-0 select-none"
-              aria-label="SSGHS Alumni Association Home"
+              aria-label="Praktan Sabujian Parishad Home"
             >
               {/* Official Alumni Seal / Crest */}
               <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-full p-0.5 shadow-lg shadow-black/40 ring-2 ring-amber-400/50 bg-white flex items-center justify-center transition-all duration-200 group-hover:scale-105 shrink-0 overflow-hidden">
                 <NextImage
                   src="/logo.png"
-                  alt="SSGHS Alumni Association Official Crest"
+                  alt="Praktan Sabujian Parishad Official Crest"
                   width={44}
                   height={44}
                   className="w-full h-full object-contain rounded-full"
@@ -260,11 +260,9 @@ export default function Navbar() {
               {/* Wordmark Hierarchy */}
               <div className="flex flex-col justify-center min-w-0">
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="font-extrabold text-sm sm:text-lg tracking-tight text-white leading-none">
-                    SSGHS
-                  </span>
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 leading-none shrink-0">
-                    Alumni
+                  <span className="font-extrabold text-sm sm:text-lg text-white leading-tight truncate">
+                    <span className="sm:hidden">সবুজিয়ান পরিষদ</span>
+                    <span className="hidden sm:inline">প্রাক্তন সবুজিয়ান পরিষদ</span>
                   </span>
                 </div>
                 {/* Hidden on phones: with the header controls it would overflow the screen. */}
@@ -272,7 +270,7 @@ export default function Navbar() {
                   Sabuj Shikshayatan Govt. High School
                 </span>
                 <span className="text-[10px] text-emerald-400/70 font-normal leading-none mt-0.5 hidden xl:block">
-                  সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় প্রাক্তন ছাত্র-ছাত্রী পরিষদ
+                  Praktan Sabujian Parishad
                 </span>
               </div>
             </Link>

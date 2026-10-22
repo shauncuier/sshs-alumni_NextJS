@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Nagad Payment Callback Handler
+ * Praktan Sabujian Parishad — Nagad Payment Callback Handler
  * GET /api/payments/nagad/callback
  * 
  * Nagad redirects user here after payment. Verifies and updates records.

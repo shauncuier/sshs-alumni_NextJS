@@ -140,7 +140,7 @@ export default function PwaProvider({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             <img loading="lazy" decoding="async" src="/logo.png" alt="SSGHS" className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
             <div>
-              <h4 className="font-bold text-xs">Install SSGHS Alumni App</h4>
+              <h4 className="font-bold text-xs">Install Praktan Sabujian Parishad App</h4>
               <p className="text-[11px] text-emerald-200">Fast access to your Smart ID &amp; Directory</p>
             </div>
           </div>

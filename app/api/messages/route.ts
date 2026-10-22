@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Messages API with Real-Time Push
+ * Praktan Sabujian Parishad — Messages API with Real-Time Push
  * 
  * GET  /api/messages                — Conversations of the signed-in member
  * GET  /api/messages?with=yyy        — Thread between the signed-in member and yyy

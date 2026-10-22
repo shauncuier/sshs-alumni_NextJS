@@ -47,7 +47,7 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-full p-0.5 shadow-md flex items-center justify-center ring-2 ring-amber-400/40 bg-white overflow-hidden shrink-0">
                 <NextImage
                   src="/logo.png"
-                  alt="SSGHS Alumni Association Crest"
+                  alt="Praktan Sabujian Parishad Crest"
                   width={48}
                   height={48}
                   className="w-full h-full object-contain rounded-full"
@@ -55,16 +55,16 @@ export default function Footer() {
               </div>
               <div>
                 <span className="font-extrabold text-lg text-white block leading-tight">
-                  SSGHS Alumni Association
+                  প্রাক্তন সবুজিয়ান পরিষদ
                 </span>
                 <span className="text-xs text-emerald-400 block font-medium">
-                  সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় প্রাক্তন ছাত্র-ছাত্রী পরিষদ
+                  Praktan Sabujian Parishad
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed pr-4">
-              The official digital ecosystem for the SSGHS Alumni Association (Sabuj Shikshayatan Government High School). Connecting classmates, preserving historic school archives, organizing reunions, and empowering the next generation of secondary students.
+              The official digital ecosystem for Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). Connecting classmates, preserving historic school archives, organizing reunions, and empowering the next generation of secondary students.
             </p>
 
             <div className="space-y-2 pt-2 text-xs text-slate-300">
@@ -230,7 +230,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4 sm:gap-8">
             <p>
-              © {new Date().getFullYear()} SSGHS Alumni Association (Sabuj Shikshayatan Government High School). All rights reserved.
+              © {new Date().getFullYear()} Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). All rights reserved.
             </p>
             <p className="text-slate-400">
               Designed &amp; developed by <a href="https://3s-soft.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">3s-Soft</a>

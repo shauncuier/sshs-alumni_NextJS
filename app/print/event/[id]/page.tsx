@@ -204,7 +204,7 @@ function RegistrationList({ rows, title, offline, batch }: { rows: RegistrationL
             {offline ? "Paper form entries" : "Registration list"}
             {batch ? ` · SSC ${batch}` : ""}
           </p>
-          <p className="text-[11px] text-slate-600">{title} · SSGHS Alumni Association</p>
+          <p className="text-[11px] text-slate-600">{title} · Praktan Sabujian Parishad</p>
         </div>
         <p className="text-[10px] text-slate-500 text-right">
           Printed {dhaka(new Date().toISOString())}

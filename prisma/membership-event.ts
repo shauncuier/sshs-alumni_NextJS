@@ -19,7 +19,7 @@ export const membershipEvent: EventItem = {
   time: "8:00 AM – 9:00 PM",
   venue: "Sabuj Shikshayatan Government High School campus, Sitakunda",
   locationCity: "Chattogram",
-  organizer: "SSGHS Alumni Association",
+  organizer: "Praktan Sabujian Parishad",
   bannerImage: "/golden-jubilee-art.jpg",
   maxAttendees: 5000,
   attendeesCount: 0,
@@ -30,7 +30,7 @@ export const membershipEvent: EventItem = {
   description: [
     "Sabuj Shikshayatan Government High School turns 50. Around 26 December 2026 (the exact date is still to be confirmed) former students of every batch since 1977 come back to the campus, with their families, for one day of celebration: a jubilee rally, flag hoisting, honours for our teachers, batch reunions and a cultural evening.",
     "সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের ৫০ বছর পূর্তি (সুবর্ণ জয়ন্তী) উৎসবে সকল প্রাক্তন শিক্ষার্থীকে সপরিবারে আমন্ত্রণ।",
-    "Registration includes breakfast, lunch and a biryani dinner, the Golden Jubilee T-shirt, the souvenir book and a commemorative gift. Registering for the jubilee also makes you a member of the SSGHS Alumni Association: the committee checks each registration and payment before confirming it, and your ticket QR code is then ready on your dashboard.",
+    "Registration includes breakfast, lunch and a biryani dinner, the Golden Jubilee T-shirt, the souvenir book and a commemorative gift. Registering for the jubilee also makes you a member of Praktan Sabujian Parishad: the committee checks each registration and payment before confirming it, and your ticket QR code is then ready on your dashboard.",
   ].join("\n\n"),
   agenda: [
     { time: "08:00 AM", activity: "Registration desk opens: collect your badge, T-shirt and gift; breakfast" },

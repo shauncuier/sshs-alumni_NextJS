@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Gate & Reunion QR Code Verification API
+ * Praktan Sabujian Parishad — Gate & Reunion QR Code Verification API
  * POST /api/alumni/card/verify
  * 
  * Verifies a digital smart card token scanned at school gate or reunion desk.

@@ -70,7 +70,7 @@ function toPublicPhoto(p: GalleryPhoto, album: GalleryAlbum): GalleryPhotoItem {
     thumbUrl: thumbUrlFor(p.imageUrl) ?? p.imageUrl,
     year: p.batchYear ?? album.year ?? undefined,
     caption: p.caption ?? "",
-    submittedBy: p.uploadedBy ?? "SSGHS Alumni Association",
+    submittedBy: p.uploadedBy ?? "Praktan Sabujian Parishad",
   };
 }
 

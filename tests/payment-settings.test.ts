@@ -23,7 +23,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const details = { bkashNumber: "+880 1711-000111", bkashType: "Merchant", nagadNumber: "01811000222", bankDetails: "A/C 123, Sonali Bank\nRouting 456", banglaQrMerchant: "SSGHS Alumni Association" };
+const details = { bkashNumber: "+880 1711-000111", bkashType: "Merchant", nagadNumber: "01811000222", bankDetails: "A/C 123, Sonali Bank\nRouting 456", banglaQrMerchant: "Praktan Sabujian Parishad" };
 const put = (body: unknown) => new Request("http://x", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 describe("payment details", () => {
@@ -59,7 +59,7 @@ describe("payment details", () => {
 
     session.user = null;
     const pub = await (await publicRoute()).json();
-    expect(pub).toMatchObject({ bkashNumber: "01711000111", nagadNumber: "01811000222", banglaQrMerchant: "SSGHS Alumni Association" });
+    expect(pub).toMatchObject({ bkashNumber: "01711000111", nagadNumber: "01811000222", banglaQrMerchant: "Praktan Sabujian Parishad" });
     expect(pub.lines).toHaveLength(4);
     expect(pub).not.toHaveProperty("updatedBy");
   });

@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — SSLCommerz Success/Fail/Cancel/IPN Handlers
+ * Praktan Sabujian Parishad — SSLCommerz Success/Fail/Cancel/IPN Handlers
  * 
  * POST /api/payments/sslcommerz/success  — User redirect on successful payment
  * POST /api/payments/sslcommerz/fail     — User redirect on failed payment

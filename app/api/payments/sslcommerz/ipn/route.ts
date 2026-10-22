@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — SSLCommerz IPN (Instant Payment Notification) Handler
+ * Praktan Sabujian Parishad — SSLCommerz IPN (Instant Payment Notification) Handler
  * POST /api/payments/sslcommerz/ipn
  * 
  * Server-to-server webhook from SSLCommerz confirming payment.

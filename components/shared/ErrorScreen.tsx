@@ -79,7 +79,7 @@ export default function ErrorScreen({
 
       <div className="flex items-center justify-center gap-2 pt-4 text-[11px] text-slate-400">
         <NextImage src="/logo.png" alt="" width={20} height={20} className="rounded-full" />
-        <span>Sabuj Shikshayatan Govt. High School Alumni Association</span>
+        <span>Praktan Sabujian Parishad · Sabuj Shikshayatan Govt. High School</span>
       </div>
     </div>
   );

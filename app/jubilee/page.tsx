@@ -81,7 +81,7 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
           <header className="relative z-10 max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
             <Link href="/" className="flex items-center gap-2.5 min-w-0">
               <Image src="/logo.png" alt="" width={32} height={32} loading="eager" className="w-8 h-8 rounded-full bg-white shrink-0" />
-              <span className="text-sm font-bold truncate">Sabuj Shikshayatan Alumni</span>
+              <span className="text-sm font-bold truncate">প্রাক্তন সবুজিয়ান পরিষদ</span>
             </Link>
             <Link
               href={userId ? "/dashboard" : "/login?callbackUrl=/jubilee"}

@@ -46,7 +46,7 @@ async function logResult(step: string, res: Response, check: (body: string, json
 
 async function run() {
   console.log("=================================================================");
-  console.log("  SSGHS Alumni Platform — Real User Admin Functionality Test Suite");
+  console.log("  Praktan Sabujian Parishad Platform — Real User Admin Functionality Test Suite");
   console.log("=================================================================\n");
 
   // 1. Fetch CSRF Token from NextAuth

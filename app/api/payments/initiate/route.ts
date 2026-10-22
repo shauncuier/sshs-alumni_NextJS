@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Payment Initiation API
+ * Praktan Sabujian Parishad — Payment Initiation API
  * POST /api/payments/initiate
  * 
  * Creates a donation record and initiates payment with the selected gateway.

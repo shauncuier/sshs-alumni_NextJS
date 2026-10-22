@@ -14,7 +14,7 @@ import { smsTestModeOn } from "@/lib/sms-test-mode";
 /** "Your registration is confirmed" with the dashboard link, in English so it fits one SMS (160 characters). */
 export function registrationConfirmedSms(eventTitle: string): string {
   const what = /jubilee/i.test(eventTitle) ? "Golden Jubilee registration" : "event registration";
-  return `SSGHS Alumni: your ${what} is confirmed. Ticket & payment slip: ${siteUrl("/dashboard")}`;
+  return `Praktan Sabujian Parishad: your ${what} is confirmed. Ticket & payment slip: ${siteUrl("/dashboard")}`;
 }
 
 export type SmsOutcome = "sent" | "test-mode" | "no-phone" | "failed";

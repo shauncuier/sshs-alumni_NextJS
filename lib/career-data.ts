@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni — Phase 4: Career Hub and Mentorship types
+ * Praktan Sabujian Parishad — Phase 4: Career Hub and Mentorship types
  */
 
 export interface JobListing {

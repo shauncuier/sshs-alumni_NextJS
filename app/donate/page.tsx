@@ -499,7 +499,7 @@ export default function DonatePage() {
 
                     <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 pt-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Audited by Sabuj Shikshayatan Alumni Executive Council</span>
+                      <span>Audited by Praktan Sabujian Parishad Executive Council</span>
                     </div>
                   </form>
                 )}

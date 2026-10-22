@@ -78,7 +78,7 @@ describe("structured data", () => {
 
 describe("more structured data", () => {
   it("names the website in both languages", () => {
-    expect(websiteJsonLd().alternateName).toContain("সবুজ শিক্ষায়তন প্রাক্তন ছাত্র-ছাত্রী পরিষদ");
+    expect(websiteJsonLd().alternateName).toContain("প্রাক্তন সবুজিয়ান পরিষদ");
   });
 
   it("builds breadcrumbs from Home with absolute links", () => {
