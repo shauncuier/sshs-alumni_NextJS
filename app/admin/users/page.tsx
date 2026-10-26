@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 
-type Role = "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "ALUMNI";
+type Role = "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "TREASURER" | "ALUMNI";
 
 interface AdminUserRecord {
   id: string;
@@ -48,7 +48,7 @@ interface Viewer {
   role: string;
 }
 
-const ROLE_LABELS: Record<Role, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", MODERATOR: "Moderator", ALUMNI: "Alumni" };
+const ROLE_LABELS: Record<Role, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", MODERATOR: "Moderator", TREASURER: "Treasurer", ALUMNI: "Alumni" };
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
 const input = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-600";
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
@@ -62,18 +62,20 @@ const roleBadge = (role: Role) =>
       ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
       : role === "MODERATOR"
         ? "bg-blue-100 text-blue-900 border border-blue-300"
+        : role === "TREASURER"
+          ? "bg-violet-100 text-violet-900 border border-violet-300"
         : "bg-slate-100 text-slate-700";
 
 /** Mirrors manageBlock in lib/admin/users.ts; the server re-checks every change. */
 function canManage(viewer: Viewer | null, u: AdminUserRecord): boolean {
   if (!viewer || (viewer.role !== "ADMIN" && viewer.role !== "SUPER_ADMIN")) return false;
   if (viewer.id === u.id || u.isEnvSuperAdmin) return false;
-  if ((u.role === "ADMIN" || u.role === "SUPER_ADMIN") && viewer.role !== "SUPER_ADMIN") return false;
+  if ((u.role === "ADMIN" || u.role === "SUPER_ADMIN" || u.role === "TREASURER") && viewer.role !== "SUPER_ADMIN") return false;
   return true;
 }
 
 function assignableRoles(viewer: Viewer | null): Role[] {
-  return viewer?.role === "SUPER_ADMIN" ? ["ALUMNI", "MODERATOR", "ADMIN"] : ["ALUMNI", "MODERATOR"];
+  return viewer?.role === "SUPER_ADMIN" ? ["ALUMNI", "MODERATOR", "TREASURER", "ADMIN"] : ["ALUMNI", "MODERATOR"];
 }
 
 function generatePassword(): string {

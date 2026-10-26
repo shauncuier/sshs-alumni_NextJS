@@ -29,15 +29,20 @@ export const ADMIN_AREAS = [
   "gate",
   "committee",
   "notices",
+  "accounts",
 ] as const;
 export type AdminArea = (typeof ADMIN_AREAS)[number];
 
 const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate", "notices"];
 
+// The treasurer keeps the accounts and sees nothing else of the admin panel.
+const TREASURER_AREAS: readonly AdminArea[] = ["accounts"];
+
 const AREAS_BY_ROLE: Record<string, readonly AdminArea[]> = {
   SUPER_ADMIN: ADMIN_AREAS,
   ADMIN: ADMIN_AREAS,
   MODERATOR: MODERATOR_AREAS,
+  TREASURER: TREASURER_AREAS,
 };
 
 export function can(role: string | null | undefined, area: AdminArea): boolean {

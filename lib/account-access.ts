@@ -1,4 +1,4 @@
-export const STAFF_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR"] as const;
+export const STAFF_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR", "TREASURER"] as const;
 
 export type AccessBlock = { code: "ACCOUNT_DISABLED" | "PENDING_APPROVAL" | "MEMBERSHIP_REJECTED"; message: string };
 

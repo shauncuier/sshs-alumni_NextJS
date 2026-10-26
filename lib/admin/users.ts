@@ -11,6 +11,7 @@ import { removeAvatarDir, uploadsRoot } from "@/lib/media/avatars";
 /**
  * User management for the admin console. Who may do what:
  *  - ADMIN manages alumni and moderators.
+ *  - Only the SUPER_ADMIN makes someone treasurer, or changes a treasurer (they handle money).
  *  - SUPER_ADMIN also manages admins. There is one super admin, defined in the
  *    server environment (see super-admin.ts); the console can neither grant the
  *    role nor change that account.
@@ -18,7 +19,7 @@ import { removeAvatarDir, uploadsRoot } from "@/lib/media/avatars";
  * Every change bumps sessionVersion, so the member's open sessions end at once.
  */
 
-export const ASSIGNABLE_ROLES = ["ALUMNI", "MODERATOR", "ADMIN"] as const;
+export const ASSIGNABLE_ROLES = ["ALUMNI", "MODERATOR", "TREASURER", "ADMIN"] as const;
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 export const USER_PAGE_SIZE = 25;
 const MIN_PASSWORD_LENGTH = 8;
@@ -74,7 +75,7 @@ export function manageBlock(actor: Actor, target: Target): string | null {
   if (actor.role !== "ADMIN" && actor.role !== "SUPER_ADMIN") return "Only admins can manage users.";
   if (actor.id === target.id) return "You cannot change your own account here.";
   if (isEnvSuperAdmin(target.email)) return "The super admin account is managed in the server environment.";
-  if ((target.role === "ADMIN" || target.role === "SUPER_ADMIN") && actor.role !== "SUPER_ADMIN") {
+  if ((target.role === "ADMIN" || target.role === "SUPER_ADMIN" || target.role === "TREASURER") && actor.role !== "SUPER_ADMIN") {
     return "Only the super admin can manage admin accounts.";
   }
   return null;
@@ -82,15 +83,16 @@ export function manageBlock(actor: Actor, target: Target): string | null {
 
 /** Why `actor` may not give someone `role`, or null when they may. */
 export function roleGrantBlock(actor: Actor, role: unknown): string | null {
-  if (!isAssignableRole(role)) return "Please choose Alumni, Moderator or Admin.";
+  if (!isAssignableRole(role)) return "Please choose Alumni, Moderator, Treasurer or Admin.";
   if (role === "ADMIN" && actor.role !== "SUPER_ADMIN") return "Only the super admin can make someone an admin.";
+  if (role === "TREASURER" && actor.role !== "SUPER_ADMIN") return "Only the super admin can make someone treasurer.";
   return null;
 }
 
 export async function listUsers(args: { q?: string | null; role?: string | null; status?: string | null; page?: number }) {
   const q = args.q?.trim() ?? "";
   const where: Prisma.UserWhereInput = {};
-  if (args.role && ["SUPER_ADMIN", "ADMIN", "MODERATOR", "ALUMNI"].includes(args.role)) where.role = args.role as Role;
+  if (args.role && ["SUPER_ADMIN", "ADMIN", "MODERATOR", "TREASURER", "ALUMNI"].includes(args.role)) where.role = args.role as Role;
   if (args.status === "DISABLED") where.disabledAt = { not: null };
   else if (args.status && ["PENDING", "VERIFIED", "REJECTED"].includes(args.status)) {
     where.status = args.status as VerificationStatus;

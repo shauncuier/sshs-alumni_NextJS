@@ -33,6 +33,7 @@ import {
   Landmark,
   Medal,
   FileText,
+  Calculator,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -57,6 +58,7 @@ const ADMIN_NAV = [
   { name: "Add Offline Form", short: "Paper form", href: "/admin/events/offline", icon: FilePlus2, area: "events" },
   { name: "Gate Scanner", short: "Gate", href: "/gate", icon: QrCode, area: "gate" },
   { name: "Donations & Funds", short: "Donations", href: "/admin/donations", icon: Heart, area: "donations" },
+  { name: "Accounts", short: "Accounts", href: "/admin/accounts", icon: Calculator, area: "accounts" },
   { name: "Payment Settings", short: "Payments", href: "/admin/payments", icon: Wallet, area: "payments" },
   { name: "User Management", short: "Users", href: "/admin/users", icon: Users, area: "users" },
   { name: "News", short: "News", href: "/admin/news", icon: Newspaper, area: "news" },
@@ -83,7 +85,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
   }
 
   const effectiveRole = user?.role || session?.user?.role;
-  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : effectiveRole === "MODERATOR" ? "Moderator" : "Administrator";
+  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : effectiveRole === "MODERATOR" ? "Moderator" : effectiveRole === "TREASURER" ? "Treasurer" : "Administrator";
   // Only the sections this role may use (lib/permissions.ts); pages and APIs check the same map.
   const navItems = ADMIN_NAV.filter((item) => can(effectiveRole, item.area));
   const userEmail = user?.email ?? null;

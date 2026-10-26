@@ -35,6 +35,10 @@ describe("permission map", () => {
     const moderatorAreas = ADMIN_AREAS.filter((a) => can("MODERATOR", a));
     expect(moderatorAreas.sort()).toEqual(["feed", "gallery", "gate", "jobs", "mentors", "news", "notices", "stories"]);
     expect(canUseAdminPanel("MODERATOR")).toBe(true);
+    // The treasurer keeps the accounts and nothing else.
+    expect(ADMIN_AREAS.filter((a) => can("TREASURER", a))).toEqual(["accounts"]);
+    expect(can("MODERATOR", "accounts")).toBe(false);
+    expect(canUseAdminPanel("TREASURER")).toBe(true);
     expect(canUseAdminPanel("ALUMNI")).toBe(false);
     expect(canUseAdminPanel(undefined)).toBe(false);
   });
@@ -50,6 +54,8 @@ describe("permission map", () => {
     expect(areaForPath("/admin/unknown-thing")).toBeNull();
     expect(homeForRole("ADMIN")).toBe("/admin");
     expect(homeForRole("MODERATOR")).toBe("/admin/news");
+    expect(areaForPath("/admin/accounts/reports")).toBe("accounts");
+    expect(homeForRole("TREASURER")).toBe("/admin/accounts");
   });
 });
 
