@@ -8,6 +8,7 @@ import { decideRegistration } from "@/lib/events/admin";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
 import { verifiedEmailToken, verifiedPhoneToken } from "../helpers/phone";
+import { setOtpRequired } from "@/lib/otp-setting";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -71,6 +72,25 @@ describe("joining through the membership event", () => {
     expect(await prisma.user.count()).toBe(0);
     expect(await avatarFolders()).toEqual([]);
     expect(await proofFolders()).toEqual([]);
+  });
+
+  it("takes the typed number without a code while an admin has switched codes off", async () => {
+    await membershipEvent();
+    await setOtpRequired(false, "admin@example.test");
+    const noCode = { ...account, phone: "01811 000 444", phoneVerificationToken: undefined };
+    const { createdAccount } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account: noCode, photo, proof, rsvp: paidRsvp });
+    expect(createdAccount).toEqual({ email: "new@example.test" });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.phone).toBe("01811000444");
+    // The number must still be a valid mobile number.
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...noCode, email: "other@example.test", phone: "12345" }, photo, proof, rsvp: paidRsvp })
+    ).rejects.toMatchObject({ status: 400, code: "INVALID_PHONE" });
+    // Switched back on, a code is required again.
+    await setOtpRequired(true, "admin@example.test");
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...noCode, email: "third@example.test", phone: "01811000555" }, photo, proof, rsvp: paidRsvp })
+    ).rejects.toMatchObject({ status: 400, code: "CONTACT_NOT_VERIFIED" });
   });
 
   it("accepts an email verification when the SMS could not be used, keeping the typed phone", async () => {

@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/activity-log";
 import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
 import { readVerifiedPhone } from "@/lib/phone-otp";
+import { otpRequired } from "@/lib/otp-setting";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import type { Prisma } from "@prisma/client";
@@ -123,7 +124,8 @@ export async function PUT(req: Request) {
         const wanted = canonicalPhone(phone);
         const before = current?.phone ? current.phone.replace(/\D/g, "").slice(-10) : null;
         if (before !== wanted.slice(1)) {
-          if (!phoneVerificationToken || readVerifiedPhone(phoneVerificationToken) !== wanted) {
+          // Unless an admin switched codes off (Admin → Bulk SMS).
+          if ((await otpRequired()) && (!phoneVerificationToken || readVerifiedPhone(phoneVerificationToken) !== wanted)) {
             throw new AppError("PHONE_NOT_VERIFIED", 400, "Please verify your new mobile number with the SMS code first.");
           }
           await requirePhoneFree(wanted, { exceptUserId: user.id });

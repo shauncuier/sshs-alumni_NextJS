@@ -8,7 +8,7 @@ import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing"
 import { PAYMENT_METHODS, type MemberRegistration, type PublicEvent } from "@/lib/events/types";
 import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_TYPES } from "@/lib/members/proof-types";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
-import ContactVerifyField, { type ContactVerification } from "./ContactVerifyField";
+import ContactVerifyField, { type ContactVerification, useCodeRequired } from "./ContactVerifyField";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
@@ -87,6 +87,8 @@ export default function RegistrationForm({
   const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "", profession: "", designation: "", company: "", address: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
+  const codeRequired = useCodeRequired();
+  const contactReady = Boolean(contactVerification) || !codeRequired;
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
   // How many of each guest type (Spouse, Child, ...) the member brings.
   const [guestCounts, setGuestCounts] = useState<Record<string, number>>({});
@@ -398,6 +400,7 @@ export default function RegistrationForm({
             verification={contactVerification}
             onVerification={setContactVerification}
             showRequired={phoneRequired}
+            codeRequired={codeRequired}
           />
           <div>
             <label htmlFor="reg-batch" className={label}>SSC batch *</label>
@@ -487,8 +490,8 @@ export default function RegistrationForm({
               if (!photo && !photoError) setPhotoError("Please add a profile photo.");
               // The type and note are required fields (reportValidity shows those); the file is checked here.
               if (!proof && !proofError) setProofError(PROOF_MISSING);
-              setPhoneRequired(!contactVerification);
-              if (form.reportValidity() && photo && !proofProblem() && contactVerification) setStep(2);
+              setPhoneRequired(!contactReady);
+              if (form.reportValidity() && photo && !proofProblem() && contactReady) setStep(2);
             }}
           >
             Continue to registration &amp; payment →

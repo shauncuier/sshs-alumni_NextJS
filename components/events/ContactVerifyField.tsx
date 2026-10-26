@@ -27,6 +27,24 @@ async function post(url: string, body: unknown) {
 }
 
 /**
+ * Whether the number must be verified with a code (Admin → Bulk SMS → Require OTP
+ * verification). True until the setting has loaded, and if it cannot be read; the
+ * server checks again either way.
+ */
+export function useCodeRequired(): boolean {
+  const [required, setRequired] = useState(true);
+  useEffect(() => {
+    fetch("/api/auth/otp-required", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.required === false) setRequired(false);
+      })
+      .catch(() => {});
+  }, []);
+  return required;
+}
+
+/**
  * Mobile number with SMS code verification. Only when the SMS service is down (the
  * send failed on the server) is an email code offered instead; a wrong number, a
  * number another account has, or a slow SMS never opens that door. Reports the
@@ -45,6 +63,7 @@ export default function ContactVerifyField({
   allowEmail = true,
   currentPhone,
   id = "reg-phone",
+  codeRequired = true,
 }: {
   phone: string;
   onPhoneChange: (phone: string) => void;
@@ -58,6 +77,8 @@ export default function ContactVerifyField({
   allowEmail?: boolean;
   currentPhone?: string | null;
   id?: string;
+  /** False while an admin has switched verification codes off (see useCodeRequired). */
+  codeRequired?: boolean;
 }) {
   const [channel, setChannel] = useState<Channel>("phone");
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -124,6 +145,28 @@ export default function ContactVerifyField({
       setBusy(null);
     }
   };
+
+  // Codes switched off by an admin: a plain number field, checked on the server.
+  if (!codeRequired) {
+    return (
+      <div className="sm:col-span-2 space-y-2">
+        <label htmlFor={id} className={label}>Mobile number *</label>
+        <input
+          id={id}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          required
+          placeholder="01XXXXXXXXX"
+          className={input}
+          value={phone}
+          onChange={(e) => onPhoneChange(e.target.value)}
+          aria-describedby={`${id}-help`}
+        />
+        <p id={`${id}-help`} className="text-[11px] text-slate-500">A Bangladeshi mobile number (01XXXXXXXXX).</p>
+      </div>
+    );
+  }
 
   const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
   const unchanged = Boolean(currentPhone) && digits(phone) === digits(currentPhone);

@@ -22,7 +22,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import ContactVerifyField, { type ContactVerification } from "@/components/events/ContactVerifyField";
+import ContactVerifyField, { type ContactVerification, useCodeRequired } from "@/components/events/ContactVerifyField";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
 import EducationSection from "@/components/profile/EducationSection";
 import { readEducation } from "@/lib/members/education";
@@ -165,6 +165,7 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [phoneVerification, setPhoneVerification] = useState<ContactVerification | null>(null);
   const [phoneNeedsCode, setPhoneNeedsCode] = useState(false);
+  const codeRequired = useCodeRequired();
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Avatar upload states
@@ -270,9 +271,9 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileData) return;
-    // A new number must be verified by SMS before it is saved.
+    // A new number must be verified by SMS before it is saved (unless codes are switched off).
     const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
-    if (profileData.phone.trim() && digits(profileData.phone) !== digits(profile?.phone) && !phoneVerification) {
+    if (codeRequired && profileData.phone.trim() && digits(profileData.phone) !== digits(profile?.phone) && !phoneVerification) {
       setPhoneNeedsCode(true);
       setSaveError("Please verify your new mobile number with the SMS code first.");
       return;
@@ -609,6 +610,7 @@ export default function ProfilePage() {
                         showRequired={phoneNeedsCode}
                         allowEmail={false}
                         currentPhone={profile.phone}
+                        codeRequired={codeRequired}
                       />
                       <div className="flex flex-col justify-center gap-2 pt-2 sm:pt-4">
                         <label className="flex items-center gap-2 cursor-pointer select-none text-slate-700 font-semibold">

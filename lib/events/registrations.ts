@@ -8,6 +8,7 @@ import { processProof, removeProofDir, saveProof } from "@/lib/media/proofs";
 import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
 import { readVerifiedPhone } from "@/lib/phone-otp";
 import { readVerifiedEmail } from "@/lib/email-otp";
+import { otpRequired } from "@/lib/otp-setting";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { computeFee, storedGuests } from "./pricing";
 import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
@@ -28,8 +29,10 @@ function normalizeTransactionId(value: string | null | undefined): string {
  * service is down, the email by emailed code (lib/email-otp.ts refuses otherwise). A
  * verified phone replaces the typed one; an email token only counts for the exact
  * address on the form, and the typed number must still be a valid mobile number.
+ * While an admin has switched codes off (lib/otp-setting.ts), the typed number is
+ * taken as it is; it still has to be a valid mobile number no other account uses.
  */
-function checkContactVerified(account: AccountInput): AccountInput {
+function checkContactVerified(account: AccountInput, codesRequired: boolean): AccountInput {
   if (account.phoneVerificationToken) {
     return { ...account, phone: readVerifiedPhone(account.phoneVerificationToken) };
   }
@@ -40,6 +43,7 @@ function checkContactVerified(account: AccountInput): AccountInput {
     }
     return { ...account, phone: canonicalPhone(account.phone) };
   }
+  if (!codesRequired) return { ...account, phone: canonicalPhone(account.phone) };
   throw new AppError("CONTACT_NOT_VERIFIED", 400, "Please verify your phone number with the SMS code (or your email if the SMS does not arrive).");
 }
 
@@ -132,7 +136,7 @@ export async function registerForEvent(args: {
   if (!args.sessionUserId && account) {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
     if (event?.isMembershipEvent) {
-      account = checkContactVerified(account);
+      account = checkContactVerified(account, await otpRequired());
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
       const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);
