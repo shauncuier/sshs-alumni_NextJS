@@ -10,7 +10,36 @@ enum Role {
   SUPER_ADMIN
   ADMIN
   MODERATOR
+  /// Keeps the association's accounts (/admin/accounts) and nothing else.
+  TREASURER
   ALUMNI
+}
+
+enum FinanceAccountType {
+  CASH
+  BKASH
+  NAGAD
+  BANK
+  BANGLA_QR
+  OTHER
+}
+
+enum FinanceKind {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum FinanceEntryStatus {
+  PENDING
+  APPROVED
+  VOID
+}
+
+enum FinanceSource {
+  MANUAL
+  REGISTRATION
+  DONATION
 }
 
 enum VerificationStatus {
@@ -216,7 +245,9 @@ model Event {
   guestTypes           Json          @default("[]")
   paymentInstructions  String?       @db.Text
 
-  registrations EventRegistration[]
+  registrations  EventRegistration[]
+  financeEntries FinanceEntry[]
+  budgetLines    EventBudgetLine[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -791,4 +822,97 @@ model PostLike {
 
   @@unique([postId, userId])
   @@index([userId])
+}
+
+// ---- Accounts (lib/finance/*, /admin/accounts). Amounts are whole poisha (1/100 taka).
+
+/// A place money is kept: cash in hand, a bKash / Nagad number, a bank account.
+model FinanceAccount {
+  id             String             @id @default(uuid()) @db.VarChar(36)
+  name           String             @db.VarChar(120)
+  type           FinanceAccountType
+  /// The site payment method whose money lands here ("Cash", "bKash", "Nagad", "Bank", "Bangla QR").
+  paymentMethod  String?            @unique @db.VarChar(20)
+  openingBalance Int                @default(0)
+  openingDate    DateTime           @db.Date
+  isActive       Boolean            @default(true)
+  sortOrder      Int                @default(0)
+  note           String?            @db.VarChar(300)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @default(now()) @updatedAt
+
+  entries     FinanceEntry[] @relation("EntryAccount")
+  transfersIn FinanceEntry[] @relation("EntryToAccount")
+}
+
+model FinanceCategory {
+  id        String      @id @default(uuid()) @db.VarChar(36)
+  name      String      @db.VarChar(120)
+  kind      FinanceKind
+  /// Set for categories the site posts to by itself (registration_fees, membership_fees, donations).
+  systemKey String?     @unique @db.VarChar(40)
+  isActive  Boolean     @default(true)
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+
+  entries     FinanceEntry[]
+  budgetLines EventBudgetLine[]
+}
+
+/// One voucher: money in (R-), out (P-) or moved between accounts (T-). Never deleted: voided.
+model FinanceEntry {
+  id            String             @id @default(uuid()) @db.VarChar(36)
+  voucherNo     String             @unique @db.VarChar(20)
+  kind          FinanceKind
+  date          DateTime           @db.Date
+  amount        Int
+  accountId     String             @db.VarChar(36)
+  toAccountId   String?            @db.VarChar(36)
+  categoryId    String?            @db.VarChar(36)
+  eventId       String?            @db.VarChar(36)
+  /// Payer (income) or payee (expense).
+  party         String?            @db.VarChar(160)
+  description   String             @db.VarChar(500)
+  /// Transaction ID, cheque or bill number.
+  reference     String?            @db.VarChar(80)
+  attachmentUrl String?            @db.VarChar(500)
+  status        FinanceEntryStatus @default(PENDING)
+  source        FinanceSource      @default(MANUAL)
+  sourceId      String?            @db.VarChar(36)
+  /// For site postings: "fee" or "donation" (one registration can post both).
+  sourceLine    String             @default("") @db.VarChar(20)
+  createdBy     String             @db.VarChar(254)
+  approvedBy    String?            @db.VarChar(254)
+  approvedAt    DateTime?
+  voidedBy      String?            @db.VarChar(254)
+  voidedAt      DateTime?
+  voidReason    String?            @db.VarChar(300)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @default(now()) @updatedAt
+
+  account   FinanceAccount   @relation("EntryAccount", fields: [accountId], references: [id])
+  toAccount FinanceAccount?  @relation("EntryToAccount", fields: [toAccountId], references: [id])
+  category  FinanceCategory? @relation(fields: [categoryId], references: [id])
+  event     Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@unique([source, sourceId, sourceLine])
+  @@index([accountId, date])
+  @@index([eventId])
+  @@index([status, date])
+}
+
+/// A planned amount for one category of an event's budget.
+model EventBudgetLine {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  eventId       String   @db.VarChar(36)
+  categoryId    String   @db.VarChar(36)
+  label         String?  @db.VarChar(160)
+  plannedAmount Int
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  event    Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category FinanceCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([eventId])
 }
