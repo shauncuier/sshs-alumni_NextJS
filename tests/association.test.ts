@@ -11,7 +11,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 });
 
 import prisma from "@/lib/prisma";
-import { createMember, createTerm, deleteTerm, findPresident, getCurrentCommittee, getPresidentMessage, listPastTerms, setPresidentMessage, updateTerm } from "@/lib/committee";
+import { committeeTiers, createMember, createTerm, deleteTerm, findPresident, getCurrentCommittee, getPresidentMessage, listPastTerms, setPresidentMessage, updateTerm } from "@/lib/committee";
 import { createHonorEntry, groupHonorEntries, listHonorEntries } from "@/lib/honor-board";
 import { createNotice, getActiveNotice, listActiveNotices, updateNotice } from "@/lib/notices";
 import { createConstitution, listConstitutions } from "@/lib/constitution";
@@ -73,6 +73,20 @@ describe("committee", () => {
     await deleteTerm(term.id);
     expect(await prisma.committeeMember.count()).toBe(0);
     expect(await contentDirs()).toEqual([]);
+  });
+
+  it("groups members into levels for the tree, top first, in English or Bangla", () => {
+    const m = (post: string, i: number) => ({ id: String(i), termId: "t", name: `N${i}`, post, lifeMemberNo: null, sscBatch: null, phone: null, facebookUrl: null, photoUrl: null, note: null, sortOrder: i });
+    const posts = ["Member", "Vice-President", "President", "General Secretary", "Finance Secretary", "সহ-সভাপতি", "Treasurer", "সদস্য", "Convener", "সাধারণ সম্পাদক"];
+    const tiers = committeeTiers(posts.map(m));
+    expect(tiers.map((t) => [t.key, t.members.map((x) => x.post)])).toEqual([
+      ["lead", ["President", "Convener"]],
+      ["vice", ["Vice-President", "সহ-সভাপতি"]],
+      ["general", ["General Secretary", "সাধারণ সম্পাদক"]],
+      ["secretaries", ["Finance Secretary", "Treasurer"]],
+      ["members", ["Member", "সদস্য"]],
+    ]);
+    expect(committeeTiers([m("Member", 1)]).map((t) => t.key)).toEqual(["members"]);
   });
 
   it("stores the President's message", async () => {

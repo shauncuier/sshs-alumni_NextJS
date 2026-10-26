@@ -118,6 +118,30 @@ export function findPresident(term: CommitteeTermView | null): CommitteeMemberVi
   return term?.members.find((m) => /^\s*president\s*$/i.test(m.post) || /^\s*সভাপতি\s*$/.test(m.post)) ?? null;
 }
 
+export interface CommitteeTier {
+  key: "lead" | "vice" | "general" | "secretaries" | "members";
+  members: CommitteeMemberView[];
+}
+
+// Posts by level, English or Bangla, checked in this order (vice before plain president).
+const TIER_RULES: [CommitteeTier["key"], RegExp][] = [
+  ["vice", /vice[\s-]*president|সহ[\s-]*সভাপতি|joint\s+convener|যুগ্ম\s+আহ্বায়ক/i],
+  ["lead", /^\s*(president|convener|chairman|সভাপতি|আহ্বায়ক)\s*$/i],
+  ["general", /^\s*(general\s+secretary|member\s+secretary|সাধারণ\s+সম্পাদক|সদস্য\s+সচিব)\s*$/i],
+  ["secretaries", /secretary|treasurer|সম্পাদক|কোষাধ্যক্ষ|সচিব/i],
+];
+const TIER_ORDER: CommitteeTier["key"][] = ["lead", "vice", "general", "secretaries", "members"];
+
+/** The committee as levels for the tree on /committee, top first; empty levels are left out. */
+export function committeeTiers(members: CommitteeMemberView[]): CommitteeTier[] {
+  const byKey = new Map<CommitteeTier["key"], CommitteeMemberView[]>(TIER_ORDER.map((k) => [k, []]));
+  for (const m of members) {
+    const key = TIER_RULES.find(([, re]) => re.test(m.post))?.[0] ?? "members";
+    byKey.get(key)!.push(m);
+  }
+  return TIER_ORDER.map((key) => ({ key, members: byKey.get(key)! })).filter((t) => t.members.length > 0);
+}
+
 const termFields = fieldReader("INVALID_COMMITTEE_TERM");
 const memberFields = fieldReader("INVALID_COMMITTEE_MEMBER");
 const maxYear = () => new Date().getFullYear() + 10;

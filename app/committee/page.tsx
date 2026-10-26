@@ -5,8 +5,8 @@ import { ArrowRight, History, Landmark, ScrollText } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/shared/PageHero";
-import PersonCard from "@/components/shared/PersonCard";
-import { getCurrentCommittee } from "@/lib/committee";
+import CommitteeTree from "@/components/committee/CommitteeTree";
+import { committeeTiers, getCurrentCommittee } from "@/lib/committee";
 import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -32,19 +32,7 @@ export default async function CommitteePage() {
 
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-8">
           {members.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {members.map((m) => (
-                <PersonCard
-                  key={m.id}
-                  name={m.name}
-                  role={m.post}
-                  details={[[m.lifeMemberNo ? `LM no. ${m.lifeMemberNo}` : null, m.sscBatch ? `SSC ${m.sscBatch}` : null].filter(Boolean).join(" · "), m.note]}
-                  photoUrl={m.photoUrl}
-                  phone={m.phone}
-                  facebookUrl={m.facebookUrl}
-                />
-              ))}
-            </div>
+            <CommitteeTree tiers={committeeTiers(members)} />
           ) : (
             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center space-y-2">
               <Landmark className="w-10 h-10 text-emerald-700 mx-auto" />
