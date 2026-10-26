@@ -156,3 +156,15 @@ Public site arranged like a classic alumni-association site (reference: oldmusli
 - **Registration forms download:** Admin → event → "Download registration forms" (or "Form" on one registration) prints every registration as the filled-in paper form, one Legal page each; Save as PDF to download.
 - **Logo:** the committee's approved logo is the master (`design/brand/alumni-council-logo.jpg`); icons, banner, paper form and guide were rebuilt from it.
 - **Schema:** new tables `CommitteeTerm`, `CommitteeMember`, `HonorBoardEntry`, `ConstitutionDocument`; new columns on `Announcement` and `AlumniProfile.dateOfBirth`. Run `npm run db:push` on every database (local done; staging and production not yet).
+
+## 10. Accounts (branch `feature/accounts`, 2026-10-26)
+
+The association's books, in **Admin → Accounts** (`/admin/accounts`).
+
+- **Who:** a new **Treasurer** role (given by the super admin in Admin → Users) sees only the accounts. Admins see everything. Only an administrator approves vouchers, changes accounts and opening balances, and runs the income sync.
+- **Vouchers:** receipts (R-2026-0001), payments (P-…) and transfers (T-…), numbered per year from a locked counter. Each has a date, amount, account, category, optional event, payer or payee, reference and an optional photo or PDF of the bill (stored privately, `lib/media/vouchers.ts`).
+- **Approval and audit:** income counts at once; expenses and transfers count only after an administrator who did not enter them approves. Nothing is deleted: a mistake is voided with a reason and stays on record. Every action is in the activity log (`PAYMENT / finance.*`).
+- **Automatic income:** a confirmed registration (admin approval, member verification or a paper form) posts its fee (Membership fees or Event registration fees) and any donation into the account of its payment method; a verified donation posts too; cancelling a confirmed registration voids its income. **Bring in site income** on the overview back-fills anything confirmed before the accounts existed, and never counts twice.
+- **Reports:** balances per account, cash book with running balance, income and expenditure by category, month by month, and per-event budget against actual. Each prints (`/print/finance`, with Prepared / Checked / Approved signature lines) and exports to Excel as CSV.
+- **Money:** whole poisha (`Int`) in the new tables; the site's existing `Float` fees are converted when posted.
+- **Code:** `lib/finance/*`, `app/api/admin/accounts/*`, `app/admin/accounts/*`, `components/admin/finance-kit.tsx`; tests in `tests/finance*.test.ts`.

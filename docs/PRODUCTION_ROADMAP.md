@@ -331,7 +331,7 @@ A read-through of every page and route against the steps above, with a UX/UI eye
 ### 29. Production database · M
 **Tasks:** full backup of the current remote database; restore it into a copy and run `npm run db:push` there first (rehearsal); then the real `db:push`, `npm run db:import-volunteers` and `npm run db:import-sms-history` (if the server has the old JSON files) and the production seed (step 11); confirm the super admin can sign in.
 **Done when:** production schema matches, existing data is intact, super admin signs in.
-**Note (2026-10-26):** the association-structure branch adds tables (committee, honor board, constitution) and columns (notices, date of birth); the rehearsal `db:push` must show them as additions only.
+**Note (2026-10-26):** the association-structure branch adds tables (committee, honor board, constitution) and columns (notices, date of birth); the rehearsal `db:push` must show them as additions only. The accounts branch adds the Treasurer role and the finance tables; after deploy an administrator opens Admin → Accounts once, sets each account's opening balance and date in Settings, then presses **Bring in site income**.
 
 ### 30. Backups · S
 **Tasks:** daily database dump and `UPLOADS_DIR` copy to the location chosen in step 3; keep 30 days; restore one backup onto a test database.
