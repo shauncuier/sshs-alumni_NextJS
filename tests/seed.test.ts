@@ -95,7 +95,7 @@ describe("removing demo content", () => {
     await prisma.donation.create({ data: { campaignId: used.id, donorName: "Real Donor", amount: 500, paymentMethod: "bKash" } });
 
     const removed = await removeDemoContent();
-    expect(removed).toEqual({ posts: 1, news: 1, announcements: 1, events: demoEvents.length - 1, campaigns: 1 });
+    expect(removed).toEqual({ committeeTerms: 0, honorBoard: 0, constitution: 0, presidentMessage: 0, posts: 1, news: 1, announcements: 1, events: demoEvents.length - 1, campaigns: 1 });
     expect(await prisma.post.findMany({ select: { content: true } })).toEqual([{ content: "Real post" }]);
     expect(await prisma.event.count()).toBe(1);
     expect(await prisma.donationCampaign.count()).toBe(1);

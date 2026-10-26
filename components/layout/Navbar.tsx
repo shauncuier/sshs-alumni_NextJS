@@ -200,7 +200,9 @@ export default function Navbar() {
           <nav ref={navRef} aria-label="Main" className="hidden xl:flex items-center gap-1 mx-auto text-sm font-medium whitespace-nowrap">
             {NAV_ITEMS.map((item) => {
               if ("href" in item) {
-                const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                // A page listed in a dropdown (e.g. /committee/past under About) belongs to that dropdown only.
+                const inGroup = NAV_ITEMS.some((g) => "links" in g && g.links.some((l) => l.href === pathname));
+                const active = item.href === "/" ? pathname === "/" : pathname === item.href || (!inGroup && pathname.startsWith(`${item.href}/`));
                 return (
                   <Link
                     prefetch={false}

@@ -43,7 +43,11 @@ export default async function PastCommitteesPage() {
           {terms.map((t) => (
             <section key={t.id} className="space-y-4">
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                {t.title} <span className="text-slate-500 font-bold text-base">({t.startYear}{t.endYear ? `–${t.endYear}` : ""})</span>
+                {t.title}
+                {/* The years, unless the title already says them. */}
+                {!t.title.includes(String(t.startYear)) && (
+                  <span className="text-slate-500 font-bold text-base"> ({t.startYear}{t.endYear ? `–${t.endYear}` : ""})</span>
+                )}
               </h2>
               {t.imageUrl ? (
                 <img loading="lazy" decoding="async" src={t.imageUrl} alt={`${t.title}`} className="w-full rounded-3xl border border-slate-200 bg-white" />

@@ -9,6 +9,7 @@ import { ensureSuperAdmin, envSuperAdminEmail, type EnsureResult } from "../lib/
 import { backfillEventJsonColumns } from "./backfill-events";
 import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGuestTypes } from "./membership-event";
 import { demoEvents } from "./demo-events";
+import { countAssociationDemo, removeAssociationDemo } from "./demo-association";
 
 /**
  * Seed steps shared by the demo seed (prisma/seed.ts, local development) and the
@@ -161,6 +162,7 @@ export async function findDemoLeftovers(env: Env = process.env): Promise<string[
     ["feed post(s)", await prisma.post.count({ where: w.posts })],
     ["event(s)", await prisma.event.count({ where: { slug: { in: w.eventSlugs } } })],
     ["donation campaign(s)", await prisma.donationCampaign.count({ where: { slug: { in: DEMO_CAMPAIGN_SLUGS } } })],
+    ["committee / honor board / constitution row(s)", await countAssociationDemo()],
   ];
   for (const [label, c] of counts) {
     if (c > 0) notes.push(`${c} demo ${label} found; remove with npm run db:remove-demo.`);
@@ -189,12 +191,15 @@ function demoContentWhere() {
 }
 
 /**
- * Deletes the demo seed's sample content. Events with registrations and campaigns
- * with donations are kept: they hold real people's records. Accounts are never deleted.
+ * Deletes the demo seed's sample content, and the sample association content
+ * (prisma/demo-association.ts). Events with registrations and campaigns with
+ * donations are kept: they hold real people's records. Accounts are never deleted.
  */
 export async function removeDemoContent(): Promise<Record<string, number>> {
   const w = demoContentWhere();
+  const association = await removeAssociationDemo();
   return {
+    ...association,
     posts: (await prisma.post.deleteMany({ where: w.posts })).count,
     news: (await prisma.newsArticle.deleteMany({ where: w.news })).count,
     announcements: (await prisma.announcement.deleteMany({ where: w.announcements })).count,

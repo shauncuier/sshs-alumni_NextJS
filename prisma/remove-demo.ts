@@ -3,7 +3,8 @@ import { prisma } from "../lib/prisma";
 import { removeDemoContent } from "./seed-core";
 
 // npm run db:remove-demo — deletes the sample posts, news, announcements, events and
-// campaigns that npm run db:seed creates. Events with registrations and campaigns
+// campaigns that npm run db:seed creates, and the sample committee, honor board,
+// constitution and President's message from npm run db:seed:association-demo. Events with registrations and campaigns
 // with donations are kept, and no account is deleted (disable test accounts in
 // /admin/users). Take a backup first on a production database.
 async function main() {

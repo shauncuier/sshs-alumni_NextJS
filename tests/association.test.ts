@@ -21,6 +21,8 @@ import { POST as createTermRoute } from "@/app/api/admin/committee/route";
 import { POST as createNoticeRoute } from "@/app/api/admin/notices/route";
 import { POST as uploadDocument } from "@/app/api/admin/documents/route";
 import { GET as serveDocument } from "@/app/api/media/documents/[id]/[file]/route";
+import { DEMO_PRESIDENT_MESSAGE, seedAssociationDemo } from "@/prisma/demo-association";
+import { removeDemoContent } from "@/prisma/seed-core";
 
 beforeEach(async () => {
   session.user = null;
@@ -130,6 +132,35 @@ describe("constitution", () => {
     await createConstitution({ title: "Constitution", year: 2006, fileUrl: a.url });
     await createConstitution({ title: "Constitution (amended)", year: 2014, fileUrl: b.url });
     expect((await listConstitutions()).map((d) => d.year)).toEqual([2014, 2006]);
+  });
+});
+
+describe("sample association content", () => {
+  it("fills every page, re-runs without duplicates, keeps real content and is removed by remove-demo", async () => {
+    await seedAssociationDemo();
+    await seedAssociationDemo();
+    const current = await getCurrentCommittee();
+    expect(current?.title).toBe("Executive Committee 2025–2027");
+    expect(findPresident(current)?.name).toBe("Mohammad Abdul Karim");
+    expect(await listPastTerms()).toHaveLength(3);
+    expect(groupHonorEntries(await listHonorEntries()).map((g) => g.honour)).toEqual(["Founding members", "Past presidents", "Past general secretaries"]);
+    expect(await listActiveNotices()).toHaveLength(3);
+    const [doc] = await listConstitutions();
+    expect(checkDocument(await fs.readFile(path.join(process.env.UPLOADS_DIR!, "documents", doc.fileUrl.split("/")[4], "document.pdf")))).toBeTruthy();
+    expect((await getPresidentMessage()).message).toBe(DEMO_PRESIDENT_MESSAGE);
+
+    // A real committee and a real message are never replaced.
+    await removeDemoContent();
+    expect(await prisma.committeeTerm.count()).toBe(0);
+    expect(await listActiveNotices()).toEqual([]);
+    expect((await getPresidentMessage()).message).toBe("");
+    const real = await createTerm({ title: "Real committee", startYear: 2025, isCurrent: true });
+    await setPresidentMessage({ message: "Real message." }, "admin@example.test");
+    await seedAssociationDemo();
+    expect((await getCurrentCommittee())?.id).toBe(real.id);
+    expect((await getPresidentMessage()).message).toBe("Real message.");
+    await removeDemoContent();
+    expect((await getPresidentMessage()).message).toBe("Real message.");
   });
 });
 
