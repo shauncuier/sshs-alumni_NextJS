@@ -96,6 +96,8 @@ model AlumniProfile {
   rollNumber         String?
   /// Optional: A+, A-, B+, B-, AB+, AB-, O+ or O- (lib/members/blood-groups.ts).
   bloodGroup         String?            @db.VarChar(3)
+  /// Asked on the join form (lib/members/date-of-birth.ts); never shown publicly.
+  dateOfBirth        DateTime?          @db.Date
   section            String?
   gender             String?
   profession         String

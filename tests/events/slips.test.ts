@@ -17,7 +17,7 @@ async function paidRegistration() {
   const { registration } = await registerForEvent({
     slug: "jubilee",
     sessionUserId: member.id,
-    rsvp: { guests: { Spouse: 1 }, paymentMethod: "bKash", transactionId: "TRXSLIP001", donationAmount: 200 },
+    rsvp: { guests: { Spouse: 1 }, guestPeople: { Spouse: [{ name: "Rina" }] }, paymentMethod: "bKash", transactionId: "TRXSLIP001", donationAmount: 200 },
   });
   return { event, member, registration };
 }
@@ -40,7 +40,7 @@ it("no slip until the payment is confirmed; then the member and admins get it, n
   });
   expect(slip!.lines).toEqual([
     { label: "Alumnus (member)", count: 1, amount: 1500 },
-    { label: "Spouse", count: 1, amount: 600 },
+    { label: "Spouse: Rina", count: 1, amount: 600 },
   ]);
   expect(slip!.confirmedOn).not.toBeNull();
 

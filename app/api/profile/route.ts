@@ -8,6 +8,7 @@ import { readVerifiedPhone } from "@/lib/phone-otp";
 import { otpRequired } from "@/lib/otp-setting";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
+import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 import type { Prisma } from "@prisma/client";
 import { normalizeEducation } from "@/lib/members/education";
 import { normalizeExperience } from "@/lib/members/experience";
@@ -64,6 +65,7 @@ export async function PUT(req: Request) {
       locationCountry,
       rollNumber,
       bloodGroup,
+      dateOfBirth,
       education,
       experience,
       section,
@@ -134,6 +136,8 @@ export async function PUT(req: Request) {
       }
 
       // Optional; undefined leaves it as it is, an empty value clears it.
+      // Date of birth: a blank or missing value leaves it as it is (it is required on joining).
+      const dob = typeof dateOfBirth === "string" && dateOfBirth.trim() ? parseDateOfBirth(dateOfBirth, false) : undefined;
       const blood = bloodGroup === undefined ? undefined : normalizeBloodGroup(bloodGroup);
       if (bloodGroup !== undefined && blood === undefined) {
         throw new AppError("INVALID_BLOOD_GROUP", 400, "Please choose a blood group from the list, or leave it empty.");
@@ -166,6 +170,7 @@ export async function PUT(req: Request) {
           industry: optional(industry),
           rollNumber: optional(rollNumber),
           bloodGroup: blood,
+          dateOfBirth: dob ?? undefined,
           education: educationList as unknown as Prisma.InputJsonValue | undefined,
           experience: experienceList as unknown as Prisma.InputJsonValue | undefined,
           section: optional(section),
@@ -195,6 +200,7 @@ export async function PUT(req: Request) {
           industry: optional(industry) ?? null,
           rollNumber: optional(rollNumber) ?? null,
           bloodGroup: blood ?? null,
+          dateOfBirth: dob ?? null,
           education: (educationList ?? []) as unknown as Prisma.InputJsonValue,
           experience: (experienceList ?? []) as unknown as Prisma.InputJsonValue,
           section: optional(section) ?? null,

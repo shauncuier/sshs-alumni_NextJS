@@ -9,6 +9,7 @@ import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 import { makeImage, makePdf } from "../helpers/images";
 import { verifiedEmailToken, verifiedPhoneToken } from "../helpers/phone";
 import { setOtpRequired } from "@/lib/otp-setting";
+import type { RsvpInput } from "@/lib/events/types";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -33,8 +34,8 @@ const packages = [
 ];
 const membershipEvent = () =>
   makeEvent({ slug: "jubilee", isMembershipEvent: true, packages, extraAdultFee: 500, childFee: 300, paymentInstructions: "bKash 01XXXXXXXXX", maxAttendees: 10 });
-const account = { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, rollNumber: "12", section: "A", phoneVerificationToken: verifiedPhoneToken() };
-const paidRsvp = { packageName: "General", extraAdults: 1, paymentMethod: "bKash", transactionId: " 9ab3xk1 ", donationAmount: 500 };
+const account = { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", rollNumber: "12", section: "A", phoneVerificationToken: verifiedPhoneToken() };
+const paidRsvp = { packageName: "General", extraAdults: 1, guestPeople: { "Extra adult": [{ name: "Guest One" }] }, paymentMethod: "bKash", transactionId: " 9ab3xk1 ", donationAmount: 500 };
 
 describe("joining through the membership event", () => {
   it("creates the account, verification request and pending registration together", async () => {
@@ -72,6 +73,56 @@ describe("joining through the membership event", () => {
     expect(await prisma.user.count()).toBe(0);
     expect(await avatarFolders()).toEqual([]);
     expect(await proofFolders()).toEqual([]);
+  });
+
+  it("needs the new member's date of birth, saved on the profile", async () => {
+    await membershipEvent();
+    for (const [dateOfBirth, code] of [
+      [undefined, "DATE_OF_BIRTH_REQUIRED"],
+      ["", "DATE_OF_BIRTH_REQUIRED"],
+      ["15/06/1985", "INVALID_DATE_OF_BIRTH"],
+      ["2001-02-30", "INVALID_DATE_OF_BIRTH"],
+      [`${new Date().getFullYear() - 3}-01-01`, "INVALID_DATE_OF_BIRTH"],
+    ] as const) {
+      await expect(
+        registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, dateOfBirth }, photo, proof, rsvp: paidRsvp })
+      ).rejects.toMatchObject({ status: 400, code });
+    }
+    expect(await prisma.user.count()).toBe(0);
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: paidRsvp });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.dateOfBirth?.toISOString().slice(0, 10)).toBe("1985-06-15");
+  });
+
+  it("needs a name for every guest and an age for every child", async () => {
+    await membershipEvent();
+    const bad: [unknown, string][] = [
+      [undefined, "Guest One"],
+      [{ "Extra adult": [] }, "name"],
+      [{ "Extra adult": [{ name: " " }] }, "name"],
+    ];
+    for (const [guestPeople] of bad) {
+      await expect(
+        registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, guestPeople } as RsvpInput })
+      ).rejects.toMatchObject({ status: 400, code: "GUEST_DETAILS_REQUIRED" });
+    }
+    // Children: an age from 0 to 17.
+    const withChild = { ...paidRsvp, extraAdults: 0, extraChildren: 1 };
+    for (const age of [undefined, "", -1, 18, 3.5]) {
+      await expect(
+        registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...withChild, guestPeople: { "Child under 12": [{ name: "Tuba", age }] } } as RsvpInput })
+      ).rejects.toMatchObject({ status: 400, code: "GUEST_DETAILS_REQUIRED" });
+    }
+    expect(await prisma.user.count()).toBe(0);
+    const { registration } = await registerForEvent({
+      slug: "jubilee",
+      sessionUserId: null,
+      account,
+      photo,
+      proof,
+      rsvp: { ...withChild, guestPeople: { "Child under 12": [{ name: "  Tuba   Akter ", age: 0 }] } } as RsvpInput,
+    });
+    expect(registration.guests).toEqual([{ name: "Child under 12", count: 1, price: 300, people: [{ name: "Tuba Akter", age: 0 }] }]);
   });
 
   it("takes the typed number without a code while an admin has switched codes off", async () => {
@@ -380,14 +431,14 @@ describe("guest types (Golden Jubilee 2026 prices)", () => {
       account,
       photo,
       proof,
-      rsvp: { guests: { Spouse: 1, Child: 2 }, paymentMethod: "bKash", transactionId: "TRX7001" },
+      rsvp: { guests: { Spouse: 1, Child: 2 }, guestPeople: { Spouse: [{ name: "Rina" }], Child: [{ name: "Tuba", age: 7 }, { name: "Rafi", age: "4" }] }, paymentMethod: "bKash", transactionId: "TRX7001" },
     });
     expect(registration).toMatchObject({
       headCount: 4,
       totalFee: 1500 + 700 + 1000,
       guests: [
-        { name: "Spouse", count: 1, price: 700 },
-        { name: "Child", count: 2, price: 500 },
+        { name: "Spouse", count: 1, price: 700, people: [{ name: "Rina" }] },
+        { name: "Child", count: 2, price: 500, people: [{ name: "Tuba", age: 7 }, { name: "Rafi", age: 4 }] },
       ],
     });
   });
@@ -454,7 +505,7 @@ describe("fee by SSC batch", () => {
       account: { ...account, sscBatch: 2018 },
       photo,
       proof,
-      rsvp: { guests: { Spouse: 1 }, paymentMethod: "bKash", transactionId: "TRX20180001" },
+      rsvp: { guests: { Spouse: 1 }, guestPeople: { Spouse: [{ name: "Rina" }] }, paymentMethod: "bKash", transactionId: "TRX20180001" },
     });
     expect(registration.totalFee).toBe(1250 + 600);
 

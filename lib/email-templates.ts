@@ -1,4 +1,5 @@
 import { schoolInfo } from "@/lib/data";
+import { formatGuestLine } from "@/lib/events/pricing";
 
 /** The crest in the email header: sent with each email as an inline image (see lib/email.ts). */
 export const LOGO_CID = "ssghs-logo";
@@ -173,7 +174,7 @@ export interface RegistrationEmailInput {
   venue: string;
   isMembershipEvent: boolean;
   headCount: number;
-  guests: { name: string; count: number }[];
+  guests: { name: string; count: number; people?: { name: string; age?: number | null }[] }[];
   totalFee: number;
   donationAmount: number;
   paymentMethod: string | null;
@@ -187,7 +188,7 @@ function registrationRows(r: RegistrationEmailInput): [string, string][] {
     ["Event", r.eventTitle],
     ["Date", r.eventDate],
     ["Venue", r.venue],
-    ["People", `${r.headCount}${r.guests.length ? ` (you + ${r.guests.map((g) => `${g.name} × ${g.count}`).join(", ")})` : ""}`],
+    ["People", `${r.headCount}${r.guests.length ? ` (you + ${r.guests.map(formatGuestLine).join(", ")})` : ""}`],
   ];
   if (r.totalFee > 0) rows.push(["Registration fee", taka(r.totalFee)]);
   if (r.donationAmount > 0) rows.push(["Donation", taka(r.donationAmount)]);

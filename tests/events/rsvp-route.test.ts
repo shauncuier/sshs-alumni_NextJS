@@ -35,7 +35,7 @@ const multipart = (payload: string, file?: Buffer, proof?: Buffer) => {
 const TOO_LARGE = { code: "UPLOAD_TOO_LARGE", error: "The upload is too large. The photo must be 5 MB or smaller and the proof document 10 MB or smaller." };
 const joinPayload = (proof: unknown = { type: "SSC_MARKSHEET" }) =>
   JSON.stringify({
-    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, phoneVerificationToken: verifiedPhoneToken() },
+    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", phoneVerificationToken: verifiedPhoneToken() },
     rsvp: { packageName: "General", paymentMethod: "bKash", transactionId: "TRX123456" },
     proof,
   });

@@ -41,11 +41,19 @@ export interface BatchFeeDef {
   price: number;
 }
 
+/** One guest's name, and the age for a child guest. */
+export interface GuestPerson {
+  name: string;
+  age?: number | null;
+}
+
 /** Guests on one registration, with the price each paid then. */
 export interface GuestLine {
   name: string;
   count: number;
   price: number;
+  /** Who they are, one entry per guest (registrations made before names were asked have none). */
+  people?: GuestPerson[];
 }
 
 export interface AgendaEntry {
@@ -57,6 +65,8 @@ export interface RsvpInput {
   packageName?: string | null;
   /** Guest counts by guest-type name. */
   guests?: Record<string, number> | null;
+  /** Each guest's name (and a child's age), by guest-type name; one entry per guest counted above. */
+  guestPeople?: Record<string, { name?: unknown; age?: unknown }[]> | null;
   /** Where the member came from (an ad's utm_source/utm_campaign); cleaned on the server. */
   source?: string | null;
   extraAdults?: number;
@@ -83,6 +93,8 @@ export interface AccountInput {
   section?: string | null;
   /** Optional; see lib/members/blood-groups.ts. */
   bloodGroup?: string | null;
+  /** YYYY-MM-DD; required on the join form (lib/members/date-of-birth.ts). */
+  dateOfBirth?: string | null;
   profession?: string | null;
   company?: string | null;
   /** পদবী, e.g. "Assistant Professor". */

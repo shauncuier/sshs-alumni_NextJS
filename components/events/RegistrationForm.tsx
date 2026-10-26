@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { usePaymentDetails } from "@/components/shared/usePaymentDetails";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
+import { computeFee, formatTaka, isChildGuestType, MAX_CHILD_GUEST_AGE, normalizePackages } from "@/lib/events/pricing";
 import { PAYMENT_METHODS, type MemberRegistration, type PublicEvent } from "@/lib/events/types";
 import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_TYPES } from "@/lib/members/proof-types";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
@@ -84,7 +84,7 @@ export default function RegistrationForm({
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
-  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "", profession: "", designation: "", company: "", address: "" });
+  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "", dateOfBirth: "", profession: "", designation: "", company: "", address: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const codeRequired = useCodeRequired();
@@ -92,6 +92,14 @@ export default function RegistrationForm({
   const [packageName, setPackageName] = useState(initialPackage ?? event.packages[0]?.name ?? "");
   // How many of each guest type (Spouse, Child, ...) the member brings.
   const [guestCounts, setGuestCounts] = useState<Record<string, number>>({});
+  // Each guest's name, and a child's age, by guest type (one entry per guest counted).
+  const [guestPeople, setGuestPeople] = useState<Record<string, { name: string; age: string }[]>>({});
+  const setGuestPerson = (type: string, index: number, field: "name" | "age", value: string) =>
+    setGuestPeople((all) => {
+      const list = [...(all[type] ?? [])];
+      list[index] = { ...(list[index] ?? { name: "", age: "" }), [field]: value };
+      return { ...all, [type]: list };
+    });
   const [tshirtSize, setTshirtSize] = useState("L");
   const [mealPreference, setMealPreference] = useState("");
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -274,6 +282,12 @@ export default function RegistrationForm({
           rsvp: {
             packageName: event.packages.length ? packageName : null,
             guests: guestCounts,
+            guestPeople: Object.fromEntries(
+              Object.entries(guestCounts).map(([type, n]) => [
+                type,
+                Array.from({ length: n }, (_, i) => ({ name: guestPeople[type]?.[i]?.name ?? "", age: guestPeople[type]?.[i]?.age ?? "" })),
+              ])
+            ),
             source: source ?? null,
             tshirtSize,
             mealPreference: mealPreference || null,
@@ -430,6 +444,20 @@ export default function RegistrationForm({
             </select>
           </div>
           <div>
+            <label htmlFor="reg-dob" className={label}>Date of birth * <span className="font-normal text-slate-400">(জন্ম তারিখ)</span></label>
+            <input
+              id="reg-dob"
+              type="date"
+              required
+              min="1916-01-01"
+              max={`${new Date().getFullYear() - 10}-12-31`}
+              autoComplete="bday"
+              className={input}
+              value={account.dateOfBirth}
+              onChange={(e) => setAccount({ ...account, dateOfBirth: e.target.value })}
+            />
+          </div>
+          <div>
             <label htmlFor="reg-profession" className={label}>Profession <span className="font-normal text-slate-400">(পেশা)</span></label>
             <input id="reg-profession" maxLength={100} autoComplete="off" placeholder="e.g. Doctor, Engineer, Business, Student" className={input} value={account.profession} onChange={(e) => setAccount({ ...account, profession: e.target.value })} />
           </div>
@@ -531,6 +559,50 @@ export default function RegistrationForm({
                 {g.max < 10 && <p className="text-[10px] text-slate-500 mt-0.5">Up to {g.max}</p>}
               </div>
             ))}
+            {event.guestTypes.some((g) => (guestCounts[g.name] ?? 0) > 0) && (
+              <div className="col-span-2 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <p className="text-xs font-bold text-slate-800">Guest details <span className="font-normal text-slate-500">(name of each guest; age for children)</span></p>
+                {event.guestTypes.flatMap((g, ti) =>
+                  Array.from({ length: guestCounts[g.name] ?? 0 }, (_, i) => {
+                    const child = isChildGuestType(g.name);
+                    const which = (guestCounts[g.name] ?? 0) > 1 ? `${g.name} ${i + 1}` : g.name;
+                    return (
+                      <div key={`${g.name}-${i}`} className={`grid gap-2 ${child ? "grid-cols-[1fr_5.5rem]" : "grid-cols-1"}`}>
+                        <div>
+                          <label htmlFor={`reg-guest-${ti}-${i}-name`} className={label}>{which}: name *</label>
+                          <input
+                            id={`reg-guest-${ti}-${i}-name`}
+                            required
+                            minLength={2}
+                            maxLength={100}
+                            autoComplete="off"
+                            className={input}
+                            value={guestPeople[g.name]?.[i]?.name ?? ""}
+                            onChange={(e) => setGuestPerson(g.name, i, "name", e.target.value)}
+                          />
+                        </div>
+                        {child && (
+                          <div>
+                            <label htmlFor={`reg-guest-${ti}-${i}-age`} className={label}>Age *</label>
+                            <input
+                              id={`reg-guest-${ti}-${i}-age`}
+                              type="number"
+                              inputMode="numeric"
+                              required
+                              min={0}
+                              max={MAX_CHILD_GUEST_AGE}
+                              className={input}
+                              value={guestPeople[g.name]?.[i]?.age ?? ""}
+                              onChange={(e) => setGuestPerson(g.name, i, "age", e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
             <div>
               <label htmlFor="reg-tshirt" className={label}>T-shirt size</label>
               <select id="reg-tshirt" className={input} value={tshirtSize} onChange={(e) => setTshirtSize(e.target.value)}>

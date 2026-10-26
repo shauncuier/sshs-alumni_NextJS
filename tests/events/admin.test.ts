@@ -28,7 +28,7 @@ const join = async () => {
     sessionUserId: null,
     photo: await makeImage(800, 800),
     proof: { type: "SSC_CERTIFICATE", file: makePdf() },
-    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, phoneVerificationToken: verifiedPhoneToken() },
+    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", phoneVerificationToken: verifiedPhoneToken() },
     rsvp: { packageName: "General", paymentMethod: "bKash", transactionId: "TRX123456", donationAmount: 250 },
   });
   return { event, registration };

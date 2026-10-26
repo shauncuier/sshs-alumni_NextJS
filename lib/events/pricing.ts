@@ -1,5 +1,5 @@
 import { AppError } from "@/lib/app-error";
-import type { BatchFeeDef, GuestLine, GuestTypeDef, PackageDef } from "./types";
+import type { BatchFeeDef, GuestLine, GuestPerson, GuestTypeDef, PackageDef } from "./types";
 
 export const MAX_EXTRA_GUESTS = 10;
 const MAX_DONATION = 1_000_000;
@@ -247,6 +247,64 @@ export function computeFee(
   };
 }
 
+/** Guest types for children ("Child", "Child under 12", "শিশু"): their guests also give an age. */
+export function isChildGuestType(name: string): boolean {
+  return /child|kid|শিশু|বাচ্চা|সন্তান/i.test(name);
+}
+
+export const MAX_CHILD_GUEST_AGE = 17;
+
+/**
+ * Adds each guest's name (and a child's age) to the priced guest lines. Every guest
+ * counted needs a name; child guests also need an age from 0 to MAX_CHILD_GUEST_AGE.
+ */
+export function attachGuestPeople(lines: GuestLine[], raw: unknown): GuestLine[] {
+  const given = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return lines.map((line) => {
+    const list = Array.isArray(given[line.name]) ? (given[line.name] as unknown[]) : [];
+    const child = isChildGuestType(line.name);
+    const people: GuestPerson[] = [];
+    for (let i = 0; i < line.count; i++) {
+      const entry = list[i] && typeof list[i] === "object" ? (list[i] as Record<string, unknown>) : {};
+      const name = typeof entry.name === "string" ? entry.name.trim().replace(/\s+/g, " ") : "";
+      const which = line.count > 1 ? `${line.name} ${i + 1}` : line.name;
+      if (name.length < 2) throw new AppError("GUEST_DETAILS_REQUIRED", 400, `Please write the name of each guest (${which}).`);
+      if (name.length > 100) throw new AppError("GUEST_DETAILS_REQUIRED", 400, `The name for ${which} is too long.`);
+      if (!child) {
+        people.push({ name });
+        continue;
+      }
+      const age = entry.age === "" || entry.age === null || entry.age === undefined ? NaN : Number(entry.age);
+      if (!Number.isInteger(age) || age < 0 || age > MAX_CHILD_GUEST_AGE) {
+        throw new AppError("GUEST_DETAILS_REQUIRED", 400, `Please give the age of ${name} (${which}), 0 to ${MAX_CHILD_GUEST_AGE}.`);
+      }
+      people.push({ name, age });
+    }
+    return { ...line, people };
+  });
+}
+
+/** "Tuba, 7; Rafi, 4": the guests' names (and children's ages), or "" when none were given. */
+export function guestWho(g: Pick<GuestLine, "people">): string {
+  return (g.people ?? []).map((p) => (p.age !== undefined && p.age !== null ? `${p.name}, ${p.age}` : p.name)).join("; ");
+}
+
+/** "Spouse × 1 (Rina)" or "Child × 2 (Tuba, 7; Rafi, 4)"; older registrations show the count only. */
+export function formatGuestLine(g: Pick<GuestLine, "name" | "count" | "people">): string {
+  const who = guestWho(g);
+  return `${g.name} × ${g.count}${who ? ` (${who})` : ""}`;
+}
+
+function storedPeople(raw: unknown): GuestPerson[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const people = raw.flatMap((p): GuestPerson[] => {
+    if (!p || typeof p !== "object" || typeof (p as { name?: unknown }).name !== "string") return [];
+    const age = Number((p as { age?: unknown }).age);
+    return [{ name: (p as { name: string }).name, ...(Number.isInteger(age) ? { age } : {}) }];
+  });
+  return people.length ? people : undefined;
+}
+
 /** Guests stored on a registration; older registrations only have the extra-adult / child counts. */
 export function storedGuests(reg: { guests?: unknown; extraAdults: number; extraChildren: number }): GuestLine[] {
   const lines = Array.isArray(reg.guests)
@@ -256,7 +314,7 @@ export function storedGuests(reg: { guests?: unknown; extraAdults: number; extra
         const count = Number(g.count);
         const price = Number(g.price);
         return typeof g.name === "string" && Number.isInteger(count) && count > 0
-          ? [{ name: g.name, count, price: Number.isFinite(price) ? price : 0 }]
+          ? [{ name: g.name, count, price: Number.isFinite(price) ? price : 0, ...(storedPeople(g.people) ? { people: storedPeople(g.people) } : {}) }]
           : [];
       })
     : [];

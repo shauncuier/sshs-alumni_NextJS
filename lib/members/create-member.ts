@@ -4,6 +4,7 @@ import { AppError } from "@/lib/app-error";
 import type { AccountInput } from "@/lib/events/types";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
+import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 
 const MIN_PASSWORD_LENGTH = 8;
 const BCRYPT_COST = 12;
@@ -78,6 +79,7 @@ export async function createMemberAccount(
           phone: input.phone?.trim() || null,
           rollNumber,
           bloodGroup,
+          dateOfBirth: parseDateOfBirth(input.dateOfBirth, false),
           section: input.section?.trim() || null,
           bio: `Alumnus of SSGHS Batch ${batch}`,
           verificationStatus: "PENDING",

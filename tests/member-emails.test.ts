@@ -66,8 +66,8 @@ const join = async () => {
     sessionUserId: null,
     photo: await makeImage(800, 800),
     proof: { type: "SSC_CERTIFICATE", file: makePdf() },
-    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, phoneVerificationToken: verifiedPhoneToken() },
-    rsvp: { guests: { Spouse: 1 }, paymentMethod: "bKash", transactionId: "TRX123456" },
+    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", phoneVerificationToken: verifiedPhoneToken() },
+    rsvp: { guests: { Spouse: 1 }, guestPeople: { Spouse: [{ name: "Rina Akter" }] }, paymentMethod: "bKash", transactionId: "TRX123456" },
   });
   return { event, registration };
 };

@@ -10,7 +10,8 @@ import { readVerifiedPhone } from "@/lib/phone-otp";
 import { readVerifiedEmail } from "@/lib/email-otp";
 import { otpRequired } from "@/lib/otp-setting";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
-import { computeFee, storedGuests } from "./pricing";
+import { attachGuestPeople, computeFee, storedGuests } from "./pricing";
+import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import { eventFeeRules } from "./service";
 import { ticketInfo } from "./tickets";
@@ -137,6 +138,7 @@ export async function registerForEvent(args: {
     const event = await prisma.event.findUnique({ where: { slug: args.slug }, select: { isMembershipEvent: true } });
     if (event?.isMembershipEvent) {
       account = checkContactVerified(account, await otpRequired());
+      parseDateOfBirth(account.dateOfBirth, true);
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
       const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);
@@ -228,6 +230,8 @@ export async function registerForEvent(args: {
       // The member's fee depends on their SSC batch: the one on the join form, or their profile's.
       const sscBatch = account?.sscBatch ?? (await tx.alumniProfile.findUnique({ where: { userId }, select: { sscBatch: true } }))?.sscBatch;
       const price = computeFee(rules, args.rsvp, { sscBatch });
+      // Online registrations name every guest (and give each child's age).
+      const guests = attachGuestPeople(price.guests, args.rsvp.guestPeople);
       if (event.isMembershipEvent && price.fee <= 0) {
         throw new AppError("MEMBERSHIP_MUST_BE_PAID", 400, "Membership registration requires a fee.");
       }
@@ -262,7 +266,7 @@ export async function registerForEvent(args: {
           packageName: price.pkg?.name ?? null,
           extraAdults: price.extraAdults,
           extraChildren: price.extraChildren,
-          guests: price.guests as unknown as Prisma.InputJsonValue,
+          guests: guests as unknown as Prisma.InputJsonValue,
           source: cleanSource(args.rsvp.source),
           headCount: price.headCount,
           guestCount: price.headCount,

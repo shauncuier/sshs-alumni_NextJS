@@ -29,7 +29,7 @@ async function confirmed(slug = "jubilee") {
     ],
   });
   const member = await makeMember();
-  const { registration } = await registerForEvent({ slug, sessionUserId: member.id, rsvp: { guests: { Spouse: 1, Child: 1 } } });
+  const { registration } = await registerForEvent({ slug, sessionUserId: member.id, rsvp: { guests: { Spouse: 1, Child: 1 }, guestPeople: { Spouse: [{ name: "Rina" }], Child: [{ name: "Tuba", age: 7 }] } } });
   return { event, member, registration };
 }
 

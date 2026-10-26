@@ -28,6 +28,7 @@ import EducationSection from "@/components/profile/EducationSection";
 import { readEducation } from "@/lib/members/education";
 import ExperienceSection from "@/components/profile/ExperienceSection";
 import { readExperience } from "@/lib/members/experience";
+import { dateOfBirthInput } from "@/lib/members/date-of-birth";
 
 interface ProfileRecord {
   id: string;
@@ -35,6 +36,7 @@ interface ProfileRecord {
   sscBatch: number;
   rollNumber: string | null;
   bloodGroup: string | null;
+  dateOfBirth?: string | null;
   education?: unknown;
   experience?: unknown;
   section: string | null;
@@ -88,6 +90,7 @@ interface ProfileForm {
   locationCountry: string;
   rollNumber: string;
   bloodGroup: string;
+  dateOfBirth: string;
   section: string;
   phone: string;
   isPhonePublic: boolean;
@@ -132,6 +135,7 @@ function toForm(profile: ProfileRecord): ProfileForm {
     locationCountry: profile.locationCountry || "Bangladesh",
     rollNumber: profile.rollNumber ?? "",
     bloodGroup: profile.bloodGroup ?? "",
+    dateOfBirth: dateOfBirthInput(profile.dateOfBirth),
     section: profile.section ?? "",
     phone: profile.phone ?? "",
     isPhonePublic: Boolean(profile.isPhonePublic),
@@ -681,6 +685,18 @@ export default function ProfilePage() {
                           <option value="">Not given</option>
                           {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
                         </select>
+                      </div>
+                      <div>
+                        <label htmlFor="pf-dob" className="block font-bold text-slate-700 mb-1">Date of Birth <span className="font-normal text-slate-400">(only you and the committee see it)</span></label>
+                        <input id="pf-dob"
+                          type="date"
+                          min="1916-01-01"
+                          max={`${new Date().getFullYear() - 10}-12-31`}
+                          autoComplete="bday"
+                          value={profileData.dateOfBirth}
+                          onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        />
                       </div>
                     </div>
                   </div>
