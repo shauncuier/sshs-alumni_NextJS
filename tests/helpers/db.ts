@@ -24,7 +24,7 @@ export async function resetDatabase(): Promise<void> {
 let counter = 0;
 
 export async function makeMember(
-  opts: { status?: "PENDING" | "VERIFIED" | "REJECTED"; role?: "ALUMNI" | "ADMIN" | "MODERATOR"; email?: string } = {}
+  opts: { status?: "PENDING" | "VERIFIED" | "REJECTED"; role?: "ALUMNI" | "ADMIN" | "MODERATOR" | "TREASURER"; email?: string } = {}
 ): Promise<{ id: string; email: string }> {
   counter += 1;
   const status = opts.status ?? "VERIFIED";
