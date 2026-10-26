@@ -157,8 +157,28 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link prefetch={false} href="/committee" className="hover:text-emerald-300 transition-colors">
+                  Executive Committee
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} href="/constitution" className="hover:text-emerald-300 transition-colors">
+                  Constitution
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} href="/honor-board" className="hover:text-emerald-300 transition-colors">
+                  Honor Board
+                </Link>
+              </li>
+              <li>
                 <Link prefetch={false} href="/school" className="hover:text-emerald-300 transition-colors">
                   School Heritage &amp; Campus
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} href="/notices" className="hover:text-emerald-300 transition-colors">
+                  Notice Board
                 </Link>
               </li>
               <li>

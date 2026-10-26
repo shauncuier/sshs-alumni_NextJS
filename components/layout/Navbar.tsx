@@ -24,12 +24,32 @@ import {
   Sparkles,
   Briefcase,
   GraduationCap,
+  ScrollText,
+  History,
+  Medal,
+  CalendarDays,
+  Megaphone,
+  Layers,
+  UserPlus,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Loaded only when someone opens search: it is not needed to show the page.
 const GlobalSearchModal = dynamic(() => import("@/components/shared/GlobalSearchModal"), { ssr: false });
 import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
+
+interface NavLink {
+  name: string;
+  href: string;
+  highlight?: boolean;
+}
+
+interface NavGroup {
+  name: string;
+  links: { name: string; href: string; icon: React.ComponentType<{ className?: string }>; desc: string }[];
+}
+
+type NavItem = NavLink | NavGroup;
 
 // Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
 // on every page costs more than the faster click is worth.
@@ -42,10 +62,10 @@ export default function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [drawerTop, setDrawerTop] = useState(64);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
 
@@ -73,8 +93,8 @@ export default function Navbar() {
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setMoreDropdownOpen(false);
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenGroup(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -86,7 +106,7 @@ export default function Navbar() {
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setMobileMenuOpen(false);
-    setMoreDropdownOpen(false);
+    setOpenGroup(null);
   }
 
   // Lock body scroll when mobile drawer is open
@@ -113,72 +133,45 @@ export default function Navbar() {
     return () => observer.disconnect();
   }, [mobileMenuOpen]);
 
-  // Primary navigation links with clean single-line naming
-  const primaryLinks = [
+  // Menu in the order of a classic alumni-association site: About, Committee,
+  // Members, News & Events, Community, then the giving link.
+  const navItems: NavItem[] = [
     { name: "Home", href: "/" },
-    { name: "Directory", href: "/alumni" },
-    { name: "Batches", href: "/batches" },
-    { name: "Events", href: "/events" },
-    { name: "Stories", href: "/stories" },
+    {
+      name: "About",
+      links: [
+        { name: "About the association", href: "/about", icon: Users, desc: "Who we are and what we do" },
+        { name: "Our school", href: "/school", icon: Building2, desc: "History of the school, EIIN 105070" },
+        { name: "Constitution", href: "/constitution", icon: ScrollText, desc: "The association's rules, as PDF" },
+        { name: "Past committees", href: "/committee/past", icon: History, desc: "Committees of earlier terms" },
+        { name: "Honor board", href: "/honor-board", icon: Medal, desc: "The people who led the association" },
+        { name: "Golden Jubilee", href: "/jubilee", icon: Sparkles, desc: "50 years of the school" },
+      ],
+    },
+    { name: "Committee", href: "/committee" },
+    { name: "Members", href: "/alumni" },
+    {
+      name: "News & Events",
+      links: [
+        { name: "News", href: "/news", icon: BookOpen, desc: "News from the association and school" },
+        { name: "Events", href: "/events", icon: CalendarDays, desc: "Reunions and programmes" },
+        { name: "Notice board", href: "/notices", icon: Megaphone, desc: "Official notices from the committee" },
+      ],
+    },
+    {
+      name: "Community",
+      links: [
+        { name: "Batches", href: "/batches", icon: Layers, desc: "Find your SSC batch" },
+        { name: "Career Hub", href: "/careers", icon: Briefcase, desc: "Jobs shared by alumni" },
+        { name: "Mentorship", href: "/mentorship", icon: GraduationCap, desc: "Guidance from senior alumni" },
+        { name: "Stories", href: "/stories", icon: BookOpen, desc: "Alumni life stories" },
+        { name: "Hall of Fame", href: "/achievements", icon: Award, desc: "Alumni achievements" },
+        { name: "Photo gallery", href: "/gallery", icon: ImageIcon, desc: "Albums and memories" },
+        { name: "Volunteer", href: "/volunteer", icon: HeartHandshake, desc: "Help run events" },
+        { name: "Contact", href: "/contact", icon: PhoneCall, desc: "Write to the committee" },
+      ],
+    },
     { name: "Giving Back", href: "/donate", highlight: true },
-  ];
-
-  // Secondary institutional links
-  const moreLinks = [
-    {
-      name: "Career Hub",
-      href: "/careers",
-      icon: Briefcase,
-      desc: "Job openings & internships from alumni firms",
-    },
-    {
-      name: "1-on-1 Mentorship",
-      href: "/mentorship",
-      icon: GraduationCap,
-      desc: "BCS, Medicine & Tech career guidance",
-    },
-    {
-      name: "Volunteer Squad",
-      href: "/volunteer",
-      icon: HeartHandshake,
-      desc: "Join organizing committees & event wings",
-    },
-    {
-      name: "About Association",
-      href: "/about",
-      icon: Users,
-      desc: "Constitution, leadership & executive committee",
-    },
-    {
-      name: "School Heritage",
-      href: "/school",
-      icon: Building2,
-      desc: "Campus legacy, historical archives & EIIN: 105070",
-    },
-    {
-      name: "Hall of Fame",
-      href: "/achievements",
-      icon: Award,
-      desc: "Distinguished alumni national & global honors",
-    },
-    {
-      name: "Photo Memories",
-      href: "/gallery",
-      icon: ImageIcon,
-      desc: "Nostalgic albums, batch photos & campus life",
-    },
-    {
-      name: "News & Bulletins",
-      href: "/news",
-      icon: BookOpen,
-      desc: "Official association notices and circulars",
-    },
-    {
-      name: "Contact Secretariat",
-      href: "/contact",
-      icon: PhoneCall,
-      desc: "Reach out to the executive alumni office",
-    },
   ];
 
   return (
@@ -277,100 +270,79 @@ export default function Navbar() {
             </Link>
 
             {/* 2. Desktop Navigation Menu */}
-            <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 text-[13px] font-medium whitespace-nowrap">
-              {primaryLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link prefetch={false}
-                    key={link.name}
-                    href={link.href}
-                    className={`px-3 py-2 rounded-lg transition-all duration-150 relative ${
-                      isActive
-                        ? "text-white font-semibold bg-emerald-800/60 border border-emerald-600/40 shadow-sm"
-                        : link.highlight
-                        ? "text-amber-300 hover:text-white hover:bg-amber-400/10 font-semibold"
-                        : "text-slate-200 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {link.highlight && (
-                        <HeartHandshake className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <nav ref={navRef} className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-[13px] font-medium whitespace-nowrap">
+              {navItems.map((item) => {
+                if ("href" in item) {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link prefetch={false}
+                      key={item.name}
+                      href={item.href}
+                      className={`px-2.5 xl:px-3 py-2 rounded-lg transition-all duration-150 relative ${
+                        isActive
+                          ? "text-white font-semibold bg-emerald-800/60 border border-emerald-600/40 shadow-sm"
+                          : item.highlight
+                          ? "text-amber-300 hover:text-white hover:bg-amber-400/10 font-semibold"
+                          : "text-slate-200 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {item.highlight && <HeartHandshake className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                        {item.name}
+                      </span>
+                      {isActive && (
+                        <span className="absolute -bottom-1 left-3 right-3 h-[2px] bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
                       )}
-                      {link.name}
-                    </span>
-                    {isActive && (
-                      <span className="absolute -bottom-1 left-3 right-3 h-[2px] bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+                    </Link>
+                  );
+                }
+                const open = openGroup === item.name;
+                const groupActive = item.links.some((l) => pathname === l.href);
+                return (
+                  <div key={item.name} className="relative" onMouseEnter={() => setOpenGroup(item.name)} onMouseLeave={() => setOpenGroup(null)}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenGroup((g) => (g === item.name ? null : item.name))}
+                      className={`px-2.5 xl:px-3 py-2 rounded-lg transition-colors flex items-center gap-1 ${
+                        open || groupActive ? "text-white bg-emerald-800/60" : "text-slate-200 hover:text-white hover:bg-white/5"
+                      }`}
+                      aria-expanded={open}
+                    >
+                      <span>{item.name}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 opacity-70 transition-transform duration-200 ${open ? "rotate-180 text-amber-300" : ""}`} />
+                    </button>
+
+                    {open && (
+                      <div className="absolute left-0 top-full pt-2 w-80 z-50 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="bg-[#052118] border border-emerald-700/70 rounded-2xl shadow-2xl shadow-black/70 p-2 space-y-1">
+                          {item.links.map((sub) => {
+                            const Icon = sub.icon;
+                            const isSubActive = pathname === sub.href;
+                            return (
+                              <Link prefetch={false}
+                                key={sub.href}
+                                href={sub.href}
+                                onClick={() => setOpenGroup(null)}
+                                className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                                  isSubActive ? "bg-emerald-800 text-white border border-emerald-600/40" : "hover:bg-emerald-900/60 text-slate-200"
+                                }`}
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-[#041a13] flex items-center justify-center text-amber-400 shrink-0 border border-emerald-800/80">
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-semibold text-xs text-white leading-tight">{sub.name}</div>
+                                  <div className="text-[11px] text-slate-300/80 mt-0.5 leading-snug line-clamp-1">{sub.desc}</div>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
-                  </Link>
+                  </div>
                 );
               })}
-
-              {/* Institutional Dropdown */}
-              <div
-                className="relative"
-                ref={dropdownRef}
-                onMouseEnter={() => setMoreDropdownOpen(true)}
-                onMouseLeave={() => setMoreDropdownOpen(false)}
-              >
-                <button
-                  type="button"
-                  onClick={() => setMoreDropdownOpen((prev) => !prev)}
-                  className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 ${
-                    moreDropdownOpen
-                      ? "text-white bg-emerald-800/60"
-                      : "text-slate-200 hover:text-white hover:bg-white/5"
-                  }`}
-                  aria-expanded={moreDropdownOpen}
-                >
-                  <span>More</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 opacity-70 transition-transform duration-200 ${
-                      moreDropdownOpen ? "rotate-180 text-amber-300" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* Dropdown Menu Box */}
-                {moreDropdownOpen && (
-                  <div className="absolute right-0 top-full pt-2 w-84 z-50 animate-in fade-in zoom-in-95 duration-150">
-                    <div className="bg-[#052118] border border-emerald-700/70 rounded-2xl shadow-2xl shadow-black/70 p-2 space-y-1">
-                      <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-emerald-400/80 border-b border-emerald-900/60 flex items-center justify-between">
-                        <span>Institutional Pages</span>
-                        <Sparkles className="w-3 h-3 text-amber-400" />
-                      </div>
-
-                      {moreLinks.map((item) => {
-                        const Icon = item.icon;
-                        const isSubActive = pathname === item.href;
-                        return (
-                          <Link prefetch={false}
-                            key={item.name}
-                            href={item.href}
-                            onClick={() => setMoreDropdownOpen(false)}
-                            className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                              isSubActive
-                                ? "bg-emerald-800 text-white border border-emerald-600/40"
-                                : "hover:bg-emerald-900/60 text-slate-200"
-                            }`}
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-[#041a13] flex items-center justify-center text-amber-400 shrink-0 border border-emerald-800/80">
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-xs text-white leading-tight">
-                                {item.name}
-                              </div>
-                              <div className="text-[11px] text-slate-300/80 mt-0.5 leading-snug line-clamp-1">
-                                {item.desc}
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
             </nav>
 
             {/* 3. Action Controls */}
@@ -415,6 +387,14 @@ export default function Navbar() {
                   </button>
                 </div>
               ) : (
+                <>
+                <Link prefetch={false}
+                  href="/register"
+                  className="hidden xl:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow-md transition-colors"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Become a Member</span>
+                </Link>
                 <Link prefetch={false}
                   href="/login"
                   className="inline-flex items-center gap-1.5 h-10 sm:h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -422,6 +402,7 @@ export default function Navbar() {
                   <LogIn className="w-3.5 h-3.5 text-emerald-200" />
                   <span>Sign In</span>
                 </Link>
+                </>
               )}
 
               {/* Mobile Drawer Trigger */}
@@ -471,9 +452,10 @@ export default function Navbar() {
             </span>
           </button>
 
-          {/* Primary Navigation Links */}
+          {/* Top-level links */}
           <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-            {primaryLinks.map((link) => {
+            {navItems.map((link) => {
+              if (!("href" in link)) return null;
               const isActive = pathname === link.href;
               return (
                 <Link prefetch={false}
@@ -481,47 +463,44 @@ export default function Navbar() {
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${
-                    isActive
-                      ? "bg-emerald-800 text-white border border-emerald-600"
-                      : "bg-emerald-950/60 text-slate-200 hover:bg-emerald-900"
+                    isActive ? "bg-emerald-800 text-white border border-emerald-600" : "bg-emerald-950/60 text-slate-200 hover:bg-emerald-900"
                   }`}
                 >
                   <span>{link.name}</span>
-                  {link.highlight && (
-                    <HeartHandshake className="w-3.5 h-3.5 text-amber-400" />
-                  )}
+                  {link.highlight && <HeartHandshake className="w-3.5 h-3.5 text-amber-400" />}
                 </Link>
               );
             })}
           </div>
 
-          {/* Institutional Sub-links */}
-          <div className="pt-3 border-t border-emerald-900/80">
-            <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400/80 px-1 mb-2">
-              Explore Association
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {moreLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname === link.href;
-                return (
-                  <Link prefetch={false}
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2 p-2 rounded-xl transition-colors ${
-                      isActive
-                        ? "bg-emerald-800 text-white"
-                        : "text-slate-300 hover:bg-emerald-900/60 hover:text-white"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="truncate">{link.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          {/* Grouped links, as in the desktop dropdowns */}
+          {navItems.map((group) => {
+            if ("href" in group) return null;
+            return (
+              <div key={group.name} className="pt-3 border-t border-emerald-900/80">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400/80 px-1 mb-2">{group.name}</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {group.links.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = pathname === link.href;
+                    return (
+                      <Link prefetch={false}
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-2 p-2 rounded-xl transition-colors ${
+                          isActive ? "bg-emerald-800 text-white" : "text-slate-300 hover:bg-emerald-900/60 hover:text-white"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="truncate">{link.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
 
           {/* Auth Action Button */}
           <div className="pt-3 border-t border-emerald-900/80">
@@ -553,6 +532,15 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
+              <div className="space-y-2">
+              <Link prefetch={false}
+                href="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-md"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Become a Member</span>
+              </Link>
               <Link prefetch={false}
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
@@ -561,6 +549,7 @@ export default function Navbar() {
                 <LogIn className="w-4 h-4" />
                 <span>Sign In to Alumni Portal</span>
               </Link>
+              </div>
             )}
 
             {/* Quick Portal & Admin Links in Mobile Drawer */}

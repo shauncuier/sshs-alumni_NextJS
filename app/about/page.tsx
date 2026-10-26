@@ -57,8 +57,20 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* The committee is listed here once its members are confirmed. */}
-          <div className="mt-12 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { href: "/committee", label: "Executive committee", note: "Who runs the association now" },
+              { href: "/constitution", label: "Constitution", note: "The rules, to download" },
+              { href: "/honor-board", label: "Honor board", note: "Those who led before" },
+            ].map((l) => (
+              <Link key={l.href} href={l.href} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-emerald-400 transition-colors">
+                <p className="font-bold text-slate-900">{l.label}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{l.note}</p>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <Users className="w-6 h-6 text-emerald-700 shrink-0" />
               <div>

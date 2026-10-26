@@ -4,6 +4,7 @@ import { publishedStoryIds } from "@/lib/stories";
 import { listPublicEvents } from "@/lib/events/service";
 import { listPublishedNews } from "@/lib/news";
 import { listOpenJobs } from "@/lib/jobs";
+import { listActiveNotices } from "@/lib/notices";
 
 // Rebuilt at most hourly from the database, not frozen at build time.
 export const revalidate = 3600;
@@ -31,6 +32,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/careers",
     "/mentorship",
     "/volunteer",
+    "/committee",
+    "/committee/past",
+    "/constitution",
+    "/honor-board",
+    "/notices",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: now,
@@ -78,5 +84,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticPages, ...batchPages, ...eventPages, ...storyPages, ...newsPages, ...jobPages];
+  const noticePages = (await listActiveNotices().catch(() => [])).map((n) => ({
+    url: `${baseUrl}/notices/${n.id}`,
+    lastModified: new Date(n.updatedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
+  }));
+
+  return [...staticPages, ...batchPages, ...eventPages, ...storyPages, ...newsPages, ...jobPages, ...noticePages];
 }
