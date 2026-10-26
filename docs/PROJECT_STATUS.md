@@ -142,3 +142,17 @@ Scope: everything changed on this branch, plus a sweep of all 55 API routes for 
 - Security fixes in section 5.
 - Roadmap steps 1–10 on `prod-readiness`: activity log, manual donations, volunteers and SMS history in the database, news / gallery / stories / careers / mentorship / network from the database, moderator permissions, page navigation without full-screen loader, sample data removed (feed, batches, dashboard, notifications rebuilt on real data), production-safe seed (`db:seed:prod`, `db:remove-demo`), donation campaigns managed in admin, production env check (`docs/PRODUCTION_ENV.md`), same-origin check and body caps on every write route, dependency fixes (real `mariadb` driver was 3.4.5) and stricter security headers, privacy clean-up of rejected applicants (`docs/DATA_RETENTION.md`), membership-flag guard.
 - Dev fix: a leftover PWA service worker served old JavaScript in `next dev` (hydration mismatch); dev now removes it.
+
+## 9. Association structure (branch `feature/association-structure`, 2026-10-26)
+
+Public site arranged like a classic alumni-association site (reference: oldmuslimians.org; structure only, our design and content):
+
+- **Menu:** Home · About ▾ (about us, our school, constitution, past committees, honor board, Golden Jubilee) · Committee · Members · News & Events ▾ (news, events, notice board) · Community ▾ · Giving Back, plus a Become a Member button for visitors.
+- **New pages:** `/committee`, `/committee/past`, `/constitution` (PDF downloads), `/honor-board`, `/notices` and `/notices/[id]`. Placeholder photos (`public/placeholders/`) show until real ones are uploaded.
+- **Home page:** message from the President (Admin → Executive Committee), aims and objectives (`lib/association-aims.ts`, placeholder wording), latest notices.
+- **Admin:** Executive Committee, Honor Board and Constitution (area `committee`, admins only); Notice Board (area `notices`, moderators too). Public PDFs are stored by `lib/media/documents.ts`.
+- **OTP switch:** Admin → Bulk SMS → "Require OTP verification" (on by default). Off: the join form and profile take the mobile number without a code (`lib/otp-setting.ts`).
+- **Registration:** date of birth is required on the join form (saved on the profile, editable there); every added guest needs a name and every child guest an age (stored in `EventRegistration.guests[].people`).
+- **Registration forms download:** Admin → event → "Download registration forms" (or "Form" on one registration) prints every registration as the filled-in paper form, one Legal page each; Save as PDF to download.
+- **Logo:** the committee's approved logo is the master (`design/brand/alumni-council-logo.jpg`); icons, banner, paper form and guide were rebuilt from it.
+- **Schema:** new tables `CommitteeTerm`, `CommitteeMember`, `HonorBoardEntry`, `ConstitutionDocument`; new columns on `Announcement` and `AlumniProfile.dateOfBirth`. Run `npm run db:push` on every database (local done; staging and production not yet).
