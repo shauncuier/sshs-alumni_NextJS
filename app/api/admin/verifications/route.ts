@@ -1,6 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
+import { postRegistrationIncome } from "@/lib/finance/posting";
 import { logActivity } from "@/lib/activity-log";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
@@ -158,6 +159,7 @@ export async function PATCH(req: Request) {
                 },
               });
               confirmedRegistrationId = pendingReg.id;
+              await postRegistrationIncome(tx, pendingReg.id, me.email);
             }
           } else {
             await tx.eventRegistration.updateMany({

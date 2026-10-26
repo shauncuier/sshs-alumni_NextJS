@@ -12,6 +12,7 @@ import { CLOSED_MESSAGES } from "./availability";
 import { computeFee } from "./pricing";
 import { eventFeeRules } from "./service";
 import { OFFLINE_SOURCE } from "./types";
+import { postRegistrationIncome } from "@/lib/finance/posting";
 
 /**
  * Paper registration forms, typed in by a committee member. The committee has the
@@ -184,6 +185,8 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
         await tx.user.update({ where: { id: created.id }, data: { status: "VERIFIED" } });
         await tx.alumniProfile.updateMany({ where: { userId: created.id }, data: { verificationStatus: "VERIFIED" } });
         await tx.verificationRequest.updateMany({ where: { userId: created.id }, data: { status: "VERIFIED", reviewedBy: input.staff.email } });
+        // The money was taken with the form: it goes into the accounts now.
+        await postRegistrationIncome(tx, registration.id, input.staff.email);
 
         return { registrationId: registration.id, userId: created.id, totalFee: registration.totalFee };
       },

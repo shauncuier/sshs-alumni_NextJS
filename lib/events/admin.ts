@@ -9,6 +9,7 @@ import { getPublicEventBySlug } from "./service";
 import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./types";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
 import { tokenUsageByRegistration } from "./tokens";
+import { postRegistrationIncome, voidRegistrationIncome } from "@/lib/finance/posting";
 
 type RegWithUser = EventRegistration & {
   user: User & { profile: AlumniProfile | null; verificationRequests: VerificationRequest[] };
@@ -146,6 +147,12 @@ export async function decideRegistration(args: {
     });
     if (write.count === 0) {
       throw new AppError("INVALID_TRANSITION", 409, "Another admin just changed this registration. Refresh and try again.");
+    }
+
+    // The accounts: a confirmed payment is income; a cancelled one is no longer counted.
+    if (args.action === "APPROVE") await postRegistrationIncome(tx, reg.id, args.adminEmail);
+    if (args.action === "CANCEL" && reg.status === "CONFIRMED") {
+      await voidRegistrationIncome(tx, reg.id, "Registration cancelled (enter any refund as an expense)", args.adminEmail);
     }
 
     let memberDecided = false;

@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { smsDonationReceived } from "@/lib/member-sms";
 import { paymentNoticesOn } from "@/lib/payment-notices";
 import { openCampaignOrThrow } from "@/lib/campaigns";
+import { postDonationIncome } from "@/lib/finance/posting";
 
 /**
  * Donations without a payment gateway: the donor pays by bKash, Nagad, Bangla QR,
@@ -133,6 +134,7 @@ export async function decideDonation(args: { donationId: string; decision: Donat
         where: { id: current.campaignId },
         data: { raisedAmount: { increment: current.amount }, donorCount: { increment: 1 } },
       });
+      await postDonationIncome(tx, current.id, args.adminEmail);
     }
     return tx.donation.findUniqueOrThrow({ where: { id: current.id }, include: { campaign: { select: { title: true } } } });
   });

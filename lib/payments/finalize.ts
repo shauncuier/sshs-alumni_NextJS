@@ -1,6 +1,7 @@
 import { PaymentGateway } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { logActivity } from "@/lib/activity-log";
+import { postDonationIncome } from "@/lib/finance/posting";
 
 type FinalizePaymentInput = {
   donationId: string;
@@ -65,6 +66,7 @@ async function applyPayment(input: FinalizePaymentInput): Promise<{ ok: boolean;
       where: { id: payment.donation.campaignId },
       data: { raisedAmount: { increment: payment.donation.amount }, donorCount: { increment: 1 } },
     });
+    await postDonationIncome(tx, payment.donationId, `gateway:${input.gateway.toLowerCase()}`);
     return { ok: true };
   });
 }
