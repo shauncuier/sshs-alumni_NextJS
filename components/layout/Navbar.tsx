@@ -21,6 +21,7 @@ import {
   LogIn,
   LogOut,
   HeartHandshake,
+  Heart,
   Sparkles,
   Briefcase,
   GraduationCap,
@@ -31,6 +32,7 @@ import {
   Megaphone,
   Layers,
   UserPlus,
+  UserRound,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -41,7 +43,6 @@ import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
 interface NavLink {
   name: string;
   href: string;
-  highlight?: boolean;
 }
 
 interface NavGroup {
@@ -51,6 +52,49 @@ interface NavGroup {
 
 type NavItem = NavLink | NavGroup;
 
+// Menu in the order of a classic alumni-association site: About, Committee, Members,
+// News & Events, Community. Everything else lives inside the three dropdowns.
+const NAV_ITEMS: NavItem[] = [
+  { name: "Home", href: "/" },
+  {
+    name: "About",
+    links: [
+      { name: "About the association", href: "/about", icon: Users, desc: "Who we are and what we do" },
+      { name: "Our school", href: "/school", icon: Building2, desc: "History of the school, EIIN 105070" },
+      { name: "Constitution", href: "/constitution", icon: ScrollText, desc: "The association's rules, as PDF" },
+      { name: "Past committees", href: "/committee/past", icon: History, desc: "Committees of earlier terms" },
+      { name: "Honor board", href: "/honor-board", icon: Medal, desc: "The people who led the association" },
+      { name: "Golden Jubilee", href: "/jubilee", icon: Sparkles, desc: "50 years of the school" },
+    ],
+  },
+  { name: "Committee", href: "/committee" },
+  { name: "Members", href: "/alumni" },
+  {
+    name: "News & Events",
+    links: [
+      { name: "News", href: "/news", icon: BookOpen, desc: "News from the association and school" },
+      { name: "Events", href: "/events", icon: CalendarDays, desc: "Reunions and programmes" },
+      { name: "Notice board", href: "/notices", icon: Megaphone, desc: "Official notices from the committee" },
+    ],
+  },
+  {
+    name: "Community",
+    links: [
+      { name: "Giving back", href: "/donate", icon: Heart, desc: "Donate to the school and scholarships" },
+      { name: "Batches", href: "/batches", icon: Layers, desc: "Find your SSC batch" },
+      { name: "Career hub", href: "/careers", icon: Briefcase, desc: "Jobs shared by alumni" },
+      { name: "Mentorship", href: "/mentorship", icon: GraduationCap, desc: "Guidance from senior alumni" },
+      { name: "Stories", href: "/stories", icon: BookOpen, desc: "Alumni life stories" },
+      { name: "Hall of fame", href: "/achievements", icon: Award, desc: "Alumni achievements" },
+      { name: "Photo gallery", href: "/gallery", icon: ImageIcon, desc: "Albums and memories" },
+      { name: "Volunteer", href: "/volunteer", icon: HeartHandshake, desc: "Help run events" },
+      { name: "Contact", href: "/contact", icon: PhoneCall, desc: "Write to the committee" },
+    ],
+  },
+];
+
+const isGroupActive = (group: NavGroup, pathname: string) => group.links.some((l) => pathname === l.href || pathname.startsWith(`${l.href}/`));
+
 // Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
 // on every page costs more than the faster click is worth.
 export default function Navbar() {
@@ -59,21 +103,21 @@ export default function Navbar() {
   // The admin console link is only for staff; visitors and members never see it.
   const role = session?.user?.role;
   const adminHref = role && canUseAdminPanel(role) ? homeForRole(role) : null;
+  const firstName = session?.user?.name?.split(" ")[0] || "Account";
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [drawerTop, setDrawerTop] = useState(64);
   const navRef = useRef<HTMLElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
 
-  // Handle scroll effect
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -85,44 +129,43 @@ export default function Navbar() {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
       }
+      if (e.key === "Escape") {
+        setOpenGroup(null);
+        setUserMenuOpen(false);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Close dropdown on outside click
+  // Close the dropdowns on an outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenGroup(null);
-      }
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenGroup(null);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close mobile menu and dropdown on route change
+  // Close menus on route change
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setMobileMenuOpen(false);
     setOpenGroup(null);
+    setUserMenuOpen(false);
   }
 
-  // Lock body scroll when mobile drawer is open
+  // Lock body scroll when the mobile drawer is open
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
 
-  // Pin the mobile drawer to the header's real bottom edge (the utility ribbon
-  // shows from sm up, so the header height changes across breakpoints)
+  // Pin the mobile drawer to the header's real bottom edge
   useLayoutEffect(() => {
     const header = headerRef.current;
     if (!mobileMenuOpen || !header) return;
@@ -133,364 +176,219 @@ export default function Navbar() {
     return () => observer.disconnect();
   }, [mobileMenuOpen]);
 
-  // Menu in the order of a classic alumni-association site: About, Committee,
-  // Members, News & Events, Community, then the giving link.
-  const navItems: NavItem[] = [
-    { name: "Home", href: "/" },
-    {
-      name: "About",
-      links: [
-        { name: "About the association", href: "/about", icon: Users, desc: "Who we are and what we do" },
-        { name: "Our school", href: "/school", icon: Building2, desc: "History of the school, EIIN 105070" },
-        { name: "Constitution", href: "/constitution", icon: ScrollText, desc: "The association's rules, as PDF" },
-        { name: "Past committees", href: "/committee/past", icon: History, desc: "Committees of earlier terms" },
-        { name: "Honor board", href: "/honor-board", icon: Medal, desc: "The people who led the association" },
-        { name: "Golden Jubilee", href: "/jubilee", icon: Sparkles, desc: "50 years of the school" },
-      ],
-    },
-    { name: "Committee", href: "/committee" },
-    { name: "Members", href: "/alumni" },
-    {
-      name: "News & Events",
-      links: [
-        { name: "News", href: "/news", icon: BookOpen, desc: "News from the association and school" },
-        { name: "Events", href: "/events", icon: CalendarDays, desc: "Reunions and programmes" },
-        { name: "Notice board", href: "/notices", icon: Megaphone, desc: "Official notices from the committee" },
-      ],
-    },
-    {
-      name: "Community",
-      links: [
-        { name: "Batches", href: "/batches", icon: Layers, desc: "Find your SSC batch" },
-        { name: "Career Hub", href: "/careers", icon: Briefcase, desc: "Jobs shared by alumni" },
-        { name: "Mentorship", href: "/mentorship", icon: GraduationCap, desc: "Guidance from senior alumni" },
-        { name: "Stories", href: "/stories", icon: BookOpen, desc: "Alumni life stories" },
-        { name: "Hall of Fame", href: "/achievements", icon: Award, desc: "Alumni achievements" },
-        { name: "Photo gallery", href: "/gallery", icon: ImageIcon, desc: "Albums and memories" },
-        { name: "Volunteer", href: "/volunteer", icon: HeartHandshake, desc: "Help run events" },
-        { name: "Contact", href: "/contact", icon: PhoneCall, desc: "Write to the committee" },
-      ],
-    },
-    { name: "Giving Back", href: "/donate", highlight: true },
-  ];
-
   return (
     <>
       <header
         ref={headerRef}
-        className={`sticky top-0 z-40 w-full transition-shadow duration-300 ${
-          scrolled ? "shadow-2xl shadow-black/25" : "shadow-md"
+        className={`sticky top-0 z-40 w-full bg-[#06281e]/98 backdrop-blur-xl border-b border-emerald-800/60 transition-shadow duration-300 ${
+          scrolled ? "shadow-xl shadow-black/25" : ""
         }`}
       >
-        {/* Top Institutional Utility Ribbon (Hidden on mobile screens to prevent text overlap) */}
-        <div className="hidden sm:block bg-[#041a13] border-b border-emerald-900/60 text-slate-300 text-[11px] font-medium tracking-normal">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
-            {/* Left: Official School Accreditation */}
-            <div className="flex items-center gap-2 sm:gap-3 overflow-hidden text-ellipsis whitespace-nowrap">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/90 text-amber-300/90 border border-amber-400/20 text-[10px] font-semibold tracking-wider uppercase shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                Govt. High School
-              </span>
-              <span className="text-slate-300/90 truncate hidden md:inline">
-                Sabuj Shikshayatan Government High School
-              </span>
-              <span className="text-emerald-700 hidden lg:inline">•</span>
-              <span className="text-slate-400 hidden lg:inline font-mono text-[10px]">
-                EIIN: 105070
-              </span>
-              <span className="text-emerald-700 hidden xl:inline">•</span>
-              <span className="text-slate-400 hidden xl:inline">Sitakunda, Chattogram</span>
-            </div>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-[72px] flex items-center gap-3 xl:gap-6">
+          {/* Logo and the association's name, as on the logo: Bangla, then English */}
+          <Link prefetch={false} href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 select-none" aria-label="Praktan Sabujian Parishad, home">
+            <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white ring-2 ring-amber-400/60 shadow-md shadow-black/30 flex items-center justify-center overflow-hidden shrink-0">
+              <NextImage src="/logo.png" alt="" width={48} height={48} className="w-full h-full object-contain" priority />
+            </span>
+            <span className="flex flex-col leading-tight">
+              <span className="font-extrabold text-[15px] sm:text-lg text-white whitespace-nowrap">প্রাক্তন সবুজিয়ান পরিষদ</span>
+              <span className="hidden sm:block text-[11px] font-semibold text-amber-300/90 whitespace-nowrap">Praktan Sabujian Parishad</span>
+            </span>
+          </Link>
 
-            {/* Right: Portal Access & Quick Links */}
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0 text-[11px]">
-              <Link prefetch={false}
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Member Portal</span>
-              </Link>
-
-              {adminHref && (
-                <>
-                  <span className="text-emerald-900 select-none">|</span>
-                  <Link prefetch={false}
-                    href={adminHref}
-                    className="inline-flex items-center gap-1.5 text-amber-300/90 hover:text-amber-200 transition-colors font-medium"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Admin Console</span>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Navbar */}
-        <div className="bg-[#06281e]/98 backdrop-blur-xl border-b border-emerald-800/50">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-1.5 sm:gap-6">
-            
-            {/* 1. Official Identity & Crest */}
-            <Link prefetch={false}
-              href="/"
-              className="flex items-center gap-2 sm:gap-3 group shrink min-w-0 select-none"
-              aria-label="Praktan Sabujian Parishad Home"
-            >
-              {/* Official Alumni Seal / Crest */}
-              <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-full p-0.5 shadow-lg shadow-black/40 ring-2 ring-amber-400/50 bg-white flex items-center justify-center transition-all duration-200 group-hover:scale-105 shrink-0 overflow-hidden">
-                <NextImage
-                  src="/logo.png"
-                  alt="Praktan Sabujian Parishad Official Crest"
-                  width={44}
-                  height={44}
-                  className="w-full h-full object-contain rounded-full"
-                  priority
-                />
-              </div>
-
-              {/* Wordmark Hierarchy */}
-              <div className="flex flex-col justify-center min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="font-extrabold text-sm sm:text-lg text-white leading-tight truncate">
-                    {/* Short name on phones and where the desktop menu leaves little room (lg). */}
-                    <span className="sm:hidden lg:inline xl:hidden">সবুজিয়ান পরিষদ</span>
-                    <span className="hidden sm:inline lg:hidden xl:inline">প্রাক্তন সবুজিয়ান পরিষদ</span>
-                  </span>
-                </div>
-                {/* Hidden on phones: with the header controls it would overflow the screen. */}
-                <span className="hidden md:block text-xs font-semibold text-emerald-200/90 tracking-normal mt-1 leading-tight line-clamp-1">
-                  Sabuj Shikshayatan Govt. High School
-                </span>
-                <span className="text-[10px] text-emerald-400/70 font-normal leading-none mt-0.5 hidden xl:block">
-                  Praktan Sabujian Parishad
-                </span>
-              </div>
-            </Link>
-
-            {/* 2. Desktop Navigation Menu */}
-            <nav ref={navRef} className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-[13px] font-medium whitespace-nowrap">
-              {navItems.map((item) => {
-                if ("href" in item) {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link prefetch={false}
-                      key={item.name}
-                      href={item.href}
-                      className={`px-2.5 xl:px-3 py-2 rounded-lg transition-all duration-150 relative ${
-                        isActive
-                          ? "text-white font-semibold bg-emerald-800/60 border border-emerald-600/40 shadow-sm"
-                          : item.highlight
-                          ? "text-amber-300 hover:text-white hover:bg-amber-400/10 font-semibold"
-                          : "text-slate-200 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {item.highlight && <HeartHandshake className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                        {item.name}
-                      </span>
-                      {isActive && (
-                        <span className="absolute -bottom-1 left-3 right-3 h-[2px] bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-                      )}
-                    </Link>
-                  );
-                }
-                const open = openGroup === item.name;
-                const groupActive = item.links.some((l) => pathname === l.href);
+          {/* Desktop menu */}
+          <nav ref={navRef} aria-label="Main" className="hidden xl:flex items-center gap-1 mx-auto text-sm font-medium whitespace-nowrap">
+            {NAV_ITEMS.map((item) => {
+              if ("href" in item) {
+                const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
-                  <div key={item.name} className="relative" onMouseEnter={() => setOpenGroup(item.name)} onMouseLeave={() => setOpenGroup(null)}>
-                    <button
-                      type="button"
-                      onClick={() => setOpenGroup((g) => (g === item.name ? null : item.name))}
-                      className={`px-2.5 xl:px-3 py-2 rounded-lg transition-colors flex items-center gap-1 ${
-                        open || groupActive ? "text-white bg-emerald-800/60" : "text-slate-200 hover:text-white hover:bg-white/5"
-                      }`}
-                      aria-expanded={open}
-                    >
-                      <span>{item.name}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 opacity-70 transition-transform duration-200 ${open ? "rotate-180 text-amber-300" : ""}`} />
-                    </button>
-
-                    {open && (
-                      <div className="absolute left-0 top-full pt-2 w-80 z-50 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="bg-[#052118] border border-emerald-700/70 rounded-2xl shadow-2xl shadow-black/70 p-2 space-y-1">
-                          {item.links.map((sub) => {
-                            const Icon = sub.icon;
-                            const isSubActive = pathname === sub.href;
-                            return (
-                              <Link prefetch={false}
-                                key={sub.href}
-                                href={sub.href}
-                                onClick={() => setOpenGroup(null)}
-                                className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                                  isSubActive ? "bg-emerald-800 text-white border border-emerald-600/40" : "hover:bg-emerald-900/60 text-slate-200"
-                                }`}
-                              >
-                                <div className="w-8 h-8 rounded-lg bg-[#041a13] flex items-center justify-center text-amber-400 shrink-0 border border-emerald-800/80">
-                                  <Icon className="w-4 h-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-xs text-white leading-tight">{sub.name}</div>
-                                  <div className="text-[11px] text-slate-300/80 mt-0.5 leading-snug line-clamp-1">{sub.desc}</div>
-                                </div>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
-
-            {/* 3. Action Controls */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 whitespace-nowrap">
-              {/* Global Search Icon Button */}
-              <button
-                type="button"
-                id="global-search-btn"
-                onClick={() => setSearchOpen(true)}
-                className="h-10 w-10 sm:h-9 sm:w-9 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 active:scale-95 text-slate-300 hover:text-white border border-emerald-800/70 flex items-center justify-center transition-all shadow-inner cursor-pointer touch-manipulation"
-                title="Search Alumni, Batches, Events (Ctrl+K)"
-                aria-label="Search directory"
-              >
-                <Search className="w-4 h-4 text-emerald-400" />
-              </button>
-
-              {/* Auth Buttons: Logged In vs Logged Out */}
-              {isAuthenticated ? (
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <Link prefetch={false}
-                    href="/dashboard"
-                    aria-label="My dashboard"
-                    className="flex items-center gap-1.5 sm:gap-2 h-10 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-900/60 hover:bg-emerald-800 text-white text-xs font-semibold border border-emerald-700/60 transition-colors shadow-sm"
+                  <Link
+                    prefetch={false}
+                    key={item.name}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`relative px-3 py-2 rounded-lg transition-colors ${active ? "text-white" : "text-slate-200 hover:text-white hover:bg-white/5"}`}
                   >
-                    <div className="w-5 h-5 rounded-full bg-emerald-600 border border-amber-400/40 flex items-center justify-center text-[10px] text-amber-300 font-bold shrink-0">
-                      {session?.user?.name ? session.user.name[0] : "A"}
-                    </div>
-                    {/* Phones show just the avatar; the name would push the header off-screen. */}
-                    <span className="hidden sm:inline max-w-[110px] truncate text-slate-100">
-                      {session?.user?.name?.split(" ")[0] || "Portal"}
-                    </span>
+                    {item.name}
+                    {active && <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 rounded-full bg-amber-400" />}
                   </Link>
-
+                );
+              }
+              const open = openGroup === item.name;
+              const active = isGroupActive(item, pathname);
+              return (
+                <div key={item.name} className="relative" onMouseEnter={() => setOpenGroup(item.name)} onMouseLeave={() => setOpenGroup(null)}>
                   <button
                     type="button"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="hidden sm:flex h-9 w-9 rounded-xl bg-emerald-950/80 hover:bg-red-950/80 text-slate-300 hover:text-red-300 border border-emerald-800/70 hover:border-red-800/70 items-center justify-center transition-colors shadow-inner cursor-pointer"
-                    title="Sign Out"
-                    aria-label="Sign Out"
+                    onClick={() => setOpenGroup((g) => (g === item.name ? null : item.name))}
+                    aria-expanded={open}
+                    className={`relative px-3 py-2 rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${
+                      open ? "text-white bg-white/5" : active ? "text-white" : "text-slate-200 hover:text-white hover:bg-white/5"
+                    }`}
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    {item.name}
+                    <ChevronDown className={`w-3.5 h-3.5 opacity-70 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+                    {active && <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 rounded-full bg-amber-400" />}
                   </button>
+                  {open && (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50">
+                      <div className={`bg-white rounded-2xl shadow-2xl shadow-black/30 border border-slate-200 p-2 grid gap-0.5 ${item.links.length > 6 ? "w-[34rem] grid-cols-2" : "w-72"}`}>
+                        {item.links.map((sub) => {
+                          const Icon = sub.icon;
+                          const subActive = pathname === sub.href;
+                          return (
+                            <Link
+                              prefetch={false}
+                              key={sub.href}
+                              href={sub.href}
+                              onClick={() => setOpenGroup(null)}
+                              className={`flex items-start gap-3 p-2.5 rounded-xl transition-colors ${subActive ? "bg-emerald-50" : "hover:bg-slate-50"}`}
+                            >
+                              <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                                <Icon className="w-4 h-4" />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[13px] font-semibold text-slate-900 leading-tight">{sub.name}</span>
+                                <span className="block text-[11px] text-slate-500 leading-snug mt-0.5">{sub.desc}</span>
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <>
-                <Link prefetch={false}
-                  href="/register"
-                  className="hidden xl:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow-md transition-colors"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Become a Member</span>
-                </Link>
-                <Link prefetch={false}
-                  href="/login"
-                  className="inline-flex items-center gap-1.5 h-10 sm:h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-tight shadow-md shadow-emerald-950/50 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <LogIn className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>Sign In</span>
-                </Link>
-                </>
-              )}
+              );
+            })}
+          </nav>
 
-              {/* Mobile Drawer Trigger */}
-              <button
-                type="button"
-                id="mobile-nav-toggle"
-                onClick={() => setMobileMenuOpen((prev) => !prev)}
-                className="lg:hidden h-10 w-10 sm:h-9 sm:w-9 rounded-xl bg-emerald-950 text-slate-200 hover:text-white hover:bg-emerald-900 border border-emerald-800 flex items-center justify-center transition-all cursor-pointer touch-manipulation active:scale-95"
-                aria-label="Toggle mobile navigation menu"
-                aria-expanded={mobileMenuOpen}
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5 text-amber-300" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
+          {/* Search, account and the mobile menu button */}
+          <div className="flex items-center gap-2 ml-auto xl:ml-0 shrink-0">
+            <button
+              type="button"
+              id="global-search-btn"
+              onClick={() => setSearchOpen(true)}
+              className="h-10 w-10 rounded-xl text-slate-200 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer"
+              title="Search alumni, batches, events (Ctrl+K)"
+              aria-label="Search"
+            >
+              <Search className="w-[18px] h-[18px]" />
+            </button>
+
+            {isAuthenticated ? (
+              <div ref={userMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen((o) => !o)}
+                  aria-expanded={userMenuOpen}
+                  aria-label="Your account"
+                  className="h-10 flex items-center gap-2 pl-1 pr-2 sm:pr-3 rounded-xl bg-white/5 hover:bg-white/10 border border-emerald-700/60 text-white text-xs font-semibold cursor-pointer"
+                >
+                  <span className="w-8 h-8 rounded-lg bg-emerald-600 text-amber-200 flex items-center justify-center text-sm font-bold">{firstName[0]}</span>
+                  <span className="hidden sm:inline max-w-[110px] truncate">{firstName}</span>
+                  <ChevronDown className="hidden sm:block w-3.5 h-3.5 opacity-70" />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full pt-2 z-50 w-56">
+                    <div className="bg-white rounded-2xl shadow-2xl shadow-black/30 border border-slate-200 p-1.5 text-sm">
+                      <p className="px-3 py-2 text-xs text-slate-500 truncate border-b border-slate-100 mb-1">
+                        Signed in as <strong className="text-slate-800">{session?.user?.name}</strong>
+                      </p>
+                      <Link prefetch={false} href="/dashboard" className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800">
+                        <LayoutDashboard className="w-4 h-4 text-emerald-700" /> Member dashboard
+                      </Link>
+                      <Link prefetch={false} href="/profile" className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800">
+                        <UserRound className="w-4 h-4 text-emerald-700" /> My profile
+                      </Link>
+                      {adminHref && (
+                        <Link prefetch={false} href={adminHref} className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800">
+                          <ShieldCheck className="w-4 h-4 text-amber-600" /> Admin console
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-50 text-rose-700 cursor-pointer mt-1 border-t border-slate-100"
+                      >
+                        <LogOut className="w-4 h-4" /> Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link prefetch={false} href="/login" className="hidden sm:inline-flex items-center h-10 px-3 rounded-xl text-sm font-semibold text-slate-200 hover:text-white hover:bg-white/10">
+                  Sign in
+                </Link>
+                <Link
+                  prefetch={false}
+                  href="/register"
+                  className="hidden sm:inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-sm font-bold shadow-md transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Join</span>
+                </Link>
+              </>
+            )}
+
+            <button
+              type="button"
+              id="mobile-nav-toggle"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="xl:hidden h-10 w-10 rounded-xl text-slate-200 hover:text-white hover:bg-white/10 border border-emerald-700/60 flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5 text-amber-300" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Navigation Drawer Backdrop */}
+      {/* Mobile drawer */}
       {mobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs transition-opacity"
-          style={{ top: drawerTop }}
-          onClick={() => setMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
+        <div className="xl:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs" style={{ top: drawerTop }} onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
       )}
-
-      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-x-0 z-50 bg-[#052118] border-t border-emerald-800/80 px-4 py-5 space-y-4 overflow-y-auto overscroll-contain shadow-2xl animate-in slide-in-from-top-2 duration-200"
+          className="xl:hidden fixed inset-x-0 z-50 bg-[#052118] border-t border-emerald-800/80 px-4 py-4 space-y-4 overflow-y-auto overscroll-contain shadow-2xl animate-in slide-in-from-top-2 duration-200"
           style={{ top: drawerTop, maxHeight: `calc(100dvh - ${drawerTop}px)` }}
         >
-          {/* Search Trigger for Mobile */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              setSearchOpen(true);
-            }}
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-950 border border-emerald-800 text-slate-300 text-xs"
-          >
-            <span className="flex items-center gap-2">
-              <Search className="w-4 h-4 text-emerald-400" />
-              <span>Search alumni, batches, events...</span>
-            </span>
-          </button>
-
-          {/* Top-level links */}
-          <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-            {navItems.map((link) => {
+          <div className="grid grid-cols-3 gap-2 text-xs font-semibold">
+            {NAV_ITEMS.map((link) => {
               if (!("href" in link)) return null;
-              const isActive = pathname === link.href;
+              const active = pathname === link.href;
               return (
-                <Link prefetch={false}
+                <Link
+                  prefetch={false}
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${
-                    isActive ? "bg-emerald-800 text-white border border-emerald-600" : "bg-emerald-950/60 text-slate-200 hover:bg-emerald-900"
-                  }`}
+                  className={`py-2.5 px-2 rounded-xl text-center transition-colors ${active ? "bg-emerald-700 text-white" : "bg-emerald-950/70 text-slate-200 hover:bg-emerald-900"}`}
                 >
-                  <span>{link.name}</span>
-                  {link.highlight && <HeartHandshake className="w-3.5 h-3.5 text-amber-400" />}
+                  {link.name}
                 </Link>
               );
             })}
           </div>
 
-          {/* Grouped links, as in the desktop dropdowns */}
-          {navItems.map((group) => {
+          {NAV_ITEMS.map((group) => {
             if ("href" in group) return null;
             return (
               <div key={group.name} className="pt-3 border-t border-emerald-900/80">
                 <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400/80 px-1 mb-2">{group.name}</div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
                   {group.links.map((link) => {
                     const Icon = link.icon;
-                    const isActive = pathname === link.href;
+                    const active = pathname === link.href;
                     return (
-                      <Link prefetch={false}
+                      <Link
+                        prefetch={false}
                         key={link.href}
                         href={link.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-2 p-2 rounded-xl transition-colors ${
-                          isActive ? "bg-emerald-800 text-white" : "text-slate-300 hover:bg-emerald-900/60 hover:text-white"
-                        }`}
+                        className={`flex items-center gap-2 p-2 rounded-xl transition-colors ${active ? "bg-emerald-800 text-white" : "text-slate-300 hover:bg-emerald-900/60 hover:text-white"}`}
                       >
                         <Icon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         <span className="truncate">{link.name}</span>
@@ -502,82 +400,39 @@ export default function Navbar() {
             );
           })}
 
-          {/* Auth Action Button */}
           <div className="pt-3 border-t border-emerald-900/80">
             {isAuthenticated ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between px-2 text-xs text-slate-300">
-                  <span className="truncate">
-                    Signed in as <strong className="text-white">{session?.user?.name}</strong>
-                  </span>
-                  <span className="text-[10px] text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 uppercase font-bold shrink-0">
-                    {(session?.user as unknown as { role?: string })?.role || "Member"}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link prefetch={false}
-                    href="/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-2.5 text-center bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md"
-                  >
-                    Dashboard
+              <div className="grid grid-cols-2 gap-2">
+                <Link prefetch={false} href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-center bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                  <LayoutDashboard className="w-4 h-4" /> Dashboard
+                </Link>
+                {adminHref ? (
+                  <Link prefetch={false} href={adminHref} onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-center bg-emerald-950 text-amber-300 rounded-xl text-xs font-bold border border-emerald-800 flex items-center justify-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4" /> Admin
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="py-2.5 text-center bg-emerald-950 hover:bg-red-950 text-slate-300 hover:text-red-300 rounded-xl text-xs font-semibold border border-emerald-800"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                ) : (
+                  <Link prefetch={false} href="/profile" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-center bg-emerald-950 text-slate-200 rounded-xl text-xs font-bold border border-emerald-800 flex items-center justify-center gap-1.5">
+                    <UserRound className="w-4 h-4" /> Profile
+                  </Link>
+                )}
+                <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="col-span-2 py-2.5 text-center text-rose-300 hover:bg-rose-950/40 rounded-xl text-xs font-semibold border border-emerald-800 flex items-center justify-center gap-1.5">
+                  <LogOut className="w-4 h-4" /> Sign out
+                </button>
               </div>
             ) : (
-              <div className="space-y-2">
-              <Link prefetch={false}
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-md"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Become a Member</span>
-              </Link>
-              <Link prefetch={false}
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Sign In to Alumni Portal</span>
-              </Link>
+              <div className="grid grid-cols-2 gap-2">
+                <Link prefetch={false} href="/register" onClick={() => setMobileMenuOpen(false)} className="py-2.5 flex items-center justify-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black">
+                  <UserPlus className="w-4 h-4" /> Become a member
+                </Link>
+                <Link prefetch={false} href="/login" onClick={() => setMobileMenuOpen(false)} className="py-2.5 flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold">
+                  <LogIn className="w-4 h-4" /> Sign in
+                </Link>
               </div>
             )}
-
-            {/* Quick Portal & Admin Links in Mobile Drawer */}
-            <div className="pt-2 flex items-center justify-between text-xs border-t border-emerald-900/60">
-              <Link prefetch={false}
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white font-semibold"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Member Portal</span>
-              </Link>
-              {adminHref && (
-                <Link prefetch={false}
-                  href={adminHref}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-semibold"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Admin Console</span>
-                </Link>
-              )}
-            </div>
           </div>
         </div>
       )}
 
-      {/* Global Search Modal */}
       {searchOpen && <GlobalSearchModal isOpen onClose={() => setSearchOpen(false)} />}
     </>
   );
