@@ -37,6 +37,12 @@ export function optionalYmd(v: unknown): string | undefined {
   return v;
 }
 
+/** The period from ?from&to, defaulting to 1 January of this year up to today. */
+export function periodOf(sp: URLSearchParams): { from: string; to: string } {
+  const today = todayYmd();
+  return { from: optionalYmd(sp.get("from")) ?? `${today.slice(0, 4)}-01-01`, to: optionalYmd(sp.get("to")) ?? today };
+}
+
 /** 1 January and 31 December of a year, as YYYY-MM-DD. */
 export function yearRange(year: number): { from: string; to: string } {
   return { from: `${year}-01-01`, to: `${year}-12-31` };
