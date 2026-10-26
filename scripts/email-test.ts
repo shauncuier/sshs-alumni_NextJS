@@ -15,7 +15,9 @@ async function main() {
   }
   const { getEmailProvider, sendEmail } = await import("../lib/email");
   const { renderEmail } = await import("../lib/email-templates");
-  console.log(`Provider: ${getEmailProvider()}; sender: ${process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || "(default)"}`);
+  const provider = getEmailProvider();
+  const sender = provider === "smtp" ? process.env.SMTP_FROM || process.env.SMTP_USER : provider === "resend" ? process.env.RESEND_FROM_EMAIL : "(console only, nothing is sent)";
+  console.log(`Provider: ${provider}; sender: ${sender || "(default)"}`);
   const email = name
     ? EMAIL_SAMPLES[name]()
     : renderEmail({

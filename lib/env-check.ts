@@ -69,9 +69,17 @@ export function checkProductionEnv(env: Env): EnvReport {
   if (!set(env, "BULKSMSBD_API_KEY") || !set(env, "BULKSMSBD_SENDER_ID")) {
     warnings.push("BULKSMSBD_API_KEY / BULKSMSBD_SENDER_ID not set: SMS codes and broadcasts will not be sent (roadmap step 18).");
   }
+  // EMAIL_PROVIDER=smtp (e.g. Gmail with an app password) is used only with a complete
+  // SMTP set-up; otherwise lib/email.ts quietly falls back to Resend.
+  const smtpForced = env.EMAIL_PROVIDER === "smtp";
+  const smtpMissing = ["SMTP_HOST", "SMTP_USER", "SMTP_PASS"].filter((name) => !set(env, name));
+  if (smtpForced && smtpMissing.length > 0) {
+    warnings.push(`EMAIL_PROVIDER is smtp but ${smtpMissing.join(", ")} ${smtpMissing.length === 1 ? "is" : "are"} not set: email will not go out through SMTP.`);
+  }
   const from = env.RESEND_FROM_EMAIL ?? "";
-  if (set(env, "RESEND_API_KEY") && /@(resend\.dev|gmail\.com|yahoo\.com|outlook\.com|hotmail\.com)\b/i.test(from || "@resend.dev")) {
-    warnings.push("RESEND_FROM_EMAIL is not on a domain verified in Resend: emails reach only the Resend account owner, not members. Verify the association's domain in Resend (roadmap step 17).");
+  const usesResend = set(env, "RESEND_API_KEY") && !(smtpForced && set(env, "SMTP_HOST"));
+  if (usesResend && /@(resend\.dev|gmail\.com|yahoo\.com|outlook\.com|hotmail\.com)\b/i.test(from || "@resend.dev")) {
+    warnings.push("RESEND_FROM_EMAIL is not on a domain verified in Resend: emails reach only the Resend account owner, not members. Verify the association's domain in Resend, or send through Gmail with EMAIL_PROVIDER=smtp (docs/PRODUCTION_ENV.md).");
   }
   if (!set(env, "CONTACT_INBOX_EMAIL")) warnings.push("CONTACT_INBOX_EMAIL not set: contact-form messages are kept only in the activity log.");
   // bKash / Nagad / bank / Bangla QR / cash are set in Admin → Payment settings, not here.
