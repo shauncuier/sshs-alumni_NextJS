@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Committee photo to be added">
+  <rect width="800" height="450" fill="#e6f2ec"/>
+  <g fill="#a7cdb9">
+    <circle cx="250" cy="190" r="42"/><path d="M175 340c4-58 36-90 75-90s71 32 75 90z"/>
+    <circle cx="400" cy="170" r="48"/><path d="M315 340c5-66 41-102 85-102s80 36 85 102z"/>
+    <circle cx="550" cy="190" r="42"/><path d="M475 340c4-58 36-90 75-90s71 32 75 90z"/>
+  </g>
+  <text x="400" y="400" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" fill="#5f8f78">Photo to be added</text>
+</svg>
