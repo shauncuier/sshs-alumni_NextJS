@@ -157,7 +157,7 @@ export default function DonatePage() {
                 <p className="text-[11px] text-slate-500 leading-snug">
                   Scan with any bank or mobile banking app (bKash, Nagad, Rocket…), then choose a campaign below and enter the transaction ID.
                 </p>
-                <a href={payment.banglaQrImage} download="SSGHS-Alumni-Bangla-QR" className="inline-block text-[11px] font-bold text-emerald-800 hover:underline">
+                <a href={payment.banglaQrImage} download="Praktan-Sabujian-Parishad-Bangla-QR" className="inline-block text-[11px] font-bold text-emerald-800 hover:underline">
                   Save the QR image
                 </a>
               </div>

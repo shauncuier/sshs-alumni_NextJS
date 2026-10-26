@@ -91,12 +91,12 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             </Link>
           </header>
 
-          {/* The jubilee's own logo: "৫০ বছর · গৌরবের পথচলা" */}
+          {/* The association's logo */}
           <div className="relative max-w-3xl mx-auto px-4 pt-4 flex justify-center">
             <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[2rem] bg-white p-2 shadow-2xl shadow-black/40 ring-4 ring-amber-300/40">
               <Image
-                src="/golden-jubilee-logo.webp"
-                alt="সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়, ৫০ বছর: গৌরবের পথচলা (Golden Jubilee logo)"
+                src="/logo-large.webp"
+                alt="প্রাক্তন সবুজিয়ান পরিষদ, Praktan Sabujian Parishad"
                 width={800}
                 height={800}
                 priority

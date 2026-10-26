@@ -149,7 +149,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-sm text-white">SSGHS Committee</div>
+              <div className="font-bold text-sm text-white">Praktan Sabujian Parishad</div>
               <div className="text-[10px] text-amber-300 font-semibold">{roleLabel}</div>
             </div>
           </div>
@@ -214,7 +214,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
             </div>
             <div>
               <div className="font-bold text-sm text-white leading-tight">Admin Console</div>
-              <div className="text-[10px] text-amber-300 font-semibold">SSGHS Committee</div>
+              <div className="text-[10px] text-amber-300 font-semibold">Praktan Sabujian Parishad</div>
             </div>
           </div>
         </div>

@@ -98,7 +98,7 @@ export default function VolunteerPage() {
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/80 border border-emerald-700/60 text-emerald-300 text-xs font-semibold shadow-inner">
             <HeartHandshake className="w-4 h-4 text-amber-400" />
-            <span>SSGHS Organizing Committee Volunteer Wing</span>
+            <span>Praktan Sabujian Parishad · Volunteer Wing</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
             Serve Your Alma Mater with Pride
@@ -394,7 +394,7 @@ export default function VolunteerPage() {
                 </button>
 
                 <p className="text-[11px] text-center text-slate-400">
-                  By submitting, you agree to coordinate with the SSGHS Executive Organizing Committee.
+                  By submitting, you agree to coordinate with the organizing committee of Praktan Sabujian Parishad.
                 </p>
               </form>
             )}

@@ -110,7 +110,7 @@ export function renderEmail(c: EmailContent): RenderedEmail {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">
   <tr><td style="background:${C.green};border-radius:16px 16px 0 0;padding:22px 28px;border-bottom:4px solid ${C.amber}">
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-      <td style="padding-right:14px;vertical-align:middle"><img src="cid:${LOGO_CID}" width="48" height="48" alt="SSGHS" style="display:block;border-radius:50%;background:#ffffff"></td>
+      <td style="padding-right:14px;vertical-align:middle"><img src="cid:${LOGO_CID}" width="48" height="48" alt="Praktan Sabujian Parishad" style="display:block;border-radius:50%;background:#ffffff"></td>
       <td style="vertical-align:middle">
         <div style="font:800 18px/1.2 ${FONT};color:#ffffff">Praktan Sabujian Parishad</div>
         <div style="font:12px/1.4 ${FONT};color:#a7f3d0">${escapeHtml(schoolInfo.bengaliName)}</div>

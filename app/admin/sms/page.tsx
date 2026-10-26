@@ -76,7 +76,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Batch Reps Coordination Call",
     category: "Batch Reps",
-    text: "Notice: Batch representatives meeting on [DAY] at [TIME], [PLACE]. Please join on time. - SSGHS Committee",
+    text: "Notice: Batch representatives meeting on [DAY] at [TIME], [PLACE]. Please join on time. - Sabujian Parishad",
     isCostSaver: true,
   },
   {
@@ -84,7 +84,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Volunteers Gate Briefing",
     category: "Volunteers",
-    text: "Volunteers: event briefing on [DAY] at [TIME], [PLACE]. Please attend on time. - SSGHS",
+    text: "Volunteers: event briefing on [DAY] at [TIME], [PLACE]. Please attend on time. - Sabujian Parishad",
     isCostSaver: true,
   },
   {
@@ -126,7 +126,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "banglish",
     title: "Batch Reps Shobha (Banglish)",
     category: "Batch Reps",
-    text: "Joruri Notice: [DIN] [SHOMOY]-e [JAYGA]-y Batch Protinidhider shobha hobe. Shokolke thakar onurodh roilo. - SSGHS",
+    text: "Joruri Notice: [DIN] [SHOMOY]-e [JAYGA]-y Batch Protinidhider shobha hobe. Shokolke thakar onurodh roilo. - Sabujian Parishad",
     isCostSaver: true,
   },
 

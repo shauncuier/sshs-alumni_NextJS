@@ -58,7 +58,7 @@ const join = async (email: string, contact: { phoneVerificationToken?: string; e
     sessionUserId: null,
     photo: await makeImage(800, 800),
     proof: { type: "SSC_CERTIFICATE", file: makePdf() },
-    account: { fullName: "New Member", email, password: "Member-Pw-2026", sscBatch: 2001, ...contact },
+    account: { fullName: "New Member", email, password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", ...contact },
     rsvp: { paymentMethod: "bKash", transactionId: `TRX${Math.random().toString(36).slice(2, 10)}` },
   });
 

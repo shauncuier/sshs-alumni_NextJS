@@ -1,5 +1,5 @@
 /**
- * SSGHS Alumni Association — Progressive Web App Service Worker
+ * Praktan Sabujian Parishad — Progressive Web App Service Worker
  * Version: 1.0.0
  * 
  * Supports:
@@ -9,7 +9,7 @@
  */
 
 // Bump on caching changes: activate deletes every cache with another name.
-const CACHE_NAME = "ssghs-alumni-v5";
+const CACHE_NAME = "ssghs-alumni-v6";
 // Shown for pages that are not cached when there is no connection. A static file,
 // not a Next.js page: a Next.js page served under another URL fails to hydrate.
 const OFFLINE_FALLBACK_URL = "/offline.html";
@@ -119,7 +119,7 @@ self.addEventListener("fetch", (event) => {
 // Push Notifications
 self.addEventListener("push", (event) => {
   let data = {
-    title: "SSGHS Alumni Association",
+    title: "Praktan Sabujian Parishad",
     body: "New reunion announcement from Sabuj Shikshayatan High School.",
     url: "/events",
   };

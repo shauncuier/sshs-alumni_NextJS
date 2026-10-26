@@ -138,7 +138,7 @@ export default function PwaProvider({ children }: { children: React.ReactNode })
           className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 bg-[#06281e] text-white p-4 rounded-2xl border border-emerald-700 shadow-2xl flex items-center justify-between gap-3 animate-fade-in"
         >
           <div className="flex items-center gap-3">
-            <img loading="lazy" decoding="async" src="/logo.png" alt="SSGHS" className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
+            <img loading="lazy" decoding="async" src="/logo.png" alt="Praktan Sabujian Parishad" className="w-9 h-9 rounded-xl object-contain bg-white p-0.5" />
             <div>
               <h4 className="font-bold text-xs">Install Praktan Sabujian Parishad App</h4>
               <p className="text-[11px] text-emerald-200">Fast access to your Smart ID &amp; Directory</p>

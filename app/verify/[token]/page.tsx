@@ -65,7 +65,7 @@ export default function VerifyTokenPage() {
           </div>
           <div>
             <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-white">
-              SSGHS Gate Control
+              Praktan Sabujian Parishad · Gate
             </h1>
             <p className="text-[11px] text-emerald-400 font-mono">
               EIIN 105070 • Official Verification Portal

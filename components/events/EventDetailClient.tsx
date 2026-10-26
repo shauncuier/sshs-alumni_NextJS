@@ -224,8 +224,8 @@ function EventDetailView({
             {event.isMembershipEvent && (
               <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-white p-1.5 shadow-2xl shadow-black/40 ring-2 ring-amber-300/60 mb-4">
                 <Image
-                  src="/golden-jubilee-logo.webp"
-                  alt="সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়, ৫০ বছর: গৌরবের পথচলা (Golden Jubilee logo)"
+                  src="/logo-large.webp"
+                  alt="প্রাক্তন সবুজিয়ান পরিষদ, Praktan Sabujian Parishad"
                   width={800}
                   height={800}
                   priority

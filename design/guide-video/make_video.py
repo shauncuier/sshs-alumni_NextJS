@@ -73,7 +73,7 @@ body {{ font-family: 'Shonar Bangla', 'Nirmala UI', 'Segoe UI', sans-serif; colo
 </style>"""
     done = sum(1 for s in SCENES[: index + 1] if s[1].startswith("ধাপ"))
     progress = f'<div class="bar"><i style="width:{round(100 * done / STEPS)}%"></i></div>'
-    foot = '<div class="foot">সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় · প্রাক্তন শিক্ষার্থী পরিষদ</div>'
+    foot = '<div class="foot">সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয় · প্রাক্তন সবুজিয়ান পরিষদ</div>'
     if shot:
         body = f"""<div class="top">{f'<div class="badge">{label}</div>' if label else ''}<div class="bn">{bn}</div><div class="en">{en}</div></div>
 <div class="phone"><img src="{b64(SHOTS / f'{shot}.png')}"></div>{progress}{foot}"""
