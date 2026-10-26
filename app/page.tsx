@@ -18,12 +18,16 @@ import { listPublishedNews } from "@/lib/news";
 import { listOpenJobs } from "@/lib/jobs";
 import { listApprovedMentors } from "@/lib/mentorship";
 import { listBatches } from "@/lib/batches";
+import { findPresident, getCurrentCommittee, getPresidentMessage } from "@/lib/committee";
+import { listActiveNotices, PRIORITY_BADGE } from "@/lib/notices";
+import { ASSOCIATION_AIMS } from "@/lib/association-aims";
+import { PERSON_PLACEHOLDER } from "@/components/shared/PersonCard";
 import { formatTaka } from "@/lib/events/pricing";
 import { formatDate } from "@/lib/utils";
 import { eventDateShort } from "@/lib/events/date-label";
 import prisma from "@/lib/prisma";
 import { schoolInfo, type AlumniMember } from "@/lib/data";
-import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Newspaper, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Megaphone, Newspaper, Quote, Sparkles, Target, Users } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { avatarAt } from "@/lib/avatar";
 import Picture from "@/components/shared/Picture";
@@ -65,6 +69,9 @@ export default async function HomePage() {
     news,
     jobs,
     mentors,
+    committee,
+    presidentMessage,
+    notices,
   ] = await Promise.all([
     prisma.alumniProfile.count({ where: listed }).catch(() => 0),
     prisma.alumniProfile.groupBy({ by: ["locationCountry"], where: { ...listed, locationCountry: { not: "" } } }).catch(() => []),
@@ -82,6 +89,9 @@ export default async function HomePage() {
     listPublishedNews(3).catch(() => []),
     listOpenJobs().catch(() => []),
     listApprovedMentors().catch(() => []),
+    getCurrentCommittee().catch(() => null),
+    getPresidentMessage().catch(() => ({ message: "" })),
+    listActiveNotices(3).catch(() => []),
   ]);
 
   const recentMembers: AlumniMember[] = recentProfiles.map((p) => ({
@@ -111,6 +121,8 @@ export default async function HomePage() {
   const upcomingEvents = events.filter((e) => e.date >= today && e.id !== heroEvent?.id).slice(0, 3);
   const featuredCampaign = campaigns[0] ?? null;
   const latestJobs = jobs.slice(0, 3);
+  const president = findPresident(committee);
+  const messageParagraphs = presidentMessage.message.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -279,6 +291,105 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* 3a. MESSAGE FROM THE PRESIDENT (written in Admin → Executive Committee) */}
+        {messageParagraphs.length > 0 && (
+          <section className="py-16 lg:py-20 bg-white border-t border-slate-200/80">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
+              <div className="md:col-span-4 flex flex-col items-center text-center gap-3">
+                <img
+                  loading="lazy"
+                  decoding="async"
+                  src={president?.photoUrl || PERSON_PLACEHOLDER}
+                  alt={president?.photoUrl ? president.name : ""}
+                  className="w-48 h-56 sm:w-56 sm:h-64 rounded-3xl object-cover object-top border border-slate-200 shadow-md bg-emerald-50"
+                />
+                {president && (
+                  <div>
+                    <p className="font-extrabold text-lg text-slate-900">{president.name}</p>
+                    <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">President</p>
+                    <p className="text-xs text-slate-500">Praktan Sabujian Parishad</p>
+                  </div>
+                )}
+              </div>
+              <div className="md:col-span-8 space-y-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                  <Quote className="w-4 h-4" /> সভাপতির বাণী
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Message from the President</h2>
+                <div className="space-y-3 text-slate-600 text-sm sm:text-base leading-relaxed">
+                  {messageParagraphs.map((p, i) => (
+                    <p key={i} className="whitespace-pre-line">{p}</p>
+                  ))}
+                </div>
+                <Link href="/committee" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-800 hover:text-emerald-700">
+                  <span>Meet the executive committee</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 3b. AIMS AND OBJECTIVES (lib/association-aims.ts) */}
+        <section className="py-16 lg:py-20 bg-emerald-50/60 border-t border-emerald-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center justify-center gap-1.5">
+                <Target className="w-4 h-4" /> পরিষদের উদ্দেশ্য ও লক্ষ্য
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Aims and objectives</h2>
+            </div>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {ASSOCIATION_AIMS.map((aim) => (
+                <li key={aim.en} className="bg-white rounded-3xl border border-emerald-100 p-6 shadow-sm space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                    <aim.icon className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900 leading-relaxed">{aim.bn}</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">{aim.en}</p>
+                </li>
+              ))}
+            </ul>
+            {!signedIn && (
+              <div className="mt-10 rounded-3xl bg-[#06281e] text-white p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                <div>
+                  <p className="text-xl font-extrabold">Become a member of this family</p>
+                  <p className="text-sm text-emerald-100">Fill in the membership form; the committee checks it and confirms your membership.</p>
+                </div>
+                <Link href="/register" className="px-6 py-3 min-h-[44px] rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm inline-flex items-center gap-2 shrink-0">
+                  Become a member <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 3c. NOTICE BOARD: the latest active notices */}
+        {notices.length > 0 && (
+          <section className="py-12 bg-white border-t border-slate-200/80">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SectionHeader eyebrow="Notices" title="Notice board" href="/notices" link="All notices" icon={<Megaphone className="w-4 h-4" />} />
+              <ul className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {notices.map((n) => {
+                  const badge = PRIORITY_BADGE[n.priority];
+                  return (
+                    <li key={n.id}>
+                      <Link href={`/notices/${n.id}`} className="block h-full p-5 rounded-2xl border border-slate-200 bg-slate-50 hover:border-emerald-400 hover:bg-white transition-colors">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                          <span>{n.date}</span>
+                          {badge && <span className={`px-2 py-0.5 rounded-full text-[10px] ${badge.className}`}>{badge.label}</span>}
+                        </div>
+                        <p className="font-bold text-sm text-slate-900 mt-1.5 line-clamp-2">{n.title}</p>
+                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">{n.content}</p>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+        )}
 
         {/* 4. LATEST NEWS */}
         {news.length > 0 && (
