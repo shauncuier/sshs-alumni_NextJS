@@ -956,6 +956,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               <span className="text-[10px] uppercase font-bold text-emerald-700 block">Confirmed revenue</span>
               <strong className="text-xl font-black text-emerald-900 block my-1">{formatTaka(totals.confirmedRevenue)}</strong>
               <span className="text-[11px] text-emerald-700">incl. {formatTaka(totals.confirmedDonations)} donations</span>
+              <Link href={`/admin/accounts/events/${event.id}`} className="block mt-1 text-[11px] font-bold text-emerald-900 underline">Budget &amp; accounts →</Link>
             </div>
 
             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200">
