@@ -479,15 +479,92 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+/// Notices on /notices, managed in /admin/notices (lib/notices.ts). Only active rows are public.
 model Announcement {
-  id       String  @id @default(uuid()) @db.VarChar(36)
-  title    String
-  content  String  @db.Text
-  priority String  @default("NORMAL") // "NORMAL", "HIGH", "URGENT"
-  author   String  @default("Alumni Executive Committee")
-  isActive Boolean @default(true)
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  title         String
+  /// Plain text; blank lines separate paragraphs. Never rendered as HTML.
+  content       String   @db.Text
+  priority      String   @default("NORMAL") // "NORMAL", "HIGH", "URGENT"
+  author        String   @default("Alumni Executive Committee")
+  isActive      Boolean  @default(true)
+  /// Optional PDF stored by lib/media/documents.ts.
+  attachmentUrl String?  @db.VarChar(500)
+  publishedAt   DateTime @default(now())
+  createdBy     String?  @db.VarChar(254)
+  updatedBy     String?  @db.VarChar(254)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([isActive, publishedAt])
+}
+
+/// A committee term on /committee (the current one) and /committee/past, managed in
+/// /admin/committee (lib/committee.ts). At most one term is current.
+model CommitteeTerm {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  title     String   @db.VarChar(200)
+  startYear Int
+  endYear   Int?
+  isCurrent Boolean  @default(false)
+  /// Group photo or scanned list, shown for past terms (content image URL).
+  imageUrl  String?  @db.VarChar(500)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  members CommitteeMember[]
+
+  @@index([isCurrent])
+}
+
+model CommitteeMember {
+  id           String  @id @default(uuid()) @db.VarChar(36)
+  termId       String  @db.VarChar(36)
+  name         String  @db.VarChar(200)
+  post         String  @db.VarChar(200)
+  lifeMemberNo String? @db.VarChar(40)
+  sscBatch     Int?
+  phone        String? @db.VarChar(40)
+  facebookUrl  String? @db.VarChar(500)
+  photoUrl     String? @db.VarChar(500)
+  /// Extra line, e.g. "Head teacher (ex officio)".
+  note         String? @db.VarChar(300)
+  sortOrder    Int     @default(0)
+
+  term CommitteeTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@index([termId, sortOrder])
+}
+
+/// Names on /honor-board, grouped by honour, managed in /admin/honor-board (lib/honor-board.ts).
+model HonorBoardEntry {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  /// Group heading, e.g. "Past presidents".
+  honour    String   @db.VarChar(200)
+  name      String   @db.VarChar(200)
+  /// Free text such as "2006–2010".
+  period    String?  @db.VarChar(100)
+  sscBatch  Int?
+  photoUrl  String?  @db.VarChar(500)
+  note      String?  @db.VarChar(300)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+/// Constitution versions on /constitution, each a PDF, managed in /admin/constitution
+/// (lib/constitution.ts).
+model ConstitutionDocument {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  title     String   @db.VarChar(200)
+  year      Int
+  summary   String?  @db.Text
+  fileUrl   String   @db.VarChar(500)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 /// Site settings edited in the admin panel, one JSON value per key (e.g. "payment":
