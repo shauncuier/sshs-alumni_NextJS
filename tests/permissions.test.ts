@@ -33,7 +33,7 @@ describe("permission map", () => {
       expect(can("ALUMNI", area)).toBe(false);
     }
     const moderatorAreas = ADMIN_AREAS.filter((a) => can("MODERATOR", a));
-    expect(moderatorAreas.sort()).toEqual(["feed", "gallery", "gate", "jobs", "mentors", "news", "stories"]);
+    expect(moderatorAreas.sort()).toEqual(["feed", "gallery", "gate", "jobs", "mentors", "news", "notices", "stories"]);
     expect(canUseAdminPanel("MODERATOR")).toBe(true);
     expect(canUseAdminPanel("ALUMNI")).toBe(false);
     expect(canUseAdminPanel(undefined)).toBe(false);
@@ -44,6 +44,9 @@ describe("permission map", () => {
     expect(areaForPath("/admin/news")).toBe("news");
     expect(areaForPath("/admin/users/abc")).toBe("users");
     expect(areaForPath("/admin/achievements")).toBe("stories");
+    expect(areaForPath("/admin/honor-board")).toBe("committee");
+    expect(areaForPath("/admin/constitution")).toBe("committee");
+    expect(areaForPath("/admin/notices")).toBe("notices");
     expect(areaForPath("/admin/unknown-thing")).toBeNull();
     expect(homeForRole("ADMIN")).toBe("/admin");
     expect(homeForRole("MODERATOR")).toBe("/admin/news");

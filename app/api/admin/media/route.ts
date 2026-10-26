@@ -7,13 +7,14 @@ import { readLimitedFormData, requireRateLimit, requireSameOrigin } from "@/lib/
 import { getSessionUser } from "@/lib/session-user";
 import { can } from "@/lib/permissions";
 
-// POST /api/admin/media — upload an image for news, gallery, stories or campaign banners (form field "image").
+// POST /api/admin/media — upload an image for news, gallery, stories, campaign banners or committee
+// and honor-board photos (form field "image").
 export async function POST(req: Request) {
   const me = await getSessionUser();
   try {
     requireSameOrigin(req);
-    // Anyone who manages news, gallery, stories or campaigns may upload images for them.
-    if (!me || !(["news", "gallery", "stories", "donations"] as const).some((area) => can(me.role, area))) throw new AppError("FORBIDDEN", 403, "You cannot upload images.");
+    // Anyone who manages news, gallery, stories, campaigns or the committee may upload images for them.
+    if (!me || !(["news", "gallery", "stories", "donations", "committee"] as const).some((area) => can(me.role, area))) throw new AppError("FORBIDDEN", 403, "You cannot upload images.");
     requireRateLimit(req, "admin-image-upload", { limit: 200, windowMs: 60 * 60_000 });
     const form = await readLimitedFormData(req, CONTENT_IMAGE_LIMITS.maxBytes + 64 * 1024);
     const file = form.get("image");

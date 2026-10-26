@@ -4,7 +4,7 @@
  * allowed), so the three can never disagree. Safe to import in the browser.
  *
  * Admins and the super admin use everything. Moderators run public content and
- * the event gate: news, gallery, stories, jobs, mentors, feed moderation and the gate scanner,
+ * the event gate: news, notices, gallery, stories, jobs, mentors, feed moderation and the gate scanner,
  * but never members, money, messages to members, settings or the activity log.
  */
 
@@ -27,10 +27,12 @@ export const ADMIN_AREAS = [
   "feed",
   "logs",
   "gate",
+  "committee",
+  "notices",
 ] as const;
 export type AdminArea = (typeof ADMIN_AREAS)[number];
 
-const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate"];
+const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate", "notices"];
 
 const AREAS_BY_ROLE: Record<string, readonly AdminArea[]> = {
   SUPER_ADMIN: ADMIN_AREAS,
@@ -53,6 +55,7 @@ export function areaForPath(pathname: string): AdminArea | null {
   const segment = pathname.replace(/^\/admin\/?/, "").split("/")[0];
   if (segment === "achievements") return "stories";
   if (segment === "id-cards") return "alumni";
+  if (segment === "honor-board" || segment === "constitution") return "committee";
   return (ADMIN_AREAS as readonly string[]).includes(segment) ? (segment as AdminArea) : null;
 }
 

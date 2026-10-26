@@ -29,6 +29,10 @@ import {
   Wallet,
   IdCard,
   FilePlus2,
+  Megaphone,
+  Landmark,
+  Medal,
+  FileText,
 } from "lucide-react";
 
 export interface AdminShellUser {
@@ -56,6 +60,10 @@ const ADMIN_NAV = [
   { name: "Payment Settings", short: "Payments", href: "/admin/payments", icon: Wallet, area: "payments" },
   { name: "User Management", short: "Users", href: "/admin/users", icon: Users, area: "users" },
   { name: "News", short: "News", href: "/admin/news", icon: Newspaper, area: "news" },
+  { name: "Notice Board", short: "Notices", href: "/admin/notices", icon: Megaphone, area: "notices" },
+  { name: "Executive Committee", short: "Committee", href: "/admin/committee", icon: Landmark, area: "committee" },
+  { name: "Honor Board", short: "Honor board", href: "/admin/honor-board", icon: Medal, area: "committee" },
+  { name: "Constitution", short: "Constitution", href: "/admin/constitution", icon: FileText, area: "committee" },
   { name: "Gallery", short: "Gallery", href: "/admin/gallery", icon: Images, area: "gallery" },
   { name: "Stories & Achievements", short: "Stories", href: "/admin/stories", icon: BookOpen, area: "stories" },
   { name: "Jobs", short: "Jobs", href: "/admin/jobs", icon: Briefcase, area: "jobs" },
