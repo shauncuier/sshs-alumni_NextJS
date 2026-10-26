@@ -51,6 +51,15 @@ describe("production environment check", () => {
     }
   });
 
+  it("is happy with Gmail over SMTP, and says which SMTP setting is missing", () => {
+    const gmail = { EMAIL_PROVIDER: "smtp", SMTP_HOST: "smtp.gmail.com", SMTP_USER: "association@gmail.com", SMTP_PASS: "app-password" };
+    // Sending through Gmail: the unverified Resend sender no longer matters.
+    expect(checkProductionEnv({ ...good, ...gmail, RESEND_FROM_EMAIL: "x <onboarding@resend.dev>" }).warnings).toEqual([]);
+    const r = checkProductionEnv({ ...good, ...gmail, SMTP_PASS: "" });
+    expect(r.warnings).toEqual([expect.stringContaining("SMTP_PASS is not set")]);
+    expect(JSON.stringify(r)).not.toContain("app-password");
+  });
+
   it("warns about test settings and features that will not work, without printing values", () => {
     const r = checkProductionEnv({ ...good, SEED_ADMIN_PASSWORD: "Secret-Value-123", RESEND_API_KEY: "", UPLOADS_DIR: "./uploads" });
     expect(r.errors).toEqual([]);
