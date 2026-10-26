@@ -13,6 +13,13 @@ import { removeDocument } from "@/lib/media/documents";
 export const NOTICE_PRIORITIES = ["NORMAL", "HIGH", "URGENT"] as const;
 export type NoticePriority = (typeof NOTICE_PRIORITIES)[number];
 
+/** The badge a public notice shows for its priority (none for normal notices). */
+export const PRIORITY_BADGE: Record<NoticePriority, { label: string; className: string } | null> = {
+  NORMAL: null,
+  HIGH: { label: "Important", className: "bg-amber-100 text-amber-800" },
+  URGENT: { label: "Urgent", className: "bg-rose-100 text-rose-800" },
+};
+
 export interface NoticeView {
   id: string;
   title: string;
