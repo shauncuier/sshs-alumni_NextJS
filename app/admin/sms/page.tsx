@@ -29,8 +29,7 @@ import {
 import { calculateSmsMetrics, normalizeBdPhoneNumber, isValidBdMobile } from "@/lib/bulksmsbd";
 import type { SmsContactItem } from "@/app/api/admin/sms/contacts/route";
 import type { SmsBroadcastRecord } from "@/lib/sms-history";
-import SmsTestModeSwitch from "@/components/admin/SmsTestModeSwitch";
-import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
+import Link from "next/link";
 
 export interface SmsTemplateItem {
   id: string;
@@ -549,8 +548,10 @@ export default function AdminBulkSmsPage() {
         </div>
       </div>
 
-      <OtpRequiredSwitch />
-      <SmsTestModeSwitch />
+      <p className="text-xs text-slate-500">
+        Verification codes (OTP on or off, test mode) are in{" "}
+        <Link href="/admin/settings#sms" className="font-bold text-emerald-800 underline">Settings → SMS &amp; verification</Link>.
+      </p>
 
       {/* Gateway Information Notice Banner */}
       {!isConfigured && (

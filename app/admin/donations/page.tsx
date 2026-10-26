@@ -239,7 +239,7 @@ export default function AdminDonationsPage() {
 
       <p className="text-xs text-slate-600 bg-white p-4 rounded-2xl border border-slate-200">
         Where donors send money (bKash, Nagad, Bangla QR, bank, cash) is set once for the whole site in{" "}
-        <Link href="/admin/payments" className="font-bold text-emerald-800 underline">Payment settings</Link>.
+        <Link href="/admin/settings#payments" className="font-bold text-emerald-800 underline">Settings → Payments</Link>.
       </p>
 
       <CampaignManager onChanged={() => void loadData()} />

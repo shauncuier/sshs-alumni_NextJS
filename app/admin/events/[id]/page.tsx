@@ -559,7 +559,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               <p className="text-sm font-bold text-slate-900">How members pay</p>
               <p className="text-[11px] text-slate-600">
                 bKash, Nagad, Bangla QR, bank and cash are set once for the whole site in{" "}
-                <Link href="/admin/payments" className="font-bold text-emerald-800 underline">Admin → Payment settings</Link>; this event offers the methods switched on there.
+                <Link href="/admin/settings#payments" className="font-bold text-emerald-800 underline">Admin → Settings → Payments</Link>; this event offers the methods switched on there.
               </p>
               <label htmlFor="ev-pay-extra" className="block text-xs font-bold text-slate-700 pt-1">
                 Extra payment instructions for this event only <span className="font-normal text-slate-400">(optional)</span>

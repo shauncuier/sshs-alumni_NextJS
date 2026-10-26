@@ -55,6 +55,9 @@ describe("permission map", () => {
     expect(homeForRole("ADMIN")).toBe("/admin");
     expect(homeForRole("MODERATOR")).toBe("/admin/news");
     expect(areaForPath("/admin/accounts/reports")).toBe("accounts");
+    expect(areaForPath("/admin/settings")).toBe("settings");
+    expect(can("MODERATOR", "settings")).toBe(false);
+    expect(can("TREASURER", "settings")).toBe(false);
     expect(homeForRole("TREASURER")).toBe("/admin/accounts");
   });
 });

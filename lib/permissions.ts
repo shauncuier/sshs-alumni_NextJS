@@ -30,6 +30,7 @@ export const ADMIN_AREAS = [
   "committee",
   "notices",
   "accounts",
+  "settings",
 ] as const;
 export type AdminArea = (typeof ADMIN_AREAS)[number];
 
