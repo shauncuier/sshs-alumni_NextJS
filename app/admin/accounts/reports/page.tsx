@@ -37,7 +37,9 @@ export default function AccountsReportsPage() {
   const [to, setTo] = useState(today());
   const [accountId, setAccountId] = useState("");
   const [year, setYear] = useState(Number(today().slice(0, 4)));
-  const [data, setData] = useState<unknown>(null);
+  // The data is kept with the query it answers: switching tabs renders the new table only
+  // once its own data has arrived, never with the previous tab's.
+  const [result, setResult] = useState<{ query: string; data: unknown } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Links from the overview open a tab and an account: ?tab=cashbook&accountId=…
@@ -52,13 +54,13 @@ export default function AccountsReportsPage() {
 
   const load = useCallback(async () => {
     setError(null);
-    setData(null);
     try {
-      setData(await api(`/api/admin/accounts/reports?${params}`, "GET"));
+      setResult({ query: params, data: await api(`/api/admin/accounts/reports?${params}`, "GET") });
     } catch (err) {
       setError((err as Error).message);
     }
   }, [params]);
+  const data = result && result.query === params ? result.data : null;
   useEffect(() => {
     void load(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [load]);
