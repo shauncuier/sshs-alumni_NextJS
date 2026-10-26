@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
-import { formatTaka, dhakaDateInput } from "@/lib/events/pricing";
+import { formatTaka, dhakaDateInput, formatGuestLine } from "@/lib/events/pricing";
 import {
   Calendar,
   Users,
@@ -27,6 +27,7 @@ import {
   Layers,
   Printer,
   UtensilsCrossed,
+  FileDown,
 } from "lucide-react";
 import { TOKEN_KINDS } from "@/lib/events/token-kinds";
 import { OFFLINE_SOURCE } from "@/lib/events/types";
@@ -187,7 +188,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   const handleExportCSV = () => {
     const header = "Name,Batch,Roll,Section,Blood_Group,Email,Phone,Package,Guests,Source,Head_Count,Fee_BDT,Donation_BDT,Payment_Method,Trx_ID,Status,Membership,Registered_At\n";
     const rows = attendees
-      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.bloodGroup ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map((g) => `${g.name} x${g.count}`).join("; "), a.source ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
+      .map((a) => [a.name, a.batch ?? "", a.rollNumber ?? "", a.section ?? "", a.bloodGroup ?? "", a.email, a.phone, a.packageName ?? "", a.guests.map(formatGuestLine).join(" | "), a.source ?? "", a.headCount, a.totalFee, a.donationAmount, a.paymentMethod ?? "", a.transactionId ?? "", a.status, a.membershipStatus, a.createdAt]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(","))
       .join("\n");
@@ -917,6 +918,15 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               >
                 <UtensilsCrossed className="w-4 h-4" /> Print food tokens
               </a>
+              <a
+                href={`/print/event/${event.id}?what=forms`}
+                target="_blank"
+                rel="noreferrer"
+                title="Every registration as the filled-in paper form; save as PDF to download"
+                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200"
+              >
+                <FileDown className="w-4 h-4" /> Download registration forms
+              </a>
               {event.isMembershipEvent && (
                 <span className="flex items-center gap-1 px-2 py-1 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-amber-900">
                   <Printer className="w-4 h-4" /> Paper forms:
@@ -1069,7 +1079,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       {a.packageName ?? "Member"} · {a.headCount} {a.headCount === 1 ? "person" : "people"}
                       {a.guests.length > 0 && (
                         <span className="block text-[11px] text-slate-500">
-                          {a.guests.map((g) => `${g.name} × ${g.count}`).join(", ")}
+                          {a.guests.map(formatGuestLine).join(", ")}
                         </span>
                       )}
                       {a.source && (
@@ -1103,6 +1113,11 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                       )}
                       {a.status === "CHECKED_IN" && (
                         <button disabled={busyId === a.id} onClick={() => decide(a, "UNDO_CHECK_IN")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-100 font-bold disabled:opacity-50">Undo check-in</button>
+                      )}
+                      {a.status !== "CANCELLED" && (
+                        <a href={`/print/event/${event.id}?what=forms&reg=${a.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-slate-100 font-bold">
+                          Form
+                        </a>
                       )}
                       {(a.status === "CONFIRMED" || a.status === "CHECKED_IN") && (
                         <>

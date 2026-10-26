@@ -3,6 +3,8 @@ import Link from "next/link";
 import { forbidden, notFound, unauthorized } from "next/navigation";
 import EventTokenTile from "@/components/events/EventTokenTile";
 import PaymentSlip from "@/components/events/PaymentSlip";
+import FilledRegistrationForm, { FILLED_FORM_CSS } from "@/components/events/FilledRegistrationForm";
+import { registrationFormsForEvent, type FilledRegistrationForm as FilledForm } from "@/lib/events/registration-forms";
 import PrintButton from "@/components/print/PrintButton";
 import { logActivity } from "@/lib/activity-log";
 import { slipsForEvent } from "@/lib/events/slips";
@@ -36,6 +38,8 @@ function chunk<T>(list: T[], size: number): T[][] {
  * 21 per A4), for every confirmed registration, one batch (&batch=) or one (&reg=).
  * &source=offline limits any of these to the paper forms the committee typed in.
  * ?what=list prints the register: one row per confirmed registration with its totals.
+ * ?what=forms prints every registration (pending too, not cancelled) as the filled-in
+ * paper registration form, one Legal page each; save it as PDF to download.
  */
 export default async function EventPrintPage({ params, searchParams }: Props) {
   const user = await getSessionUser();
@@ -45,7 +49,7 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
   const whatParam = first(sp.what);
-  const what = whatParam === "tokens" ? "tokens" : whatParam === "list" ? "list" : "slips";
+  const what = whatParam === "tokens" ? "tokens" : whatParam === "list" ? "list" : whatParam === "forms" ? "forms" : "slips";
   const registrationId = first(sp.reg) || null;
   const batch = Number(first(sp.batch)) || null;
   const offline = first(sp.source) === "offline";
@@ -55,7 +59,8 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
   if (!event) notFound();
 
   const confirmed = await prisma.eventRegistration.findMany({
-    where: { eventId: id, status: { in: ["CONFIRMED", "CHECKED_IN"] }, ...(source ? { source } : {}) },
+    // Forms cover pending registrations too, so their batch buttons do as well.
+    where: { eventId: id, status: what === "forms" ? { not: "CANCELLED" } : { in: ["CONFIRMED", "CHECKED_IN"] }, ...(source ? { source } : {}) },
     select: { user: { select: { profile: { select: { sscBatch: true } } } } },
   });
   const batches = [...new Set(confirmed.map((r) => r.user.profile?.sscBatch).filter((b): b is number => typeof b === "number"))].sort((a, b) => a - b);
@@ -72,8 +77,9 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
     }
   }
   const list: RegistrationListRow[] = what === "list" ? await registrationListForPrint(id, { batch, source }) : [];
-  const count = what === "slips" ? slips.length : what === "list" ? list.length : tokens.length;
-  const noun = { slips: "payment slip", tokens: "food/kit token", list: "registration list row" }[what];
+  const forms: FilledForm[] = what === "forms" ? await registrationFormsForEvent(id, { registrationId, batch, source, paperSource: OFFLINE_SOURCE }) : [];
+  const count = what === "slips" ? slips.length : what === "list" ? list.length : what === "forms" ? forms.length : tokens.length;
+  const noun = { slips: "payment slip", tokens: "food/kit token", list: "registration list row", forms: "registration form" }[what];
   if (count > 0) {
     // Each printed token or slip stands for money or food: keep a record of who printed which.
     await logActivity({
@@ -97,7 +103,8 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
       <style>{`
-        @page { size: A4 ${what === "list" ? "landscape" : "portrait"}; margin: ${what === "tokens" ? "15.1mm 9.75mm" : "8mm 10mm"}; }
+        @page { size: ${what === "forms" ? "legal portrait" : `A4 ${what === "list" ? "landscape" : "portrait"}`}; margin: ${what === "tokens" ? "15.1mm 9.75mm" : what === "forms" ? "9mm 11mm" : "8mm 10mm"}; }
+        ${what === "forms" ? FILLED_FORM_CSS : ""}
         .reg-list thead { display: table-header-group; }
         .reg-list tr { break-inside: avoid; }
         @media print { .no-print { display: none !important; } .sheet { box-shadow: none !important; margin: 0 !important; } }
@@ -112,10 +119,10 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
               ← Back to {event.title}
             </Link>
             <p className="text-sm font-bold text-slate-900">
-              {what === "slips" ? `${count} payment slip${count === 1 ? "" : "s"}` : what === "list" ? `${count} registration${count === 1 ? "" : "s"} in the list` : `${count} food / kit token${count === 1 ? "" : "s"}`}
+              {what === "slips" ? `${count} payment slip${count === 1 ? "" : "s"}` : what === "list" ? `${count} registration${count === 1 ? "" : "s"} in the list` : what === "forms" ? `${count} registration form${count === 1 ? "" : "s"}` : `${count} food / kit token${count === 1 ? "" : "s"}`}
               {offline ? " · paper forms" : ""}
-              {batch ? ` · batch ${batch}` : registrationId ? " · one registration" : offline ? "" : " · all confirmed"}
-              {count > 0 && what !== "list" && <span className="font-normal text-slate-500"> · {Math.ceil(count / (what === "slips" ? 2 : 21))} A4 page(s)</span>}
+              {batch ? ` · batch ${batch}` : registrationId ? " · one registration" : offline ? "" : what === "forms" ? " · all registrations" : " · all confirmed"}
+              {count > 0 && what !== "list" && what !== "forms" && <span className="font-normal text-slate-500"> · {Math.ceil(count / (what === "slips" ? 2 : 21))} A4 page(s)</span>}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -127,6 +134,9 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
             </Link>
             <Link href={`/print/event/${id}?what=list${batch ? `&batch=${batch}` : ""}${offline ? "&source=offline" : ""}`} className={`px-3 py-2 rounded-xl border font-bold ${what === "list" ? "bg-emerald-800 text-white border-emerald-800" : "border-slate-300"}`}>
               Entries list
+            </Link>
+            <Link href={`/print/event/${id}?what=forms${batch ? `&batch=${batch}` : ""}${offline ? "&source=offline" : ""}`} className={`px-3 py-2 rounded-xl border font-bold ${what === "forms" ? "bg-emerald-800 text-white border-emerald-800" : "border-slate-300"}`}>
+              Registration forms
             </Link>
             {!registrationId && (
               <Link
@@ -152,12 +162,12 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
         </div>
         <p className="max-w-5xl mx-auto mt-1 text-[11px] text-slate-500">
           Print on A4 at 100% (actual size) with background graphics on.{" "}
-          {what === "list" ? "A4 landscape; the column headings repeat on every page. Tick and sign each row when you check it." : what === "tokens" ? `Cut along the dashed lines. Each token works once at its food counter. Up to ${MAX_TOKENS_PER_PRINT} tokens per print: pick a batch for big events.` : "Two slips per page; cut along the middle."}
+          {what === "forms" ? "Legal paper (8.5 × 14 in), one form per page, laid out like the paper registration form. To download, choose “Save as PDF” as the printer." : what === "list" ? "A4 landscape; the column headings repeat on every page. Tick and sign each row when you check it." : what === "tokens" ? `Cut along the dashed lines. Each token works once at its food counter. Up to ${MAX_TOKENS_PER_PRINT} tokens per print: pick a batch for big events.` : "Two slips per page; cut along the middle."}
         </p>
       </div>
 
       {error && <p className="no-print max-w-5xl mx-auto mt-6 px-4 text-sm font-bold text-rose-700">{error}</p>}
-      {!error && count === 0 && <p className="no-print max-w-5xl mx-auto mt-6 px-4 text-sm text-slate-500">{offline ? "No confirmed paper-form registrations to print." : "No confirmed registrations to print."}</p>}
+      {!error && count === 0 && <p className="no-print max-w-5xl mx-auto mt-6 px-4 text-sm text-slate-500">{what === "forms" ? (offline ? "No paper-form registrations to print." : "No registrations to print.") : offline ? "No confirmed paper-form registrations to print." : "No confirmed registrations to print."}</p>}
 
       <div className="py-6 print:py-0 flex flex-col items-center gap-6 print:gap-0 overflow-x-auto">
         {what === "slips" &&
@@ -168,6 +178,7 @@ export default async function EventPrintPage({ params, searchParams }: Props) {
               ))}
             </div>
           ))}
+        {what === "forms" && forms.map((f) => <FilledRegistrationForm key={f.registrationId} form={f} />)}
         {what === "list" && count > 0 && <RegistrationList rows={list} title={event.title} offline={offline} batch={batch} />}
         {what === "tokens" &&
           chunk(tokens, 21).map((page, i) => (
