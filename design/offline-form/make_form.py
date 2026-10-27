@@ -34,7 +34,7 @@ BANGLA_QR = next((HERE / f"bangla-qr.{ext}" for ext in ("png", "jpg", "jpeg") if
 QR_MERCHANT = "PRAKTAN CHATRO CHATRI PORISHAD SABUJ SHIKSHAYATAN"
 QR_BANK = "ONE Bank · OK Wallet"
 QR_ACCOUNT = "01819172910"
-EMAIL = "sabujshikshayatanalumni@gmail.com"
+EMAIL = "info@exsabujian.org"
 SITE = "/jubilee"
 
 GREEN = "#06281e"

@@ -18,7 +18,7 @@ It creates one throwaway account per role (deleted at the end), signs in over HT
 
 - [ ] Home, events, news, gallery, stories, achievements, batches, alumni directory, careers, mentorship, about, contact load and look right on a phone.
 - [ ] Directory shows no phone or email unless the member made them public.
-- [ ] Contact form sends; the message reaches `sabujshikshayatanalumni@gmail.com` (and is in Admin → Logs).
+- [ ] Contact form sends; the message reaches `info@exsabujian.org` (and is in Admin → Logs).
 - [ ] Donate page shows the open campaigns and the real payment details; a donation with a transaction ID is accepted ("waiting for the committee").
 - [ ] "Post a job" and "Become a mentor" ask to sign in first.
 - [ ] Join the association (see `PHONE_TEST_CHECKLIST.md`): ends with "waiting for approval"; signing in is refused until approved.

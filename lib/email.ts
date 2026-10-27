@@ -40,7 +40,7 @@ export interface EmailPayload {
 
 /** Where replies to site emails go: EMAIL_REPLY_TO, else the association's mailbox. */
 function replyToAddress(): string {
-  return process.env.EMAIL_REPLY_TO || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sabujshikshayatanalumni@gmail.com";
+  return process.env.EMAIL_REPLY_TO || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@exsabujian.org";
 }
 
 // ── Email Provider Detection ──────────────────────────────────────────

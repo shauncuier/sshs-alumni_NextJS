@@ -44,7 +44,7 @@ def get_optimized_image_b64(path: Path, max_w: int = 1200, quality: int = 86) ->
 # where the registration link and the video are posted.
 FACEBOOK_GROUP = "https://www.facebook.com/groups/sshsalumniassociation"
 FACEBOOK_PAGE = "https://www.facebook.com/ssghschool"
-ASSOCIATION_EMAIL = "sabujshikshayatanalumni@gmail.com"
+ASSOCIATION_EMAIL = "info@exsabujian.org"
 QR_VIDEO = make_qr_data_url(FACEBOOK_GROUP)
 QR_CONTACT = make_qr_data_url(FACEBOOK_GROUP)
 

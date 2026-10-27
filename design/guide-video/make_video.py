@@ -88,7 +88,7 @@ body {{ font-family: 'Shonar Bangla', 'Nirmala UI', 'Segoe UI', sans-serif; colo
         body = f"""<div class="top"><div class="bn" style="font-size:76px">{bn}</div><div class="en">What happens next</div></div>
 <div class="card">{rows}</div>
 <div class="top" style="top:1430px"><div class="en" style="font-size:34px">রেজিস্ট্রেশনের শেষ সময় <b style="color:{GOLD_LIGHT}">৩০ নভেম্বর ২০২৬</b></div>
-<div class="en" style="font-size:28px;margin-top:22px">Help: sabujshikshayatanalumni@gmail.com · Facebook group: SSHS Alumni Association</div></div>{foot}"""
+<div class="en" style="font-size:28px;margin-top:22px">Help: info@exsabujian.org · Facebook group: SSHS Alumni Association</div></div>{foot}"""
     else:
         body = f"""<div class="top" style="top:330px"><div class="title50">৫০</div>
 <div class="bn" style="font-size:96px;margin-top:10px">সুবর্ণ জয়ন্তী ২০২৬</div>

@@ -72,7 +72,7 @@ export async function initiateSession(
       product_category: "Donation",
       product_profile: "non-physical-goods",
       cus_name: req.donorName,
-      cus_email: req.donorEmail || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sabujshikshayatanalumni@gmail.com",
+      cus_email: req.donorEmail || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@exsabujian.org",
       // Online payments are off (manual only); never send a made-up phone number.
       cus_phone: req.donorPhone || "",
       cus_add1: "Chattogram, Bangladesh",

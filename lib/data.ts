@@ -217,7 +217,7 @@ export const schoolInfo = {
   board: "Board of Intermediate and Secondary Education, Chattogram",
   email: "info@sabujsghs.edu.bd",
   /** The alumni association's own mailbox: contact details, replies to site emails. */
-  associationEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sabujshikshayatanalumni@gmail.com",
+  associationEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@exsabujian.org",
   phone: "+880 1745-950025",
   website: "https://sabujsghs.edu.bd/",
   /** The school's Facebook page and the alumni association's Facebook group. */

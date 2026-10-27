@@ -39,7 +39,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 14 | Dependency audit and security headers | 3 · Security | S | ✅ Done 2026-10-12 |
 | 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ✅ Done 2026-10-12 |
 | 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ✅ Done 2026-10-12 |
-| 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | 🟡 Resend key and association email set 2026-10-12; verify `exsabujian.org` in Resend next |
+| 17 | Email provider with the association's own domain (**You**) | 4 · Integrations | S | 🟡 Own mail server `info@exsabujian.org` (SMTP) chosen 2026-10-28, Resend not used; test emails left |
 | 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | 🟡 Key works (balance ৳94.05), `npm run sms:test` ready; operator tests by you |
 | 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | 🟡 Admin page ready; the committee enters the real numbers and QR |
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
@@ -231,9 +231,10 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ## Phase 4 — Integrations
 
-### 17. Email provider · S · **You** · 🟡 Partly done 2026-10-12
+### 17. Email provider · S · **You** · 🟡 Own mail server chosen 2026-10-28; test emails left
 **Done:** Resend API key (send-only) in `.env.local`; the association's mailbox `sabujshikshayatanalumni@gmail.com` is the reply-to of every email (`EMAIL_REPLY_TO`), the contact-form inbox (`CONTACT_INBOX_EMAIL`) and the contact address on the site (`NEXT_PUBLIC_CONTACT_EMAIL`: footer, contact page, souvenir call); the made-up `alumni@`/`souvenir@sabujsghs.edu.bd` addresses are gone. Sender is Resend's test address `onboarding@resend.dev`, which **only delivers to the Resend account owner's own address**; the production check warns about it, and `npm run email:test -- <address>` sends a test. Also fixed: a signed-in member volunteering while registering was saved with an invented email, phone ("Registered Attendee") and batch 2010; the server now uses their profile.
-**Left:** verify `exsabujian.org` in Resend (SPF/DKIM records in its DNS), set `RESEND_FROM_EMAIL` to e.g. `Praktan Sabujian Parishad <noreply@exsabujian.org>`, then send the four test emails below.
+**2026-10-28:** the association's mailbox is now **`info@exsabujian.org`** (Hostinger Business Email; MX, SPF, DKIM and DMARC already in Cloudflare DNS). It replaces the Gmail address as reply-to, contact address and contact-form inbox, and the live site sends through it by SMTP (`smtp.hostinger.com`, 465) until Resend is verified.
+**Left:** after the live site is up, send the four test emails below from `info@exsabujian.org`. Resend is **not used** for now (user, 2026-10-28: the association has its own mail server); `RESEND_API_KEY` stays empty.
 **Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY`, `RESEND_FROM_EMAIL` and `CONTACT_INBOX_EMAIL`; send a test approval email, a test email code, a test donation receipt and a test contact-form message.
 **Done when:** emails arrive in Gmail's inbox (not spam) from the association's domain.
 

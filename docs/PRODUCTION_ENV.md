@@ -26,8 +26,8 @@ It prints variable names only, never values, and exits with an error when the si
 
 | Variable | Feature | Roadmap |
 | --- | --- | --- |
-| `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (or `SMTP_*`) | Email codes, receipts, job and mentorship emails. The sender must be on a domain verified in Resend (`exsabujian.org`, e.g. `Praktan Sabujian Parishad <noreply@exsabujian.org>`); `onboarding@resend.dev` or a Gmail address only reaches the Resend account owner. Until the association has a domain, send through Gmail instead: `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, `SMTP_USER` = the mailbox, `SMTP_PASS` = a Gmail app password (needs 2-Step Verification; about 500 emails a day). Test with `npm run email:test -- you@example.com` | 17 |
-| `EMAIL_REPLY_TO`, `NEXT_PUBLIC_CONTACT_EMAIL` | Association mailbox for replies and the site's contact address (`sabujshikshayatanalumni@gmail.com`) | 17 |
+| `EMAIL_PROVIDER=smtp` + `SMTP_*` | Email codes, receipts, job and mentorship emails, sent through the association's own mailbox: `SMTP_HOST=smtp.hostinger.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, `SMTP_USER=info@exsabujian.org`, `SMTP_PASS` = the mailbox password, `SMTP_FROM` on `info@exsabujian.org` (SPF, DKIM and DMARC already in DNS). Resend (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`) is not used for now. Test with `npm run email:test -- you@example.com` | 17 |
+| `EMAIL_REPLY_TO`, `NEXT_PUBLIC_CONTACT_EMAIL` | Association mailbox for replies and the site's contact address (`info@exsabujian.org`, Hostinger Business Email) | 17 |
 | `BULKSMSBD_API_KEY`, `BULKSMSBD_SENDER_ID`, `OTP_BRAND_NAME` | SMS codes and broadcasts | 18 |
 | — | bKash / Nagad numbers, bank account and the Bangla QR image are **not** env variables any more: an admin sets them in **Admin → Payment settings** (each method switched on or off) (the old `NEXT_PUBLIC_BANGLA_QR_*` and `NEXT_PUBLIC_DONATION_INSTRUCTIONS` are only a fallback until then) | 19 |
 | `CONTACT_INBOX_EMAIL` | Contact-form messages by email | 17 |
