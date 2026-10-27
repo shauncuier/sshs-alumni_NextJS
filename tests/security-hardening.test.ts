@@ -53,6 +53,28 @@ describe("security headers", () => {
   });
 });
 
+describe("bare domain redirect", () => {
+  const redirects = async (appUrl: string) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", appUrl);
+    vi.resetModules();
+    return (await import("../next.config.mjs")).default.redirects!();
+  };
+
+  it("sends the bare domain to the www address, keeping the path", async () => {
+    const rule = (await redirects("https://www.exsabujian.org")).find((r) => r.has);
+    expect(rule).toEqual({
+      source: "/:path*",
+      has: [{ type: "host", value: "exsabujian.org" }],
+      destination: "https://www.exsabujian.org/:path*",
+      permanent: true,
+    });
+  });
+
+  it("adds nothing when the site address has no www (local development)", async () => {
+    expect((await redirects("http://localhost:3000")).some((r) => r.has)).toBe(false);
+  });
+});
+
 describe("privacy clean-up of rejected applicants", () => {
   const DAY = 86_400_000;
   const id = (n: number) => String(n).padStart(32, "a");
