@@ -50,7 +50,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 25 | Test gaps closed (route handlers, logging) | 6 · Quality | M | ✅ Done 2026-10-12 |
 | 26 | Manual QA walkthrough for every role | 6 · Quality | S | 🟡 Access checks automated and passing; hands-on part by you |
 | 27 | Performance pass (images, mobile Lighthouse) | 6 · Quality | M | 🟡 Images done; Lighthouse on a production build by you |
-| 28 | Server set up (Node, Nginx, PM2, SSL, uploads folder) | 7 · Deploy | M | 🟡 Live on https://www.exsabujian.org 2026-10-28 (Hostinger Node.js web app, `main` 82d49e2); apex redirect and `/api/media` check left |
+| 28 | Server set up (Node, Nginx, PM2, SSL, uploads folder) | 7 · Deploy | M | 🟡 Live on https://www.exsabujian.org 2026-10-28 (Hostinger Node.js web app, `main` 264c28d); bare domain redirects to www; `/api/media` check left |
 | 29 | Production database: back up, rehearse, migrate, seed | 7 · Deploy | M | ⬜ |
 | 30 | Backups running and a restore tested | 7 · Deploy | S | ⬜ |
 | 31 | Monitoring and alerts | 7 · Deploy | S | ⬜ |
@@ -327,7 +327,7 @@ A read-through of every page and route against the steps above, with a UX/UI eye
 ## Phase 7 — Deploy
 
 ### 28. Server set-up · M
-**Result 2026-10-28:** live at **https://www.exsabujian.org** on Hostinger Node.js web hosting (account `u996175628`, MariaDB `u996175628_ssghs`), built from `main` (82d49e2) with `build:hostinger` (tables, 50 SSC batches, super admin and membership event created). Settings are in hPanel → Node.js → Environment variables (copy in the git-ignored `.env.hostinger`). Gotchas on this server: glibc older than 2.29 (native SWC does not load, so `next.config.mjs` and `--webpack`); hPanel's deploy wizard reads `.env.example` from the zip and resets the build script to `build`, so deploy a zip without `.env.example` and build with `build:hostinger`; values pass through a `.env` file, so no `#` in secrets. **Left:** redirect `exsabujian.org` to `www` (the apex also serves the site); confirm `/api/media/...` files need a login.
+**Result 2026-10-28:** live at **https://www.exsabujian.org** on Hostinger Node.js web hosting (account `u996175628`, MariaDB `u996175628_ssghs`), built from `main` (82d49e2) with `build:hostinger` (tables, 50 SSC batches, super admin and membership event created). Settings are in hPanel → Node.js → Environment variables (copy in the git-ignored `.env.hostinger`). Gotchas on this server: glibc older than 2.29 (native SWC does not load, so `next.config.mjs` and `--webpack`); hPanel's deploy wizard reads `.env.example` from the zip and resets the build script to `build`, so deploy a zip without `.env.example` and build with `build:hostinger`; values pass through a `.env` file, so no `#` in secrets. `exsabujian.org` permanently redirects to the same path on `www` (`next.config.mjs`, from `NEXT_PUBLIC_APP_URL`, 264c28d). **Left:** confirm `/api/media/...` files need a login.
 **Tasks:** Node 22+, Nginx, PM2 (with log rotation), Certbot SSL; `npm ci` on the server (never copy `node_modules`); `UPLOADS_DIR` outside the web root, owned by the app user, `chmod 700`; `.env.production` with production values (start from the list in `docs/PRODUCTION_ENV.md`, check it with `npm run env:check -- .env.production`); firewall (SSH, HTTP, HTTPS only).
 **Done when:** the site loads over HTTPS on the real domain, and `/api/media/...` files are not reachable directly.
 
