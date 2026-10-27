@@ -18,7 +18,7 @@ describe("security headers", () => {
   const load = async (env: string) => {
     vi.stubEnv("NODE_ENV", env);
     vi.resetModules();
-    const config = (await import("../next.config")).default;
+    const config = (await import("../next.config.mjs")).default;
     const rules = await config.headers!();
     return Object.fromEntries(rules[0].headers.map((h) => [h.key, h.value]));
   };
@@ -41,7 +41,7 @@ describe("security headers", () => {
     expect(h["Permissions-Policy"]).toContain("microphone=()");
     vi.stubEnv("NODE_ENV", "production");
     vi.resetModules();
-    const rules = await (await import("../next.config")).default.headers!();
+    const rules = await (await import("../next.config.mjs")).default.headers!();
     // No page-specific camera rule: it would not apply after client-side navigation.
     expect(rules.filter((r) => r.headers.some((x) => x.key === "Permissions-Policy"))).toHaveLength(1);
   });
