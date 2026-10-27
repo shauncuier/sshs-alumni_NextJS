@@ -1,6 +1,27 @@
-import type { NextConfig } from "next";
+// Plain JavaScript, not TypeScript: a .ts config needs the native SWC compiler, which
+// does not load on Hostinger servers with an older glibc (< 2.29).
+// The site's address (NEXT_PUBLIC_APP_URL) is https://www.<domain>. The bare domain
+// sends visitors there, so sign-in cookies and the same-origin checks see one origin.
+function bareDomainRedirect() {
+  let url;
+  try {
+    url = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "");
+  } catch {
+    return [];
+  }
+  if (!url.hostname.startsWith("www.")) return [];
+  return [
+    {
+      source: "/:path*",
+      has: [{ type: "host", value: url.hostname.slice(4) }],
+      destination: `${url.origin}/:path*`,
+      permanent: true,
+    },
+  ];
+}
 
-const nextConfig: NextConfig = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["sharp", "tesseract.js", "@prisma/client", "mariadb", "bcryptjs", "nodemailer"],
@@ -46,6 +67,7 @@ const nextConfig: NextConfig = {
     return [
       // The gate scanner moved out of the admin console so moderators (gate volunteers) can use it.
       { source: "/admin/gate-verify", destination: "/gate", permanent: false },
+      ...bareDomainRedirect(),
     ];
   },
   async headers() {

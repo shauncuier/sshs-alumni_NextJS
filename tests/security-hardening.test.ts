@@ -18,7 +18,7 @@ describe("security headers", () => {
   const load = async (env: string) => {
     vi.stubEnv("NODE_ENV", env);
     vi.resetModules();
-    const config = (await import("../next.config")).default;
+    const config = (await import("../next.config.mjs")).default;
     const rules = await config.headers!();
     return Object.fromEntries(rules[0].headers.map((h) => [h.key, h.value]));
   };
@@ -41,7 +41,7 @@ describe("security headers", () => {
     expect(h["Permissions-Policy"]).toContain("microphone=()");
     vi.stubEnv("NODE_ENV", "production");
     vi.resetModules();
-    const rules = await (await import("../next.config")).default.headers!();
+    const rules = await (await import("../next.config.mjs")).default.headers!();
     // No page-specific camera rule: it would not apply after client-side navigation.
     expect(rules.filter((r) => r.headers.some((x) => x.key === "Permissions-Policy"))).toHaveLength(1);
   });
@@ -50,6 +50,28 @@ describe("security headers", () => {
     const h = await load("development");
     expect(h["Content-Security-Policy"]).toContain("connect-src 'self' ws: wss:");
     expect(h["Strict-Transport-Security"]).toBeUndefined();
+  });
+});
+
+describe("bare domain redirect", () => {
+  const redirects = async (appUrl: string) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", appUrl);
+    vi.resetModules();
+    return (await import("../next.config.mjs")).default.redirects!();
+  };
+
+  it("sends the bare domain to the www address, keeping the path", async () => {
+    const rule = (await redirects("https://www.exsabujian.org")).find((r) => r.has);
+    expect(rule).toEqual({
+      source: "/:path*",
+      has: [{ type: "host", value: "exsabujian.org" }],
+      destination: "https://www.exsabujian.org/:path*",
+      permanent: true,
+    });
+  });
+
+  it("adds nothing when the site address has no www (local development)", async () => {
+    expect((await redirects("http://localhost:3000")).some((r) => r.has)).toBe(false);
   });
 });
 
