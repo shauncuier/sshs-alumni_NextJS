@@ -364,9 +364,13 @@ export function EntryItem({ e, meta, busy, onApprove, onVoid, onEdit }: { e: Ent
   );
 }
 
-/** Approve and void, shared by the overview and the voucher list. */
+/**
+ * Approve and void, shared by the overview and the voucher list. Void asks for its
+ * reason in `dialog`, which the page renders.
+ */
 export function useEntryActions(after: (message: string) => Promise<void> | void, onError: (message: string) => void) {
   const [busy, setBusy] = useState(false);
+  const [voiding, setVoiding] = useState<Entry | null>(null);
   const run = async (fn: () => Promise<unknown>, message: string) => {
     setBusy(true);
     try {
@@ -381,10 +385,68 @@ export function useEntryActions(after: (message: string) => Promise<void> | void
   return {
     busy,
     approve: (e: Entry) => run(() => api(`/api/admin/accounts/entries/${e.id}/approve`, "POST", {}), `${e.voucherNo} approved.`),
-    void: (e: Entry) => {
-      const reason = window.prompt(`Why is ${e.voucherNo} (${taka(e.amount)}) void? It stays on record.`);
-      if (!reason) return;
-      void run(() => api(`/api/admin/accounts/entries/${e.id}/void`, "POST", { reason }), `${e.voucherNo} voided.`);
-    },
+    void: (e: Entry) => setVoiding(e),
+    dialog: voiding && (
+      <VoidDialog
+        e={voiding}
+        onClose={() => setVoiding(null)}
+        onVoided={async () => {
+          const voucherNo = voiding.voucherNo;
+          setVoiding(null);
+          await after(`${voucherNo} voided.`);
+        }}
+      />
+    ),
   };
+}
+
+const danger = primary.replace("bg-emerald-800 hover:bg-emerald-700", "bg-rose-700 hover:bg-rose-600");
+
+function VoidDialog({ e, onClose, onVoided }: { e: Entry; onClose: () => void; onVoided: () => Promise<void> }) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const tooShort = reason.trim().length < 3;
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await api(`/api/admin/accounts/entries/${e.id}/void`, "POST", { reason: reason.trim() });
+      await onVoided();
+    } catch (err) {
+      setError((err as Error).message);
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog title={`Void ${e.voucherNo}`} onClose={onClose}>
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-0.5">
+        <p className="font-bold text-slate-900">{e.description}</p>
+        <p>{e.date} · {taka(e.amount)}</p>
+      </div>
+      <p className="text-xs text-slate-600">A void voucher stays on record, struck through with your reason, and no longer counts in any total. This cannot be undone: enter a new voucher if it was right after all.</p>
+      <div>
+        <label htmlFor="fe-void-reason" className={label}>Reason *</label>
+        <textarea
+          id="fe-void-reason"
+          rows={3}
+          maxLength={300}
+          autoFocus
+          className={input}
+          placeholder="e.g. Entered twice; the bill was paid from bKash instead"
+          value={reason}
+          onChange={(ev) => setReason(ev.target.value)}
+        />
+      </div>
+      {error && <p role="alert" className="text-xs font-bold text-rose-700">{error}</p>}
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <button type="button" onClick={onClose} className={ghost}>Keep it</button>
+        <button type="button" disabled={saving || tooShort} onClick={() => void save()} className={danger}>
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />} Void voucher
+        </button>
+      </div>
+    </Dialog>
+  );
 }

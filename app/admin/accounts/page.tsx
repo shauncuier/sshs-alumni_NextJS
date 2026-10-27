@@ -188,6 +188,7 @@ export default function AccountsOverviewPage() {
           }}
         />
       )}
+      {actions.dialog}
     </div>
   );
 }

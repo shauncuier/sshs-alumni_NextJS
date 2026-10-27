@@ -147,6 +147,7 @@ export default function AccountsEntriesPage() {
           }}
         />
       )}
+      {actions.dialog}
     </div>
   );
 }
