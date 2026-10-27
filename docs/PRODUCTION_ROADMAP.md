@@ -16,7 +16,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | --- | --- | --- | --- | --- |
 | 1 | Finish the activity log | 0 · In-flight | M | ✅ Done 2026-10-11 |
 | 2 | Commit the volunteer page header/footer fix | 0 · In-flight | S | ✅ Done 2026-10-11 |
-| 3 | Choose hosting, domain and backup location (**You**) | 1 · Decisions | S | ⏸️ Deferred — no domain/hosting yet; must be done before step 28 |
+| 3 | Choose hosting, domain and backup location (**You**) | 1 · Decisions | S | 🟡 Domain `www.exsabujian.org` and Hostinger hosting bought 2026-10-28; backup location still open |
 | 4 | Decide which sections launch, which are hidden (**You**) | 1 · Decisions | S | ✅ All sections launch |
 | 5 | Decide payments at launch: manual only or online gateways (**You**) | 1 · Decisions | S | ✅ Manual only |
 | 6 | Hide or remove the sections not launching | 2 · Real data | M | ⏭️ Nothing to hide (step 4) |
@@ -39,7 +39,7 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 | 14 | Dependency audit and security headers | 3 · Security | S | ✅ Done 2026-10-12 |
 | 15 | Privacy: delete rejected applicants' photos and documents | 3 · Security | S | ✅ Done 2026-10-12 |
 | 16 | Fix the known edge cases (membership flag, moderator 403 text) | 3 · Security | S | ✅ Done 2026-10-12 |
-| 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | 🟡 Resend key and association email set 2026-10-12; domain verification waits for the domain (step 3) |
+| 17 | Email provider (Resend) with a verified domain (**You**) | 4 · Integrations | S | 🟡 Resend key and association email set 2026-10-12; verify `exsabujian.org` in Resend next |
 | 18 | SMS gateway: approved OTP template and sender ID, real-phone test (**You**) | 4 · Integrations | S | 🟡 Key works (balance ৳94.05), `npm run sms:test` ready; operator tests by you |
 | 19 | Bangla QR image and payment instructions (**You**) | 4 · Integrations | S | 🟡 Admin page ready; the committee enters the real numbers and QR |
 | 20 | Online payment gateways | 4 · Integrations | L | ⏭️ Not needed — manual payment chosen |
@@ -83,7 +83,8 @@ Size: **S** ≈ under 2 hours · **M** ≈ half a day to a day · **L** ≈ seve
 
 ## Phase 1 — Decisions (only the committee can make these)
 
-### 3. Hosting, domain and backups · S · **You** · ⏸️ Deferred 2026-10-11 (no domain or hosting yet). Blocks steps 17 (email domain), 28–31 (deploy); everything else can go ahead.
+### 3. Hosting, domain and backups · S · **You** · 🟡 Domain and hosting bought 2026-10-28; backup location open
+**Result so far:** official domain **https://www.exsabujian.org** (`NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` = `https://www.exsabujian.org`, sending email domain `exsabujian.org`). Hosting: a **new Hostinger account** (Node.js hosting), to be connected later. The earlier Hostinger account with `forestgreen-ferret-656052.hostingersite.com` was only a trial and is not used for launch. **Left:** backup location and who holds the keys.
 **Why:** member photos and proof documents are stored on the server's disk, so serverless hosting (e.g. Vercel) cannot be used as is.
 **Decide:**
 - Host: Ubuntu VPS with Nginx + PM2 (recommended) or a cPanel Node.js app. Needs Node 22+, a persistent disk, SSH access.
@@ -197,7 +198,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 **Tasks:**
 - Generate a new `NEXTAUTH_SECRET` (`openssl rand -base64 32`) for production; replace the fixed example value in `.env.example` with a placeholder.
 - Production `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` (12+ characters, password manager).
-- `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` set to the real domain.
+- `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` set to the real domain (`https://www.exsabujian.org`).
 - No seed passwords or test accounts in production env.
 
 **Done when:** production env reviewed line by line against `.env.example`; nothing secret in git.
@@ -232,7 +233,7 @@ One sub-step per section: 9a news, 9b gallery, 9c stories & achievements, 9d car
 
 ### 17. Email provider · S · **You** · 🟡 Partly done 2026-10-12
 **Done:** Resend API key (send-only) in `.env.local`; the association's mailbox `sabujshikshayatanalumni@gmail.com` is the reply-to of every email (`EMAIL_REPLY_TO`), the contact-form inbox (`CONTACT_INBOX_EMAIL`) and the contact address on the site (`NEXT_PUBLIC_CONTACT_EMAIL`: footer, contact page, souvenir call); the made-up `alumni@`/`souvenir@sabujsghs.edu.bd` addresses are gone. Sender is Resend's test address `onboarding@resend.dev`, which **only delivers to the Resend account owner's own address**; the production check warns about it, and `npm run email:test -- <address>` sends a test. Also fixed: a signed-in member volunteering while registering was saved with an invented email, phone ("Registered Attendee") and batch 2010; the server now uses their profile.
-**Left:** verify the association's domain in Resend (SPF/DKIM) once the domain exists (step 3), set `RESEND_FROM_EMAIL` to an address on it, then send the four test emails below.
+**Left:** verify `exsabujian.org` in Resend (SPF/DKIM records in its DNS), set `RESEND_FROM_EMAIL` to e.g. `Praktan Sabujian Parishad <noreply@exsabujian.org>`, then send the four test emails below.
 **Tasks:** Resend account; verify the sending domain (SPF, DKIM records in DNS); set `RESEND_API_KEY`, `RESEND_FROM_EMAIL` and `CONTACT_INBOX_EMAIL`; send a test approval email, a test email code, a test donation receipt and a test contact-form message.
 **Done when:** emails arrive in Gmail's inbox (not spam) from the association's domain.
 

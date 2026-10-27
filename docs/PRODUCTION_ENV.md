@@ -16,7 +16,7 @@ It prints variable names only, never values, and exits with an error when the si
 | --- | --- |
 | `DATABASE_URL` | Production MySQL/MariaDB URL. Its own database user and password, not root. |
 | `NEXTAUTH_SECRET` | New random value for production only: `openssl rand -base64 32`. Never reuse the local one, never the old example value. Changing it signs everyone out and invalidates issued member cards and tickets, so set it once. |
-| `NEXTAUTH_URL` | The site's `https://` address, e.g. `https://alumni.example.org`. |
+| `NEXTAUTH_URL` | The site's `https://` address: `https://www.exsabujian.org`. |
 | `NEXT_PUBLIC_APP_URL` | Same address as `NEXTAUTH_URL`. Must be set **before `npm run build`** (it is built into the pages). |
 | `SUPER_ADMIN_EMAIL` | The committee's super admin login. |
 | `SUPER_ADMIN_PASSWORD` | 12+ characters, kept in a password manager. Changing it and restarting resets the password and signs the super admin out everywhere. |
@@ -26,7 +26,7 @@ It prints variable names only, never values, and exits with an error when the si
 
 | Variable | Feature | Roadmap |
 | --- | --- | --- |
-| `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (or `SMTP_*`) | Email codes, receipts, job and mentorship emails. The sender must be on a domain verified in Resend; `onboarding@resend.dev` or a Gmail address only reaches the Resend account owner. Until the association has a domain, send through Gmail instead: `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, `SMTP_USER` = the mailbox, `SMTP_PASS` = a Gmail app password (needs 2-Step Verification; about 500 emails a day). Test with `npm run email:test -- you@example.com` | 17 |
+| `RESEND_API_KEY` + `RESEND_FROM_EMAIL` (or `SMTP_*`) | Email codes, receipts, job and mentorship emails. The sender must be on a domain verified in Resend (`exsabujian.org`, e.g. `Praktan Sabujian Parishad <noreply@exsabujian.org>`); `onboarding@resend.dev` or a Gmail address only reaches the Resend account owner. Until the association has a domain, send through Gmail instead: `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, `SMTP_USER` = the mailbox, `SMTP_PASS` = a Gmail app password (needs 2-Step Verification; about 500 emails a day). Test with `npm run email:test -- you@example.com` | 17 |
 | `EMAIL_REPLY_TO`, `NEXT_PUBLIC_CONTACT_EMAIL` | Association mailbox for replies and the site's contact address (`sabujshikshayatanalumni@gmail.com`) | 17 |
 | `BULKSMSBD_API_KEY`, `BULKSMSBD_SENDER_ID`, `OTP_BRAND_NAME` | SMS codes and broadcasts | 18 |
 | — | bKash / Nagad numbers, bank account and the Bangla QR image are **not** env variables any more: an admin sets them in **Admin → Payment settings** (each method switched on or off) (the old `NEXT_PUBLIC_BANGLA_QR_*` and `NEXT_PUBLIC_DONATION_INSTRUCTIONS` are only a fallback until then) | 19 |
