@@ -53,6 +53,20 @@ const DEFAULT_OPENING = "2015-01-01";
 export async function ensureFinanceDefaults(db: Db = prisma): Promise<void> {
   const [accounts, categories] = await Promise.all([db.financeAccount.count(), db.financeCategory.count()]);
   if (accounts > 0 && categories > 0) return;
+  if (db === prisma) return prisma.$transaction((tx) => createDefaults(tx));
+  return createDefaults(db);
+}
+
+/**
+ * The first pages of the accounts load together, so several requests can find the
+ * books empty at once. Each takes the same Setting row lock first: the others wait,
+ * then count again and find the defaults already made.
+ */
+async function createDefaults(db: Prisma.TransactionClient): Promise<void> {
+  await db.$executeRaw`INSERT INTO \`Setting\` (\`key\`, \`value\`, \`updatedAt\`) VALUES ('finance-defaults', '1', NOW(3))
+    ON DUPLICATE KEY UPDATE \`updatedAt\` = NOW(3)`;
+  const [accounts, categories] = await Promise.all([db.financeAccount.count(), db.financeCategory.count()]);
+  if (accounts > 0 && categories > 0) return;
   if (accounts === 0) {
     for (const [i, a] of DEFAULT_ACCOUNTS.entries()) {
       await db.financeAccount.upsert({

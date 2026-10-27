@@ -57,6 +57,17 @@ describe("money", () => {
   });
 });
 
+describe("set-up", () => {
+  it("creates each default account and category once, even when the first pages load together", async () => {
+    await Promise.all(Array.from({ length: 6 }, () => ensureFinanceDefaults()));
+    const categories = await prisma.financeCategory.findMany({ select: { name: true, kind: true } });
+    const keys = categories.map((c) => `${c.kind}:${c.name}`);
+    expect(keys.length).toBe(new Set(keys).size);
+    expect(keys).toContain("EXPENSE:Scholarships");
+    expect(await prisma.financeAccount.count()).toBe(5);
+  });
+});
+
 describe("vouchers", () => {
   it("numbers each kind per year, with no duplicates when saved together", async () => {
     const s = await setup();
