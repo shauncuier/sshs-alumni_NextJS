@@ -75,7 +75,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                <a href={`tel:${schoolInfo.phone.replace(/[^+\d]/g, "")}`} className="hover:text-emerald-300">{schoolInfo.phone}</a>
+                <a href={`tel:${schoolInfo.associationPhone.replace(/[^+\d]/g, "")}`} className="hover:text-emerald-300">{schoolInfo.associationPhone}</a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-emerald-500 shrink-0" />

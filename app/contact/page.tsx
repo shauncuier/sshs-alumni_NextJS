@@ -90,6 +90,14 @@ export default function ContactPage() {
                   <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
+                      <strong className="block text-slate-900 font-semibold">Association phone:</strong>
+                      <a href={`tel:${schoolInfo.associationPhone.replace(/[^+\d]/g, "")}`} className="text-emerald-700 hover:underline">{schoolInfo.associationPhone}</a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
                       <strong className="block text-slate-900 font-semibold">School phone:</strong>
                       <a href={`tel:${schoolInfo.phone.replace(/[^+\d]/g, "")}`} className="text-emerald-700 hover:underline">{schoolInfo.phone}</a>
                     </div>
