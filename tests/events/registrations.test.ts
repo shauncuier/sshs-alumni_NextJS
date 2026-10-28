@@ -210,6 +210,21 @@ describe("joining through the membership event", () => {
       registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: paidRsvp, paymentScreenshot: undefined })
     ).rejects.toMatchObject({ status: 400, code: "SCREENSHOT_REQUIRED" });
     expect(await prisma.eventRegistration.count()).toBe(0);
+    // The last 4 digits are required; the app's ID and the time are optional.
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { ...qr, payerAccountLast4: undefined, transactionId: "" } })
+    ).rejects.toMatchObject({ status: 400, code: "INVALID_ACCOUNT_DIGITS" });
+    const other = await makeMember({ role: "MODERATOR", status: "PENDING", email: "qr-only@example.test" });
+    const { registration: qrOnly } = await registerForEvent({
+      slug: "jubilee",
+      sessionUserId: other.id,
+      rsvp: { ...paidRsvp, paymentMethod: "Bangla QR", transactionId: "", payerAccountLast4: "5517" },
+    });
+    expect(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: qrOnly.id } })).toMatchObject({
+      transactionId: null,
+      payerAccountLast4: "5517",
+      payerPaidAt: null,
+    });
     // A client can't link a file of its choosing as the screenshot.
     const { registration } = await registerForEvent({
       slug: "jubilee",

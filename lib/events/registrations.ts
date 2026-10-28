@@ -268,9 +268,12 @@ export async function registerForEvent(args: {
       const needsPayment = price.total > 0;
       const transactionId = normalizeTransactionId(args.rsvp.transactionId);
       const paymentMethod = args.rsvp.paymentMethod ?? null;
-      // Bangla QR: the member's own transaction ID never matches the association's SMS,
-      // so the payment is matched by the paying account's last 4 digits and the time.
-      let payer: { payerAccountLast4: string; payerPaidAt: Date } | null = null;
+      // Bangla QR: the member's own transaction ID never matches the association's SMS.
+      // The screenshot and the last 4 digits of the paying account are required (our SMS
+      // shows the account masked, e.g. 0182***5517); the app's ID and the time are optional.
+      // The admin records our SMS TrxID when confirming.
+      const banglaQr = isBanglaQr(paymentMethod);
+      let payer: { payerAccountLast4: string; payerPaidAt: Date | null } | null = null;
       if (needsPayment) {
         if (!PAYMENT_METHODS.includes(paymentMethod as (typeof PAYMENT_METHODS)[number])) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please choose how you paid.");
@@ -279,18 +282,23 @@ export async function registerForEvent(args: {
         if (methods.length > 0 && !(methods as string[]).includes(paymentMethod!)) {
           throw new AppError("PAYMENT_REQUIRED", 400, `${paymentMethod} is not accepted right now. Please choose another way to pay.`);
         }
-        if (!/^[A-Z0-9-]{6,40}$/.test(transactionId)) {
+        if (!(banglaQr && !transactionId) && !/^[A-Z0-9-]{6,40}$/.test(transactionId)) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");
         }
         if (paymentMethod !== "Cash" && !screenshotUrl) {
           throw new AppError("SCREENSHOT_REQUIRED", 400, "Attach the screenshot of your payment receipt.");
         }
-        if (isBanglaQr(paymentMethod)) {
-          payer = { payerAccountLast4: normalizeLast4(args.rsvp.payerAccountLast4), payerPaidAt: normalizePaidAt(args.rsvp.payerPaidAt, now) };
+        if (banglaQr) {
+          payer = {
+            payerAccountLast4: normalizeLast4(args.rsvp.payerAccountLast4),
+            payerPaidAt: args.rsvp.payerPaidAt ? normalizePaidAt(args.rsvp.payerPaidAt, now) : null,
+          };
         }
-        const usedByDonation = await tx.donation.findFirst({ where: { transactionRef: transactionId, paymentStatus: { not: "FAILED" } }, select: { id: true } });
-        if (usedByDonation || (await tx.eventRegistration.findUnique({ where: { transactionId }, select: { id: true } }))) {
-          throw new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been used for a registration.");
+        if (transactionId) {
+          const usedByDonation = await tx.donation.findFirst({ where: { transactionRef: transactionId, paymentStatus: { not: "FAILED" } }, select: { id: true } });
+          if (usedByDonation || (await tx.eventRegistration.findUnique({ where: { transactionId }, select: { id: true } }))) {
+            throw new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been used for a registration.");
+          }
         }
       }
 
@@ -311,7 +319,7 @@ export async function registerForEvent(args: {
           mealPreference: args.rsvp.mealPreference?.trim() || null,
           notes,
           paymentMethod: needsPayment ? paymentMethod : null,
-          transactionId: needsPayment ? transactionId : null,
+          transactionId: needsPayment && transactionId ? transactionId : null,
           payerAccountLast4: payer?.payerAccountLast4 ?? null,
           payerPaidAt: payer?.payerPaidAt ?? null,
           status: needsPayment ? "PENDING_PAYMENT" : "CONFIRMED",

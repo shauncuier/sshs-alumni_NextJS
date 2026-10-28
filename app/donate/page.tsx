@@ -94,7 +94,6 @@ export default function DonatePage() {
       if (paymentMethod !== "Cash" && !screenshot) throw new Error("Attach the screenshot of your payment receipt.");
       if (paymentMethod === "Bangla QR") {
         if (!/^\d{4}$/.test(payerLast4)) throw new Error("Type the last 4 digits of the number or account you paid from.");
-        if (!payerPaidAt) throw new Error("Enter the date and time shown on your payment receipt.");
       }
       const form = new FormData();
       form.append(
@@ -482,11 +481,11 @@ export default function DonatePage() {
 
                       <div>
                         <label htmlFor="don-trx" className="block font-semibold text-slate-700 mb-1">
-                          {paymentMethod === "Cash" ? "Cash receipt number" : paymentMethod === "Bangla QR" ? "Transaction ID shown in your app" : `${paymentMethod} transaction ID`} *
+                          {paymentMethod === "Cash" ? "Cash receipt number *" : paymentMethod === "Bangla QR" ? "Transaction ID shown in your app" : `${paymentMethod} transaction ID *`}
                         </label>
                         <input
                           id="don-trx"
-                          required
+                          required={paymentMethod !== "Bangla QR"}
                           value={transactionId}
                           onChange={(e) => setTransactionId(e.target.value)}
                           placeholder={paymentMethod === "Cash" ? "e.g. CASH-2026-0042" : "e.g. 9AB3XK1LQ"}
@@ -511,11 +510,10 @@ export default function DonatePage() {
                             />
                           </div>
                           <div>
-                            <label htmlFor="don-paid-at" className="block font-semibold text-slate-700 mb-1">Payment date and time *</label>
+                            <label htmlFor="don-paid-at" className="block font-semibold text-slate-700 mb-1">Payment date and time</label>
                             <input
                               id="don-paid-at"
                               type="datetime-local"
-                              required
                               value={payerPaidAt}
                               onChange={(e) => setPayerPaidAt(e.target.value)}
                               className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"

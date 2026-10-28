@@ -306,7 +306,6 @@ export default function RegistrationForm({
       if (paid && paymentMethod !== "Cash" && !paymentReceipt) throw new Error("Attach the screenshot of your payment receipt.");
       if (paid && paymentMethod === "Bangla QR") {
         if (!/^\d{4}$/.test(payerLast4)) throw new Error("Type the last 4 digits of the number or account you paid from.");
-        if (!payerPaidAt) throw new Error("Enter the date and time shown on your payment receipt.");
       }
       // Joining sends the photo and the proof along, so it goes as multipart; signed-in members stay JSON unless sending a payment receipt.
       let res: Response;
@@ -788,12 +787,12 @@ export default function RegistrationForm({
                   {paymentMethod === "Cash"
                     ? "Cash Voucher / Receipt Serial No. *"
                     : paymentMethod === "Bangla QR"
-                      ? "Transaction ID shown in your app *"
+                      ? "Transaction ID shown in your app"
                       : `${paymentMethod} Transaction ID (TrxID) *`}
                 </label>
                 <input
                   id="reg-trx"
-                  required
+                  required={paymentMethod !== "Bangla QR"}
                   className={input}
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
@@ -825,11 +824,10 @@ export default function RegistrationForm({
                     <p className="text-[10px] text-slate-500 mt-1">The bKash, Nagad, Rocket or bank account number the money left from.</p>
                   </div>
                   <div>
-                    <label htmlFor="reg-paid-at" className={label}>Payment date and time *</label>
+                    <label htmlFor="reg-paid-at" className={label}>Payment date and time</label>
                     <input
                       id="reg-paid-at"
                       type="datetime-local"
-                      required
                       className={input}
                       value={payerPaidAt}
                       onChange={(e) => setPayerPaidAt(e.target.value)}

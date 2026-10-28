@@ -121,6 +121,9 @@ describe("Bangla QR donations", () => {
     const campaign = await makeCampaign();
     await expect(createManualDonation(qr(campaign.id), null, null)).rejects.toMatchObject({ code: "SCREENSHOT_REQUIRED" });
     await expect(createManualDonation(qr(campaign.id, { payerAccountLast4: "" }), null)).rejects.toMatchObject({ code: "INVALID_ACCOUNT_DIGITS" });
+    // The donor's app ID and the time are optional.
+    const minimal = await createManualDonation(qr(campaign.id, { transactionId: "", payerPaidAt: undefined }), null);
+    expect(minimal).toMatchObject({ transactionRef: null, payerAccountLast4: "5517", payerPaidAt: null });
     await expect(createManualDonation(qr(campaign.id, { payerPaidAt: "soon" }), null)).rejects.toMatchObject({ code: "INVALID_PAYMENT_TIME" });
     // Cash needs no screenshot.
     await expect(createManualDonation(input(campaign.id, { paymentMethod: "Cash", transactionId: "CASH-0001" }), null, null)).resolves.toBeTruthy();

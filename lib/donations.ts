@@ -18,7 +18,7 @@ import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merc
  * PENDING until a committee member checks the payment and verifies it; only then
  * does it count towards the campaign total and the donor get a receipt. Every method
  * except cash needs a screenshot of the payment; Bangla QR also needs the last 4 digits
- * of the paying account and the time (see lib/payments/bangla-qr.ts).
+ * of the paying account and is verified with our SMS TrxID (lib/payments/bangla-qr.ts).
  */
 
 export const DONATION_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
@@ -71,10 +71,14 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
     throw new AppError("INVALID_DONATION", 400, `${method} is not accepted right now. Please choose another way to pay.`);
   }
   const transactionRef = normalizeTransactionRef(input.transactionId);
-  if (!/^[A-Z0-9-]{6,40}$/.test(transactionRef)) {
+  // Bangla QR: the donor's app ID is optional (it never matches our SMS); the screenshot
+  // and the last 4 digits of the paying account are required, the time is optional.
+  if (!(isBanglaQr(method) && !transactionRef) && !/^[A-Z0-9-]{6,40}$/.test(transactionRef)) {
     throw new AppError("INVALID_DONATION", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");
   }
-  const payer = isBanglaQr(method) ? { payerAccountLast4: normalizeLast4(input.payerAccountLast4), payerPaidAt: normalizePaidAt(input.payerPaidAt) } : null;
+  const payer = isBanglaQr(method)
+    ? { payerAccountLast4: normalizeLast4(input.payerAccountLast4), payerPaidAt: input.payerPaidAt ? normalizePaidAt(input.payerPaidAt) : null }
+    : null;
   if (method !== "Cash" && !screenshot) throw new AppError("SCREENSHOT_REQUIRED", 400, "Attach the screenshot of your payment receipt.");
   const batch = Number(input.donorBatch);
   const donorBatch = Number.isInteger(batch) && batch >= 1960 && batch <= new Date().getFullYear() ? batch : null;
@@ -84,10 +88,12 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
 
   // One payment, one claim: a transaction ID already used for a donation or a
   // registration cannot be submitted again.
-  const [usedByDonation, usedByRegistration] = await Promise.all([
-    prisma.donation.findFirst({ where: { transactionRef, paymentStatus: { not: "FAILED" } }, select: { id: true } }),
-    prisma.eventRegistration.findUnique({ where: { transactionId: transactionRef }, select: { id: true } }),
-  ]);
+  const [usedByDonation, usedByRegistration] = transactionRef
+    ? await Promise.all([
+        prisma.donation.findFirst({ where: { transactionRef, paymentStatus: { not: "FAILED" } }, select: { id: true } }),
+        prisma.eventRegistration.findUnique({ where: { transactionId: transactionRef }, select: { id: true } }),
+      ])
+    : [null, null];
   if (usedByDonation || usedByRegistration) {
     throw new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been submitted.");
   }
@@ -110,7 +116,7 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
       paymentGateway: "MANUAL",
       paymentStatus: "PENDING",
       isAnonymous: input.isAnonymous === true,
-      transactionRef,
+      transactionRef: transactionRef || null,
       receiptId: newReceiptId(),
     },
     include: { campaign: { select: { title: true } } },
