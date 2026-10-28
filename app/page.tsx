@@ -21,6 +21,7 @@ import { listBatches } from "@/lib/batches";
 import { findPresident, getCurrentCommittee, getPresidentMessage } from "@/lib/committee";
 import { listActiveNotices, PRIORITY_BADGE } from "@/lib/notices";
 import { ASSOCIATION_AIMS } from "@/lib/association-aims";
+import { INFRASTRUCTURE_SPONSOR } from "@/lib/sponsor";
 import { PERSON_PLACEHOLDER } from "@/components/shared/PersonCard";
 import { formatTaka } from "@/lib/events/pricing";
 import { formatDate } from "@/lib/utils";
@@ -614,6 +615,35 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* 12a. SPONSOR: the website's infrastructure sponsor (lib/sponsor.ts) */}
+        <section className="py-14 lg:py-16 bg-white border-t border-slate-200/80">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-center sm:text-left">
+              <Image
+                src={INFRASTRUCTURE_SPONSOR.logo}
+                alt={`${INFRASTRUCTURE_SPONSOR.nameEn} logo`}
+                width={160}
+                height={160}
+                className="w-36 h-36 sm:w-40 sm:h-40 shrink-0 rounded-full shadow-lg ring-4 ring-emerald-50"
+              />
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                  সৌজন্যে · Website infrastructure sponsor
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">{INFRASTRUCTURE_SPONSOR.nameBn}</h2>
+                <p className="text-sm font-semibold text-slate-700">{INFRASTRUCTURE_SPONSOR.nameEn}</p>
+                <p className="flex items-center justify-center sm:justify-start gap-1.5 text-sm text-slate-600">
+                  <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                  {INFRASTRUCTURE_SPONSOR.addressBn}
+                </p>
+                <p className="text-sm text-slate-500 italic">
+                  &ldquo;{INFRASTRUCTURE_SPONSOR.motto}&rdquo; · Est. {INFRASTRUCTURE_SPONSOR.established}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* 13. JOIN (visitors only) */}
         {!signedIn && (
