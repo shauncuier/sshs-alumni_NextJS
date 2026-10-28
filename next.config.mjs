@@ -48,6 +48,7 @@ const nextConfig = {
     localPatterns: [
       { pathname: "/*", search: "" },
       { pathname: "/og/**", search: "" },
+      { pathname: "/sponsors/**", search: "" },
       { pathname: "/api/media/content/**", search: "" },
     ],
     // Optimized images are kept for 30 days (the default re-checks after 4 hours).
