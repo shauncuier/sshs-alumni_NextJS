@@ -19,7 +19,7 @@ const TYPES = new Map<string, { contentType: string; ext: string; csp: string }>
 
 /**
  * A new member's proof-of-study document. Private: administrators only, never
- * cached, and deleted once the membership is decided (then this answers 404).
+ * cached, and kept on record after the membership is decided.
  */
 export async function GET(_req: Request, { params }: Params) {
   const me = await getSessionUser();

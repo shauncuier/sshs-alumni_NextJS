@@ -7,7 +7,7 @@ What the platform stores about people, why, and when it is removed. Files live u
 | Account: email, password hash, role, status | The member; admins | While the account exists |
 | Profile: name, batch, profession, city, bio, links | Verified members and the public directory. Phone and email only if the member makes them public | While the account exists; the member can edit it |
 | Profile photo (web size and print master) | Public on the profile; master for admins (cards, magazine) | While the account exists. **Rejected applicants: deleted 30 days after the rejection** |
-| Proof of study (certificate, marksheet, school ID) | Admins only | **Deleted as soon as the membership is decided** (approved or rejected); type, note and reviewer stay on record |
+| Proof of study (certificate, marksheet, school ID) | Admins only | **Kept on record** after the membership is decided, approved or rejected (decided 2026-10-29). Requests decided before that date had their file deleted at the decision |
 | Payment screenshot sent when joining | Admins only | While the membership is valid. **Rejected applicants: deleted 30 days after the rejection**; the transaction ID and amount stay (needed for refunds and accounts) |
 | Event registrations, tickets, check-ins | The member; admins and gate staff | Kept as the event's record |
 | Donations: name, contact, amount, transaction ID | Admins; the donor's name publicly unless anonymous | Kept (financial records) |
@@ -19,9 +19,9 @@ What the platform stores about people, why, and when it is removed. Files live u
 
 ## Automatic clean-up
 
-- **Rejected applicants** (`lib/privacy-cleanup.ts`): photos, any leftover proof files and payment screenshots of members still rejected `PRIVACY_REJECTED_DAYS` (default 30) after the decision are deleted. The server runs it a minute after start and then daily; `npm run privacy:cleanup` runs it now. Each run that deletes something is written to the activity log (`privacy.rejected_files_purged`, counts only).
+- **Rejected applicants** (`lib/privacy-cleanup.ts`): photos and payment screenshots of members still rejected `PRIVACY_REJECTED_DAYS` (default 30) after the decision are deleted; their proof of study is kept. The server runs it a minute after start and then daily; `npm run privacy:cleanup` runs it now. Each run that deletes something is written to the activity log (`privacy.rejected_files_purged`, counts only).
 - **Activity log**: entries older than `LOG_RETENTION_DAYS` are deleted at every server start.
-- **Proofs**: deleted when the membership is decided; a failed deletion is retried the next time an admin opens the verification queue.
+- **Proofs**: never deleted automatically. Only deleting the whole account (`/admin/users`) removes a member's proof files.
 
 ## Requests from members
 

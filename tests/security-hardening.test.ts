@@ -90,6 +90,7 @@ describe("privacy clean-up of rejected applicants", () => {
     const m = await makeMember({ status });
     const avatarDir = await file("avatars", id(n), "avatar.webp");
     const receiptDir = await file("receipts", id(n + 100), "receipt.jpg");
+    const proofDir = await file("proofs", id(n + 200), "document.pdf");
     await prisma.alumniProfile.update({
       where: { userId: m.id },
       data: { avatarUrl: `/api/media/avatars/${id(n)}/avatar.webp`, avatarOriginalUrl: `/api/media/avatars/${id(n)}/original.jpg` },
@@ -98,12 +99,13 @@ describe("privacy clean-up of rejected applicants", () => {
     await prisma.eventRegistration.create({
       data: { eventId: event.id, userId: m.id, status: "CANCELLED", transactionId: `TRX${n}`, notes: `Hi\n[Payment Screenshot: /api/media/receipts/${id(n + 100)}/receipt.jpg]` },
     });
-    const req = await prisma.verificationRequest.create({ data: { userId: m.id, sscBatch: 2000, status } });
+    const proofFileUrl = `/api/media/proofs/${id(n + 200)}/document.pdf`;
+    const req = await prisma.verificationRequest.create({ data: { userId: m.id, sscBatch: 2000, status, proofFileUrl } });
     await prisma.$executeRaw`UPDATE VerificationRequest SET updatedAt = ${new Date(Date.now() - decidedDaysAgo * DAY)} WHERE id = ${req.id}`;
-    return { m, avatarDir, receiptDir };
+    return { m, avatarDir, receiptDir, proofDir, proofFileUrl };
   }
 
-  it("deletes photos and payment screenshots of applicants rejected over 30 days ago, and logs it", async () => {
+  it("deletes photos and payment screenshots of applicants rejected over 30 days ago, keeps their proof, and logs it", async () => {
     const old = await applicant("REJECTED", 31, 1);
     const recent = await applicant("REJECTED", 5, 2);
     const member = await applicant("VERIFIED", 90, 3);
@@ -118,6 +120,9 @@ describe("privacy clean-up of rejected applicants", () => {
     const reg = await prisma.eventRegistration.findFirstOrThrow({ where: { userId: old.m.id } });
     expect(reg.notes).toContain("Payment screenshot deleted");
     expect(reg.transactionId).toBe("TRX1"); // the payment reference stays on record
+    // The proof of study is the association's record and is never deleted.
+    expect(await exists(old.proofDir)).toBe(true);
+    expect(await prisma.verificationRequest.findFirstOrThrow({ where: { userId: old.m.id } })).toMatchObject({ proofFileUrl: old.proofFileUrl, proofDeletedAt: null });
 
     for (const kept of [recent, member]) {
       expect(await exists(kept.avatarDir)).toBe(true);

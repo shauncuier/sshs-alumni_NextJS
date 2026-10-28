@@ -2,7 +2,6 @@ import type { AlumniProfile, EventRegistration, User, VerificationRequest } from
 import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
-import { discardProofsForUser } from "@/lib/members/proof-retention";
 import { toProofSummary } from "@/lib/members/proof-types";
 import { storedGuests } from "./pricing";
 import { getPublicEventBySlug } from "./service";
@@ -183,9 +182,6 @@ export async function decideRegistration(args: {
 
     return { regId: reg.id, userId: reg.userId, memberDecided };
   });
-
-  // Never throws: a failed deletion is logged and retried later (see proof-retention).
-  if (memberDecided) await discardProofsForUser(userId);
 
   // Tell the member; a mail problem never fails the decision.
   if (args.action === "APPROVE") {

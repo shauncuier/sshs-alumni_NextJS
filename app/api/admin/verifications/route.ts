@@ -1,10 +1,9 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
 import { postRegistrationIncome } from "@/lib/finance/posting";
 import { logActivity } from "@/lib/activity-log";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
-import { discardDecidedProofs, discardProofsForUser } from "@/lib/members/proof-retention";
 import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
@@ -20,10 +19,6 @@ export async function GET(req: Request) {
     if (!me || !isAdminRole(me.role)) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
     }
-
-    // Retry deleting proofs an earlier decision could not remove, after the response
-    // is sent so it never slows the queue down (never throws).
-    after(() => discardDecidedProofs());
 
     const statusParam = new URL(req.url).searchParams.get("status") ?? "PENDING";
     if (statusParam !== "all" && !REQUEST_STATUSES.includes(statusParam as RequestStatus)) {
@@ -185,9 +180,6 @@ export async function PATCH(req: Request) {
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: result.code });
       }
-      // The membership is decided: delete the proof-of-study file now that the
-      // decision has committed. Never throws; a failure is logged and retried.
-      await discardProofsForUser(result.updated.userId);
       const updated =
         (await prisma.verificationRequest.findUnique({ where: { id: requestId } }).catch(() => null)) ?? result.updated;
 

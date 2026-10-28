@@ -1,7 +1,7 @@
 import "../lib/load-env";
 
-// npm run privacy:cleanup — deletes rejected applicants' photos, proofs and payment
-// screenshots older than PRIVACY_REJECTED_DAYS (default 30). The server also runs
+// npm run privacy:cleanup — deletes rejected applicants' photos and payment
+// screenshots (never their proof of study) older than PRIVACY_REJECTED_DAYS (default 30). The server also runs
 // this daily; use this to run it now.
 async function main() {
   const { purgeRejectedApplicantFiles, rejectedRetentionDays } = await import("../lib/privacy-cleanup");

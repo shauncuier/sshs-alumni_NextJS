@@ -7,7 +7,7 @@ import { PROOF_MAX_BYTES } from "@/lib/members/proof-types";
 import { uploadsRoot } from "./avatars";
 
 // Proof-of-study documents uploaded when joining. They are private (admins only)
-// and deleted once the membership is decided; see lib/members/proof-retention.ts.
+// and kept on record after the membership is decided.
 
 export const PROOF_LIMITS = { maxBytes: PROOF_MAX_BYTES } as const;
 
@@ -99,13 +99,6 @@ export async function removeProofDir(dir: string): Promise<void> {
 export function proofDirFromUrl(fileUrl: string): string | null {
   const match = /^\/api\/media\/proofs\/([a-f0-9]{32})\/(document\.(?:jpg|pdf))$/.exec(fileUrl);
   return match ? path.join(proofsRoot(), match[1]) : null;
-}
-
-/** Deletes a stored proof's folder; throws when the files could not be removed. */
-export async function deleteProofFiles(fileUrl: string): Promise<void> {
-  const dir = proofDirFromUrl(fileUrl);
-  if (!dir) return; // Nothing of ours on disk.
-  await fs.rm(dir, { recursive: true, force: true });
 }
 
 /** The file's path, or null when the id or file name is not one we wrote. */

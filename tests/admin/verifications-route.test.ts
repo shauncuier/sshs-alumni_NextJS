@@ -11,19 +11,9 @@ vi.mock("@/lib/session-user", () => ({
   getSessionUser: async () => auth.session?.user ?? null,
   isAdminRole: (role: string) => role === "ADMIN" || role === "SUPER_ADMIN",
 }));
-// `after` needs a live request scope; collect the callbacks and run them explicitly.
-const scheduled = vi.hoisted(() => [] as (() => unknown)[]);
-vi.mock("next/server", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("next/server")>()),
-  after: (task: () => unknown) => {
-    scheduled.push(task);
-  },
-}));
-
 import { GET, PATCH } from "@/app/api/admin/verifications/route";
 
 beforeEach(async () => {
-  scheduled.length = 0;
   auth.session = { user: { email: "admin@example.test", role: "ADMIN" } };
   await resetDatabase();
   await fs.rm(process.env.UPLOADS_DIR!, { recursive: true, force: true });
@@ -87,34 +77,18 @@ describe("verification queue and proof documents", () => {
   });
 
   for (const status of ["VERIFIED", "REJECTED"] as const) {
-    it(`deletes the proof file after the request is ${status.toLowerCase()}`, async () => {
+    it(`keeps the proof file after the request is ${status.toLowerCase()}`, async () => {
       const { request, dir } = await pendingMember();
       expect(proofDirFromUrl(request.proofFileUrl!)).toBe(dir);
       const res = await patch({ requestId: request.id, status });
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.request).toMatchObject({ status, proofType: "OTHER", proofFileUrl: null, reviewedBy: "admin@example.test" });
-      expect(body.request.proofDeletedAt).toBeTruthy();
+      expect(body.request).toMatchObject({ status, proofType: "OTHER", proofFileUrl: request.proofFileUrl, proofDeletedAt: null, reviewedBy: "admin@example.test" });
       const stored = await prisma.verificationRequest.findUniqueOrThrow({ where: { id: request.id } });
-      expect(stored).toMatchObject({ status, proofFileUrl: null, proofNote: "Headmistress letter" });
-      expect(stored.proofDeletedAt).toBeInstanceOf(Date);
-      expect(await exists(dir)).toBe(false);
+      expect(stored).toMatchObject({ status, proofFileUrl: request.proofFileUrl, proofNote: "Headmistress letter", proofDeletedAt: null });
+      expect(await exists(dir)).toBe(true);
     });
   }
-
-  it("retries a failed deletion after the queue response, not during it", async () => {
-    const { request, dir } = await pendingMember();
-    // A decided request whose file an earlier attempt could not delete.
-    await prisma.verificationRequest.update({ where: { id: request.id }, data: { status: "VERIFIED" } });
-    const res = await GET(new Request("http://x/api/admin/verifications?status=all"));
-    expect(res.status).toBe(200);
-    expect((await res.json()).requests[0].proofFileUrl).toBe(request.proofFileUrl);
-    expect(await exists(dir)).toBe(true);
-    expect(scheduled).toHaveLength(1);
-    await scheduled[0]();
-    expect(await exists(dir)).toBe(false);
-    expect((await prisma.verificationRequest.findUniqueOrThrow({ where: { id: request.id } })).proofFileUrl).toBeNull();
-  });
 
   it("keeps the proof when the decision is refused", async () => {
     const { request, dir } = await pendingMember();

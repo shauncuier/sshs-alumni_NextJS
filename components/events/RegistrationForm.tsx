@@ -476,7 +476,7 @@ export default function RegistrationForm({
           <fieldset className="sm:col-span-2 min-w-0 p-3 rounded-xl border border-slate-300 bg-slate-50/60 space-y-3" aria-describedby="reg-proof-help">
             <legend className="px-1 text-xs font-bold text-slate-800">Proof you studied at SSGHS *</legend>
             <p id="reg-proof-help" className="text-[11px] text-slate-500">
-              Only the alumni committee can see this. It is deleted after your membership is decided.
+              Only the alumni committee can see this. It is kept privately with your membership record.
             </p>
             <div>
               <label htmlFor="reg-proof-type" className={label}>Type of document *</label>

@@ -3,14 +3,14 @@ import path from "node:path";
 import prisma from "@/lib/prisma";
 import { logActivity } from "@/lib/activity-log";
 import { uploadsRoot } from "@/lib/media/avatars";
-import { proofDirFromUrl } from "@/lib/media/proofs";
 
 /**
- * Privacy: an applicant the committee rejected keeps no photo, proof document or
- * payment screenshot on the server longer than PRIVACY_REJECTED_DAYS (default 30)
- * after the rejection. Their account row, the decision and the payment's
- * transaction ID stay on record (who applied, what was decided, which payment to
- * refund); the files go. Runs at server start and daily (instrumentation.ts), or
+ * Privacy: an applicant the committee rejected keeps no photo or payment screenshot
+ * on the server longer than PRIVACY_REJECTED_DAYS (default 30) after the rejection.
+ * Their account row, the decision, the payment's transaction ID and the proof of
+ * study stay on record (who applied, what they showed, what was decided, which
+ * payment to refund); proofs are kept as the association's records and are
+ * visible to admins only. Runs at server start and daily (instrumentation.ts), or
  * on demand with `npm run privacy:cleanup`; each run that removes something is
  * written to the activity log.
  */
@@ -46,7 +46,7 @@ export async function purgeRejectedApplicantFiles(opts: { now?: Date; days?: num
       id: true,
       updatedAt: true,
       profile: { select: { id: true, avatarUrl: true, avatarOriginalUrl: true } },
-      verificationRequests: { select: { id: true, status: true, updatedAt: true, proofFileUrl: true } },
+      verificationRequests: { select: { status: true, updatedAt: true } },
       eventRegistrations: { select: { id: true, notes: true } },
     },
   });
@@ -63,11 +63,6 @@ export async function purgeRejectedApplicantFiles(opts: { now?: Date; days?: num
     const dirs = new Set<string>();
     const avatarDirs = [uploadDir(u.profile?.avatarUrl), uploadDir(u.profile?.avatarOriginalUrl)];
     for (const d of avatarDirs) if (d) dirs.add(d);
-    const proofs = u.verificationRequests.filter((r) => r.proofFileUrl);
-    for (const r of proofs) {
-      const d = proofDirFromUrl(r.proofFileUrl!);
-      if (d) dirs.add(d);
-    }
     const registrations = u.eventRegistrations.filter((r) => r.notes && HAS_SCREENSHOT.test(r.notes));
     for (const r of registrations) {
       for (const m of r.notes!.matchAll(SCREENSHOT)) {
@@ -76,7 +71,7 @@ export async function purgeRejectedApplicantFiles(opts: { now?: Date; days?: num
       }
     }
     const hasAvatar = Boolean(u.profile?.avatarUrl || u.profile?.avatarOriginalUrl);
-    if (!hasAvatar && proofs.length === 0 && registrations.length === 0) continue;
+    if (!hasAvatar && registrations.length === 0) continue;
 
     for (const d of dirs) {
       await fs.rm(d, { recursive: true, force: true });
@@ -85,7 +80,6 @@ export async function purgeRejectedApplicantFiles(opts: { now?: Date; days?: num
     const stamp = `[Payment screenshot deleted ${now.toISOString().slice(0, 10)} (privacy clean-up)]`;
     await prisma.$transaction([
       ...(hasAvatar ? [prisma.alumniProfile.update({ where: { id: u.profile!.id }, data: { avatarUrl: null, avatarOriginalUrl: null } })] : []),
-      ...proofs.map((r) => prisma.verificationRequest.update({ where: { id: r.id }, data: { proofFileUrl: null, proofDeletedAt: now } })),
       ...registrations.map((r) => prisma.eventRegistration.update({ where: { id: r.id }, data: { notes: r.notes!.replace(SCREENSHOT, stamp) } })),
     ]);
     purgedUsers++;
@@ -95,7 +89,7 @@ export async function purgeRejectedApplicantFiles(opts: { now?: Date; days?: num
     await logActivity({
       category: "SYSTEM",
       action: "privacy.rejected_files_purged",
-      summary: `Deleted photos, proofs and payment screenshots of ${purgedUsers} rejected applicant(s) after ${days} days`,
+      summary: `Deleted photos and payment screenshots of ${purgedUsers} rejected applicant(s) after ${days} days`,
       metadata: { users: purgedUsers, folders, retentionDays: days },
     });
   }
