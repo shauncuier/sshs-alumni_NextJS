@@ -254,19 +254,14 @@ export default function Footer() {
       {/* Sponsor credit: the website infrastructure sponsor (Admin → Sponsors) */}
       <SponsorCredit />
 
-      {/* Bottom Bar: Copyright & Tagline */}
+      {/* Bottom Bar: Copyright & credit */}
       <div className="bg-[#020e0a] border-t border-emerald-950 py-6 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4 sm:gap-8">
-            <p>
-              © {new Date().getFullYear()} Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). All rights reserved.
-            </p>
-            <p className="text-slate-400">
-              Designed &amp; developed by <a href="https://3s-soft.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">3s-Soft</a>
-            </p>
-          </div>
-          <p className="text-emerald-400/80 font-medium">
-            &ldquo;Connecting generations, preserving memories, building the future.&rdquo;
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-8 text-center md:text-left">
+          <p>
+            © {new Date().getFullYear()} Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). All rights reserved.
+          </p>
+          <p className="text-slate-400 shrink-0">
+            Designed &amp; developed by <a href="https://3s-soft.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">3s-Soft</a>
           </p>
         </div>
       </div>

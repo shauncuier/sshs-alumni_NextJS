@@ -8,7 +8,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 });
 
 import prisma from "@/lib/prisma";
-import { createSponsor, deleteSponsor, getFeaturedSponsor, groupSponsors, listSponsors, seedDefaultSponsor, updateSponsor, DEFAULT_SPONSOR } from "@/lib/sponsors";
+import { createSponsor, deleteSponsor, getFeaturedSponsor, groupSponsors, listSponsors, seedLaunchSponsors, updateSponsor, LAUNCH_SPONSORS } from "@/lib/sponsors";
 import { POST as createSponsorRoute } from "@/app/api/admin/sponsors/route";
 import { GET as featuredRoute } from "@/app/api/sponsors/featured/route";
 
@@ -59,14 +59,24 @@ describe("sponsors", () => {
     expect(await listSponsors()).toEqual([]);
   });
 
-  it("adds the launch sponsor once, and not again after it is removed", async () => {
-    expect(await seedDefaultSponsor()).toBe(true);
-    const [launch] = await listSponsors();
-    expect(launch).toMatchObject({ category: "INFRASTRUCTURE", name: DEFAULT_SPONSOR.name, logoUrl: DEFAULT_SPONSOR.logoUrl });
-    expect(await seedDefaultSponsor()).toBe(false);
-    await deleteSponsor(launch.id);
-    expect(await seedDefaultSponsor()).toBe(false);
-    expect(await prisma.sponsor.count()).toBe(0);
+  it("adds each launch sponsor once, and not again after it is removed", async () => {
+    expect(await seedLaunchSponsors()).toEqual(LAUNCH_SPONSORS.map((l) => l.sponsor.name));
+    const groups = groupSponsors(await listSponsors({ publishedOnly: true }));
+    expect(groups.map((g) => [g.category, g.sponsors.map((s) => s.logoUrl)])).toEqual([
+      ["INFRASTRUCTURE", ["/sponsors/tasf-logo.png"]],
+      ["DEVELOPMENT", ["/sponsors/3s-soft-logo.webp"]],
+    ]);
+    expect((await getFeaturedSponsor())?.nameEn).toBe("Tofazzal Ahmed Smrity Foundation");
+    expect(await seedLaunchSponsors()).toEqual([]);
+    const [first] = await listSponsors();
+    await deleteSponsor(first.id);
+    expect(await seedLaunchSponsors()).toEqual([]);
+    expect(await prisma.sponsor.count()).toBe(1);
+  });
+
+  it("adds a launch sponsor that is new to a database that already has the others", async () => {
+    await prisma.setting.create({ data: { key: LAUNCH_SPONSORS[0].key, value: "earlier" } });
+    expect(await seedLaunchSponsors()).toEqual(["3S-SOFT"]);
   });
 
   it("lets only admins manage them", async () => {

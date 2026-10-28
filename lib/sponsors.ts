@@ -43,16 +43,33 @@ export interface SponsorInput {
   sortOrder?: unknown;
 }
 
-/** The sponsor the site launched with; added once by the production seed. */
-export const DEFAULT_SPONSOR = {
-  category: "INFRASTRUCTURE" as const,
-  name: "তফজ্জল আহম্মদ স্মৃতি ফাউন্ডেশন",
-  nameEn: "Tofazzal Ahmed Smrity Foundation",
-  address: "জোড়ামতল, সোনাইছড়ি, সীতাকুণ্ড, চট্টগ্রাম",
-  note: "For the welfare of humanity · Est. 2022",
-  // Bundled with the site in public/sponsors (made from the foundation's PDF logo).
-  logoUrl: "/sponsors/tasf-logo.png",
-};
+/** The sponsors the site launched with; each is added once by the production seed. */
+export const LAUNCH_SPONSORS: { key: string; sponsor: SponsorInput & { name: string; logoUrl: string } }[] = [
+  {
+    key: "sponsors.defaultSeeded",
+    sponsor: {
+      category: "INFRASTRUCTURE",
+      name: "তফজ্জল আহম্মদ স্মৃতি ফাউন্ডেশন",
+      nameEn: "Tofazzal Ahmed Smrity Foundation",
+      address: "জোড়ামতল, সোনাইছড়ি, সীতাকুণ্ড, চট্টগ্রাম",
+      note: "For the welfare of humanity · Est. 2022",
+      // Made from the foundation's PDF logo.
+      logoUrl: "/sponsors/tasf-logo.png",
+    },
+  },
+  {
+    key: "sponsors.seeded.3s-soft",
+    sponsor: {
+      category: "DEVELOPMENT",
+      name: "3S-SOFT",
+      address: "Chittagong, Bangladesh",
+      note: "Designed and developed this website · Web development, SEO and eCommerce services",
+      website: "https://3s-soft.com",
+      // From the 3s-soft.com home page.
+      logoUrl: "/sponsors/3s-soft-logo.webp",
+    },
+  },
+];
 
 // Logos bundled with the site; everything else must be uploaded through /api/admin/media.
 const BUNDLED_LOGO = /^\/sponsors\/[\w.-]+\.(png|webp|jpg|jpeg|svg)$/;
@@ -165,14 +182,17 @@ export async function deleteSponsor(id: string): Promise<SponsorView> {
   return toView(current);
 }
 
-// Marks that the launch sponsor was added, so removing it later in the admin keeps it removed.
-const SEEDED_KEY = "sponsors.defaultSeeded";
-
-/** Adds DEFAULT_SPONSOR once, on a database that never had it. True when it was added. */
-export async function seedDefaultSponsor(): Promise<boolean> {
-  if (await prisma.setting.findUnique({ where: { key: SEEDED_KEY } })) return false;
-  const added = (await prisma.sponsor.count()) === 0;
-  if (added) await createSponsor({ ...DEFAULT_SPONSOR, sortOrder: 1 });
-  await prisma.setting.create({ data: { key: SEEDED_KEY, value: new Date().toISOString() } });
+/**
+ * Adds each launch sponsor once. A setting per sponsor marks it as added, so a sponsor
+ * an admin later removes stays removed. Returns the names added this time.
+ */
+export async function seedLaunchSponsors(): Promise<string[]> {
+  const added: string[] = [];
+  for (const { key, sponsor } of LAUNCH_SPONSORS) {
+    if (await prisma.setting.findUnique({ where: { key } })) continue;
+    await createSponsor(sponsor);
+    await prisma.setting.create({ data: { key, value: new Date().toISOString() } });
+    added.push(sponsor.name);
+  }
   return added;
 }

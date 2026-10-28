@@ -83,7 +83,7 @@ export default async function SponsorsPage() {
                 <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{g.labelBn}</p>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">{g.label}</h2>
               </div>
-              {g.category === "INFRASTRUCTURE" ? (
+              {g.category === "INFRASTRUCTURE" || g.category === "DEVELOPMENT" ? (
                 <div className="space-y-4">
                   {g.sponsors.map((s) => (
                     <div key={s.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-center sm:text-left">

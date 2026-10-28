@@ -589,6 +589,7 @@ model HonorBoardEntry {
 
 enum SponsorCategory {
   INFRASTRUCTURE
+  DEVELOPMENT
   EVENT
   SCHOLARSHIP
   SUPPORTER
