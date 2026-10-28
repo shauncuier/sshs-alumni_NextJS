@@ -61,7 +61,7 @@ export function areaForPath(pathname: string): AdminArea | null {
   const segment = pathname.replace(/^\/admin\/?/, "").split("/")[0];
   if (segment === "achievements") return "stories";
   if (segment === "id-cards") return "alumni";
-  if (segment === "honor-board" || segment === "constitution") return "committee";
+  if (segment === "honor-board" || segment === "constitution" || segment === "sponsors") return "committee";
   return (ADMIN_AREAS as readonly string[]).includes(segment) ? (segment as AdminArea) : null;
 }
 

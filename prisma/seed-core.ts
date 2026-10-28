@@ -10,6 +10,7 @@ import { backfillEventJsonColumns } from "./backfill-events";
 import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGuestTypes } from "./membership-event";
 import { demoEvents } from "./demo-events";
 import { countAssociationDemo, removeAssociationDemo } from "./demo-association";
+import { seedDefaultSponsor } from "../lib/sponsors";
 
 /**
  * Seed steps shared by the demo seed (prisma/seed.ts, local development) and the
@@ -248,13 +249,14 @@ export interface ProductionSeedResult {
   superAdmin: EnsureResult;
   batchesCreated: number;
   membershipEventCreated: boolean;
+  sponsorAdded: boolean;
   renamedRows: number;
   repaired: { eventJson: number; registrations: number };
   lockedLegacyAccounts: string[];
   warnings: string[];
 }
 
-/** Batches, the super admin and the membership event. No test accounts, no sample content. */
+/** Batches, the super admin, the membership event and the launch sponsor. No test accounts, no sample content. */
 export async function runProductionSeed(env: Env = process.env): Promise<ProductionSeedResult> {
   if (!envSuperAdminEmail()) {
     throw new Error("SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be set: a production database needs its super admin.");
@@ -263,8 +265,9 @@ export async function runProductionSeed(env: Env = process.env): Promise<Product
   const batchesCreated = await seedBatches();
   const repaired = await repairLegacyRows();
   const membershipEventCreated = await seedMembershipEvent();
+  const sponsorAdded = await seedDefaultSponsor();
   const renamedRows = await renameAssociationInRows();
   const lockedLegacyAccounts = await lockLegacyAccounts();
   const warnings = await findDemoLeftovers(env);
-  return { superAdmin, batchesCreated, membershipEventCreated, renamedRows, repaired, lockedLegacyAccounts, warnings };
+  return { superAdmin, batchesCreated, membershipEventCreated, sponsorAdded, renamedRows, repaired, lockedLegacyAccounts, warnings };
 }

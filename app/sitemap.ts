@@ -36,6 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/committee/past",
     "/constitution",
     "/honor-board",
+    "/sponsors",
     "/notices",
   ].map((route) => ({
     url: `${baseUrl}${route}`,

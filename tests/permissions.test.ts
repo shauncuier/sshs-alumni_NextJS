@@ -50,6 +50,7 @@ describe("permission map", () => {
     expect(areaForPath("/admin/achievements")).toBe("stories");
     expect(areaForPath("/admin/honor-board")).toBe("committee");
     expect(areaForPath("/admin/constitution")).toBe("committee");
+    expect(areaForPath("/admin/sponsors")).toBe("committee");
     expect(areaForPath("/admin/notices")).toBe("notices");
     expect(areaForPath("/admin/unknown-thing")).toBeNull();
     expect(homeForRole("ADMIN")).toBe("/admin");

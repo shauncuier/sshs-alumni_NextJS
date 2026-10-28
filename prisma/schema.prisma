@@ -587,6 +587,35 @@ model HonorBoardEntry {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
+enum SponsorCategory {
+  INFRASTRUCTURE
+  EVENT
+  SCHOLARSHIP
+  SUPPORTER
+}
+
+/// Supporters on /sponsors, grouped by category, managed in /admin/sponsors
+/// (lib/sponsors.ts). The first published INFRASTRUCTURE sponsor is also credited
+/// in the footer and on the home page.
+model Sponsor {
+  id          String          @id @default(uuid()) @db.VarChar(36)
+  category    SponsorCategory @default(SUPPORTER)
+  /// Name as shown first, usually in Bangla.
+  name        String          @db.VarChar(200)
+  nameEn      String?         @db.VarChar(200)
+  address     String?         @db.VarChar(300)
+  /// One line under the name, e.g. what they support or their motto.
+  note        String?         @db.VarChar(500)
+  website     String?         @db.VarChar(500)
+  logoUrl     String?         @db.VarChar(500)
+  isPublished Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @default(now()) @updatedAt
+
+  @@index([isPublished, category, sortOrder])
+}
+
 /// Constitution versions on /constitution, each a PDF, managed in /admin/constitution
 /// (lib/constitution.ts).
 model ConstitutionDocument {

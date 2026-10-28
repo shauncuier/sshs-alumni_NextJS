@@ -8,11 +8,12 @@ import { runProductionSeed } from "./seed-core";
 // event, and nothing else. No test accounts, no sample posts, news or campaigns.
 // Existing rows are never overwritten, so it can be re-run at any time.
 async function main() {
-  console.log("Seeding the production database (batches, super admin, membership event)...");
+  console.log("Seeding the production database (batches, super admin, membership event, sponsor)...");
   const r = await runProductionSeed();
   console.log(`Super admin ${envSuperAdminEmail()}: ${r.superAdmin}`);
   console.log(`SSC batches created: ${r.batchesCreated}`);
   if (r.renamedRows) console.log(`Renamed the association in ${r.renamedRows} row(s).`);
+  if (r.sponsorAdded) console.log("Added the website infrastructure sponsor (edit it in /admin/sponsors).");
   console.log(r.membershipEventCreated ? "Membership event created. Add its payment instructions in /admin/events before opening joining." : "Membership event already exists; left unchanged.");
   if (r.repaired.eventJson || r.repaired.registrations) {
     console.log(`Repaired ${r.repaired.eventJson} event JSON value(s) and ${r.repaired.registrations} legacy free registration(s).`);

@@ -3,8 +3,8 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { MapPin, Phone, Mail, Globe, ExternalLink } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
-import { INFRASTRUCTURE_SPONSOR as sponsor } from "@/lib/sponsor";
 import FacebookIcon from "@/components/shared/FacebookIcon";
+import SponsorCredit from "@/components/layout/SponsorCredit";
 
 // Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
 // on every page costs more than the faster click is worth.
@@ -203,6 +203,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link prefetch={false} href="/sponsors" className="hover:text-emerald-300 transition-colors">
+                  Our Sponsors
+                </Link>
+              </li>
+              <li>
                 <Link prefetch={false} href="/contact" className="hover:text-emerald-300 transition-colors">
                   Contact Committee
                 </Link>
@@ -246,28 +251,8 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Sponsor credit: the website's infrastructure sponsor (lib/sponsor.ts) */}
-      <div className="border-t border-emerald-900/80 py-5 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center sm:text-left">
-          <NextImage
-            src={sponsor.logo}
-            alt={`${sponsor.nameEn} logo`}
-            width={56}
-            height={56}
-            className="w-14 h-14 shrink-0 rounded-full ring-2 ring-emerald-800/60"
-          />
-          <div className="space-y-0.5">
-            <p className="text-sm text-slate-200">
-              <span className="text-emerald-400">সৌজন্যে -</span>{" "}
-              <span className="font-bold text-white">{sponsor.nameBn}</span>
-              <span className="text-slate-400">। {sponsor.addressBn}</span>
-            </p>
-            <p className="text-[11px] text-slate-400">
-              Website infrastructure sponsor: {sponsor.nameEn}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Sponsor credit: the website infrastructure sponsor (Admin → Sponsors) */}
+      <SponsorCredit />
 
       {/* Bottom Bar: Copyright & Tagline */}
       <div className="bg-[#020e0a] border-t border-emerald-950 py-6 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
