@@ -16,6 +16,7 @@ What the platform stores about people, why, and when it is removed. Files live u
 | Contact-form messages | Admins (activity log, committee inbox) | Activity-log retention |
 | Activity log: who did what, IP address, browser | Admins and super admin | `LOG_RETENTION_DAYS` (default 365), then deleted at server start |
 | Phone and email verification codes | Nobody (sealed, hashed) | Minutes; never stored in plain text |
+| Site visits (pages viewed, device, rough location) | Google Analytics 4 (property G-SE8HGWHXY1), the committee through Google | Google's retention setting for the property (`components/shared/GoogleAnalytics.tsx`, live site only) |
 
 ## Automatic clean-up
 

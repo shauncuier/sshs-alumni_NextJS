@@ -73,6 +73,13 @@ const nextConfig = {
   },
   async headers() {
     const dev = process.env.NODE_ENV === "development";
+    // Google Analytics (components/shared/GoogleAnalytics.tsx): the gtag script and the
+    // hosts it sends visits to.
+    const ga = {
+      script: "https://www.googletagmanager.com",
+      connect: "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+      img: "https://*.google-analytics.com https://*.googletagmanager.com",
+    };
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
@@ -81,13 +88,13 @@ const nextConfig = {
       "frame-ancestors 'self'",
       "form-action 'self'",
       // Next.js inlines its bootstrap scripts; without nonces 'unsafe-inline' is required.
-      "script-src 'self' 'unsafe-inline'" + (dev ? " 'unsafe-eval'" : ""),
+      `script-src 'self' 'unsafe-inline' ${ga.script}` + (dev ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
       // Initials avatars are inline data: SVGs (lib/avatar.ts).
-      "img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org",
+      `img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org ${ga.img}`,
       "font-src 'self' data:",
       // Live updates use same-origin Server-Sent Events; the dev server also needs its HMR socket.
-      "connect-src 'self'" + (dev ? " ws: wss:" : ""),
+      `connect-src 'self' ${ga.connect}` + (dev ? " ws: wss:" : ""),
       "worker-src 'self' blob:",
       "manifest-src 'self'",
       ...(dev ? [] : ["upgrade-insecure-requests"]),

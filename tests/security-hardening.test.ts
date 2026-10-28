@@ -25,7 +25,8 @@ describe("security headers", () => {
 
   it("production sends a strict policy, HSTS and no legacy XSS auditor", async () => {
     const h = await load("production");
-    expect(h["Content-Security-Policy"]).toContain("connect-src 'self';");
+    expect(h["Content-Security-Policy"]).toContain("connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com;");
+    expect(h["Content-Security-Policy"]).toContain("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;");
     expect(h["Content-Security-Policy"]).toContain("object-src 'none'");
     expect(h["Content-Security-Policy"]).toContain("upgrade-insecure-requests");
     expect(h["Content-Security-Policy"]).not.toContain("unsafe-eval");
@@ -48,7 +49,7 @@ describe("security headers", () => {
 
   it("development allows the HMR socket and sends no HSTS", async () => {
     const h = await load("development");
-    expect(h["Content-Security-Policy"]).toContain("connect-src 'self' ws: wss:");
+    expect(h["Content-Security-Policy"]).toMatch(/connect-src 'self' [^;]* ws: wss:/);
     expect(h["Strict-Transport-Security"]).toBeUndefined();
   });
 });
