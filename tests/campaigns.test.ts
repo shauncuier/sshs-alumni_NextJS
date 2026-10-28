@@ -9,7 +9,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 });
 
 import { CATEGORY_LABELS, campaignStatus, createCampaign, deleteCampaign, listAdminCampaigns, listOpenCampaigns, updateCampaign } from "@/lib/campaigns";
-import { createManualDonation } from "@/lib/donations";
+import { createManualDonation } from "./helpers/donate";
 import { GET as listRoute, POST as createRoute } from "@/app/api/admin/campaigns/route";
 import { DELETE as deleteRoute, PATCH as patchRoute } from "@/app/api/admin/campaigns/[id]/route";
 import { GET as publicRoute } from "@/app/api/donations/route";

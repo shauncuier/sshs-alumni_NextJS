@@ -25,14 +25,18 @@ beforeAll(async () => {
 });
 
 const ctx = { params: Promise.resolve({ slug: "jubilee" }) };
-const multipart = (payload: string, file?: Buffer, proof?: Buffer) => {
+const multipart = (payload: string, file?: Buffer, proof?: Buffer, receipt: Buffer | null = makePdf()) => {
   const form = new FormData();
   form.append("payload", payload);
   if (file) form.append("photo", new File([new Uint8Array(file)], "me.jpg", { type: "image/jpeg" }));
   if (proof) form.append("proof", new File([new Uint8Array(proof)], "certificate.pdf", { type: "application/pdf" }));
+  if (receipt) form.append("paymentReceipt", new File([new Uint8Array(receipt)], "receipt.pdf", { type: "application/pdf" }));
   return form;
 };
-const TOO_LARGE = { code: "UPLOAD_TOO_LARGE", error: "The upload is too large. The photo must be 5 MB or smaller and the proof document 10 MB or smaller." };
+const TOO_LARGE = {
+  code: "UPLOAD_TOO_LARGE",
+  error: "The upload is too large. The photo must be 5 MB or smaller, the proof document and the payment screenshot 10 MB or smaller each.",
+};
 const joinPayload = (proof: unknown = { type: "SSC_MARKSHEET" }) =>
   JSON.stringify({
     account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", phoneVerificationToken: verifiedPhoneToken() },
@@ -46,7 +50,7 @@ describe("POST /api/events/[slug]/rsvp uploads", () => {
   it("refuses an oversized body from Content-Length before reading it", async () => {
     const req = new Request("http://x/api", {
       method: "POST",
-      headers: { "content-type": "multipart/form-data; boundary=x", "content-length": String(5 * 1024 * 1024 + 10 * 1024 * 1024 + 64 * 1024 + 1) },
+      headers: { "content-type": "multipart/form-data; boundary=x", "content-length": String(5 * 1024 * 1024 + 10 * 1024 * 1024 + 10 * 1024 * 1024 + 64 * 1024 + 1) },
       body: "--x--",
     });
     const res = await POST(req, ctx);
@@ -72,8 +76,8 @@ describe("POST /api/events/[slug]/rsvp uploads", () => {
     const res = await POST(req, ctx);
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject(TOO_LARGE);
-    // The cap is 5 MB + 10 MB + 64 KB: reading stops right after it.
-    expect(sent).toBeLessThan(20);
+    // The cap is 5 MB + 10 MB + 10 MB + 64 KB: reading stops right after it.
+    expect(sent).toBeLessThan(30);
   });
 
   it("answers malformed input with 400 INVALID_REQUEST", async () => {
@@ -102,6 +106,16 @@ describe("POST /api/events/[slug]/rsvp uploads", () => {
 });
 
 describe("POST /api/events/[slug]/rsvp proof of study", () => {
+  it("refuses a paid join without a payment screenshot, keeping no files", async () => {
+    await jubilee();
+    const res = await post(multipart(joinPayload(), photo, makePdf(), null));
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("SCREENSHOT_REQUIRED");
+    expect(await prisma.user.count()).toBe(0);
+    const left = await fs.readdir(path.join(process.env.UPLOADS_DIR!, "proofs")).catch(() => [] as string[]);
+    expect(left).toEqual([]);
+  });
+
   it("joins with a photo and a proof document", async () => {
     await jubilee();
     const res = await post(multipart(joinPayload({ type: "SSC_MARKSHEET", note: "Board copy" }), photo, makePdf()));

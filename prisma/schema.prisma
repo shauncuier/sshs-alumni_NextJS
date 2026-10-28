@@ -254,33 +254,40 @@ model Event {
 }
 
 model EventRegistration {
-  id             String             @id @default(uuid()) @db.VarChar(36)
-  eventId        String             @db.VarChar(36)
-  event          Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId         String             @db.VarChar(36)
-  user           User               @relation(fields: [userId], references: [id])
-  guestCount     Int                @default(1)
-  mealPreference String?
-  notes          String?            @db.Text
-  packageName    String?
-  extraAdults    Int                @default(0)
-  extraChildren  Int                @default(0)
+  id                String             @id @default(uuid()) @db.VarChar(36)
+  eventId           String             @db.VarChar(36)
+  event             Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId            String             @db.VarChar(36)
+  user              User               @relation(fields: [userId], references: [id])
+  guestCount        Int                @default(1)
+  mealPreference    String?
+  notes             String?            @db.Text
+  packageName       String?
+  extraAdults       Int                @default(0)
+  extraChildren     Int                @default(0)
   /// [{ name, count, price }]: guests added, with the price each paid
-  guests         Json               @default("[]")
+  guests            Json               @default("[]")
   /// Where the member came from, e.g. "facebook/jubilee2026" (the /jubilee link's utm_source/utm_campaign)
-  source         String?            @db.VarChar(80)
-  headCount      Int                @default(1)
-  tshirtSize     String?
-  totalFee       Float              @default(0)
-  donationAmount Float              @default(0)
-  paymentMethod  String?
-  transactionId  String?            @unique
-  status         RegistrationStatus @default(PENDING_PAYMENT)
-  confirmedBy    String?
-  confirmedAt    DateTime?
-  checkedInAt    DateTime?
+  source            String?            @db.VarChar(80)
+  headCount         Int                @default(1)
+  tshirtSize        String?
+  totalFee          Float              @default(0)
+  donationAmount    Float              @default(0)
+  paymentMethod     String?
+  /// The ID the member typed from their own app's receipt.
+  transactionId     String?            @unique
+  /// Bangla QR: last 4 digits of the account the member paid from, and when they say they paid
+  /// (matched against the association's OK Wallet SMS, lib/payments/bangla-qr.ts).
+  payerAccountLast4 String?            @db.VarChar(4)
+  payerPaidAt       DateTime?
+  /// Bangla QR: the TrxID in the association's own SMS, recorded by the admin on confirming.
+  merchantTrxId     String?            @unique @db.VarChar(40)
+  status            RegistrationStatus @default(PENDING_PAYMENT)
+  confirmedBy       String?
+  confirmedAt       DateTime?
+  checkedInAt       DateTime?
   /// Single-use food and kit tokens printed for this registration (lib/events/tokens.ts).
-  tokens         EventToken[]
+  tokens            EventToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -326,27 +333,34 @@ model DonationCampaign {
 }
 
 model Donation {
-  id             String           @id @default(uuid()) @db.VarChar(36)
-  campaignId     String           @db.VarChar(36)
-  campaign       DonationCampaign @relation(fields: [campaignId], references: [id])
-  userId         String?          @db.VarChar(36)
-  user           User?            @relation(fields: [userId], references: [id])
-  donorName      String
-  donorEmail     String?
-  donorPhone     String?
-  donorBatch     Int?
-  amount         Float
-  paymentMethod  String // "bKash", "Nagad", "Card", "Bank"
-  paymentGateway PaymentGateway   @default(BKASH)
-  paymentStatus  PaymentStatus    @default(INITIATED)
-  isAnonymous    Boolean          @default(false)
-  transactionRef String?
-  gatewayTrxId   String?
-  receiptId      String?
-  receiptUrl     String?          @db.VarChar(500)
-  paidAt         DateTime?
-  failureReason  String?          @db.Text
-  ipnPayload     String?          @db.Text
+  id                   String           @id @default(uuid()) @db.VarChar(36)
+  campaignId           String           @db.VarChar(36)
+  campaign             DonationCampaign @relation(fields: [campaignId], references: [id])
+  userId               String?          @db.VarChar(36)
+  user                 User?            @relation(fields: [userId], references: [id])
+  donorName            String
+  donorEmail           String?
+  donorPhone           String?
+  donorBatch           Int?
+  amount               Float
+  paymentMethod        String // "bKash", "Nagad", "Card", "Bank"
+  paymentGateway       PaymentGateway   @default(BKASH)
+  paymentStatus        PaymentStatus    @default(INITIATED)
+  isAnonymous          Boolean          @default(false)
+  transactionRef       String?
+  /// Bangla QR: last 4 digits of the paying account, when the donor says they paid, and the
+  /// TrxID in the association's own SMS (recorded by the admin on confirming).
+  payerAccountLast4    String?          @db.VarChar(4)
+  payerPaidAt          DateTime?
+  merchantTrxId        String?          @unique @db.VarChar(40)
+  /// Screenshot of the donor's payment receipt (lib/media/receipts.ts), admins only.
+  paymentScreenshotUrl String?          @db.VarChar(500)
+  gatewayTrxId         String?
+  receiptId            String?
+  receiptUrl           String?          @db.VarChar(500)
+  paidAt               DateTime?
+  failureReason        String?          @db.Text
+  ipnPayload           String?          @db.Text
 
   transaction PaymentTransaction?
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/prisma";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "../helpers/register";
 import { registrationFormsForEvent } from "@/lib/events/registration-forms";
 import { OFFLINE_SOURCE } from "@/lib/events/types";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";

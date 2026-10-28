@@ -28,6 +28,9 @@ interface VerificationRequestRow {
   paymentMethod?: string | null;
   transactionId?: string | null;
   totalFee?: number | null;
+  payerAccountLast4?: string | null;
+  payerPaidAt?: string | null;
+  merchantTrxId?: string | null;
   paymentReceiptUrl?: string | null;
   user: {
     email: string;
@@ -93,6 +96,9 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     paymentMethod: row.paymentMethod ?? null,
     transactionId: row.transactionId ?? null,
     totalFee: row.totalFee ?? null,
+    payerAccountLast4: row.payerAccountLast4 ?? null,
+    payerPaidAt: row.payerPaidAt ?? null,
+    merchantTrxId: row.merchantTrxId ?? null,
     paymentReceiptUrl: row.paymentReceiptUrl ?? null,
   };
 }
@@ -116,25 +122,26 @@ export async function fetchVerificationRequests(
 }
 
 // Approving also verifies the member's account and profile; see the PATCH handler.
-// Resolves to the request's proof after the decision (its file is deleted by then).
+// A Bangla QR payment also needs the TrxID from the association's SMS (merchantTrxId).
 /** Confirms a later payment of an already-decided member (their membership event registration). */
-export async function confirmMemberPayment(eventId: string, registrationId: string): Promise<void> {
+export async function confirmMemberPayment(eventId: string, registrationId: string, merchantTrxId?: string): Promise<void> {
   const res = await fetch(`/api/admin/events/${eventId}/registrations/${registrationId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "APPROVE" }),
+    body: JSON.stringify({ action: "APPROVE", merchantTrxId }),
   });
   if (!res.ok) throw new Error(await errorMessage(res, "Could not confirm the payment."));
 }
 
 export async function decideVerification(
   requestId: string,
-  status: "VERIFIED" | "REJECTED"
+  status: "VERIFIED" | "REJECTED",
+  merchantTrxId?: string
 ): Promise<ProofSummary | null> {
   const res = await fetch("/api/admin/verifications", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ requestId, status }),
+    body: JSON.stringify({ requestId, status, merchantTrxId }),
   });
   if (!res.ok) throw new Error(await errorMessage(res, "Could not save the verification decision."));
   const body: { request?: VerificationRequestRow } = await res.json().catch(() => ({}));

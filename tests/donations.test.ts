@@ -20,7 +20,9 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
   return { ...actual, getSessionUser: async () => session.user };
 });
 
-import { createManualDonation, decideDonation } from "@/lib/donations";
+import { decideDonation } from "@/lib/donations";
+import { createManualDonation } from "./helpers/donate";
+import { makePdf } from "./helpers/images";
 import { POST as submitDonation } from "@/app/api/donations/route";
 import { PATCH as decideRoute } from "@/app/api/admin/donations/[id]/route";
 import { POST as initiateOnline } from "@/app/api/payments/initiate/route";
@@ -48,6 +50,12 @@ const input = (campaignId: string, extra: Record<string, unknown> = {}) => ({
 });
 const json = (body: unknown, method = "POST") =>
   new Request("http://x/api", { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const donationForm = (body: unknown, screenshot: Buffer | null = makePdf()) => {
+  const form = new FormData();
+  form.append("payload", JSON.stringify(body));
+  if (screenshot) form.append("paymentReceipt", new File([new Uint8Array(screenshot)], "receipt.pdf", { type: "application/pdf" }));
+  return new Request("http://x/api", { method: "POST", body: form });
+};
 
 describe("manual donations", () => {
   it("records a pending donation that does not count until verified", async () => {
@@ -105,10 +113,41 @@ describe("manual donations", () => {
   });
 });
 
+describe("Bangla QR donations", () => {
+  const qr = (campaignId: string, extra: Record<string, unknown> = {}) =>
+    input(campaignId, { paymentMethod: "Bangla QR", transactionId: "000AT941", payerAccountLast4: "5517", payerPaidAt: new Date().toISOString(), ...extra });
+
+  it("needs a screenshot, the last 4 digits and the time, and stores them", async () => {
+    const campaign = await makeCampaign();
+    await expect(createManualDonation(qr(campaign.id), null, null)).rejects.toMatchObject({ code: "SCREENSHOT_REQUIRED" });
+    await expect(createManualDonation(qr(campaign.id, { payerAccountLast4: "" }), null)).rejects.toMatchObject({ code: "INVALID_ACCOUNT_DIGITS" });
+    await expect(createManualDonation(qr(campaign.id, { payerPaidAt: "soon" }), null)).rejects.toMatchObject({ code: "INVALID_PAYMENT_TIME" });
+    // Cash needs no screenshot.
+    await expect(createManualDonation(input(campaign.id, { paymentMethod: "Cash", transactionId: "CASH-0001" }), null, null)).resolves.toBeTruthy();
+    const donation = await createManualDonation(qr(campaign.id), null);
+    expect(donation).toMatchObject({ payerAccountLast4: "5517", merchantTrxId: null });
+    expect(donation.paymentScreenshotUrl).toMatch(/^\/api\/media\/receipts\/[a-f0-9]{32}\/receipt\.pdf$/);
+  });
+
+  it("is verified only with the TrxID from our SMS, which can confirm one payment only", async () => {
+    const campaign = await makeCampaign();
+    const first = await createManualDonation(qr(campaign.id), null);
+    const second = await createManualDonation(qr(campaign.id, { transactionId: "000AROXA" }), null);
+    await expect(decideDonation({ donationId: first.id, decision: "VERIFY", adminEmail: "a@example.test" })).rejects.toMatchObject({ code: "MERCHANT_TRX_REQUIRED" });
+    const verified = await decideDonation({ donationId: first.id, decision: "VERIFY", adminEmail: "a@example.test", merchantTrxId: " 72610280154891 " });
+    expect(verified).toMatchObject({ paymentStatus: "COMPLETED", merchantTrxId: "72610280154891" });
+    await expect(
+      decideDonation({ donationId: second.id, decision: "VERIFY", adminEmail: "a@example.test", merchantTrxId: "72610280154891" })
+    ).rejects.toMatchObject({ status: 409, code: "DUPLICATE_MERCHANT_TRX" });
+    expect((await prisma.donation.findUniqueOrThrow({ where: { id: second.id } })).paymentStatus).toBe("PENDING");
+  });
+});
+
 describe("donation routes", () => {
   it("public submit, admin-only decision, both logged", async () => {
     const campaign = await makeCampaign();
-    const res = await submitDonation(json(input(campaign.id)));
+    expect((await submitDonation(donationForm(input(campaign.id), null))).status).toBe(400);
+    const res = await submitDonation(donationForm(input(campaign.id)));
     expect(res.status).toBe(201);
     const { donation } = await res.json();
     expect(donation).toMatchObject({ status: "PENDING", transactionRef: "9AB3XK1LQ" });

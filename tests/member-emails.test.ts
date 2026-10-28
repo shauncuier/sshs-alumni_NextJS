@@ -18,7 +18,7 @@ vi.mock("@/lib/email", async (importOriginal) => {
 });
 
 import { decideRegistration } from "@/lib/events/admin";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "./helpers/register";
 import { renderEmail } from "@/lib/email-templates";
 import { EMAIL_SAMPLES } from "@/lib/email-samples";
 import prisma from "@/lib/prisma";

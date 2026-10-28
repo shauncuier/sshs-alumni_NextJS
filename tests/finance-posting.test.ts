@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/prisma";
 import { makeEvent, makeMember, resetDatabase } from "./helpers/db";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "./helpers/register";
 import { decideRegistration } from "@/lib/events/admin";
-import { createManualDonation, decideDonation } from "@/lib/donations";
+import { decideDonation } from "@/lib/donations";
+import { createManualDonation } from "./helpers/donate";
 import { syncFromSite } from "@/lib/finance/posting";
 import { accountBalances } from "@/lib/finance/reports";
 

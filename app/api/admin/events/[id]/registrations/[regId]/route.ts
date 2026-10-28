@@ -14,10 +14,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   try {
     requireSameOrigin(req);
-    const { action } = await readJsonBody(req);
+    const { action, merchantTrxId } = await readJsonBody(req);
     if (!ACTIONS.includes(action)) return NextResponse.json({ error: "Unknown action." }, { status: 400 });
     const { id, regId } = await params;
-    const registration = await decideRegistration({ eventId: id, registrationId: regId, action, adminEmail: me.email });
+    const registration = await decideRegistration({ eventId: id, registrationId: regId, action, adminEmail: me.email, merchantTrxId });
     await logActivity({
       category: "ADMIN",
       action: `registration.${String(action).toLowerCase()}`,
@@ -25,7 +25,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       actor: me,
       targetType: "EventRegistration",
       targetId: regId,
-      metadata: { eventId: id, newStatus: (registration as { status?: string }).status },
+      metadata: { eventId: id, newStatus: (registration as { status?: string }).status, merchantTrxId: registration.merchantTrxId ?? undefined },
       req,
     });
     return NextResponse.json({ registration });

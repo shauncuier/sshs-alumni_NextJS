@@ -34,7 +34,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 import { canonicalPhone, phoneTaken } from "@/lib/phone-registry";
 import { requestPhoneOtp, resetSmsOutage } from "@/lib/phone-otp";
 import { requestEmailOtp } from "@/lib/email-otp";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "./helpers/register";
 import { createUser } from "@/lib/admin/users";
 import { PUT as updateProfile } from "@/app/api/profile/route";
 

@@ -9,6 +9,8 @@ import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
 import { tokenUsageByRegistration } from "./tokens";
 import { postRegistrationIncome, voidRegistrationIncome } from "@/lib/finance/posting";
+import { isBanglaQr, normalizeMerchantTrxId } from "@/lib/payments/bangla-qr";
+import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 type RegWithUser = EventRegistration & {
   user: User & { profile: AlumniProfile | null; verificationRequests: VerificationRequest[] };
@@ -44,6 +46,9 @@ function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     mealPreference: reg.mealPreference,
     paymentMethod: reg.paymentMethod,
     transactionId: reg.transactionId,
+    payerAccountLast4: reg.payerAccountLast4,
+    payerPaidAt: reg.payerPaidAt?.toISOString() ?? null,
+    merchantTrxId: reg.merchantTrxId,
     notes: reg.notes,
     status: reg.status,
     confirmedBy: reg.confirmedBy,
@@ -115,14 +120,16 @@ const TRANSITIONS: Record<Action, { from: RegistrationStatusValue[]; to: Registr
  * 409 before it ever touches the member's account, profile or verification
  * request.
  *
- * Once the membership is decided (approved or rejected), the member's proof-of-
- * study file is deleted, after the transaction commits.
+ * Approving a Bangla QR payment needs the TrxID from the association's OK Wallet
+ * SMS (`merchantTrxId`); it is stored, and no other payment may reuse it.
  */
 export async function decideRegistration(args: {
   eventId: string;
   registrationId: string;
   action: Action;
   adminEmail: string;
+  /** The TrxID from the association's SMS; required to approve a Bangla QR payment. */
+  merchantTrxId?: unknown;
 }): Promise<AdminRegistration> {
   const transition = TRANSITIONS[args.action];
   if (!transition) throw new AppError("INVALID_ACTION", 400, "Unknown action.");
@@ -134,12 +141,18 @@ export async function decideRegistration(args: {
       throw new AppError("INVALID_TRANSITION", 409, `This registration is ${reg.status.toLowerCase().replace("_", " ")}.`);
     }
 
+    let merchantTrxId: string | undefined;
+    if (args.action === "APPROVE" && isBanglaQr(reg.paymentMethod)) {
+      merchantTrxId = normalizeMerchantTrxId(args.merchantTrxId);
+      await assertMerchantTrxIdFree(tx, merchantTrxId, { registrationId: reg.id });
+    }
+
     const now = new Date();
     const write = await tx.eventRegistration.updateMany({
       where: { id: reg.id, status: reg.status },
       data: {
         status: transition.to,
-        ...(args.action === "APPROVE" ? { confirmedBy: args.adminEmail, confirmedAt: now } : {}),
+        ...(args.action === "APPROVE" ? { confirmedBy: args.adminEmail, confirmedAt: now, merchantTrxId } : {}),
         ...(args.action === "CHECK_IN" ? { checkedInAt: now } : {}),
         ...(args.action === "UNDO_CHECK_IN" ? { checkedInAt: null } : {}),
       },
@@ -181,6 +194,9 @@ export async function decideRegistration(args: {
     }
 
     return { regId: reg.id, userId: reg.userId, memberDecided };
+  }).catch((err: unknown) => {
+    if (isMerchantTrxClash(err)) throw new AppError("DUPLICATE_MERCHANT_TRX", 409, "This SMS TrxID is already recorded for another payment.");
+    throw err;
   });
 
   // Tell the member; a mail problem never fails the decision.

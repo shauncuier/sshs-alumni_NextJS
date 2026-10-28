@@ -1,6 +1,6 @@
 import { beforeEach, expect, it } from "vitest";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "../helpers/register";
 import { decideRegistration } from "@/lib/events/admin";
 import { slipFor, slipsForEvent } from "@/lib/events/slips";
 

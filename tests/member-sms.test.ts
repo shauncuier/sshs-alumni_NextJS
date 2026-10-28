@@ -28,7 +28,7 @@ vi.mock("@/lib/email", async (importOriginal) => {
 });
 
 import { decideRegistration } from "@/lib/events/admin";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "./helpers/register";
 import { registrationConfirmedSms } from "@/lib/member-sms";
 import { setSmsTestMode } from "@/lib/sms-test-mode";
 

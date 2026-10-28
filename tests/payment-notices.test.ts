@@ -31,8 +31,9 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 });
 
 import { decideRegistration } from "@/lib/events/admin";
-import { registerForEvent } from "@/lib/events/registrations";
-import { createManualDonation, decideDonation } from "@/lib/donations";
+import { registerForEvent } from "./helpers/register";
+import { decideDonation } from "@/lib/donations";
+import { createManualDonation } from "./helpers/donate";
 import { donationReceivedSms } from "@/lib/member-sms";
 import { getPaymentNotices, setPaymentNotices } from "@/lib/payment-notices";
 import { GET, PUT } from "@/app/api/admin/payment-notices/route";

@@ -60,6 +60,10 @@ export default function DonatePage() {
   const donationMethods: readonly string[] = payment && payment.methods.length > 0 ? payment.methods : DONATION_METHODS;
   const paymentMethod = paymentMethodChoice && donationMethods.includes(paymentMethodChoice) ? paymentMethodChoice : donationMethods[0];
   const [transactionId, setTransactionId] = useState("");
+  // Bangla QR is matched to our OK Wallet SMS by the paying account's last 4 digits and the time.
+  const [payerLast4, setPayerLast4] = useState("");
+  const [payerPaidAt, setPayerPaidAt] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -87,10 +91,15 @@ export default function DonatePage() {
     }
 
     try {
-      const res = await fetch("/api/donations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      if (paymentMethod !== "Cash" && !screenshot) throw new Error("Attach the screenshot of your payment receipt.");
+      if (paymentMethod === "Bangla QR") {
+        if (!/^\d{4}$/.test(payerLast4)) throw new Error("Type the last 4 digits of the number or account you paid from.");
+        if (!payerPaidAt) throw new Error("Enter the date and time shown on your payment receipt.");
+      }
+      const form = new FormData();
+      form.append(
+        "payload",
+        JSON.stringify({
           campaignId: selectedCampaign,
           amount: donationAmt,
           donorName,
@@ -99,9 +108,13 @@ export default function DonatePage() {
           donorBatch,
           paymentMethod,
           transactionId,
+          payerAccountLast4: paymentMethod === "Bangla QR" ? payerLast4 : null,
+          payerPaidAt: paymentMethod === "Bangla QR" && payerPaidAt ? new Date(payerPaidAt).toISOString() : null,
           isAnonymous,
-        }),
-      });
+        })
+      );
+      if (screenshot) form.append("paymentReceipt", screenshot);
+      const res = await fetch("/api/donations", { method: "POST", body: form });
 
       const data = await res.json();
       if (!res.ok) {
@@ -117,6 +130,7 @@ export default function DonatePage() {
       });
       setSubmitted(true);
       setTransactionId("");
+      setScreenshot(null);
     } catch (err) {
       console.error("[Donation Error]", err);
       setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred. Please try again.");
@@ -457,12 +471,18 @@ export default function DonatePage() {
                             <span>Scan with any bank or mobile banking app{payment.banglaQrMerchant ? ` (${payment.banglaQrMerchant})` : ""}.</span>
                           </div>
                         )}
+                        {paymentMethod === "Bangla QR" && (
+                          <p>
+                            Your app&apos;s transaction ID is different from the one the association receives; that&apos;s normal. We match your
+                            donation by the last 4 digits of the number you paid from and the time.
+                          </p>
+                        )}
                         <p>The committee checks every payment before it is added to the campaign total.</p>
                       </div>
 
                       <div>
                         <label htmlFor="don-trx" className="block font-semibold text-slate-700 mb-1">
-                          {paymentMethod === "Cash" ? "Cash receipt number" : `${paymentMethod} transaction ID`} *
+                          {paymentMethod === "Cash" ? "Cash receipt number" : paymentMethod === "Bangla QR" ? "Transaction ID shown in your app" : `${paymentMethod} transaction ID`} *
                         </label>
                         <input
                           id="don-trx"
@@ -473,6 +493,51 @@ export default function DonatePage() {
                           className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-600"
                         />
                       </div>
+
+                      {paymentMethod === "Bangla QR" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="don-last4" className="block font-semibold text-slate-700 mb-1">Last 4 digits of the number you paid from *</label>
+                            <input
+                              id="don-last4"
+                              required
+                              inputMode="numeric"
+                              autoComplete="off"
+                              maxLength={4}
+                              value={payerLast4}
+                              onChange={(e) => setPayerLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                              placeholder="e.g. 5517"
+                              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="don-paid-at" className="block font-semibold text-slate-700 mb-1">Payment date and time *</label>
+                            <input
+                              id="don-paid-at"
+                              type="datetime-local"
+                              required
+                              value={payerPaidAt}
+                              onChange={(e) => setPayerPaidAt(e.target.value)}
+                              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {paymentMethod !== "Cash" && (
+                        <div>
+                          <label htmlFor="don-screenshot" className="block font-semibold text-slate-700 mb-1">Payment screenshot *</label>
+                          <input
+                            id="don-screenshot"
+                            type="file"
+                            required
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            onChange={(e) => setScreenshot(e.target.files?.[0] ?? null)}
+                            className="block w-full text-xs text-slate-600 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-emerald-100 file:text-emerald-900 file:font-bold cursor-pointer"
+                          />
+                          <p className="text-[11px] text-slate-500 mt-1">The receipt from your bKash, Nagad, Rocket or bank app showing the amount and time (JPEG, PNG, WebP or PDF, up to 10 MB).</p>
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-2 pt-1">
                         <input

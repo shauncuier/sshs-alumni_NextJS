@@ -6,19 +6,21 @@ import { AppError } from "@/lib/app-error";
 import type { AccountInput, RsvpInput } from "@/lib/events/types";
 import { AVATAR_LIMITS } from "@/lib/media/avatars";
 import { PROOF_LIMITS } from "@/lib/media/proofs";
+import { RECEIPT_MAX_BYTES } from "@/lib/media/receipts";
 import { getSessionUser } from "@/lib/session-user";
 import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 
 type Params = { params: Promise<{ slug: string }> };
 type Payload = { account?: AccountInput; rsvp?: RsvpInput; proof?: { type?: unknown; note?: unknown } | null };
 
-// The photo may be 5 MB and the proof document 10 MB; the rest of the multipart
-// body (JSON details, boundaries) is small.
-const MAX_BODY_BYTES = AVATAR_LIMITS.maxBytes + PROOF_LIMITS.maxBytes + 64 * 1024;
+// The photo may be 5 MB, the proof document and the payment screenshot 10 MB each;
+// the rest of the multipart body (JSON details, boundaries) is small.
+const MAX_BODY_BYTES = AVATAR_LIMITS.maxBytes + PROOF_LIMITS.maxBytes + RECEIPT_MAX_BYTES + 64 * 1024;
 const tooLarge = () =>
-  new AppError("UPLOAD_TOO_LARGE", 400, "The upload is too large. The photo must be 5 MB or smaller and the proof document 10 MB or smaller.");
+  new AppError("UPLOAD_TOO_LARGE", 400, "The upload is too large. The photo must be 5 MB or smaller, the proof document and the payment screenshot 10 MB or smaller each.");
 const photoTooLarge = () => new AppError("INVALID_PHOTO", 400, "The photo must be 5 MB or smaller.");
 const proofTooLarge = () => new AppError("INVALID_PROOF", 400, "The proof document must be 10 MB or smaller.");
+const receiptTooLarge = () => new AppError("INVALID_RECEIPT", 400, "The payment screenshot must be 10 MB or smaller.");
 const invalidRequest = () => new AppError("INVALID_REQUEST", 400, "Invalid request.");
 
 function parsePayload(raw: unknown): Payload {
@@ -76,6 +78,7 @@ export async function POST(req: Request, { params }: Params) {
     let body: Payload;
     let photo: Buffer | undefined;
     let proofFile: Buffer | undefined;
+    let paymentScreenshot: Buffer | undefined;
     if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
       // Joining: JSON details in `payload`, the profile photo in `photo` and the
       // proof-of-study document in `proof`.
@@ -91,18 +94,12 @@ export async function POST(req: Request, { params }: Params) {
         if (proof.size > PROOF_LIMITS.maxBytes) throw proofTooLarge();
         proofFile = Buffer.from(await proof.arrayBuffer());
       }
+      // The payment screenshot; registerForEvent saves it and refuses a paid
+      // registration without one (Cash excepted).
       const receipt = form.get("paymentReceipt");
       if (receipt instanceof File && receipt.size > 0) {
-        try {
-          const { processReceipt, saveReceipt } = await import("@/lib/media/receipts");
-          const processed = await processReceipt(Buffer.from(await receipt.arrayBuffer()));
-          const saved = await saveReceipt(processed);
-          const currentNotes = body.rsvp?.notes ? `${body.rsvp.notes}\n` : "";
-          if (!body.rsvp) body.rsvp = {};
-          body.rsvp.notes = `${currentNotes}[Payment Screenshot: ${saved.fileUrl}]`;
-        } catch (receiptErr) {
-          console.warn("Could not save payment receipt, continuing registration:", receiptErr);
-        }
+        if (receipt.size > RECEIPT_MAX_BYTES) throw receiptTooLarge();
+        paymentScreenshot = Buffer.from(await receipt.arrayBuffer());
       }
     } else {
       body = (await readJsonBody(req)) as Payload;
@@ -116,6 +113,7 @@ export async function POST(req: Request, { params }: Params) {
       photo: me ? undefined : photo,
       proof: me ? undefined : { type: body.proof?.type, note: body.proof?.note, file: proofFile },
       rsvp: body.rsvp ?? {},
+      paymentScreenshot,
     });
     const reg = result.registration;
     await logActivity({

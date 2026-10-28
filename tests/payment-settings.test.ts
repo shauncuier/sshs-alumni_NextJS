@@ -10,7 +10,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 
 import { availableMethods, getPaymentSettings, paymentLines, updatePaymentSettings } from "@/lib/payment-settings";
 import { getPublicEventBySlug } from "@/lib/events/service";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "./helpers/register";
 import { GET as publicRoute } from "@/app/api/payment-settings/route";
 import { GET as adminGet, PUT as adminPut } from "@/app/api/admin/payment-settings/route";
 import { findDemoLeftovers } from "../prisma/seed-core";

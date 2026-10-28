@@ -8,7 +8,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
   return { ...actual, getSessionUser: async () => session.user };
 });
 
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "../helpers/register";
 import { checkInCounts, checkInTicket } from "@/lib/events/tickets";
 import { GET, POST } from "@/app/api/events/verify-ticket/route";
 

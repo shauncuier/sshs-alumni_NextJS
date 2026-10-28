@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
 import { processProof, proofDirFromUrl, saveProof } from "@/lib/media/proofs";
 import { makePdf } from "../helpers/images";
-import { resetDatabase } from "../helpers/db";
+import { makeEvent, resetDatabase } from "../helpers/db";
 
 const auth = vi.hoisted(() => ({ session: null as { user: { email: string; role: string } } | null }));
 vi.mock("@/lib/session-user", () => ({
@@ -65,6 +65,54 @@ describe("verification decisions", () => {
     const entry = await prisma.activityLog.findFirstOrThrow({ where: { action: "membership.rejected" } });
     expect(entry).toMatchObject({ actorEmail: "admin@example.test", status: "SUCCESS" });
     expect(entry.summary).toMatch(/queue@example.test|Queue Member/);
+  });
+});
+
+describe("Bangla QR membership payments", () => {
+  const qrRegistration = async (userEmail: string) => {
+    const event = await makeEvent({ slug: "jubilee", isMembershipEvent: true });
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: userEmail } });
+    return prisma.eventRegistration.create({
+      data: {
+        eventId: event.id,
+        userId: user.id,
+        status: "PENDING_PAYMENT",
+        paymentMethod: "Bangla QR",
+        transactionId: "000AT941",
+        totalFee: 1250,
+        payerAccountLast4: "5517",
+        payerPaidAt: new Date("2026-10-28T17:29:00Z"),
+      },
+    });
+  };
+
+  it("needs the TrxID from our SMS to approve, and stores it", async () => {
+    const { request } = await pendingMember();
+    const reg = await qrRegistration("queue@example.test");
+
+    const listed = (await (await GET(new Request("http://x/api/admin/verifications?status=PENDING"))).json()).requests[0];
+    expect(listed).toMatchObject({ paymentMethod: "Bangla QR", payerAccountLast4: "5517", merchantTrxId: null, awaitingPayment: true });
+
+    const missing = await patch({ requestId: request.id, status: "VERIFIED" });
+    expect(missing.status).toBe(400);
+    expect((await missing.json()).code).toBe("MERCHANT_TRX_REQUIRED");
+    expect((await prisma.verificationRequest.findUniqueOrThrow({ where: { id: request.id } })).status).toBe("PENDING");
+
+    expect((await patch({ requestId: request.id, status: "VERIFIED", merchantTrxId: "72610280154891" })).status).toBe(200);
+    expect(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: reg.id } })).toMatchObject({ status: "CONFIRMED", merchantTrxId: "72610280154891" });
+  });
+
+  it("refuses an SMS TrxID already used for a donation", async () => {
+    const { request } = await pendingMember();
+    await qrRegistration("queue@example.test");
+    const campaign = await prisma.donationCampaign.create({ data: { slug: "fund", title: "Fund", description: "d", goalAmount: 1000, isActive: true } });
+    await prisma.donation.create({
+      data: { campaignId: campaign.id, donorName: "Donor", amount: 1250, paymentMethod: "Bangla QR", paymentGateway: "MANUAL", paymentStatus: "COMPLETED", merchantTrxId: "72610280154891" },
+    });
+    const res = await patch({ requestId: request.id, status: "VERIFIED", merchantTrxId: "72610280154891" });
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe("DUPLICATE_MERCHANT_TRX");
+    expect((await prisma.verificationRequest.findUniqueOrThrow({ where: { id: request.id } })).status).toBe("PENDING");
   });
 });
 

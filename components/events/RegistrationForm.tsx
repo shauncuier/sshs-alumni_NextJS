@@ -108,6 +108,10 @@ export default function RegistrationForm({
   const [donation, setDonation] = useState("");
   const [paymentMethodChoice, setPaymentMethod] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState("");
+  // Bangla QR: the payer's app and our OK Wallet number the payment differently, so it
+  // is matched by the paying account's last 4 digits and the time on the receipt.
+  const [payerLast4, setPayerLast4] = useState("");
+  const [payerPaidAt, setPayerPaidAt] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -295,8 +299,15 @@ export default function RegistrationForm({
             donationAmount: donation ? Number(donation) : 0,
             paymentMethod: paid ? paymentMethod : null,
             transactionId: paid ? transactionId : null,
+            payerAccountLast4: paid && paymentMethod === "Bangla QR" ? payerLast4 : null,
+            payerPaidAt: paid && paymentMethod === "Bangla QR" && payerPaidAt ? new Date(payerPaidAt).toISOString() : null,
           },
         });
+      if (paid && paymentMethod !== "Cash" && !paymentReceipt) throw new Error("Attach the screenshot of your payment receipt.");
+      if (paid && paymentMethod === "Bangla QR") {
+        if (!/^\d{4}$/.test(payerLast4)) throw new Error("Type the last 4 digits of the number or account you paid from.");
+        if (!payerPaidAt) throw new Error("Enter the date and time shown on your payment receipt.");
+      }
       // Joining sends the photo and the proof along, so it goes as multipart; signed-in members stay JSON unless sending a payment receipt.
       let res: Response;
       if (needsAccount) {
@@ -762,7 +773,11 @@ export default function RegistrationForm({
                     <p>
                       {payment?.banglaQrImage ? "Scan this code" : "Scan the association's Bangla QR code"} with any bank or mobile banking app
                       (bKash, Nagad, Rocket, Upay or your bank&apos;s app), pay <strong>{total ? formatTaka(total.total) : "the total"}</strong>,
-                      then enter the transaction ID from the payment receipt below.
+                      then fill in the details from your payment receipt below.
+                    </p>
+                    <p>
+                      The transaction ID in your app is different from the one the association receives; that&apos;s normal. We match your
+                      payment by the <strong>last 4 digits</strong> of the number you paid from and the <strong>time</strong>.
                     </p>
                   </div>
                 </div>
@@ -770,7 +785,11 @@ export default function RegistrationForm({
 
               <div>
                 <label htmlFor="reg-trx" className={label}>
-                  {paymentMethod === "Cash" ? "Cash Voucher / Receipt Serial No. *" : `${paymentMethod} Transaction ID (TrxID) *`}
+                  {paymentMethod === "Cash"
+                    ? "Cash Voucher / Receipt Serial No. *"
+                    : paymentMethod === "Bangla QR"
+                      ? "Transaction ID shown in your app *"
+                      : `${paymentMethod} Transaction ID (TrxID) *`}
                 </label>
                 <input
                   id="reg-trx"
@@ -787,11 +806,44 @@ export default function RegistrationForm({
                 )}
               </div>
 
+              {paymentMethod === "Bangla QR" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="reg-last4" className={label}>Last 4 digits of the number you paid from *</label>
+                    <input
+                      id="reg-last4"
+                      required
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={4}
+                      pattern="\d{4}"
+                      className={input}
+                      value={payerLast4}
+                      onChange={(e) => setPayerLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="e.g. 5517"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">The bKash, Nagad, Rocket or bank account number the money left from.</p>
+                  </div>
+                  <div>
+                    <label htmlFor="reg-paid-at" className={label}>Payment date and time *</label>
+                    <input
+                      id="reg-paid-at"
+                      type="datetime-local"
+                      required
+                      className={input}
+                      value={payerPaidAt}
+                      onChange={(e) => setPayerPaidAt(e.target.value)}
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">As shown on your payment receipt.</p>
+                  </div>
+                </div>
+              )}
+
               {/* Payment Proof Screenshot Upload with OCR */}
               <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="reg-receipt" className={label}>
-                    Upload Payment Proof Screenshot (Recommended)
+                    {paymentMethod === "Cash" ? "Upload Payment Proof Screenshot (Optional)" : "Payment screenshot *"}
                   </label>
                   {isScanningReceipt && (
                     <span className="text-[10px] text-amber-700 font-semibold animate-pulse">
@@ -807,7 +859,8 @@ export default function RegistrationForm({
                   className="block w-full text-xs text-slate-600 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-emerald-100 file:text-emerald-900 file:font-bold cursor-pointer"
                 />
                 <p className="text-[10px] text-slate-500">
-                  Upload screenshot of your bKash, Nagad, Rocket or Bank SMS/App confirmation (JPEG, PNG, WebP or PDF, up to 10 MB).
+                  The screenshot of your payment receipt from your bKash, Nagad, Rocket or bank app, showing the amount and time
+                  (JPEG, PNG, WebP or PDF, up to 10 MB).
                 </p>
                 {paymentReceiptPreview && (
                   <div className="mt-2 flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200">

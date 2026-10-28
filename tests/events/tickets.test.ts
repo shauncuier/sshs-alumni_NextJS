@@ -1,6 +1,6 @@
 import { beforeEach, expect, it } from "vitest";
 import { createCardToken } from "@/lib/id-card";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "../helpers/register";
 import { checkInTicket, ticketInfo, TICKET_QR_PREFIX } from "@/lib/events/tickets";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
 

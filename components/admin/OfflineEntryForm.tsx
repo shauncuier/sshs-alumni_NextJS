@@ -265,7 +265,7 @@ export default function OfflineEntryForm({ event }: { event: PublicEvent }) {
         </div>
         {paymentMethod === "Bangla QR" && (
           <div>
-            <label htmlFor="off-trx" className={label}>Transaction ID *</label>
+            <label htmlFor="off-trx" className={label}>TrxID from our OK Wallet SMS *</label>
             <input id="off-trx" required maxLength={40} className={`${input} uppercase`} value={transactionId} onChange={(e) => setTransactionId(e.target.value)} />
           </div>
         )}

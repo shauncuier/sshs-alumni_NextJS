@@ -3,7 +3,9 @@ import { errorResponse } from "@/lib/api-response";
 import { logActivity, logFailure } from "@/lib/activity-log";
 import { createManualDonation } from "@/lib/donations";
 import { listOpenCampaigns } from "@/lib/campaigns";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { AppError } from "@/lib/app-error";
+import { RECEIPT_MAX_BYTES } from "@/lib/media/receipts";
+import { readJsonBody, readLimitedFormData, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
 import { getSessionUser } from "@/lib/session-user";
 
 // GET /api/donations — fundraising campaigns open for donations (not closed, started, not ended).
@@ -18,12 +20,29 @@ export async function GET() {
 
 // POST /api/donations — record a donation paid manually (bKash, Nagad, Bangla QR,
 // bank, cash). It stays PENDING until the committee verifies the transaction ID.
+// Multipart: the details as JSON in `payload` and the payment screenshot in
+// `paymentReceipt` (required for every method except cash).
 export async function POST(req: Request) {
   const me = await getSessionUser();
   try {
     requireSameOrigin(req);
     requireRateLimit(req, "donation-submit", { limit: 10, windowMs: 60 * 60_000 });
-    const donation = await createManualDonation(await readJsonBody(req), me?.id ?? null);
+    let input: Record<string, unknown>;
+    let screenshot: Buffer | undefined;
+    if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
+      const form = await readLimitedFormData(req, RECEIPT_MAX_BYTES + 64 * 1024);
+      try {
+        input = JSON.parse(String(form.get("payload") ?? ""));
+      } catch {
+        throw new AppError("INVALID_REQUEST", 400, "Invalid request.");
+      }
+      if (!input || typeof input !== "object" || Array.isArray(input)) throw new AppError("INVALID_REQUEST", 400, "Invalid request.");
+      const file = form.get("paymentReceipt");
+      if (file instanceof File && file.size > 0) screenshot = Buffer.from(await file.arrayBuffer());
+    } else {
+      input = await readJsonBody(req);
+    }
+    const donation = await createManualDonation(input, me?.id ?? null, screenshot);
     await logActivity({
       category: "PAYMENT",
       action: "donation.submitted",

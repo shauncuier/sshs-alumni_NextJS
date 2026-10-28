@@ -195,6 +195,10 @@ export interface VerificationRequestItem {
   paymentMethod?: string | null;
   transactionId?: string | null;
   totalFee?: number | null;
+  /** Bangla QR: last 4 digits and time the member gave, and the SMS TrxID once confirmed. */
+  payerAccountLast4?: string | null;
+  payerPaidAt?: string | null;
+  merchantTrxId?: string | null;
   paymentReceiptUrl?: string | null;
   avatarUrl?: string;
   avatarOriginalUrl?: string | null;

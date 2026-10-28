@@ -60,13 +60,18 @@ export async function processReceipt(input: Buffer): Promise<ProcessedReceipt> {
 
 export async function saveReceipt(
   receipt: ProcessedReceipt
-): Promise<{ id: string; fileUrl: string }> {
+): Promise<{ id: string; dir: string; fileUrl: string }> {
   const id = crypto.randomBytes(16).toString("hex");
   const dir = path.join(receiptsRoot(), id);
   const file = `receipt.${receipt.ext}`;
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, file), receipt.data);
-  return { id, fileUrl: `/api/media/receipts/${id}/${file}` };
+  return { id, dir, fileUrl: `/api/media/receipts/${id}/${file}` };
+}
+
+/** Removes a saved receipt's folder after a failed registration or donation (never throws). */
+export async function removeReceiptDir(dir: string): Promise<void> {
+  await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
 }
 
 export function receiptFilePath(id: string, file: string): string | null {

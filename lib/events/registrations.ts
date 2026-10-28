@@ -5,6 +5,7 @@ import { AppError } from "@/lib/app-error";
 import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
 import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
 import { processProof, removeProofDir, saveProof } from "@/lib/media/proofs";
+import { processReceipt, removeReceiptDir, saveReceipt } from "@/lib/media/receipts";
 import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
 import { readVerifiedPhone } from "@/lib/phone-otp";
 import { readVerifiedEmail } from "@/lib/email-otp";
@@ -18,6 +19,7 @@ import { ticketInfo } from "./tickets";
 import { PAYMENT_METHODS, type AccountInput, type MemberRegistration, type ProofInput, type RsvpInput } from "./types";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
+import { isBanglaQr, normalizeLast4, normalizePaidAt } from "@/lib/payments/bangla-qr";
 
 const ACTIVE_STATUSES = ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"] as const;
 
@@ -108,6 +110,8 @@ export async function registerForEvent(args: {
   photo?: Buffer;
   /** Proof of study (type, note and raw upload); required when a signed-out visitor joins. */
   proof?: ProofInput;
+  /** Screenshot of the payment receipt (raw upload); required for every paid method except Cash. */
+  paymentScreenshot?: Buffer;
   now?: Date;
 }): Promise<{ registration: MemberRegistration; createdAccount: { email: string } | null }> {
   const now = args.now ?? new Date();
@@ -127,9 +131,11 @@ export async function registerForEvent(args: {
   };
   let photoDir: string | null = null;
   let proofDir: string | null = null;
+  let receiptDir: string | null = null;
   const removeUploads = async () => {
     if (photoDir) await removeAvatarDir(photoDir);
     if (proofDir) await removeProofDir(proofDir);
+    if (receiptDir) await removeReceiptDir(receiptDir);
   };
   // Hashed here, not inside the transaction: bcrypt is slow and the transaction
   // holds the event row lock, which would make every join wait for it.
@@ -165,6 +171,26 @@ export async function registerForEvent(args: {
       }
     }
   }
+
+  // The payment screenshot, saved by the server like the photo and proof. Any marker a
+  // client typed into the notes is dropped, so only a file we stored can be linked.
+  let screenshotUrl: string | null = null;
+  if (args.paymentScreenshot) {
+    const processed = await processReceipt(args.paymentScreenshot).catch(async (err) => {
+      await removeUploads();
+      throw err;
+    });
+    try {
+      const saved = await saveReceipt(processed);
+      receiptDir = saved.dir;
+      screenshotUrl = saved.fileUrl;
+    } catch (err) {
+      await removeUploads();
+      throw err;
+    }
+  }
+  const typedNotes = (args.rsvp.notes ?? "").replace(/\[Payment Screenshot:[^\]]*\]/g, "").trim();
+  const notes = [typedNotes, screenshotUrl ? `[Payment Screenshot: ${screenshotUrl}]` : ""].filter(Boolean).join("\n") || null;
 
   const result = await prisma
     .$transaction(async (tx) => {
@@ -242,6 +268,9 @@ export async function registerForEvent(args: {
       const needsPayment = price.total > 0;
       const transactionId = normalizeTransactionId(args.rsvp.transactionId);
       const paymentMethod = args.rsvp.paymentMethod ?? null;
+      // Bangla QR: the member's own transaction ID never matches the association's SMS,
+      // so the payment is matched by the paying account's last 4 digits and the time.
+      let payer: { payerAccountLast4: string; payerPaidAt: Date } | null = null;
       if (needsPayment) {
         if (!PAYMENT_METHODS.includes(paymentMethod as (typeof PAYMENT_METHODS)[number])) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please choose how you paid.");
@@ -252,6 +281,12 @@ export async function registerForEvent(args: {
         }
         if (!/^[A-Z0-9-]{6,40}$/.test(transactionId)) {
           throw new AppError("PAYMENT_REQUIRED", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");
+        }
+        if (paymentMethod !== "Cash" && !screenshotUrl) {
+          throw new AppError("SCREENSHOT_REQUIRED", 400, "Attach the screenshot of your payment receipt.");
+        }
+        if (isBanglaQr(paymentMethod)) {
+          payer = { payerAccountLast4: normalizeLast4(args.rsvp.payerAccountLast4), payerPaidAt: normalizePaidAt(args.rsvp.payerPaidAt, now) };
         }
         const usedByDonation = await tx.donation.findFirst({ where: { transactionRef: transactionId, paymentStatus: { not: "FAILED" } }, select: { id: true } });
         if (usedByDonation || (await tx.eventRegistration.findUnique({ where: { transactionId }, select: { id: true } }))) {
@@ -274,9 +309,11 @@ export async function registerForEvent(args: {
           donationAmount: price.donation,
           tshirtSize: args.rsvp.tshirtSize?.trim() || null,
           mealPreference: args.rsvp.mealPreference?.trim() || null,
-          notes: args.rsvp.notes?.trim() || null,
+          notes,
           paymentMethod: needsPayment ? paymentMethod : null,
           transactionId: needsPayment ? transactionId : null,
+          payerAccountLast4: payer?.payerAccountLast4 ?? null,
+          payerPaidAt: payer?.payerPaidAt ?? null,
           status: needsPayment ? "PENDING_PAYMENT" : "CONFIRMED",
           confirmedAt: needsPayment ? null : now,
         },

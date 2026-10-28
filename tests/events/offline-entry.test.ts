@@ -106,6 +106,8 @@ describe("paper forms entered by the committee", () => {
     expect(profile.avatarUrl).toMatch(/^\/api\/media\/avatars\//);
     const reg = await prisma.eventRegistration.findUniqueOrThrow({ where: { id: result.registrationId } });
     expect(reg.transactionId).toBe("ABC12345");
+    // Staff copy the TrxID from our OK Wallet SMS: it is recorded as the SMS TrxID too.
+    expect(reg.merchantTrxId).toBe("ABC12345");
     expect(mail.sent.map((m) => m.to)).toEqual(["paper@example.test", "paper@example.test"]);
   });
 

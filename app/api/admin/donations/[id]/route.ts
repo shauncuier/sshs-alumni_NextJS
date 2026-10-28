@@ -15,8 +15,8 @@ export async function PATCH(req: Request, { params }: Params) {
   try {
     requireSameOrigin(req);
     if (!me || !isAdminRole(me.role)) throw new AppError("FORBIDDEN", 403, "Only administrators can verify donations.");
-    const { action, reason } = await readJsonBody(req);
-    const donation = await decideDonation({ donationId: id, decision: action as DonationDecision, reason, adminEmail: me.email });
+    const { action, reason, merchantTrxId } = await readJsonBody(req);
+    const donation = await decideDonation({ donationId: id, decision: action as DonationDecision, reason, adminEmail: me.email, merchantTrxId });
     await logActivity({
       category: "PAYMENT",
       action: action === "VERIFY" ? "donation.verified" : "donation.rejected",
@@ -24,7 +24,7 @@ export async function PATCH(req: Request, { params }: Params) {
       actor: me,
       targetType: "Donation",
       targetId: donation.id,
-      metadata: { amount: donation.amount, campaign: donation.campaign.title, reason: action === "REJECT" ? reason : undefined },
+      metadata: { amount: donation.amount, campaign: donation.campaign.title, reason: action === "REJECT" ? reason : undefined, merchantTrxId: donation.merchantTrxId ?? undefined },
       req,
     });
     return NextResponse.json({ donation: { id: donation.id, paymentStatus: donation.paymentStatus, paidAt: donation.paidAt, failureReason: donation.failureReason } });

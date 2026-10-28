@@ -4,7 +4,7 @@ import path from "node:path";
 import prisma from "@/lib/prisma";
 import { decideRegistration, getAdminEvent } from "@/lib/events/admin";
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
-import { registerForEvent } from "@/lib/events/registrations";
+import { registerForEvent } from "../helpers/register";
 import { makeImage, makePdf } from "../helpers/images";
 import { verifiedPhoneToken } from "../helpers/phone";
 import { makeEvent, resetDatabase } from "../helpers/db";
@@ -170,5 +170,32 @@ describe("proof of study after the membership decision", () => {
     const after = await request();
     expect(after).toMatchObject({ status: "PENDING", proofFileUrl: before.proofFileUrl, proofDeletedAt: null });
     expect(await exists(proofDir(before.proofFileUrl!))).toBe(true);
+  });
+});
+
+describe("confirming a Bangla QR payment", () => {
+  it("needs the TrxID from our SMS, stores it, and refuses it for a second payment", async () => {
+    const event = await makeEvent({ slug: "dinner", registrationFee: 1250 });
+    const [a, b] = await Promise.all([
+      prisma.user.create({ data: { email: "qr-a@example.test", passwordHash: "x", status: "VERIFIED" } }),
+      prisma.user.create({ data: { email: "qr-b@example.test", passwordHash: "x", status: "VERIFIED" } }),
+    ]);
+    const pending = (userId: string, transactionId: string) =>
+      prisma.eventRegistration.create({
+        data: { eventId: event.id, userId, status: "PENDING_PAYMENT", paymentMethod: "Bangla QR", transactionId, totalFee: 1250, payerAccountLast4: "5517" },
+      });
+    const first = await pending(a.id, "000AT941");
+    const second = await pending(b.id, "000AROXA");
+
+    await expect(
+      decideRegistration({ eventId: event.id, registrationId: first.id, action: "APPROVE", adminEmail: "admin@example.test" })
+    ).rejects.toMatchObject({ status: 400, code: "MERCHANT_TRX_REQUIRED" });
+    const confirmed = await decideRegistration({ eventId: event.id, registrationId: first.id, action: "APPROVE", adminEmail: "admin@example.test", merchantTrxId: "72610280154891" });
+    expect(confirmed).toMatchObject({ status: "CONFIRMED", merchantTrxId: "72610280154891", payerAccountLast4: "5517" });
+
+    await expect(
+      decideRegistration({ eventId: event.id, registrationId: second.id, action: "APPROVE", adminEmail: "admin@example.test", merchantTrxId: "72610280154891" })
+    ).rejects.toMatchObject({ status: 409, code: "DUPLICATE_MERCHANT_TRX" });
+    expect((await prisma.eventRegistration.findUniqueOrThrow({ where: { id: second.id } })).status).toBe("PENDING_PAYMENT");
   });
 });

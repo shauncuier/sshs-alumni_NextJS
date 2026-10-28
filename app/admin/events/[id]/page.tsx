@@ -8,6 +8,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
+import BanglaQrMatch from "@/components/admin/BanglaQrMatch";
+import { Dialog } from "@/components/admin/content-kit";
+import { smsTime } from "@/lib/payments/bangla-qr";
 import { formatTaka, dhakaDateInput, formatGuestLine } from "@/lib/events/pricing";
 import {
   Calendar,
@@ -68,6 +71,9 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   const [attendeeStatusFilter, setAttendeeStatusFilter] = useState("ALL");
   const [attendeeSourceFilter, setAttendeeSourceFilter] = useState<"ALL" | "ONLINE" | "OFFLINE">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Confirming a Bangla QR payment: the registration and the TrxID from our OK Wallet SMS.
+  const [qrConfirm, setQrConfirm] = useState<AdminRegistration | null>(null);
+  const [qrTrx, setQrTrx] = useState("");
 
   const [newPkg, setNewPkg] = useState<PublicPackage>({
     name: "", price: "৳1,000", priceAmount: 1000, description: "", includes: [], isPopular: false, adults: 1, children: 0, guestsFree: false,
@@ -162,6 +168,12 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
     save({ agenda: (event.agenda ?? []).filter((_, i) => i !== idx) }, "Agenda session removed.");
 
   const decide = async (a: AdminRegistration, action: "APPROVE" | "CANCEL" | "CHECK_IN" | "UNDO_CHECK_IN") => {
+    // A Bangla QR payment is confirmed in a dialog against our own SMS (its TrxID is recorded).
+    if (action === "APPROVE" && a.paymentMethod === "Bangla QR") {
+      setQrTrx("");
+      setQrConfirm(a);
+      return;
+    }
     // Confirming takes the payment as received; cancelling ends the ticket (and, for a
     // pending join, rejects the membership). Both need a deliberate yes.
     const paid = a.totalFee + a.donationAmount > 0 ? ` (${formatTaka(a.totalFee + a.donationAmount)}${a.transactionId ? `, TrxID ${a.transactionId}` : ""})` : "";
@@ -172,17 +184,31 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
           ? `Cancel the registration of ${a.name}${paid}? This cannot be undone.`
           : null;
     if (question && !window.confirm(question)) return;
+    await send(a, action);
+  };
+
+  const send = async (a: AdminRegistration, action: "APPROVE" | "CANCEL" | "CHECK_IN" | "UNDO_CHECK_IN", merchantTrxId?: string): Promise<boolean> => {
     setBusyId(a.id);
     const res = await fetch(`/api/admin/events/${event.id}/registrations/${a.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, merchantTrxId }),
     });
     const body = await res.json();
     setBusyId(null);
-    if (!res.ok) return showToast(body.error || "Could not update the registration.", "error");
+    if (!res.ok) {
+      showToast(body.error || "Could not update the registration.", "error");
+      return false;
+    }
     showToast(`${a.name}: ${body.registration.status.replace("_", " ").toLowerCase()}`);
     load();
+    return true;
+  };
+
+  const confirmQr = async () => {
+    if (!qrConfirm) return;
+    if (!qrTrx.trim()) return showToast("Enter the TrxID from our OK Wallet SMS (or paste the SMS).", "error");
+    if (await send(qrConfirm, "APPROVE", qrTrx)) setQrConfirm(null);
   };
 
   const handleExportCSV = () => {
@@ -204,7 +230,7 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
     if (attendeeStatusFilter !== "ALL" && a.status !== attendeeStatusFilter) return false;
     if (attendeeSourceFilter !== "ALL" && (a.source === OFFLINE_SOURCE) !== (attendeeSourceFilter === "OFFLINE")) return false;
     const q = attendeeSearch.trim().toLowerCase();
-    return !q || [a.name, a.email, a.phone, String(a.batch ?? ""), a.transactionId ?? ""].some((v) => v.toLowerCase().includes(q));
+    return !q || [a.name, a.email, a.phone, String(a.batch ?? ""), a.transactionId ?? "", a.merchantTrxId ?? "", a.payerAccountLast4 ?? ""].some((v) => v.toLowerCase().includes(q));
   });
   const checkedInCount = attendees.filter((a) => a.status === "CHECKED_IN").length;
   const offlineCount = attendees.filter((a) => a.source === OFFLINE_SOURCE).length;
@@ -212,6 +238,32 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
       <Toast toast={toast} />
+      {qrConfirm && (
+        <Dialog title={`Confirm the Bangla QR payment from ${qrConfirm.name}`} onClose={() => setQrConfirm(null)}>
+          <BanglaQrMatch
+            amount={qrConfirm.totalFee + qrConfirm.donationAmount}
+            last4={qrConfirm.payerAccountLast4}
+            paidAt={qrConfirm.payerPaidAt}
+            memberTrxId={qrConfirm.transactionId}
+            value={qrTrx}
+            onChange={setQrTrx}
+            idPrefix="event-bqr"
+          />
+          {screenshotOf(qrConfirm) && (
+            <a href={screenshotOf(qrConfirm)!} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-700 font-bold underline">
+              Open the member&apos;s payment screenshot
+            </a>
+          )}
+          <button
+            type="button"
+            disabled={busyId === qrConfirm.id}
+            onClick={() => void confirmQr()}
+            className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-bold"
+          >
+            {event?.isMembershipEvent ? "Approve payment and membership" : "Confirm payment"}
+          </button>
+        </Dialog>
+      )}
 
       {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
@@ -1092,6 +1144,15 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                     <td className="block md:table-cell py-1 md:py-3 md:px-3">
                       {formatTaka(a.totalFee)}{a.donationAmount > 0 && <> + {formatTaka(a.donationAmount)} donation</>}
                       <div className="text-slate-500 font-mono">{a.paymentMethod ?? "—"} {a.transactionId ?? ""}</div>
+                      {a.payerAccountLast4 && (
+                        <div className="text-[11px] text-slate-500">
+                          from …{a.payerAccountLast4}{a.payerPaidAt ? ` at ${smsTime(new Date(a.payerPaidAt))}` : ""}
+                        </div>
+                      )}
+                      {a.merchantTrxId && <div className="text-[11px] text-emerald-700 font-mono">SMS TrxID {a.merchantTrxId}</div>}
+                      {screenshotOf(a) && (
+                        <a href={screenshotOf(a)!} target="_blank" rel="noreferrer" className="text-[11px] text-emerald-700 font-bold underline">Payment screenshot</a>
+                      )}
                     </td>
                     <td className="block md:table-cell py-1 md:py-3 md:px-3 font-bold">
                       {a.status.replace("_", " ")}
@@ -1147,6 +1208,12 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   );
 }
 
+
+/** The payment screenshot the member attached (stored in the registration's notes). */
+function screenshotOf(a: AdminRegistration): string | null {
+  const m = a.notes ? /\[Payment Screenshot:\s*([^\]]+)\]/.exec(a.notes) : null;
+  return m ? m[1].trim() : null;
+}
 export default function AdminEventStudioPage(props: AdminEventStudioProps) {
   return (
     <Suspense fallback={<div className="p-8 text-slate-500 font-medium">Loading event studio...</div>}>

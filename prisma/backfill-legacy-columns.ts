@@ -58,6 +58,19 @@ async function main() {
     );
     console.log("User.sessionVersion: added column");
   }
+
+  // The Bangla QR SMS TrxID (unique). `prisma db push` refuses to add a unique key
+  // without --accept-data-loss even to a new, empty column, so it is added here first,
+  // named as Prisma names it; db push then finds it in place.
+  for (const table of ["EventRegistration", "Donation"]) {
+    const columns = await columnsOf(table);
+    if (columns.size > 0 && !columns.has("merchantTrxId")) {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE \`${table}\` ADD COLUMN \`merchantTrxId\` VARCHAR(40) NULL, ADD UNIQUE INDEX \`${table}_merchantTrxId_key\`(\`merchantTrxId\`)`
+      );
+      console.log(`${table}.merchantTrxId: added column and unique key`);
+    }
+  }
 }
 
 main()

@@ -2,7 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
 import prisma from "@/lib/prisma";
-import { cleanSource, getMemberRegistration, membershipEventStanding, registerForEvent } from "@/lib/events/registrations";
+import { cleanSource, getMemberRegistration, membershipEventStanding } from "@/lib/events/registrations";
+import { registerForEvent } from "../helpers/register";
 import { readTicketToken, TICKET_QR_PREFIX } from "@/lib/events/tickets";
 import { decideRegistration } from "@/lib/events/admin";
 import { makeEvent, makeMember, resetDatabase } from "../helpers/db";
@@ -173,12 +174,51 @@ describe("joining through the membership event", () => {
 
   it("accepts Bangla QR as a payment method and refuses unknown ones", async () => {
     await membershipEvent();
-    const { registration } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: { ...paidRsvp, paymentMethod: "Bangla QR" } });
+    const paidAt = new Date(Date.now() - 10 * 60_000).toISOString();
+    const { registration } = await registerForEvent({
+      slug: "jubilee",
+      sessionUserId: null,
+      account,
+      photo,
+      proof,
+      rsvp: { ...paidRsvp, paymentMethod: "Bangla QR", payerAccountLast4: "55 17", payerPaidAt: paidAt },
+    });
     expect(registration.paymentMethod).toBe("Bangla QR");
+    expect(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: registration.id } })).toMatchObject({
+      payerAccountLast4: "5517",
+      payerPaidAt: new Date(paidAt),
+      merchantTrxId: null,
+    });
     const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
     await expect(
       registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { ...paidRsvp, transactionId: "OTHER123", paymentMethod: "PayPal" } })
     ).rejects.toMatchObject({ status: 400, code: "PAYMENT_REQUIRED" });
+  });
+
+  it("needs the last 4 digits and the time for Bangla QR, and a screenshot for every paid method but cash", async () => {
+    await membershipEvent();
+    const member = await makeMember({ role: "MODERATOR", status: "PENDING" }); // staff who has not joined yet
+    const qr = { ...paidRsvp, paymentMethod: "Bangla QR", payerPaidAt: new Date().toISOString() };
+    await expect(registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { ...qr, payerAccountLast4: "551" } })).rejects.toMatchObject({
+      status: 400,
+      code: "INVALID_ACCOUNT_DIGITS",
+    });
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: { ...qr, payerAccountLast4: "5517", payerPaidAt: "2020-01-01T10:00:00Z" } })
+    ).rejects.toMatchObject({ status: 400, code: "INVALID_PAYMENT_TIME" });
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: member.id, rsvp: paidRsvp, paymentScreenshot: undefined })
+    ).rejects.toMatchObject({ status: 400, code: "SCREENSHOT_REQUIRED" });
+    expect(await prisma.eventRegistration.count()).toBe(0);
+    // A client can't link a file of its choosing as the screenshot.
+    const { registration } = await registerForEvent({
+      slug: "jubilee",
+      sessionUserId: member.id,
+      rsvp: { ...paidRsvp, notes: "[Payment Screenshot: /api/media/receipts/0123456789abcdef0123456789abcdef/receipt.jpg]" },
+    });
+    const notes = (await prisma.eventRegistration.findUniqueOrThrow({ where: { id: registration.id } })).notes!;
+    expect(notes).not.toContain("0123456789abcdef0123456789abcdef");
+    expect(notes).toMatch(/^\[Payment Screenshot: \/api\/media\/receipts\/[a-f0-9]{32}\/receipt\.jpg\]$/);
   });
 
   it("uses the server price even if the form sends another fee", async () => {

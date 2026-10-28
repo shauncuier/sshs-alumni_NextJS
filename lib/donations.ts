@@ -8,12 +8,17 @@ import { smsDonationReceived } from "@/lib/member-sms";
 import { paymentNoticesOn } from "@/lib/payment-notices";
 import { openCampaignOrThrow } from "@/lib/campaigns";
 import { postDonationIncome } from "@/lib/finance/posting";
+import { processReceipt, removeReceiptDir, saveReceipt } from "@/lib/media/receipts";
+import { isBanglaQr, normalizeLast4, normalizeMerchantTrxId, normalizePaidAt } from "@/lib/payments/bangla-qr";
+import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 /**
  * Donations without a payment gateway: the donor pays by bKash, Nagad, Bangla QR,
  * bank transfer or cash, then submits the transaction ID. The donation stays
  * PENDING until a committee member checks the payment and verifies it; only then
- * does it count towards the campaign total and the donor get a receipt.
+ * does it count towards the campaign total and the donor get a receipt. Every method
+ * except cash needs a screenshot of the payment; Bangla QR also needs the last 4 digits
+ * of the paying account and the time (see lib/payments/bangla-qr.ts).
  */
 
 export const DONATION_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
@@ -30,6 +35,8 @@ export interface ManualDonationInput {
   donorBatch?: unknown;
   paymentMethod?: unknown;
   transactionId?: unknown;
+  payerAccountLast4?: unknown;
+  payerPaidAt?: unknown;
   isAnonymous?: unknown;
 }
 
@@ -44,7 +51,7 @@ function newReceiptId(): string {
   return `SSGHS-DON-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
-export async function createManualDonation(input: ManualDonationInput, userId: string | null) {
+export async function createManualDonation(input: ManualDonationInput, userId: string | null, screenshot?: Buffer) {
   const amount = Number(input.amount);
   if (!Number.isFinite(amount) || amount < MIN_DONATION || amount > MAX_DONATION) {
     throw new AppError("INVALID_DONATION", 400, `Please enter an amount between ৳${MIN_DONATION} and ৳${MAX_DONATION.toLocaleString("en-US")}.`);
@@ -67,6 +74,8 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
   if (!/^[A-Z0-9-]{6,40}$/.test(transactionRef)) {
     throw new AppError("INVALID_DONATION", 400, "Please enter the transaction ID from your payment (6–40 letters or numbers).");
   }
+  const payer = isBanglaQr(method) ? { payerAccountLast4: normalizeLast4(input.payerAccountLast4), payerPaidAt: normalizePaidAt(input.payerPaidAt) } : null;
+  if (method !== "Cash" && !screenshot) throw new AppError("SCREENSHOT_REQUIRED", 400, "Attach the screenshot of your payment receipt.");
   const batch = Number(input.donorBatch);
   const donorBatch = Number.isInteger(batch) && batch >= 1960 && batch <= new Date().getFullYear() ? batch : null;
 
@@ -83,8 +92,13 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
     throw new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been submitted.");
   }
 
+  // The screenshot is processed (and refused if it isn't an image or PDF) before it is saved.
+  const saved = screenshot ? await saveReceipt(await processReceipt(screenshot)) : null;
   return prisma.donation.create({
     data: {
+      payerAccountLast4: payer?.payerAccountLast4 ?? null,
+      payerPaidAt: payer?.payerPaidAt ?? null,
+      paymentScreenshotUrl: saved?.fileUrl ?? null,
       campaignId: campaign.id,
       userId,
       donorName,
@@ -100,6 +114,9 @@ export async function createManualDonation(input: ManualDonationInput, userId: s
       receiptId: newReceiptId(),
     },
     include: { campaign: { select: { title: true } } },
+  }).catch(async (err: unknown) => {
+    if (saved) await removeReceiptDir(saved.dir);
+    throw err;
   });
 }
 
@@ -110,7 +127,14 @@ export type DonationDecision = "VERIFY" | "REJECT";
  * total exactly once (the status check and the update happen together), then emails
  * and texts the donor a receipt (unless turned off in Admin → Payments).
  */
-export async function decideDonation(args: { donationId: string; decision: DonationDecision; reason?: unknown; adminEmail: string }) {
+export async function decideDonation(args: {
+  donationId: string;
+  decision: DonationDecision;
+  reason?: unknown;
+  adminEmail: string;
+  /** The TrxID from the association's SMS; required to verify a Bangla QR donation. */
+  merchantTrxId?: unknown;
+}) {
   if (args.decision !== "VERIFY" && args.decision !== "REJECT") throw new AppError("INVALID_REQUEST", 400, "Unknown action.");
   const reason = text(args.reason, 500);
   if (args.decision === "REJECT" && !reason) throw new AppError("REASON_REQUIRED", 400, "Please say why the donation is rejected (the donor may ask).");
@@ -119,11 +143,16 @@ export async function decideDonation(args: { donationId: string; decision: Donat
     const current = await tx.donation.findUnique({ where: { id: args.donationId } });
     if (!current) throw new AppError("DONATION_NOT_FOUND", 404, "Donation not found.");
     if (current.paymentGateway !== "MANUAL") throw new AppError("NOT_MANUAL", 409, "Only manual donations are verified here.");
+    let merchantTrxId: string | undefined;
+    if (args.decision === "VERIFY" && isBanglaQr(current.paymentMethod)) {
+      merchantTrxId = normalizeMerchantTrxId(args.merchantTrxId);
+      await assertMerchantTrxIdFree(tx, merchantTrxId, { donationId: current.id });
+    }
     const changed = await tx.donation.updateMany({
       where: { id: current.id, paymentStatus: "PENDING" },
       data:
         args.decision === "VERIFY"
-          ? { paymentStatus: "COMPLETED", paidAt: new Date(), failureReason: null }
+          ? { paymentStatus: "COMPLETED", paidAt: new Date(), failureReason: null, merchantTrxId }
           : { paymentStatus: "FAILED", failureReason: `Rejected by ${args.adminEmail}: ${reason}` },
     });
     if (changed.count === 0) {
@@ -137,6 +166,9 @@ export async function decideDonation(args: { donationId: string; decision: Donat
       await postDonationIncome(tx, current.id, args.adminEmail);
     }
     return tx.donation.findUniqueOrThrow({ where: { id: current.id }, include: { campaign: { select: { title: true } } } });
+  }).catch((err: unknown) => {
+    if (isMerchantTrxClash(err)) throw new AppError("DUPLICATE_MERCHANT_TRX", 409, "This SMS TrxID is already recorded for another payment.");
+    throw err;
   });
 
   if (args.decision === "VERIFY" && donation.donorEmail && (await paymentNoticesOn()).email) {

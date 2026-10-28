@@ -75,6 +75,9 @@ export interface RsvpInput {
   mealPreference?: string | null;
   paymentMethod?: string | null;
   transactionId?: string | null;
+  /** Bangla QR only: last 4 digits of the paying account and when the member paid (ISO). */
+  payerAccountLast4?: string | null;
+  payerPaidAt?: string | null;
   donationAmount?: number;
   notes?: string | null;
 }
@@ -209,6 +212,10 @@ export interface AdminRegistration {
   mealPreference: string | null;
   paymentMethod: string | null;
   transactionId: string | null;
+  /** Bangla QR: what the member gave to match the payment, and the TrxID from the association's SMS. */
+  payerAccountLast4: string | null;
+  payerPaidAt: string | null;
+  merchantTrxId: string | null;
   notes: string | null;
   status: RegistrationStatusValue;
   confirmedBy: string | null;

@@ -13,6 +13,8 @@ import { computeFee } from "./pricing";
 import { eventFeeRules } from "./service";
 import { OFFLINE_SOURCE } from "./types";
 import { postRegistrationIncome } from "@/lib/finance/posting";
+import { normalizeMerchantTrxId } from "@/lib/payments/bangla-qr";
+import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 /**
  * Paper registration forms, typed in by a committee member. The committee has the
@@ -54,7 +56,7 @@ export interface OfflineEntryInput {
   guests?: Record<string, number> | null;
   tshirtSize?: string | null;
   paymentMethod: string;
-  /** Required for Bangla QR; none for cash. */
+  /** Required for Bangla QR: the TrxID in the association's OK Wallet SMS. None for cash. */
   transactionId?: string | null;
   formNo?: string | null;
   receiptNo?: string | null;
@@ -150,6 +152,10 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
         if (reservedHeads + price.headCount > event.maxAttendees) {
           throw new AppError("REGISTRATION_CLOSED", 409, CLOSED_MESSAGES.FULL);
         }
+        // Staff copy the TrxID from the association's OK Wallet SMS: it is also the SMS
+        // TrxID, so the same SMS can't confirm a second payment.
+        const merchantTrxId = input.paymentMethod === "Bangla QR" ? normalizeMerchantTrxId(transactionId) : null;
+        if (merchantTrxId) await assertMerchantTrxIdFree(tx, merchantTrxId);
         if (transactionId) {
           const usedByDonation = await tx.donation.findFirst({ where: { transactionRef: transactionId, paymentStatus: { not: "FAILED" } }, select: { id: true } });
           if (usedByDonation || (await tx.eventRegistration.findUnique({ where: { transactionId }, select: { id: true } }))) {
@@ -174,6 +180,7 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
             notes,
             paymentMethod: input.paymentMethod,
             transactionId: transactionId || null,
+            merchantTrxId,
             status: "CONFIRMED",
             confirmedBy: input.staff.email,
             confirmedAt: now,
@@ -206,6 +213,7 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
       throw new AppError("EMAIL_EXISTS", 409, "This email already has an account. Search for the member in Admin › Alumni instead, or leave the email empty.");
     }
     if (isPhoneClash(err)) throw new AppError("PHONE_TAKEN", 409, PHONE_TAKEN_MESSAGE);
+    if (isMerchantTrxClash(err)) throw new AppError("DUPLICATE_MERCHANT_TRX", 409, "This SMS TrxID is already recorded for another payment.");
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002" && JSON.stringify(err.meta ?? {}).includes("transactionId")) {
       throw new AppError("DUPLICATE_TRANSACTION", 409, "This transaction ID has already been used for a registration.");
     }

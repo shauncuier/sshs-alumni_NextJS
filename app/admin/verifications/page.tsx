@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { VerificationRequestItem } from "@/lib/data";
 import { confirmMemberPayment, decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
+import BanglaQrMatch from "@/components/admin/BanglaQrMatch";
 import { formatTaka } from "@/lib/events/pricing";
 import {
   ShieldCheck,
@@ -57,6 +58,8 @@ function VerificationReviewContent() {
 
   const [copiedTrx, setCopiedTrx] = useState<string | null>(null);
   const [overriddenApplicantId, setOverriddenApplicantId] = useState<string | null>(null);
+  // The TrxID from the association's OK Wallet SMS, for confirming a Bangla QR payment.
+  const [merchantTrx, setMerchantTrx] = useState("");
   const [docImageFailed, setDocImageFailed] = useState(false);
   const [ocrScan, setOcrScan] = useState<{
     scanning: boolean;
@@ -211,7 +214,8 @@ function VerificationReviewContent() {
         const matchesEmail = r.email.toLowerCase().includes(q);
         const matchesBatch = r.sscBatch.toString().includes(q);
         const matchesRoll = r.rollNumber?.toLowerCase().includes(q);
-        const matchesTrx = r.transactionId?.toLowerCase().includes(q);
+        const matchesTrx =
+          r.transactionId?.toLowerCase().includes(q) || r.merchantTrxId?.toLowerCase().includes(q) || (q.length === 4 && r.payerAccountLast4 === q);
         const matchesMethod = r.paymentMethod?.toLowerCase().includes(q);
         if (
           !matchesName &&
@@ -242,6 +246,7 @@ function VerificationReviewContent() {
   if (prevApplicantId !== activeApplicant?.id) {
     setPrevApplicantId(activeApplicant?.id);
     setDocImageFailed(false);
+    setMerchantTrx("");
   }
 
   const handleNext = () => {
@@ -258,16 +263,27 @@ function VerificationReviewContent() {
 
   // A member approved earlier who paid again later (e.g. their old registration was
   // lost): confirming confirms that registration and issues the ticket.
+  // A Bangla QR payment is confirmed with the TrxID from our own SMS (one SMS, one payment).
+  const needsMerchantTrx = (a: VerificationRequestItem) => a.paymentMethod === "Bangla QR" && a.awaitingPayment;
+  const missingMerchantTrx = (a: VerificationRequestItem) => {
+    if (!needsMerchantTrx(a) || merchantTrx.trim()) return false;
+    setError("Enter the TrxID from our OK Wallet SMS for this payment first (or paste the SMS).");
+    return true;
+  };
+
   const handleConfirmPayment = async (a: VerificationRequestItem) => {
     if (!a.membershipEventId || !a.registrationId) return;
+    if (missingMerchantTrx(a)) return;
     const paid = a.totalFee ? ` of ${formatCurrencyBDT(a.totalFee)}` : "";
     if (!window.confirm(`Confirm the payment${paid} from ${a.fullName}? Check it arrived in the account first.`)) return;
     setBusyId(a.id);
     setError(null);
     setSuccessMsg(null);
     try {
-      await confirmMemberPayment(a.membershipEventId, a.registrationId);
-      setRequests((prev) => prev.map((r) => (r.id === a.id ? { ...r, awaitingPayment: false, paymentStatus: "CONFIRMED" } : r)));
+      await confirmMemberPayment(a.membershipEventId, a.registrationId, needsMerchantTrx(a) ? merchantTrx : undefined);
+      setRequests((prev) =>
+        prev.map((r) => (r.id === a.id ? { ...r, awaitingPayment: false, paymentStatus: "CONFIRMED", merchantTrxId: needsMerchantTrx(a) ? merchantTrx : r.merchantTrxId } : r))
+      );
       setSuccessMsg(`Payment from ${a.fullName} confirmed; their ticket is ready.`);
     } catch (err) {
       setError((err as Error).message);
@@ -277,12 +293,15 @@ function VerificationReviewContent() {
   };
 
   const handleDecide = async (id: string, decision: "VERIFIED" | "REJECTED") => {
-    setBusyId(id);
+    const applicant = requests.find((r) => r.id === id);
     setError(null);
+    if (decision === "VERIFIED" && applicant && missingMerchantTrx(applicant)) return;
+    const smsTrx = decision === "VERIFIED" && applicant && needsMerchantTrx(applicant) ? merchantTrx : undefined;
+    setBusyId(id);
     setSuccessMsg(null);
 
     try {
-      const proof = await decideVerification(id, decision);
+      const proof = await decideVerification(id, decision, smsTrx);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === id
@@ -291,6 +310,7 @@ function VerificationReviewContent() {
                 status: decision,
                 awaitingPayment: decision === "VERIFIED" ? false : r.awaitingPayment,
                 paymentStatus: decision === "VERIFIED" ? "CONFIRMED" : "CANCELLED",
+                merchantTrxId: smsTrx ?? r.merchantTrxId,
                 proof: proof ?? r.proof,
               }
             : r
@@ -1076,7 +1096,7 @@ function VerificationReviewContent() {
                         {/* TrxID with Copy */}
                         <div className="p-3.5 bg-white rounded-xl border border-slate-200">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">
-                            Transaction ID (TrxID)
+                            {activeApplicant.paymentMethod === "Bangla QR" ? "TrxID in member's app" : "Transaction ID (TrxID)"}
                           </div>
                           <div className="flex items-center justify-between gap-1 mt-1 font-mono font-bold text-xs text-slate-800 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
                             <span className="select-all">{activeApplicant.transactionId || "—"}</span>
@@ -1097,6 +1117,24 @@ function VerificationReviewContent() {
                           </div>
                         </div>
                       </div>
+
+                      {activeApplicant.paymentMethod === "Bangla QR" &&
+                        (activeApplicant.awaitingPayment ? (
+                          <BanglaQrMatch
+                            amount={activeApplicant.totalFee ?? 0}
+                            last4={activeApplicant.payerAccountLast4 ?? null}
+                            paidAt={activeApplicant.payerPaidAt ?? null}
+                            memberTrxId={activeApplicant.transactionId ?? null}
+                            value={merchantTrx}
+                            onChange={setMerchantTrx}
+                            idPrefix="verify-bqr"
+                          />
+                        ) : activeApplicant.merchantTrxId ? (
+                          <p className="text-xs text-slate-600">
+                            Confirmed against our OK Wallet SMS, TrxID <span className="font-mono font-bold">{activeApplicant.merchantTrxId}</span>
+                            {activeApplicant.payerAccountLast4 ? ` (paid from …${activeApplicant.payerAccountLast4})` : ""}.
+                          </p>
+                        ) : null)}
 
                       {/* Payment Proof Screenshot Preview if uploaded */}
                       {activeApplicant.paymentReceiptUrl && (

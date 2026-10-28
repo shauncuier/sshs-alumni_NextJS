@@ -8,6 +8,8 @@ import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { isBanglaQr, normalizeMerchantTrxId } from "@/lib/payments/bangla-qr";
+import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
 type RequestStatus = (typeof REQUEST_STATUSES)[number];
@@ -51,6 +53,9 @@ export async function GET(req: Request) {
                 paymentMethod: true,
                 totalFee: true,
                 notes: true,
+                payerAccountLast4: true,
+                payerPaidAt: true,
+                merchantTrxId: true,
                 event: { select: { id: true, title: true, slug: true } },
               },
             })) ??
@@ -65,6 +70,9 @@ export async function GET(req: Request) {
                 paymentMethod: true,
                 totalFee: true,
                 notes: true,
+                payerAccountLast4: true,
+                payerPaidAt: true,
+                merchantTrxId: true,
                 event: { select: { id: true, title: true, slug: true } },
               },
             }));
@@ -81,6 +89,9 @@ export async function GET(req: Request) {
             paymentMethod: reg?.paymentMethod ?? null,
             transactionId: reg?.transactionId ?? null,
             totalFee: reg?.totalFee ?? null,
+            payerAccountLast4: reg?.payerAccountLast4 ?? null,
+            payerPaidAt: reg?.payerPaidAt ?? null,
+            merchantTrxId: reg?.merchantTrxId ?? null,
             paymentReceiptUrl,
           };
         })
@@ -145,12 +156,19 @@ export async function PATCH(req: Request) {
               where: { userId: request.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
             });
             if (pendingReg) {
+              // Bangla QR: the TrxID in the association's own SMS, so one SMS confirms one payment.
+              let merchantTrxId: string | undefined;
+              if (isBanglaQr(pendingReg.paymentMethod)) {
+                merchantTrxId = normalizeMerchantTrxId(body.merchantTrxId);
+                await assertMerchantTrxIdFree(tx, merchantTrxId, { registrationId: pendingReg.id });
+              }
               await tx.eventRegistration.update({
                 where: { id: pendingReg.id },
                 data: {
                   status: "CONFIRMED",
                   confirmedBy: me.email,
                   confirmedAt: new Date(),
+                  merchantTrxId,
                 },
               });
               confirmedRegistrationId = pendingReg.id;
@@ -208,6 +226,10 @@ export async function PATCH(req: Request) {
         request: updated,
       });
     } catch (dbErr) {
+      if (dbErr instanceof AppError) throw dbErr;
+      if (isMerchantTrxClash(dbErr)) {
+        return NextResponse.json({ error: "This SMS TrxID is already recorded for another payment.", code: "DUPLICATE_MERCHANT_TRX" }, { status: 409 });
+      }
       console.error("Verification decision failed:", dbErr);
       return NextResponse.json(
         { error: "Could not save the verification decision. Please try again." },

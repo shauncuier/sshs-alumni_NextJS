@@ -4,6 +4,9 @@ import { formatCurrencyBDT } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import { Heart, TrendingUp, Users, CheckCircle2, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import CampaignManager from "@/components/admin/CampaignManager";
+import BanglaQrMatch from "@/components/admin/BanglaQrMatch";
+import { Dialog } from "@/components/admin/content-kit";
+import { smsTime } from "@/lib/payments/bangla-qr";
 import Link from "next/link";
 
 interface DonationRecord {
@@ -30,6 +33,9 @@ interface PendingDonation {
   amount: number;
   paymentMethod: string;
   transactionRef: string | null;
+  payerAccountLast4: string | null;
+  payerPaidAt: string | null;
+  paymentScreenshotUrl: string | null;
   receiptId: string | null;
   campaignTitle: string;
   createdAt: string;
@@ -52,6 +58,9 @@ export default function AdminDonationsPage() {
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [pending, setPending] = useState<PendingDonation[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Verifying a Bangla QR donation: the donation and the TrxID from our OK Wallet SMS.
+  const [qrVerify, setQrVerify] = useState<PendingDonation | null>(null);
+  const [qrTrx, setQrTrx] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,12 +89,18 @@ export default function AdminDonationsPage() {
     loadData(); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
-  const decide = async (d: PendingDonation, action: "VERIFY" | "REJECT") => {
+  const decide = async (d: PendingDonation, action: "VERIFY" | "REJECT", merchantTrxId?: string) => {
     let reason: string | null = null;
+    // A Bangla QR donation is verified in a dialog against our own SMS (its TrxID is recorded).
+    if (action === "VERIFY" && d.paymentMethod === "Bangla QR" && merchantTrxId === undefined) {
+      setQrTrx("");
+      setQrVerify(d);
+      return;
+    }
     if (action === "REJECT") {
       reason = window.prompt(`Why is the ${d.paymentMethod} payment ${d.transactionRef ?? ""} of ${formatCurrencyBDT(d.amount)} rejected?`);
       if (!reason || !reason.trim()) return;
-    } else if (!window.confirm(`Verify ${formatCurrencyBDT(d.amount)} from ${d.donorName}? Check that ${d.paymentMethod} transaction ${d.transactionRef ?? ""} arrived first.`)) {
+    } else if (merchantTrxId === undefined && !window.confirm(`Verify ${formatCurrencyBDT(d.amount)} from ${d.donorName}? Check that ${d.paymentMethod} transaction ${d.transactionRef ?? ""} arrived first.`)) {
       return;
     }
     setBusyId(d.id);
@@ -95,11 +110,12 @@ export default function AdminDonationsPage() {
       const res = await fetch(`/api/admin/donations/${d.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, reason }),
+        body: JSON.stringify({ action, reason, merchantTrxId }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || "Could not save the decision.");
       setNotice(action === "VERIFY" ? `Verified ${formatCurrencyBDT(d.amount)} from ${d.donorName}.` : `Rejected the donation from ${d.donorName}.`);
+      setQrVerify(null);
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the decision.");
@@ -108,8 +124,41 @@ export default function AdminDonationsPage() {
     }
   };
 
+  const verifyQr = () => {
+    if (!qrVerify) return;
+    if (!qrTrx.trim()) return setError("Enter the TrxID from our OK Wallet SMS (or paste the SMS).");
+    void decide(qrVerify, "VERIFY", qrTrx);
+  };
+
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
+      {qrVerify && (
+        <Dialog title={`Verify the Bangla QR donation from ${qrVerify.donorName}`} onClose={() => setQrVerify(null)}>
+          <BanglaQrMatch
+            amount={qrVerify.amount}
+            last4={qrVerify.payerAccountLast4}
+            paidAt={qrVerify.payerPaidAt}
+            memberTrxId={qrVerify.transactionRef}
+            value={qrTrx}
+            onChange={setQrTrx}
+            idPrefix="donation-bqr"
+          />
+          {qrVerify.paymentScreenshotUrl && (
+            <a href={qrVerify.paymentScreenshotUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-700 font-bold underline">
+              Open the donor&apos;s payment screenshot
+            </a>
+          )}
+          {error && <p role="alert" className="text-xs font-bold text-rose-700">{error}</p>}
+          <button
+            type="button"
+            disabled={busyId !== null}
+            onClick={verifyQr}
+            className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-bold"
+          >
+            Verify donation
+          </button>
+        </Dialog>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -166,6 +215,14 @@ export default function AdminDonationsPage() {
                     {formatCurrencyBDT(d.amount)} <span className="font-semibold text-slate-500 text-xs">by {d.paymentMethod}</span>
                   </div>
                   <div className="font-mono font-bold text-slate-900 break-all">{d.transactionRef ?? "—"}</div>
+                  {d.payerAccountLast4 && (
+                    <div className="text-slate-500">
+                      Paid from …{d.payerAccountLast4}{d.payerPaidAt ? ` at ${smsTime(new Date(d.payerPaidAt))}` : ""}
+                    </div>
+                  )}
+                  {d.paymentScreenshotUrl && (
+                    <a href={d.paymentScreenshotUrl} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold underline">Payment screenshot</a>
+                  )}
                   <div className="text-slate-700">
                     {d.donorName}
                     {d.isAnonymous ? " (wants to stay anonymous)" : ""}
