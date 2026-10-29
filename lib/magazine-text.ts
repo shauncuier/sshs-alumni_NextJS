@@ -14,6 +14,9 @@ export interface MagazinePost {
   createdAt: string;
   editedAt: string | null;
   content: string;
+  /** Public-form submissions only: the piece's title and how to reach the sender. */
+  title?: string | null;
+  contact?: string | null;
 }
 
 /** "25 October 2026", in Bangladesh time. */
@@ -38,10 +41,11 @@ export function plainText(content: string): string {
 }
 
 /** One post, ready for the magazine: who, which batch, when, then the text. */
-export function postText(post: Pick<MagazinePost, "authorName" | "authorBatch" | "batchTag" | "createdAt" | "content">): string {
+export function postText(post: Pick<MagazinePost, "authorName" | "authorBatch" | "batchTag" | "createdAt" | "content"> & { title?: string | null }): string {
   const batch = post.batchTag ?? post.authorBatch;
   const who = batch ? `${post.authorName} (SSC ${batch})` : post.authorName;
-  return `${who} — ${magazineDate(post.createdAt)}\n\n${plainText(post.content)}`;
+  const title = post.title?.trim();
+  return `${who} — ${magazineDate(post.createdAt)}${title ? `\n${title}` : ""}\n\n${plainText(post.content)}`;
 }
 
 /** All shown posts as one plain-text block, separated for the layout. */

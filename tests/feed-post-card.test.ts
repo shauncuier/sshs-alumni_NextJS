@@ -67,3 +67,14 @@ describe("call for magazine writings", () => {
     expect(html).toMatch(/<button[^>]*>(?:<svg[\s\S]*?<\/svg>)?\s*আপনার লেখা পোস্ট করুন<\/button>/);
   });
 });
+
+describe("public magazine form", () => {
+  it("asks for name, batch, phone, email, title and the writing, with a hidden honeypot and the call text", async () => {
+    const { default: MagazineForm } = await import("@/components/magazine/MagazineForm");
+    const html = renderToStaticMarkup(React.createElement(MagazineForm));
+    for (const name of ["name", "batch", "phone", "email", "title", "content"]) expect(html).toContain(`name="${name}"`);
+    expect(html).toMatch(/name="website"[^>]*tabindex="-1"|tabindex="-1"[^>]*name="website"/i);
+    expect(html).toContain("প্রত্যুষ রুবেল");
+    expect(html).toMatch(/<button[^>]*type="submit"/);
+  });
+});

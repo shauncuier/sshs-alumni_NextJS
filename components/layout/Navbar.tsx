@@ -5,35 +5,7 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {
-  Search,
-  Menu,
-  X,
-  ChevronDown,
-  Users,
-  Building2,
-  Award,
-  Image as ImageIcon,
-  BookOpen,
-  PhoneCall,
-  LayoutDashboard,
-  ShieldCheck,
-  LogIn,
-  LogOut,
-  HeartHandshake,
-  Heart,
-  Sparkles,
-  Briefcase,
-  GraduationCap,
-  ScrollText,
-  History,
-  Medal,
-  CalendarDays,
-  Megaphone,
-  Layers,
-  UserPlus,
-  UserRound,
-} from "lucide-react";
+import { Search, Menu, X, ChevronDown, Users, Building2, Award, Image as ImageIcon, BookOpen, PhoneCall, LayoutDashboard, ShieldCheck, LogIn, LogOut, HeartHandshake, Heart, Sparkles, Briefcase, GraduationCap, ScrollText, History, Medal, CalendarDays, Megaphone, Layers, UserPlus, UserRound, BookOpenText } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Loaded only when someone opens search: it is not needed to show the page.
@@ -88,6 +60,7 @@ const NAV_ITEMS: NavItem[] = [
       { name: "Hall of fame", href: "/achievements", icon: Award, desc: "Alumni achievements" },
       { name: "Photo gallery", href: "/gallery", icon: ImageIcon, desc: "Albums and memories" },
       { name: "Volunteer", href: "/volunteer", icon: HeartHandshake, desc: "Help run events" },
+      { name: "Souvenir writings", href: "/magazine", icon: BookOpenText, desc: "Send a piece for the Jubilee souvenir book" },
       { name: "Contact", href: "/contact", icon: PhoneCall, desc: "Write to the committee" },
     ],
   },

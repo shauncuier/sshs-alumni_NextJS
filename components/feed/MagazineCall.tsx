@@ -1,5 +1,7 @@
 import React from "react";
+import Link from "next/link";
 import { BookOpenText, PenLine, Phone } from "lucide-react";
+import { MAGAZINE_CALL as CALL } from "@/lib/magazine-call";
 
 /**
  * The publication subcommittee's call for writings for the Golden Jubilee
@@ -14,23 +16,21 @@ export default function MagazineCall({ onWrite }: { onWrite: () => void }) {
           <BookOpenText className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <h2 id="magazine-call-title" className="text-base sm:text-lg font-black text-amber-300 leading-snug">সুবর্ণজয়ন্তী স্মরণিকার জন্য লেখা আহ্বান</h2>
+          <h2 id="magazine-call-title" className="text-base sm:text-lg font-black text-amber-300 leading-snug">{CALL.title}</h2>
           <p className="text-[11px] text-emerald-200 mt-0.5">আপনার লেখা এখানে পোস্ট করুন; প্রকাশনা উপকমিটি স্মরণিকার জন্য সংগ্রহ করবে।</p>
         </div>
       </div>
 
       <div className="text-sm leading-relaxed text-emerald-50 space-y-3">
-        <p>
-          প্রিয় প্রাক্তন সবুজিয়ানবৃন্দ- অফুরান শুভেচ্ছা রইলো। প্রিয় বিদ্যাপীঠের ৫০ বছর পূর্তি উপলক্ষ্যে সুবর্ণজয়ন্তী উদযাপন উৎসব দরজায় কড়া নাড়ছে। অতি আনন্দের সাথে জানাচ্ছি যে, সুবর্ণজয়ন্তী উপলক্ষ্যে প্রকাশনা উপকমিটি একটি স্মরণিকা স্মারক গ্রন্থ রচনা এবং উন্মোচনের সিদ্ধান্ত গ্রহণ করেছে। সাবেক ও বর্তমান সকল সবুজিয়ান এবং শ্রদ্বেয় শিক্ষকমন্ডলীর কাছে থেকে আমরা লেখা, স্মৃতিচারণমূলক গল্প, কবিতা ইত্যাদি আহ্বান করছি। আমাদের প্রাণের উৎসবে সবার উপস্থিতিতে প্রিয় স্কুল প্রাঙ্গণ হয়ে উঠুক মিলনমেলার হৃদবাগিচা।
-        </p>
+        <p>{CALL.body}</p>
         <p className="text-xs text-emerald-100">
           শুভেচ্ছান্তে-
           <br />
-          <span className="font-bold text-white">প্রত্যুষ রুবেল</span>
+          <span className="font-bold text-white">{CALL.convenor}</span>
           <br />
-          আহ্বায়ক, প্রকাশনা উপকমিটি
+          {CALL.role}
           <br />
-          সুবর্ণজয়ন্তী উদযাপন পরিষদ
+          {CALL.council}
         </p>
       </div>
 
@@ -43,11 +43,15 @@ export default function MagazineCall({ onWrite }: { onWrite: () => void }) {
           <PenLine className="w-4 h-4" />
           আপনার লেখা পোস্ট করুন
         </button>
-        <a href="tel:+8801818869523" className="px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-emerald-100 hover:bg-emerald-700/60 flex items-center justify-center gap-1.5 border border-emerald-600">
+        <a href={CALL.phoneHref} className="px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-emerald-100 hover:bg-emerald-700/60 flex items-center justify-center gap-1.5 border border-emerald-600">
           <Phone className="w-4 h-4" />
-          মোবাইলঃ 01818-869523
+          মোবাইলঃ {CALL.phone}
         </a>
       </div>
+      <p className="text-[11px] text-emerald-200">
+        সদস্য নন এমন কেউ (শিক্ষক, বর্তমান ছাত্র) লিখতে চাইলে এই লিংকটি দিন:{" "}
+        <Link prefetch={false} href={CALL.publicPath} className="font-bold text-amber-300 hover:underline">exsabujian.org{CALL.publicPath}</Link>
+      </p>
     </section>
   );
 }

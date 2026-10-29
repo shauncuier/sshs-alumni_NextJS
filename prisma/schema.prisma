@@ -200,6 +200,22 @@ model Post {
   updatedAt DateTime @updatedAt
 }
 
+/// A writing sent through the public /magazine form for the souvenir book; the
+/// committee copies it from /admin/feed ("Magazine text"). Not shown anywhere public.
+model MagazineSubmission {
+  id      String  @id @default(uuid()) @db.VarChar(36)
+  name    String  @db.VarChar(120)
+  batch   Int?
+  phone   String? @db.VarChar(40)
+  email   String? @db.VarChar(254)
+  title   String? @db.VarChar(200)
+  content String  @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Comment {
   id       String @id @default(uuid()) @db.VarChar(36)
   postId   String @db.VarChar(36)

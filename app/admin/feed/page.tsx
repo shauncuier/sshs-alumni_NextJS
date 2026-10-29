@@ -40,6 +40,8 @@ export default function AdminFeedMagazinePage() {
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  // Where the text comes from: members' feed posts, or the public /magazine form.
+  const [source, setSource] = useState<"feed" | "form">("feed");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function AdminFeedMagazinePage() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ page: String(page) });
+      const params = new URLSearchParams({ page: String(page), source });
       if (query) params.set("q", query);
       if (from) params.set("from", from);
       if (to) params.set("to", to);
@@ -73,7 +75,7 @@ export default function AdminFeedMagazinePage() {
     } finally {
       setLoading(false);
     }
-  }, [page, query, from, to]);
+  }, [page, query, from, to, source]);
 
   useEffect(() => {
     void load(); // eslint-disable-line react-hooks/set-state-in-effect
@@ -131,6 +133,21 @@ export default function AdminFeedMagazinePage() {
         </div>
       )}
 
+      <div role="tablist" aria-label="Where the text comes from" className="flex gap-2 text-xs">
+        {([["feed", "Feed posts"], ["form", "Sent through the public form"]] as const).map(([key, name]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={source === key}
+            onClick={() => { setSource(key); setPage(1); }}
+            className={`px-4 py-2 min-h-[40px] rounded-xl font-bold transition-colors cursor-pointer ${source === key ? "bg-emerald-800 text-white shadow-sm" : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"}`}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="flex-1 flex items-center gap-2 bg-white px-3 rounded-2xl border border-slate-200 shadow-xs min-h-[44px]">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -138,7 +155,7 @@ export default function AdminFeedMagazinePage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search the text or the author"
+            placeholder={source === "form" ? "Search the text, title, name or contact" : "Search the text or the author"}
             aria-label="Search posts"
             className="w-full text-base sm:text-xs bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none"
           />
@@ -156,7 +173,8 @@ export default function AdminFeedMagazinePage() {
       </div>
 
       <p className="text-[11px] text-slate-500">
-        {loading ? "Loading posts…" : total === 0 ? "No posts match." : `Showing ${shownFrom}–${shownTo} of ${total} ${total === 1 ? "post" : "posts"}, newest first.`}
+        {loading ? "Loading…" : total === 0 ? (source === "form" ? "Nothing has been sent through the public form yet, or nothing matches." : "No posts match.") : `Showing ${shownFrom}–${shownTo} of ${total} ${total === 1 ? "piece" : "pieces"}, newest first.`}
+        {source === "form" && <span className="block mt-0.5">The public form is at <a href="/magazine" target="_blank" rel="noreferrer" className="font-bold text-emerald-800 hover:underline">/magazine</a>; share that link with teachers and others who are not members.</span>}
       </p>
 
       <div className="space-y-3">
@@ -170,9 +188,11 @@ export default function AdminFeedMagazinePage() {
                     <span className="ml-2 px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded-full text-[10px] font-bold border border-emerald-200 align-middle">SSC {post.batchTag ?? post.authorBatch}</span>
                   )}
                 </h2>
+                {post.title && <p className="text-sm font-semibold text-slate-800 mt-0.5 break-words">{post.title}</p>}
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   {magazineDate(post.createdAt)}
                   {post.editedAt ? ` · edited ${magazineDate(post.editedAt)}` : ""}
+                  {post.contact ? ` · ${post.contact}` : ""}
                 </p>
               </div>
               <button type="button" onClick={() => void copyOne(post)} className={`${ghost} shrink-0`} aria-label={`Copy ${post.authorName}'s post`}>
