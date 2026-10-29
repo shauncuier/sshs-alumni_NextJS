@@ -10,16 +10,22 @@ interface CreatePostModalProps {
   onClose: () => void;
   /** Saves the post; throws with a message if it was not saved. */
   onPostCreated: (content: string, batchTag: number | undefined) => Promise<void> | void;
+  /**
+   * Editing an existing post: the form starts from its text and batch tag and says
+   * "Save changes". Give the modal a `key` per post so a new post starts fresh.
+   */
+  initial?: { content: string; batchTag?: number };
 }
 
-export default function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostModalProps) {
+export default function CreatePostModal({ isOpen, onClose, onPostCreated, initial }: CreatePostModalProps) {
   const { data: session } = useSession();
   const userName = session?.user?.name || "Member";
   const userBatch = session?.user?.batchYear;
   const userImage = session?.user?.image;
+  const editing = Boolean(initial);
 
-  const [content, setContent] = useState("");
-  const [batchTag, setBatchTag] = useState<string | null>(null);
+  const [content, setContent] = useState(initial?.content ?? "");
+  const [batchTag, setBatchTag] = useState<string | null>(initial?.batchTag ? String(initial.batchTag) : null);
   const effectiveBatchTag = batchTag ?? (userBatch ? String(userBatch) : "all");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +52,10 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div role="dialog" aria-modal="true" aria-label="Create community post" className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label={editing ? "Edit community post" : "Create community post"} className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-          <h3 className="text-sm font-bold text-slate-900">Create Community Post</h3>
+          <h3 className="text-sm font-bold text-slate-900">{editing ? "Edit your post" : "Create Community Post"}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -85,6 +91,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
                   className="bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]"
                 >
                   {userBatch && <option value={String(userBatch)}>Batch {userBatch}</option>}
+                  {initial?.batchTag && initial.batchTag !== userBatch && <option value={String(initial.batchTag)}>Batch {initial.batchTag}</option>}
                   <option value="all">Public All Batches</option>
                 </select>
               </div>
@@ -115,7 +122,7 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }: Crea
               className="px-5 py-2 text-xs font-bold bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-colors disabled:opacity-50 flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{submitting ? "Publishing..." : "Post to Community"}</span>
+              <span>{submitting ? (editing ? "Saving..." : "Publishing...") : editing ? "Save changes" : "Post to Community"}</span>
             </button>
           </div>
         </form>

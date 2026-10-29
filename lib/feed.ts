@@ -8,8 +8,8 @@ import { initialsAvatar } from "@/lib/avatar";
 
 /**
  * The community feed: posts, likes and comments by members, all stored. Authors
- * can delete their own posts and comments; admins and moderators ("feed" area)
- * can delete anyone's. Post.likesCount and Post.commentsCount are kept in step
+ * can edit and delete their own posts and delete their own comments; admins and
+ * moderators ("feed" area) can edit and delete anyone's. Post.likesCount and Post.commentsCount are kept in step
  * inside the same transaction as the like or comment.
  */
 
@@ -61,6 +61,8 @@ function toPostItem(p: PostRow, viewer: Actor | null, likedIds: Set<string>): Po
     batchTag: p.batchTag ?? undefined,
     isLiked: likedIds.has(p.id),
     canDelete: Boolean(viewer && (viewer.id === p.authorId || can(viewer.role, "feed"))),
+    canEdit: Boolean(viewer && (viewer.id === p.authorId || can(viewer.role, "feed"))),
+    editedAt: p.editedAt ? relativeTime(p.editedAt) : null,
   };
 }
 
@@ -80,15 +82,43 @@ export async function listFeed(viewer: Actor | null, opts: { batch?: number | nu
   return rows.map((r) => toPostItem(r, viewer, likedIds));
 }
 
-export async function createPost(actor: Actor, input: { content?: unknown; batchTag?: unknown }): Promise<PostItem> {
-  const content = typeof input.content === "string" ? input.content.trim() : "";
+function cleanContent(raw: unknown): string {
+  const content = typeof raw === "string" ? raw.trim() : "";
   if (!content) throw new AppError("INVALID_POST", 400, "Post content cannot be empty.");
   if (content.length > POST_MAX) throw new AppError("INVALID_POST", 400, `Post content cannot exceed ${POST_MAX} characters.`);
+  return content;
+}
+
+/** The batch tag from the form, or null if none was given or it is not a plausible SSC year. */
+function cleanBatchTag(raw: unknown): number | null {
+  const tag = Number(raw);
+  return Number.isInteger(tag) && tag >= 1950 && tag <= new Date().getFullYear() ? tag : null;
+}
+
+export async function createPost(actor: Actor, input: { content?: unknown; batchTag?: unknown }): Promise<PostItem> {
+  const content = cleanContent(input.content);
   const profile = await prisma.alumniProfile.findUnique({ where: { userId: actor.id }, select: { sscBatch: true } });
-  const tag = Number(input.batchTag);
-  const batchTag = Number.isInteger(tag) && tag >= 1950 && tag <= new Date().getFullYear() ? tag : profile?.sscBatch ?? null;
+  const batchTag = cleanBatchTag(input.batchTag) ?? profile?.sscBatch ?? null;
   const row = await prisma.post.create({ data: { authorId: actor.id, content, batchTag }, include: { author: { select: authorSelect } } });
   return toPostItem(row, actor, new Set());
+}
+
+/**
+ * Changes a post's text (and batch tag, when a valid one is given) by its author or
+ * a moderator. The post keeps its original date; editedAt records the change.
+ */
+export async function updatePost(actor: Actor, id: string, input: { content?: unknown; batchTag?: unknown }): Promise<PostItem> {
+  const content = cleanContent(input.content);
+  const post = await postOrThrow(id);
+  if (post.authorId !== actor.id && !can(actor.role, "feed")) throw new AppError("FORBIDDEN", 403, "You can only edit your own posts.");
+  const batchTag = cleanBatchTag(input.batchTag);
+  const row = await prisma.post.update({
+    where: { id },
+    data: { content, editedAt: new Date(), ...(batchTag ? { batchTag } : {}) },
+    include: { author: { select: authorSelect } },
+  });
+  const liked = await prisma.postLike.findFirst({ where: { postId: id, userId: actor.id }, select: { postId: true } });
+  return toPostItem(row, actor, new Set(liked ? [id] : []));
 }
 
 async function postOrThrow(id: string) {

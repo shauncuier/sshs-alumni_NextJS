@@ -151,6 +151,10 @@ export interface PostItem {
   profileId?: string | null;
   /** The viewer may delete this post (its author, or a moderator). */
   canDelete?: boolean;
+  /** The viewer may change this post's text (its author, or a moderator). */
+  canEdit?: boolean;
+  /** When the text was last changed ("3 min ago"), or null if never edited. */
+  editedAt?: string | null;
 }
 
 export interface NewsItem {

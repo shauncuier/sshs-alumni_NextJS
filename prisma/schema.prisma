@@ -190,6 +190,8 @@ model Post {
   likesCount    Int     @default(0)
   commentsCount Int     @default(0)
   isPinned      Boolean @default(false)
+  /// When the author (or a moderator) last changed the text; null until the first edit.
+  editedAt      DateTime?
 
   comments Comment[]
   likes    PostLike[]

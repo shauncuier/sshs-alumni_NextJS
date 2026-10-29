@@ -8,9 +8,9 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
   return { ...actual, getSessionUser: async () => session.user };
 });
 
-import { addComment, createPost, deleteComment, deletePost, listComments, listFeed, toggleLike } from "@/lib/feed";
+import { addComment, createPost, deleteComment, deletePost, listComments, listFeed, toggleLike, updatePost } from "@/lib/feed";
 import { GET as listRoute, POST as createRoute } from "@/app/api/posts/route";
-import { DELETE as deleteRoute } from "@/app/api/posts/[id]/route";
+import { DELETE as deleteRoute, PATCH as editRoute } from "@/app/api/posts/[id]/route";
 import { POST as likeRoute } from "@/app/api/posts/[id]/like/route";
 import { GET as commentsRoute, POST as commentRoute } from "@/app/api/posts/[id]/comments/route";
 
@@ -65,6 +65,46 @@ describe("feed posts", () => {
     await deletePost(author, a.id);
     await deletePost(mod, b.id);
     expect(await prisma.post.count()).toBe(0);
+  });
+});
+
+describe("editing posts", () => {
+  it("the author can change the text; the post keeps its date and records when it was edited", async () => {
+    const me = await actor();
+    const post = await createPost(me, { content: "Typo hear" });
+    const before = await prisma.post.findUniqueOrThrow({ where: { id: post.id } });
+    expect(before.editedAt).toBeNull();
+
+    const edited = await updatePost(me, post.id, { content: "Typo here" });
+    expect(edited).toMatchObject({ id: post.id, content: "Typo here", canEdit: true });
+    expect(edited.editedAt).toBeTruthy();
+
+    const after = await prisma.post.findUniqueOrThrow({ where: { id: post.id } });
+    expect(after.content).toBe("Typo here");
+    expect(after.createdAt.getTime()).toBe(before.createdAt.getTime());
+    expect(after.editedAt).toBeInstanceOf(Date);
+    expect((await listFeed(me))[0]).toMatchObject({ content: "Typo here", canEdit: true });
+  });
+
+  it("another member cannot edit it; an admin can", async () => {
+    const author = await actor();
+    const stranger = await actor();
+    const admin = await actor("ADMIN");
+    const post = await createPost(author, { content: "Mine" });
+
+    expect((await listFeed(stranger))[0].canEdit).toBe(false);
+    await expect(updatePost(stranger, post.id, { content: "Hijacked" })).rejects.toMatchObject({ status: 403 });
+    expect((await updatePost(admin, post.id, { content: "Tidied by staff" })).content).toBe("Tidied by staff");
+    await expect(updatePost(author, "no-such-post", { content: "x" })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("rejects empty or over-long edits and keeps the batch tag unless a valid one is given", async () => {
+    const me = await actor();
+    const post = await createPost(me, { content: "Tagged", batchTag: 2000 });
+    await expect(updatePost(me, post.id, { content: "  " })).rejects.toMatchObject({ status: 400 });
+    await expect(updatePost(me, post.id, { content: "x".repeat(5001) })).rejects.toMatchObject({ status: 400 });
+    expect((await updatePost(me, post.id, { content: "Still tagged" })).batchTag).toBe(2000);
+    expect((await updatePost(me, post.id, { content: "Retagged", batchTag: 1999 })).batchTag).toBe(1999);
   });
 });
 
@@ -149,5 +189,29 @@ describe("feed routes", () => {
     session.user = me;
     expect((await deleteRoute(json({}, "DELETE"), params(post.id))).status).toBe(200);
     expect((await likeRoute(json({}), params(post.id))).status).toBe(404);
+  });
+
+  it("PATCH /api/posts/[id]: the author or an admin may edit, another member may not", async () => {
+    const author = await actor();
+    session.user = author;
+    const { post } = await (await createRoute(json({ content: "Draft" }))).json();
+
+    session.user = null;
+    expect((await editRoute(json({ content: "Nope" }, "PATCH"), params(post.id))).status).toBe(401);
+
+    session.user = await actor();
+    expect((await editRoute(json({ content: "Nope" }, "PATCH"), params(post.id))).status).toBe(403);
+
+    session.user = author;
+    const mine = await editRoute(json({ content: "Draft, fixed" }, "PATCH"), params(post.id));
+    expect(mine.status).toBe(200);
+    expect((await mine.json()).post).toMatchObject({ id: post.id, content: "Draft, fixed", canEdit: true });
+
+    session.user = await actor("ADMIN");
+    const staff = await editRoute(json({ content: "Draft, moderated" }, "PATCH"), params(post.id));
+    expect(staff.status).toBe(200);
+    expect((await (await listRoute(new Request("http://x/api/posts"))).json()).posts[0].content).toBe("Draft, moderated");
+    expect((await editRoute(json({ content: "" }, "PATCH"), params(post.id))).status).toBe(400);
+    expect((await editRoute(json({ content: "x" }, "PATCH"), params("missing"))).status).toBe(404);
   });
 });

@@ -27,6 +27,8 @@ export default function FeedPage() {
   }, []);
   const [filter, setFilter] = useState<"all" | "my-batch" | "official">("all");
   const [createPostOpen, setCreatePostOpen] = useState(false);
+  // The post being edited (its own form), or null.
+  const [editing, setEditing] = useState<PostItem | null>(null);
 
   const user = session?.user;
   const userName = user?.name || "Member";
@@ -38,6 +40,19 @@ export default function FeedPage() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Your post was not saved.");
     setPosts((list) => [data.post, ...list]);
+  };
+
+  const handlePostEdited = async (content: string, batchTag?: number) => {
+    if (!editing) return;
+    const res = await fetch(`/api/posts/${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content, batchTag }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Your changes were not saved.");
+    setPosts((list) => list.map((p) => (p.id === editing.id ? data.post : p)));
+  };
+
+  const closePostForm = () => {
+    setCreatePostOpen(false);
+    setEditing(null);
   };
 
   const filteredPosts = posts.filter((post) => {
@@ -114,7 +129,7 @@ export default function FeedPage() {
               <p className="text-center text-xs text-slate-500 bg-white rounded-3xl border border-slate-200 p-10">No posts yet. Be the first to share something.</p>
             )}
             {filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} onDeleted={(id) => setPosts((list) => list.filter((p) => p.id !== id))} />
+              <PostCard key={post.id} post={post} onDeleted={(id) => setPosts((list) => list.filter((p) => p.id !== id))} onEdit={setEditing} />
             ))}
           </div>
         </main>
@@ -123,9 +138,11 @@ export default function FeedPage() {
       <MobileNav />
 
       <CreatePostModal
-        isOpen={createPostOpen}
-        onClose={() => setCreatePostOpen(false)}
-        onPostCreated={handlePostCreated}
+        key={editing?.id ?? "new"}
+        isOpen={createPostOpen || editing !== null}
+        onClose={closePostForm}
+        onPostCreated={editing ? handlePostEdited : handlePostCreated}
+        initial={editing ? { content: editing.content, batchTag: editing.batchTag } : undefined}
       />
     </div>
   );

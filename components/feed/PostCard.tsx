@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Heart, Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
+import { BadgeCheck, Heart, Loader2, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import type { PostItem } from "@/lib/data";
 import { avatarAt } from "@/lib/avatar";
 
@@ -19,6 +19,8 @@ interface PostCardProps {
   post: PostItem;
   /** Called after the post was deleted, so the list can drop it. */
   onDeleted?: (id: string) => void;
+  /** Opens the page's edit form for this post; the Edit button only shows when given. */
+  onEdit?: (post: PostItem) => void;
 }
 
 async function call(url: string, method: string, body?: unknown) {
@@ -29,7 +31,7 @@ async function call(url: string, method: string, body?: unknown) {
 }
 
 /** A feed post with real likes and comments (stored via /api/posts). */
-export default function PostCard({ post, onDeleted }: PostCardProps) {
+export default function PostCard({ post, onDeleted, onEdit }: PostCardProps) {
   const [likes, setLikes] = useState(post.likesCount);
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [commentCount, setCommentCount] = useState(post.commentsCount);
@@ -132,14 +134,22 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
             </div>
             <div className="text-xs text-slate-500">
               {post.author.profession} • <span>{post.timestamp}</span>
+              {post.editedAt && <span className="text-slate-400"> • Edited {post.editedAt}</span>}
             </div>
           </div>
         </div>
-        {post.canDelete && (
-          <button type="button" onClick={() => void removePost()} disabled={busy} aria-label="Delete post" title="Delete post" className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center shrink-0">
+          {post.canEdit && onEdit && (
+            <button type="button" onClick={() => onEdit(post)} disabled={busy} aria-label="Edit post" title="Edit post" className="text-slate-400 hover:text-emerald-700 p-1.5 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer">
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
+          {post.canDelete && (
+            <button type="button" onClick={() => void removePost()} disabled={busy} aria-label="Delete post" title="Delete post" className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="text-sm text-slate-800 leading-relaxed whitespace-pre-line break-words">{post.content}</div>
