@@ -5,37 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { can, type AdminArea } from "@/lib/permissions";
-import {
-  LayoutDashboard,
-  UserCheck,
-  Layers,
-  Calendar,
-  Heart,
-  Users,
-  ShieldCheck,
-  ArrowLeft,
-  QrCode,
-  HeartHandshake,
-  Menu,
-  X,
-  ChevronDown,
-  MessageSquare,
-  ScrollText,
-  Newspaper,
-  Images,
-  BookOpen,
-  Briefcase,
-  GraduationCap,
-  IdCard,
-  FilePlus2,
-  Megaphone,
-  Landmark,
-  Medal,
-  Handshake,
-  FileText,
-  Calculator,
-  Settings,
-} from "lucide-react";
+import { ArrowLeft, BookOpen, BookText, Briefcase, Calculator, Calendar, ChevronDown, FilePlus2, FileText, GraduationCap, Handshake, Heart, HeartHandshake, IdCard, Images, Landmark, Layers, LayoutDashboard, Medal, Megaphone, Menu, MessageSquare, Newspaper, QrCode, ScrollText, Settings, ShieldCheck, UserCheck, Users, X } from "lucide-react";
 
 export interface AdminShellUser {
   email: string | null;
@@ -86,6 +56,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { name: "Stories & achievements", short: "Stories", href: "/admin/stories", icon: BookOpen, area: "stories" },
       { name: "Jobs", short: "Jobs", href: "/admin/jobs", icon: Briefcase, area: "jobs" },
       { name: "Mentors", short: "Mentors", href: "/admin/mentors", icon: GraduationCap, area: "mentors" },
+      { name: "Magazine text", short: "Magazine", href: "/admin/feed", icon: BookText, area: "feed" },
     ],
   },
   {
