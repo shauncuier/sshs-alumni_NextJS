@@ -54,3 +54,16 @@ describe("post form", () => {
     expect(create).not.toContain("Save changes");
   });
 });
+
+describe("call for magazine writings", () => {
+  it("shows the publication subcommittee's call, its convenor and phone, and a button to write", async () => {
+    const { default: MagazineCall } = await import("@/components/feed/MagazineCall");
+    const html = renderToStaticMarkup(React.createElement(MagazineCall, { onWrite: () => {} }));
+    expect(html).toContain("স্মরণিকা");
+    expect(html).toContain("প্রত্যুষ রুবেল");
+    expect(html).toContain("প্রকাশনা উপকমিটি");
+    expect(html).toContain('href="tel:+8801818869523"');
+    expect(html).toContain("01818-869523");
+    expect(html).toMatch(/<button[^>]*>(?:<svg[\s\S]*?<\/svg>)?\s*আপনার লেখা পোস্ট করুন<\/button>/);
+  });
+});

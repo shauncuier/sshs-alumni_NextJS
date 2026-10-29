@@ -7,6 +7,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
+import MagazineCall from "@/components/feed/MagazineCall";
 import type { PostItem } from "@/lib/data";
 import { Plus } from "lucide-react";
 
@@ -68,6 +69,9 @@ export default function FeedPage() {
         <AppHeader title="Community Social Feed" />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-4xl w-full mx-auto space-y-6">
+          {/* The publication subcommittee's call for souvenir-book writings */}
+          <MagazineCall onWrite={() => setCreatePostOpen(true)} />
+
           {/* Top Post Creator Bar */}
           <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-3">
             {user?.image ? (
