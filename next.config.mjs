@@ -36,9 +36,14 @@ const nextConfig = {
   experimental: {
     // Enables forbidden()/unauthorized() with app/forbidden.tsx and app/unauthorized.tsx.
     authInterrupts: true,
-    // Shared hosting reports every CPU of the machine but caps threads per account;
-    // a build there sets NEXT_BUILD_CPUS so page-data workers stay within the limit.
-    ...(process.env.NEXT_BUILD_CPUS ? { cpus: Number(process.env.NEXT_BUILD_CPUS) } : {}),
+    // Shared hosting reports every CPU of the machine but caps threads per account, so
+    // page-data workers stay within the limit: NEXT_BUILD_CPUS, else 2 on Linux (Hostinger's
+    // own rebuilds run plain `npm run build` without it).
+    ...(process.env.NEXT_BUILD_CPUS
+      ? { cpus: Number(process.env.NEXT_BUILD_CPUS) }
+      : process.platform === "linux"
+        ? { cpus: 2 }
+        : {}),
   },
   images: {
     // AVIF where the browser takes it (smallest), else WebP: what matters on mobile data.
