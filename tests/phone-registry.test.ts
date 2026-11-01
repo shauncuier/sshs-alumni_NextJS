@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { makeEvent, makeMember, resetDatabase } from "./helpers/db";
 import { makeImage, makePdf } from "./helpers/images";
 import { verifiedEmailToken, verifiedPhoneToken } from "./helpers/phone";
+import { setOtpRequired } from "@/lib/otp-setting";
 
 const sms = vi.hoisted(() => ({ sent: 0, fail: false }));
 vi.mock("@/lib/bulksmsbd", async (importOriginal) => {
@@ -134,7 +135,16 @@ describe("the number must be verified", () => {
     expect((await put({ phone: "01711000999", phoneVerificationToken: verifiedPhoneToken("8801711000888") })).status).toBe(400);
     expect((await put({ phone: "01711000222", phoneVerificationToken: verifiedPhoneToken("8801711000222") })).status).toBe(409);
     expect((await put({ phone: "01711000999", phoneVerificationToken: verifiedPhoneToken("8801711000999") })).status).toBe(200);
-    expect((await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } })).phone).toBe("01711000999");
+    const proved = await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } });
+    expect(proved.phone).toBe("01711000999");
+    expect(proved.phoneVerifiedAt).toBeInstanceOf(Date);
+
+    // Codes switched off: a new number is saved without a code, marked not verified.
+    await setOtpRequired(false, "admin@example.test");
+    expect((await put({ phone: "01711000777" })).status).toBe(200);
+    const typed = await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } });
+    expect(typed.phone).toBe("01711000777");
+    expect(typed.phoneVerifiedAt).toBeNull();
   });
 
   it("the database itself refuses two accounts with one number", async () => {

@@ -176,6 +176,8 @@ export interface VerificationRequestItem {
   fullName: string;
   email: string;
   phone: string;
+  /** The number was proved by SMS code (false: typed while codes were off). */
+  phoneVerified?: boolean;
   sscBatch: number;
   rollNumber: string;
   profession: string;

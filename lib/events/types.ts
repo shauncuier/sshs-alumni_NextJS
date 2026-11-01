@@ -90,6 +90,8 @@ export interface AccountInput {
   phoneVerificationToken?: string | null;
   /** From POST /api/auth/email-otp/verify; the fallback when the SMS code fails. Proves the member owns `email`. */
   emailVerificationToken?: string | null;
+  /** Set by the server only (checkContactVerified): `phone` came from a valid SMS code. */
+  phoneVerified?: boolean;
   password: string;
   sscBatch: number | string;
   rollNumber?: string | null;

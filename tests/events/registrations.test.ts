@@ -93,6 +93,8 @@ describe("joining through the membership event", () => {
     await registerForEvent({ slug: "jubilee", sessionUserId: null, account, photo, proof, rsvp: paidRsvp });
     const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
     expect(profile.dateOfBirth?.toISOString().slice(0, 10)).toBe("1985-06-15");
+    // Joined with an SMS code: the number is marked verified.
+    expect(profile.phoneVerifiedAt).toBeInstanceOf(Date);
   });
 
   it("needs a name for every guest and an age for every child", async () => {
@@ -130,10 +132,12 @@ describe("joining through the membership event", () => {
     await membershipEvent();
     await setOtpRequired(false, "admin@example.test");
     const noCode = { ...account, phone: "01811 000 444", phoneVerificationToken: undefined };
-    const { createdAccount } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account: noCode, photo, proof, rsvp: paidRsvp });
+    // A visitor cannot mark their own number verified.
+    const { createdAccount } = await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...noCode, phoneVerified: true }, photo, proof, rsvp: paidRsvp });
     expect(createdAccount).toEqual({ email: "new@example.test" });
     const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
     expect(profile.phone).toBe("01811000444");
+    expect(profile.phoneVerifiedAt).toBeNull();
     // The number must still be a valid mobile number.
     await expect(
       registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...noCode, email: "other@example.test", phone: "12345" }, photo, proof, rsvp: paidRsvp })
@@ -152,6 +156,7 @@ describe("joining through the membership event", () => {
     expect(createdAccount).toEqual({ email: "new@example.test" });
     const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
     expect(profile.phone).toBe("01811000333");
+    expect(profile.phoneVerifiedAt).toBeNull();
   });
 
   it("leaves nothing behind when the registration fails", async () => {

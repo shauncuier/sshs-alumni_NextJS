@@ -37,16 +37,16 @@ function normalizeTransactionId(value: string | null | undefined): string {
  */
 function checkContactVerified(account: AccountInput, codesRequired: boolean): AccountInput {
   if (account.phoneVerificationToken) {
-    return { ...account, phone: readVerifiedPhone(account.phoneVerificationToken) };
+    return { ...account, phone: readVerifiedPhone(account.phoneVerificationToken), phoneVerified: true };
   }
   if (account.emailVerificationToken) {
     const verified = readVerifiedEmail(account.emailVerificationToken);
     if (!verified || verified !== account.email?.trim().toLowerCase()) {
       throw new AppError("EMAIL_NOT_VERIFIED", 400, "Please verify your email address with the emailed code.");
     }
-    return { ...account, phone: canonicalPhone(account.phone) };
+    return { ...account, phone: canonicalPhone(account.phone), phoneVerified: false };
   }
-  if (!codesRequired) return { ...account, phone: canonicalPhone(account.phone) };
+  if (!codesRequired) return { ...account, phone: canonicalPhone(account.phone), phoneVerified: false };
   throw new AppError("CONTACT_NOT_VERIFIED", 400, "Please verify your phone number with the SMS code (or your email if the SMS does not arrive).");
 }
 
@@ -122,6 +122,7 @@ export async function registerForEvent(args: {
   // server, never taken from the request.
   let account: AccountInput | undefined = args.account && {
     ...args.account,
+    phoneVerified: false,
     avatarUrl: null,
     avatarOriginalUrl: null,
     proofType: null,

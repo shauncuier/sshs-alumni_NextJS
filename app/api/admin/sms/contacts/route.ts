@@ -16,6 +16,8 @@ export interface SmsContactItem {
   categoryLabel: string;
   status: string;
   detail?: string;
+  /** Registered members only: true when the number was proved by SMS code, false when typed with codes off. */
+  phoneVerified?: boolean;
 }
 
 export async function GET() {
@@ -58,6 +60,7 @@ export async function GET() {
             select: {
               fullName: true,
               phone: true,
+              phoneVerifiedAt: true,
               sscBatch: true,
               profession: true,
             },
@@ -79,6 +82,7 @@ export async function GET() {
             categoryLabel: "Registered Alumni",
             status: u.status,
             detail: u.profile.profession || undefined,
+            phoneVerified: u.profile.phoneVerifiedAt !== null,
           });
         }
       }

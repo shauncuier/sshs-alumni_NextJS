@@ -37,6 +37,7 @@ interface VerificationRequestRow {
     profile: {
       fullName: string;
       phone: string | null;
+      phoneVerifiedAt?: string | Date | null;
       avatarUrl: string | null;
       avatarOriginalUrl?: string | null;
       profession: string;
@@ -61,6 +62,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     fullName: profile?.fullName ?? row.user.email,
     email: row.user.email,
     phone: profile?.phone ?? "",
+    phoneVerified: Boolean(profile?.phoneVerifiedAt),
     avatarUrl: profile?.avatarUrl || "/logo.png",
     avatarOriginalUrl: profile?.avatarOriginalUrl ?? null,
     hasValidPhoto: hasPhoto,

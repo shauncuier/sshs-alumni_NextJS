@@ -144,6 +144,8 @@ model AlumniProfile {
   coverUrl           String?            @db.VarChar(500)
   /// 01XXXXXXXXX; one account per number (lib/phone-registry.ts).
   phone              String?            @unique @db.VarChar(20)
+  /// When `phone` was proved by SMS code; null = typed but not verified (codes off, email fallback, paper form).
+  phoneVerifiedAt    DateTime?
   isPhonePublic      Boolean            @default(false)
   isEmailPublic      Boolean            @default(false)
   skills             Json               @default("[]")

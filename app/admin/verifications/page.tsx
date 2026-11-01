@@ -697,7 +697,20 @@ function VerificationReviewContent() {
                     </div>
                     <div className="text-xs text-slate-400 mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span>{activeApplicant.email}</span>
-                      {activeApplicant.phone && <span>• {activeApplicant.phone}</span>}
+                      {activeApplicant.phone && (
+                        <span>
+                          • {activeApplicant.phone}{" "}
+                          {activeApplicant.phoneVerified ? (
+                            <span className="px-1.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              Number verified
+                            </span>
+                          ) : (
+                            <span className="px-1.5 rounded text-[10px] font-bold bg-orange-50 text-orange-800 border border-orange-200">
+                              Number not verified
+                            </span>
+                          )}
+                        </span>
+                      )}
                       {activeApplicant.rollNumber && (
                         <span>• Roll: {activeApplicant.rollNumber}</span>
                       )}

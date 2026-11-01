@@ -13,6 +13,7 @@ import {
   Upload,
   Smartphone,
   ShieldCheck,
+  ShieldAlert,
   Info,
   Clock,
   Check,
@@ -175,7 +176,7 @@ export default function AdminBulkSmsPage() {
   const [contactsLoading, setContactsLoading] = useState<boolean>(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [groupFilter, setGroupFilter] = useState<"ALL" | "VERIFIED" | "BATCH_REPS" | "VOLUNTEERS" | "BATCH" | "MANUAL">("ALL");
+  const [groupFilter, setGroupFilter] = useState<"ALL" | "VERIFIED" | "PHONE_UNVERIFIED" | "BATCH_REPS" | "VOLUNTEERS" | "BATCH" | "MANUAL">("ALL");
   const [selectedBatch, setSelectedBatch] = useState<number | "">("");
 
   // Manual Input & CSV State
@@ -319,6 +320,7 @@ export default function AdminBulkSmsPage() {
     return contacts.filter((c) => {
       // Group filter
       if (groupFilter === "VERIFIED" && c.status !== "VERIFIED") return false;
+      if (groupFilter === "PHONE_UNVERIFIED" && c.phoneVerified !== false) return false;
       if (groupFilter === "BATCH_REPS" && c.category !== "BATCH_REP") return false;
       if (groupFilter === "VOLUNTEERS" && c.category !== "VOLUNTEER") return false;
       if (groupFilter === "BATCH" && selectedBatch !== "" && c.batch !== Number(selectedBatch)) return false;
@@ -652,6 +654,19 @@ export default function AdminBulkSmsPage() {
 
               <button
                 type="button"
+                onClick={() => setGroupFilter("PHONE_UNVERIFIED")}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                  groupFilter === "PHONE_UNVERIFIED"
+                    ? "bg-orange-600 text-white shadow-xs"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                Number Not Verified ({contacts.filter((c) => c.phoneVerified === false).length})
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setGroupFilter("BATCH_REPS")}
                 className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                   groupFilter === "BATCH_REPS"
@@ -879,8 +894,18 @@ export default function AdminBulkSmsPage() {
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                          <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
                             {contact.phone}
+                            {contact.phoneVerified === true && (
+                              <span className="font-sans px-1.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                Number verified
+                              </span>
+                            )}
+                            {contact.phoneVerified === false && (
+                              <span className="font-sans px-1.5 rounded text-[10px] font-bold bg-orange-50 text-orange-800 border border-orange-200">
+                                Number not verified
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

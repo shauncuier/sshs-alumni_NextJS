@@ -77,6 +77,7 @@ export async function createMemberAccount(
           locationCity: input.locationCity?.trim() || "Chattogram",
           locationCountry: "Bangladesh",
           phone: input.phone?.trim() || null,
+          phoneVerifiedAt: input.phoneVerified && input.phone?.trim() ? new Date() : null,
           rollNumber,
           bloodGroup,
           dateOfBirth: parseDateOfBirth(input.dateOfBirth, false),

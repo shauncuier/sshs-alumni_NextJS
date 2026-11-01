@@ -122,6 +122,7 @@ export async function PUT(req: Request) {
       // An unchanged number (in any format) and an empty field leave it as it is.
       const current = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { phone: true } });
       let newPhone: string | undefined;
+      let newPhoneVerifiedAt: Date | null | undefined;
       if (typeof phone === "string" && phone.trim()) {
         const wanted = canonicalPhone(phone);
         const before = current?.phone ? current.phone.replace(/\D/g, "").slice(-10) : null;
@@ -132,6 +133,14 @@ export async function PUT(req: Request) {
           }
           await requirePhoneFree(wanted, { exceptUserId: user.id });
           newPhone = wanted;
+          // Codes switched off: the number is saved but marked not verified.
+          let proved = false;
+          try {
+            proved = !!phoneVerificationToken && readVerifiedPhone(phoneVerificationToken) === wanted;
+          } catch {
+            // An expired or wrong code while codes are off: saved, not verified.
+          }
+          newPhoneVerifiedAt = proved ? new Date() : null;
         }
       }
 
@@ -176,6 +185,7 @@ export async function PUT(req: Request) {
           section: optional(section),
           bio: optional(bio),
           phone: newPhone,
+          phoneVerifiedAt: newPhoneVerifiedAt,
           skills: Array.isArray(skills) ? skills : undefined,
           linkedin: safeUrl(linkedin),
           facebook: safeUrl(facebook),
