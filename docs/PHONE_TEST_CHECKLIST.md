@@ -18,7 +18,7 @@ Do this once on an **Android phone with Chrome** and once on an **iPhone with Sa
 | 2 | **Profile photo**: pick from the gallery, then try taking one with the camera | Preview shows. A HEIC photo gets a clear "take a screenshot / set JPEG" message | ☐ | ☐ |
 | 3 | Fill name, email, password, mobile, SSC batch (must be chosen; nothing pre-selected), roll, section | Keyboard matches the field (email, numbers, phone); the page does not zoom in when typing | ☐ | ☐ |
 | 4 | **Proof of study**: choose the type, upload the photo/PDF | File name and size show; over 10 MB is refused with a clear message | ☐ | ☐ |
-| 5 | **Send code** to the mobile number | SMS `Your SSGHS Alumni OTP is XXXX` arrives within a minute | ☐ | ☐ |
+| 5 | **Send code** to the mobile number | SMS `Your ExSabujian OTP is XXXX` arrives within a minute | ☐ | ☐ |
 | 6 | Enter the code | "Verified" shows next to the number | ☐ | ☐ |
 | 7 | (Once, on one phone) Tap **SMS not arriving? Get the code by email** | The code is emailed instead; the email arrives (only after the domain is verified in Resend — step 17) | ☐ | ☐ |
 | 8 | **Continue to registration & payment**, choose a package | Total updates for extra adults / children | ☐ | ☐ |

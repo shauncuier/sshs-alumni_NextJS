@@ -12,7 +12,7 @@ async function main() {
     console.error("Usage: npm run sms:test -- 01XXXXXXXXX");
     process.exit(1);
   }
-  const brand = process.env.OTP_BRAND_NAME?.trim() || "SSGHS Alumni";
+  const brand = process.env.OTP_BRAND_NAME?.trim() || "ExSabujian";
   const message = `Your ${brand} OTP is 1234`;
   console.log(`Sending "${message}" to ${normalized} (sender ID ${process.env.BULKSMSBD_SENDER_ID || "not set"})...`);
   const r = await sendBulkSms({ numbers: [normalized], message });

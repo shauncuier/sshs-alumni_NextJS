@@ -42,11 +42,11 @@ function smsOutage(now: number, err: AppError): AppError {
 
 /**
  * The brand in the SMS; must match the name on the OTP template registered with the gateway.
- * The registered template still says "SSGHS Alumni": switch to Praktan Sabujian Parishad only
- * after BulkSMSBD approves a template with the new name (then set OTP_BRAND_NAME).
+ * BulkSMSBD's approved format is "Your {Brand} OTP is XXXX" with the brand ExSabujian;
+ * any other text may be accepted by the gateway but never delivered.
  */
 function otpBrand(): string {
-  return process.env.OTP_BRAND_NAME?.trim() || "SSGHS Alumni";
+  return process.env.OTP_BRAND_NAME?.trim() || "ExSabujian";
 }
 
 /** Returns the phone as 8801XXXXXXXXX, or throws when it is not a Bangladeshi mobile number. */

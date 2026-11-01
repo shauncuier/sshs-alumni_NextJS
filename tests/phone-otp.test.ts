@@ -33,7 +33,7 @@ describe("requestPhoneOtp", () => {
     expect(res.phone).toBe("01711000111");
     expect(sms.sent).toHaveLength(1);
     expect(sms.sent[0].numbers).toEqual(["8801711000111"]);
-    expect(sms.sent[0].message).toMatch(/^Your SSGHS Alumni OTP is \d{4}$/);
+    expect(sms.sent[0].message).toMatch(/^Your ExSabujian OTP is \d{4}$/);
   });
 
   it("refuses numbers that are not Bangladeshi mobiles", async () => {
