@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import AssociationPhones from "@/components/shared/AssociationPhones";
 import { schoolInfo } from "@/lib/data";
 import { MapPin, Phone, Mail, Send, CheckCircle2, Globe } from "lucide-react";
 import FacebookIcon from "@/components/shared/FacebookIcon";
@@ -87,11 +88,11 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <strong className="block text-slate-900 font-semibold">Association phone:</strong>
-                      <a href={`tel:${schoolInfo.associationPhone.replace(/[^+\d]/g, "")}`} className="text-emerald-700 hover:underline">{schoolInfo.associationPhone}</a>
+                      <AssociationPhones linkClassName="text-emerald-700 hover:underline" nameClassName="text-slate-600" />
                     </div>
                   </div>
 

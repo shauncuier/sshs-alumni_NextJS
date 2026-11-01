@@ -228,8 +228,6 @@ export const schoolInfo = {
   email: "info@sabujsghs.edu.bd",
   /** The alumni association's own mailbox: contact details, replies to site emails. */
   associationEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@exsabujian.org",
-  /** The alumni association's official phone number. */
-  associationPhone: "+880 1818-521472",
   /** The school's own phone number. */
   phone: "+880 1745-950025",
   website: "https://sabujsghs.edu.bd/",

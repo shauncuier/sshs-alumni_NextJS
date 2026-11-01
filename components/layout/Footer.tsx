@@ -3,6 +3,7 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { MapPin, Phone, Mail, Globe, ExternalLink } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
+import AssociationPhones from "@/components/shared/AssociationPhones";
 import FacebookIcon from "@/components/shared/FacebookIcon";
 import SponsorCredit from "@/components/layout/SponsorCredit";
 
@@ -73,9 +74,9 @@ export default function Footer() {
                 <MapPin className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <span>{schoolInfo.location}</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
-                <a href={`tel:${schoolInfo.associationPhone.replace(/[^+\d]/g, "")}`} className="hover:text-emerald-300">{schoolInfo.associationPhone}</a>
+              <div className="flex items-start gap-2.5">
+                <Phone className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                <AssociationPhones linkClassName="hover:text-emerald-300" nameClassName="text-slate-400" />
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-emerald-500 shrink-0" />

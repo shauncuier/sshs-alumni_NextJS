@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { forbidden } from "next/navigation";
-import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, Mail, MessageSquare, ScrollText, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, Mail, MessageSquare, Phone, ScrollText, Users } from "lucide-react";
+import ContactPhonesForm from "@/components/admin/ContactPhonesForm";
 import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
 import PaymentNoticeSwitches from "@/components/admin/PaymentNoticeSwitches";
 import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
@@ -33,6 +34,7 @@ function emailStatus(): { ok: boolean; service: string; sender: string; note: st
 const SECTIONS = [
   { id: "payments", name: "Payments", icon: CreditCard, area: "payments" },
   { id: "sms", name: "SMS & verification", icon: MessageSquare, area: "sms" },
+  { id: "contact", name: "Contact numbers", icon: Phone, area: "settings" },
   { id: "email", name: "Email", icon: Mail, area: "settings" },
   { id: "access", name: "Users & log", icon: Users, area: "settings" },
 ] as const;
@@ -79,6 +81,13 @@ export default async function SettingsPage() {
             {sms.isConfigured && <span>Sender: <b className="text-slate-900 font-mono">{sms.senderId}</b></span>}
             <Link href="/admin/sms" className="font-bold text-emerald-800 underline">Send a bulk SMS</Link>
           </div>
+        </section>
+      )}
+
+      {can(me.role, "settings") && (
+        <section id="contact" className="scroll-mt-28 space-y-3">
+          <SectionTitle icon={Phone} title="Contact numbers" text="The association's phone numbers in the footer and on the contact page, each with a name if you like." />
+          <ContactPhonesForm />
         </section>
       )}
 
