@@ -7,6 +7,7 @@ import "./globals.css";
 import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin, websiteJsonLd } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
+import ClarityAnalytics from "@/components/shared/ClarityAnalytics";
 
 // No web fonts: the site uses the phone's own fonts (globals.css), so nothing extra
 // is downloaded before text appears on a slow connection.
@@ -56,6 +57,7 @@ export default function RootLayout({
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
         <GoogleAnalytics />
+        <ClarityAnalytics />
         {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}
         <Suspense fallback={null}>
           <NavigationProgress />
