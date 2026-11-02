@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { initialsAvatar } from "@/lib/avatar";
+import { shownAvatar } from "@/lib/members/photo-privacy";
+import { getSessionUser } from "@/lib/session-user";
 import { readEducation } from "@/lib/members/education";
 import EducationSection from "@/components/profile/EducationSection";
 import ExperienceSection from "@/components/profile/ExperienceSection";
@@ -96,6 +98,8 @@ export default async function AlumniIndividualPage({ params }: Props) {
       phone: true,
       isPhonePublic: true,
       isEmailPublic: true,
+      gender: true,
+      isPhotoPublic: true,
       createdAt: true,
       user: {
         select: {
@@ -108,7 +112,9 @@ export default async function AlumniIndividualPage({ params }: Props) {
 
   if (!profile) notFound();
 
-  const avatarSrc = profile.avatarUrl || initialsAvatar(profile.fullName);
+  // A hidden photo (lib/members/photo-privacy.ts) only for the member herself and admins.
+  const viewer = await getSessionUser().catch(() => null);
+  const avatarSrc = shownAvatar(profile.avatarUrl, profile, viewer) || initialsAvatar(profile.fullName);
 
   const skillsList = Array.isArray(profile.skills)
     ? profile.skills.filter((s): s is string => typeof s === "string")

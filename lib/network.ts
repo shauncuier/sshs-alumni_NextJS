@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { initialsAvatar } from "@/lib/avatar";
+import { PHOTO_PRIVACY_SELECT, shownAvatar, type PhotoPrivacy } from "@/lib/members/photo-privacy";
 
 /**
  * The member network: verified members only, searchable by name, profession,
@@ -34,7 +35,9 @@ export interface MemberBasics {
   avatarUrl: string;
 }
 
-const photo = (url: string | null | undefined, name: string) => (url && url !== "/logo.png" ? url : initialsAvatar(name));
+// Other members see a hidden photo (lib/members/photo-privacy.ts) as the silhouette.
+const photo = (url: string | null | undefined, name: string, privacy: PhotoPrivacy) =>
+  url && url !== "/logo.png" ? shownAvatar(url, privacy) : initialsAvatar(name);
 
 /** Members who may appear in the network and receive messages: verified, or staff, and not disabled. */
 export const ACTIVE_MEMBER: Prisma.UserWhereInput = {
@@ -76,6 +79,8 @@ export async function searchMembers(args: { viewerId: string; q?: string | null;
         locationCity: true,
         locationCountry: true,
         avatarUrl: true,
+        gender: true,
+        isPhotoPublic: true,
         phone: true,
         isPhonePublic: true,
         isEmailPublic: true,
@@ -99,7 +104,7 @@ export async function searchMembers(args: { viewerId: string; q?: string | null;
     company: p.company,
     locationCity: p.locationCity,
     locationCountry: p.locationCountry,
-    avatarUrl: photo(p.avatarUrl, p.fullName),
+    avatarUrl: photo(p.avatarUrl, p.fullName, p),
     phone: p.isPhonePublic ? p.phone : null,
     email: p.isEmailPublic ? p.user.email : null,
   }));
@@ -111,12 +116,12 @@ export async function memberBasics(userIds: string[]): Promise<Map<string, Membe
   if (unique.length === 0) return new Map();
   const users = await prisma.user.findMany({
     where: { id: { in: unique } },
-    select: { id: true, email: true, profile: { select: { id: true, fullName: true, sscBatch: true, avatarUrl: true } } },
+    select: { id: true, email: true, profile: { select: { id: true, fullName: true, sscBatch: true, avatarUrl: true, ...PHOTO_PRIVACY_SELECT } } },
   });
   return new Map(
     users.map((u) => {
       const name = u.profile?.fullName || u.email.split("@")[0];
-      return [u.id, { userId: u.id, profileId: u.profile?.id ?? null, fullName: name, sscBatch: u.profile?.sscBatch ?? null, avatarUrl: photo(u.profile?.avatarUrl, name) }];
+      return [u.id, { userId: u.id, profileId: u.profile?.id ?? null, fullName: name, sscBatch: u.profile?.sscBatch ?? null, avatarUrl: photo(u.profile?.avatarUrl, name, u.profile ?? {}) }];
     })
   );
 }

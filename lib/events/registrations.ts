@@ -8,6 +8,7 @@ import { processProof, removeProofDir, saveProof } from "@/lib/media/proofs";
 import { processReceipt, removeReceiptDir, saveReceipt } from "@/lib/media/receipts";
 import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
 import { readVerifiedPhone } from "@/lib/phone-otp";
+import { normalizeGender } from "@/lib/members/gender";
 import { readVerifiedEmail } from "@/lib/email-otp";
 import { otpRequired } from "@/lib/otp-setting";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
@@ -146,6 +147,7 @@ export async function registerForEvent(args: {
     if (event?.isMembershipEvent) {
       account = checkContactVerified(account, await otpRequired());
       parseDateOfBirth(account.dateOfBirth, true);
+      if (!normalizeGender(account.gender)) throw new AppError("GENDER_REQUIRED", 400, "Please choose your gender.");
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
       const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);

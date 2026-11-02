@@ -4,6 +4,7 @@ import { AppError } from "@/lib/app-error";
 import type { AccountInput } from "@/lib/events/types";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
+import { normalizeGender } from "@/lib/members/gender";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -80,6 +81,7 @@ export async function createMemberAccount(
           phoneVerifiedAt: input.phoneVerified && input.phone?.trim() ? new Date() : null,
           rollNumber,
           bloodGroup,
+          gender: normalizeGender(input.gender),
           dateOfBirth: parseDateOfBirth(input.dateOfBirth, false),
           section: input.section?.trim() || null,
           bio: `Alumnus of SSGHS Batch ${batch}`,

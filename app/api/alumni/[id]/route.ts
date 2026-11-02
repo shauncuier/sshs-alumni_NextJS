@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireRateLimit } from "@/lib/request-security";
 import { AppError } from "@/lib/app-error";
+import { shownAvatar } from "@/lib/members/photo-privacy";
+import { getSessionUser } from "@/lib/session-user";
 
 export async function GET(
   req: Request,
@@ -46,6 +48,8 @@ export async function GET(
         phone: true,
         isPhonePublic: true,
         isEmailPublic: true,
+        gender: true,
+        isPhotoPublic: true,
         user: { select: { email: true, role: true } },
       },
     });
@@ -54,9 +58,11 @@ export async function GET(
       return NextResponse.json({ error: "Alumni profile not found" }, { status: 404 });
     }
 
-    const { phone, isPhonePublic, isEmailPublic, user, ...rest } = profile;
+    const { phone, isPhonePublic, isEmailPublic, gender, isPhotoPublic, user, ...rest } = profile;
+    const viewer = await getSessionUser().catch(() => null);
     const alumni = {
       ...rest,
+      avatarUrl: shownAvatar(rest.avatarUrl, { userId: rest.userId, gender, isPhotoPublic }, viewer),
       phone: isPhonePublic ? phone : null,
       isPhonePublic,
       isEmailPublic,

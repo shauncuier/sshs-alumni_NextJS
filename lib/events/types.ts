@@ -98,6 +98,8 @@ export interface AccountInput {
   section?: string | null;
   /** Optional; see lib/members/blood-groups.ts. */
   bloodGroup?: string | null;
+  /** "MALE" or "FEMALE"; required on the join form (lib/members/gender.ts). */
+  gender?: string | null;
   /** YYYY-MM-DD; required on the join form (lib/members/date-of-birth.ts). */
   dateOfBirth?: string | null;
   profession?: string | null;

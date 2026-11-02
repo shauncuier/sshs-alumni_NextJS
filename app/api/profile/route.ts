@@ -8,6 +8,7 @@ import { readVerifiedPhone } from "@/lib/phone-otp";
 import { otpRequired } from "@/lib/otp-setting";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
+import { normalizeGender } from "@/lib/members/gender";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 import type { Prisma } from "@prisma/client";
 import { normalizeEducation } from "@/lib/members/education";
@@ -65,6 +66,8 @@ export async function PUT(req: Request) {
       locationCountry,
       rollNumber,
       bloodGroup,
+      gender,
+      isPhotoPublic,
       dateOfBirth,
       education,
       experience,
@@ -151,6 +154,12 @@ export async function PUT(req: Request) {
       if (bloodGroup !== undefined && blood === undefined) {
         throw new AppError("INVALID_BLOOD_GROUP", 400, "Please choose a blood group from the list, or leave it empty.");
       }
+      // Gender: undefined leaves it, empty clears it. Photo: true shows it, false hides it,
+      // null goes back to the default (hidden for women, lib/members/gender.ts).
+      const genderValue = gender === undefined ? undefined : normalizeGender(gender);
+      if (isPhotoPublic !== undefined && isPhotoPublic !== null && typeof isPhotoPublic !== "boolean") {
+        throw new AppError("INVALID_INPUT", 400, "Say whether your photo is shown or hidden.");
+      }
 
       // Education after SSC: undefined leaves it as it is.
       const educationList = education === undefined ? undefined : normalizeEducation(education);
@@ -179,6 +188,8 @@ export async function PUT(req: Request) {
           industry: optional(industry),
           rollNumber: optional(rollNumber),
           bloodGroup: blood,
+          gender: genderValue,
+          isPhotoPublic: isPhotoPublic as boolean | null | undefined,
           dateOfBirth: dob ?? undefined,
           education: educationList as unknown as Prisma.InputJsonValue | undefined,
           experience: experienceList as unknown as Prisma.InputJsonValue | undefined,
@@ -210,6 +221,8 @@ export async function PUT(req: Request) {
           industry: optional(industry) ?? null,
           rollNumber: optional(rollNumber) ?? null,
           bloodGroup: blood ?? null,
+          gender: genderValue ?? null,
+          isPhotoPublic: (isPhotoPublic as boolean | null | undefined) ?? null,
           dateOfBirth: dob ?? null,
           education: (educationList ?? []) as unknown as Prisma.InputJsonValue,
           experience: (experienceList ?? []) as unknown as Prisma.InputJsonValue,

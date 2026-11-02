@@ -69,13 +69,13 @@ const staff = { email: "committee@example.test" };
 describe("paper forms entered by the committee", () => {
   it("approves the member and confirms the registration at once, without proof upload, photo, email or SMS code", async () => {
     const event = await jubilee();
-    const result = await enterOfflineRegistration({ eventId: event.id, staff, member, proofType: "SCHOOL_TESTIMONIAL", paymentMethod: "Cash", formNo: "17", receiptNo: "R-9" });
+    const result = await enterOfflineRegistration({ eventId: event.id, staff, member: { ...member, gender: "FEMALE" }, proofType: "SCHOOL_TESTIMONIAL", paymentMethod: "Cash", formNo: "17", receiptNo: "R-9" });
     expect(result.email).toBe(`01711000222@${NO_EMAIL_DOMAIN}`);
     expect(result.totalFee).toBe(1500);
 
     const user = await prisma.user.findUniqueOrThrow({ where: { id: result.userId }, include: { profile: true, verificationRequests: true } });
     expect(user.status).toBe("VERIFIED");
-    expect(user.profile).toMatchObject({ verificationStatus: "VERIFIED", phone: "01711000222", profession: "Teacher", address: "Sitakunda", avatarUrl: "/logo.png" });
+    expect(user.profile).toMatchObject({ verificationStatus: "VERIFIED", phone: "01711000222", profession: "Teacher", address: "Sitakunda", avatarUrl: "/logo.png", gender: "FEMALE" });
     expect(user.verificationRequests[0]).toMatchObject({ status: "VERIFIED", reviewedBy: staff.email, proofType: "SCHOOL_TESTIMONIAL", proofFileUrl: null });
     expect(user.verificationRequests[0].proofNote).toContain("checked by committee@example.test");
 

@@ -39,7 +39,7 @@ const TOO_LARGE = {
 };
 const joinPayload = (proof: unknown = { type: "SSC_MARKSHEET" }) =>
   JSON.stringify({
-    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", phoneVerificationToken: verifiedPhoneToken() },
+    account: { fullName: "New Member", email: "new@example.test", password: "Member-Pw-2026", sscBatch: 2001, dateOfBirth: "1985-06-15", gender: "MALE", phoneVerificationToken: verifiedPhoneToken() },
     rsvp: { packageName: "General", paymentMethod: "bKash", transactionId: "TRX123456" },
     proof,
   });

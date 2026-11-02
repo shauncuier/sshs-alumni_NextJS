@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import { NextResponse } from "next/server";
 import { avatarFilePath, type AvatarFile } from "@/lib/media/avatars";
+import { canSeePhoto, PHOTO_PRIVACY_SELECT } from "@/lib/members/photo-privacy";
+import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 type Params = { params: Promise<{ id: string; file: string }> };
@@ -9,7 +11,9 @@ const notFound = () => NextResponse.json({ error: "Not found." }, { status: 404 
 
 /**
  * Member photos live on the server disk. The 400x400 web avatar is public (the
- * id is an unguessable random value); the print master is for admins only.
+ * id is an unguessable random value) unless its member hides it (lib/members/photo-privacy.ts):
+ * then only she and admins get it, so an address copied earlier stops working. The print
+ * master is for admins only.
  */
 // Smaller copies for lists and headers (lib/avatar.ts avatarAt); made on first request.
 const SIZES = new Set([96, 192]);
@@ -41,7 +45,16 @@ export async function GET(req: Request, { params }: Params) {
     headers["Content-Disposition"] = `inline; filename="member-photo-${id}.jpg"`;
   } else {
     headers["Content-Type"] = "image/webp";
-    headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    const owner = await prisma.alumniProfile.findFirst({
+      where: { avatarUrl: { startsWith: `/api/media/avatars/${id}/` } },
+      select: PHOTO_PRIVACY_SELECT,
+    });
+    if (owner && !canSeePhoto(owner)) {
+      if (!canSeePhoto(owner, await getSessionUser())) return notFound();
+      headers["Cache-Control"] = "private, no-store";
+    } else {
+      headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    }
   }
 
   try {

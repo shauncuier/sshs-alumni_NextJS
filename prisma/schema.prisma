@@ -128,6 +128,7 @@ model AlumniProfile {
   /// Asked on the join form (lib/members/date-of-birth.ts); never shown publicly.
   dateOfBirth        DateTime?          @db.Date
   section            String?
+  /// "MALE" or "FEMALE" (lib/members/gender.ts); a woman's photo is hidden by default.
   gender             String?
   profession         String
   company            String?
@@ -148,6 +149,8 @@ model AlumniProfile {
   phoneVerifiedAt    DateTime?
   isPhonePublic      Boolean            @default(false)
   isEmailPublic      Boolean            @default(false)
+  /// The member's own choice to show (true) or hide (false) her photo; null = the default (lib/members/gender.ts photoIsPublic).
+  isPhotoPublic      Boolean?
   skills             Json               @default("[]")
   /// Education after SSC: [{ level, institution, subject, year }] (lib/members/education.ts).
   education          Json               @default("[]")

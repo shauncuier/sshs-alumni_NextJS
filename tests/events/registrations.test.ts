@@ -97,6 +97,20 @@ describe("joining through the membership event", () => {
     expect(profile.phoneVerifiedAt).toBeInstanceOf(Date);
   });
 
+  it("needs the new member's gender, saved on the profile", async () => {
+    await membershipEvent();
+    for (const gender of [null, "", "other"]) {
+      await expect(
+        registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, gender }, photo, proof, rsvp: paidRsvp })
+      ).rejects.toMatchObject({ status: 400 });
+    }
+    expect(await prisma.user.count()).toBe(0);
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, gender: "female" }, photo, proof, rsvp: paidRsvp });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.gender).toBe("FEMALE");
+    expect(profile.isPhotoPublic).toBeNull();
+  });
+
   it("needs a name for every guest and an age for every child", async () => {
     await membershipEvent();
     const bad: [unknown, string][] = [

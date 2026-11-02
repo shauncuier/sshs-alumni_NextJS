@@ -22,6 +22,16 @@ export function initialsAvatar(name: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * Shown instead of a member's photo when she keeps it hidden (lib/members/photo-privacy.ts):
+ * a plain person outline on the site's green, the same for everyone.
+ */
+export const HIDDEN_PHOTO_AVATAR = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#06281e"/>` +
+    `<circle cx="32" cy="25" r="11" fill="#fcd34d" fill-opacity=".85"/>` +
+    `<path d="M12 58c0-12 9-19 20-19s20 7 20 19z" fill="#fcd34d" fill-opacity=".85"/></svg>`
+)}`;
+
 /** A member picture for display at about `px` CSS pixels: a small copy when one exists, else initials. */
 export function avatarAt(url: string | null | undefined, px: number, name = ""): string {
   if (!url) return initialsAvatar(name);

@@ -30,6 +30,7 @@ interface AdminUserRecord {
   disabled: boolean;
   batch: number | null;
   phone: string | null;
+  gender: string | null;
   createdAt: string;
   isEnvSuperAdmin: boolean;
 }
@@ -481,6 +482,20 @@ export default function AdminUsersPage() {
                   >
                     {assignableRoles(viewer).map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                   </select>
+                  {u.batch !== null && (
+                    <select
+                      aria-label={`Gender of ${u.name}`}
+                      title="Women's photos are hidden from other members by default"
+                      disabled={busy}
+                      className={`${input} bg-white lg:w-28 min-h-[40px] py-2`}
+                      value={u.gender ?? ""}
+                      onChange={(e) => void update(u, { action: "gender", gender: e.target.value || null }, `Gender saved for ${u.name}.`)}
+                    >
+                      <option value="">Gender?</option>
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                    </select>
+                  )}
                   <button type="button" disabled={busy} onClick={() => setResetting(u)} className={ghostButton}>
                     <Key className="w-3.5 h-3.5" /> <span>Password</span>
                   </button>

@@ -44,6 +44,8 @@ export interface OfflineEntryInput {
     sscBatch: number | string;
     rollNumber?: string | null;
     section?: string | null;
+    /** "MALE" or "FEMALE" when the form says (lib/members/gender.ts). */
+    gender?: string | null;
     bloodGroup?: string | null;
     profession?: string | null;
     designation?: string | null;
@@ -127,6 +129,7 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
             sscBatch: m.sscBatch,
             rollNumber: m.rollNumber,
             section: m.section,
+            gender: m.gender,
             bloodGroup: m.bloodGroup,
             profession: m.profession,
             designation: m.designation,

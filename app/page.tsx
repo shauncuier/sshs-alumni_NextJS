@@ -31,6 +31,7 @@ import { schoolInfo, type AlumniMember } from "@/lib/data";
 import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Megaphone, Newspaper, Quote, Sparkles, Target, Users } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { avatarAt } from "@/lib/avatar";
+import { shownAvatar } from "@/lib/members/photo-privacy";
 import Picture from "@/components/shared/Picture";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -107,7 +108,7 @@ export default async function HomePage() {
     locationCity: p.locationCity,
     locationCountry: p.locationCountry,
     bio: p.bio ?? "",
-    avatarUrl: avatarAt(p.avatarUrl, 48, p.fullName),
+    avatarUrl: avatarAt(shownAvatar(p.avatarUrl, p), 48, p.fullName),
     isVerified: true,
     phone: p.isPhonePublic ? p.phone || undefined : undefined,
     email: p.isEmailPublic ? p.user.email : "",

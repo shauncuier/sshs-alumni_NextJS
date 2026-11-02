@@ -6,6 +6,7 @@ import type { PublicEvent } from "@/lib/events/types";
 import { computeFee, formatTaka, normalizePackages } from "@/lib/events/pricing";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
+import { GENDER_LABELS, GENDERS } from "@/lib/members/gender";
 import { PROOF_TYPES } from "@/lib/members/proof-types";
 
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
@@ -20,6 +21,7 @@ const EMPTY = {
   sscBatch: "",
   rollNumber: "",
   section: "",
+  gender: "",
   bloodGroup: "",
   profession: "",
   designation: "",
@@ -179,6 +181,13 @@ export default function OfflineEntryForm({ event }: { event: PublicEvent }) {
               <option value="Science">Science</option>
               <option value="Business Studies">Business Studies</option>
               <option value="Humanities">Humanities</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="off-gender" className={label}>Gender (লিঙ্গ)</label>
+            <select id="off-gender" className={input} value={member.gender} onChange={(e) => set({ gender: e.target.value })}>
+              <option value="">Not given</option>
+              {GENDERS.map((g) => <option key={g} value={g}>{GENDER_LABELS[g]}</option>)}
             </select>
           </div>
           <div>

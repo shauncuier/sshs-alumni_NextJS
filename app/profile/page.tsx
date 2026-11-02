@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import ContactVerifyField, { type ContactVerification, useCodeRequired } from "@/components/events/ContactVerifyField";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
+import { GENDER_LABELS, GENDERS } from "@/lib/members/gender";
 import EducationSection from "@/components/profile/EducationSection";
 import { readEducation } from "@/lib/members/education";
 import ExperienceSection from "@/components/profile/ExperienceSection";
@@ -36,6 +37,7 @@ interface ProfileRecord {
   sscBatch: number;
   rollNumber: string | null;
   bloodGroup: string | null;
+  gender?: string | null;
   dateOfBirth?: string | null;
   education?: unknown;
   experience?: unknown;
@@ -90,6 +92,7 @@ interface ProfileForm {
   locationCountry: string;
   rollNumber: string;
   bloodGroup: string;
+  gender: string;
   dateOfBirth: string;
   section: string;
   phone: string;
@@ -135,6 +138,7 @@ function toForm(profile: ProfileRecord): ProfileForm {
     locationCountry: profile.locationCountry || "Bangladesh",
     rollNumber: profile.rollNumber ?? "",
     bloodGroup: profile.bloodGroup ?? "",
+    gender: profile.gender ?? "",
     dateOfBirth: dateOfBirthInput(profile.dateOfBirth),
     section: profile.section ?? "",
     phone: profile.phone ?? "",
@@ -674,6 +678,17 @@ export default function ProfilePage() {
                           placeholder="e.g. Science, Business Studies, Humanities"
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                         />
+                      </div>
+                      <div>
+                        <label htmlFor="pf-gender" className="block font-bold text-slate-700 mb-1">Gender <span className="font-normal text-slate-400">(women&apos;s photos are hidden by default; see Settings)</span></label>
+                        <select id="pf-gender"
+                          value={profileData.gender}
+                          onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        >
+                          <option value="">Not given</option>
+                          {GENDERS.map((g) => <option key={g} value={g}>{GENDER_LABELS[g]}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label htmlFor="pf-blood" className="block font-bold text-slate-700 mb-1">Blood Group <span className="font-normal text-slate-400">(optional)</span></label>

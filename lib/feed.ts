@@ -5,6 +5,7 @@ import type { PostItem } from "@/lib/data";
 import { can } from "@/lib/permissions";
 import { relativeTime } from "@/lib/utils";
 import { initialsAvatar } from "@/lib/avatar";
+import { PHOTO_PRIVACY_SELECT, shownAvatar } from "@/lib/members/photo-privacy";
 
 /**
  * The community feed: posts, likes and comments by members, all stored. Authors
@@ -34,14 +35,15 @@ const authorSelect = {
   role: true,
   status: true,
   email: true,
-  profile: { select: { id: true, fullName: true, avatarUrl: true, sscBatch: true, profession: true } },
+  profile: { select: { id: true, fullName: true, avatarUrl: true, sscBatch: true, profession: true, ...PHOTO_PRIVACY_SELECT } },
 } satisfies Prisma.UserSelect;
 
 type PostRow = Prisma.PostGetPayload<{ include: { author: { select: typeof authorSelect } } }>;
 
 function toPostItem(p: PostRow, viewer: Actor | null, likedIds: Set<string>): PostItem {
   const name = p.author.profile?.fullName || p.author.email.split("@")[0];
-  const avatar = p.author.profile?.avatarUrl && p.author.profile.avatarUrl !== "/logo.png" ? p.author.profile.avatarUrl : initialsAvatar(name);
+  const photo = p.author.profile?.avatarUrl && p.author.profile.avatarUrl !== "/logo.png" ? p.author.profile.avatarUrl : null;
+  const avatar = p.author.profile ? shownAvatar(photo, p.author.profile, viewer) ?? initialsAvatar(name) : initialsAvatar(name);
   const staff = p.author.role === "ADMIN" || p.author.role === "SUPER_ADMIN" || p.author.role === "MODERATOR";
   return {
     id: p.id,

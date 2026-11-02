@@ -12,6 +12,7 @@ import ContactVerifyField, { type ContactVerification, useCodeRequired } from ".
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
+import { GENDER_LABELS, GENDERS } from "@/lib/members/gender";
 
 const BATCH_YEARS = Array.from({ length: new Date().getFullYear() - FIRST_SSC_BATCH + 1 }, (_, i) => new Date().getFullYear() - i);
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
@@ -84,7 +85,7 @@ export default function RegistrationForm({
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
-  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", bloodGroup: "", dateOfBirth: "", profession: "", designation: "", company: "", address: "" });
+  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", gender: "", bloodGroup: "", dateOfBirth: "", profession: "", designation: "", company: "", address: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const codeRequired = useCodeRequired();
@@ -390,6 +391,11 @@ export default function RegistrationForm({
               <p id="reg-photo-help" className="text-[11px] text-slate-500 mt-1">
                 A clear, recent photo of your face. It will be used on your alumni card and in association publications. JPEG, PNG or WebP, up to 5 MB, at least 600 × 600 px.
               </p>
+              {account.gender === "FEMALE" && (
+                <p className="text-[11px] font-semibold text-emerald-800 mt-1">
+                  Your photo stays hidden from other members and visitors: they see a plain avatar. Only you and the committee see it. You can show it later in Settings.
+                </p>
+              )}
               {photoError && <p role="alert" className="text-[11px] font-bold text-rose-700 mt-1">{photoError}</p>}
             </div>
           </div>
@@ -444,6 +450,13 @@ export default function RegistrationForm({
               <option value="Science">Science (বিজ্ঞান বিভাগ)</option>
               <option value="Business Studies">Business Studies (ব্যবসায় শিক্ষা / বাণিজ্য)</option>
               <option value="Humanities">Humanities (মানবিক বিভাগ)</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="reg-gender" className={label}>Gender * <span className="font-normal text-slate-400">(লিঙ্গ)</span></label>
+            <select id="reg-gender" required className={input} value={account.gender} onChange={(e) => setAccount({ ...account, gender: e.target.value })}>
+              <option value="" disabled>Choose</option>
+              {GENDERS.map((g) => <option key={g} value={g}>{GENDER_LABELS[g]}</option>)}
             </select>
           </div>
           <div>

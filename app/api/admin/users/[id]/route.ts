@@ -8,7 +8,7 @@ import { getSessionUser, isAdminRole } from "@/lib/session-user";
 
 type Params = { params: Promise<{ id: string }> };
 
-// PATCH /api/admin/users/[id] — { action: "role", role } | { action: "disable" | "enable" } | { action: "password", password }
+// PATCH /api/admin/users/[id] — { action: "role", role } | { action: "disable" | "enable" } | { action: "password", password } | { action: "gender", gender }
 export async function PATCH(req: Request, { params }: Params) {
   let me: Awaited<ReturnType<typeof getSessionUser>> = null;
   const { id } = await params;
@@ -20,7 +20,11 @@ export async function PATCH(req: Request, { params }: Params) {
     const body = await readJsonBody(req);
     const change = body as UserChange;
     const user = await updateUser(me, id, change);
-    const what = change.action === "role" ? `changed role of ${user.email} to ${user.role}` : change.action === "password" ? `reset password of ${user.email}` : `${change.action}d ${user.email}`;
+    const what =
+      change.action === "role" ? `changed role of ${user.email} to ${user.role}`
+      : change.action === "password" ? `reset password of ${user.email}`
+      : change.action === "gender" ? `set gender of ${user.email} to ${user.gender ?? "not given"}`
+      : `${change.action}d ${user.email}`;
     await logActivity({ category: "ADMIN", action: `user.${change.action}`, summary: what.charAt(0).toUpperCase() + what.slice(1), actor: me, targetType: "User", targetId: user.id, metadata: { role: user.role }, req });
     return NextResponse.json({ user });
   } catch (err) {

@@ -7,6 +7,7 @@ import { FIRST_SSC_BATCH } from "@/lib/data";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import path from "node:path";
 import { removeAvatarDir, uploadsRoot } from "@/lib/media/avatars";
+import { normalizeGender } from "@/lib/members/gender";
 
 /**
  * User management for the admin console. Who may do what:
@@ -36,6 +37,8 @@ export interface AdminUserRow {
   disabled: boolean;
   batch: number | null;
   phone: string | null;
+  /** "MALE", "FEMALE" or null (lib/members/gender.ts); null without a profile. */
+  gender: string | null;
   createdAt: string;
   /** The environment-defined super admin: shown, never editable. */
   isEnvSuperAdmin: boolean;
@@ -48,7 +51,7 @@ const rowSelect = {
   status: true,
   disabledAt: true,
   createdAt: true,
-  profile: { select: { fullName: true, sscBatch: true, phone: true } },
+  profile: { select: { fullName: true, sscBatch: true, phone: true, gender: true } },
 } satisfies Prisma.UserSelect;
 
 function toRow(u: Prisma.UserGetPayload<{ select: typeof rowSelect }>): AdminUserRow {
@@ -61,6 +64,7 @@ function toRow(u: Prisma.UserGetPayload<{ select: typeof rowSelect }>): AdminUse
     disabled: Boolean(u.disabledAt),
     batch: u.profile?.sscBatch ?? null,
     phone: u.profile?.phone ?? null,
+    gender: u.profile?.gender ?? null,
     createdAt: u.createdAt.toISOString(),
     isEnvSuperAdmin: isEnvSuperAdmin(u.email),
   };
@@ -199,13 +203,24 @@ export type UserChange =
   | { action: "role"; role: unknown }
   | { action: "disable" }
   | { action: "enable" }
-  | { action: "password"; password: unknown };
+  | { action: "password"; password: unknown }
+  | { action: "gender"; gender: unknown };
 
 export async function updateUser(actor: Actor, targetId: string, change: UserChange): Promise<AdminUserRow> {
   const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, email: true, role: true } });
   if (!target) throw new AppError("USER_NOT_FOUND", 404, "User not found.");
   const blocked = manageBlock(actor, target);
   if (blocked) throw new AppError("FORBIDDEN", 403, blocked);
+
+  // Gender only changes the profile (and so whether her photo is hidden by default):
+  // no reason to sign the member out.
+  if (change.action === "gender") {
+    const gender = normalizeGender(change.gender);
+    const profile = await prisma.alumniProfile.findUnique({ where: { userId: target.id }, select: { id: true } });
+    if (!profile) throw new AppError("NO_PROFILE", 400, "This account has no member profile.");
+    await prisma.alumniProfile.update({ where: { userId: target.id }, data: { gender } });
+    return toRow(await prisma.user.findUniqueOrThrow({ where: { id: target.id }, select: rowSelect }));
+  }
 
   let data: Prisma.UserUpdateInput;
   switch (change.action) {

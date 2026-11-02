@@ -6,6 +6,7 @@ import type { MentorProfile } from "@/lib/career-data";
 import { sendEmail } from "@/lib/email";
 import { can } from "@/lib/permissions";
 import { initialsAvatar } from "@/lib/avatar";
+import { PHOTO_PRIVACY_SELECT, shownAvatar } from "@/lib/members/photo-privacy";
 
 /**
  * Alumni mentorship. Verified members apply to mentor; an admin approves them
@@ -64,7 +65,16 @@ const acceptedCount = { _count: { select: { requests: { where: { status: "ACCEPT
 
 export async function listApprovedMentors(): Promise<MentorProfile[]> {
   const rows = await prisma.mentor.findMany({ where: { status: "APPROVED" }, orderBy: { createdAt: "asc" }, include: acceptedCount });
-  return rows.map(toMentorProfile);
+  // The mentor's photo is a copy taken when they applied; a photo hidden since then
+  // (lib/members/photo-privacy.ts) shows as the silhouette.
+  const privacy = new Map(
+    (await prisma.alumniProfile.findMany({ where: { userId: { in: rows.map((r) => r.userId) } }, select: PHOTO_PRIVACY_SELECT })).map((p) => [p.userId, p])
+  );
+  return rows.map((r) => {
+    const profile = toMentorProfile(r);
+    const p = privacy.get(r.userId);
+    return r.avatarUrl && p ? { ...profile, avatarUrl: shownAvatar(r.avatarUrl, p) } : profile;
+  });
 }
 
 export async function getOwnMentorProfile(userId: string): Promise<Mentor | null> {

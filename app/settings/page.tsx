@@ -6,6 +6,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import { Lock, Bell, Eye, CheckCircle2 } from "lucide-react";
 import PasswordInput from "@/components/shared/PasswordInput";
+import { photoIsPublic } from "@/lib/members/gender";
 
 type Visibility = "public" | "hidden";
 
@@ -13,6 +14,10 @@ export default function SettingsPage() {
   // Privacy is stored on the member's profile; load the real values before editing.
   const [phoneVisibility, setPhoneVisibility] = useState<Visibility | null>(null);
   const [emailVisibility, setEmailVisibility] = useState<Visibility | null>(null);
+  // The photo starts from the default (hidden for women) until the member picks; only a
+  // changed choice is saved, so the default still follows a later gender change.
+  const [photoVisibility, setPhotoVisibility] = useState<Visibility | null>(null);
+  const [photoChanged, setPhotoChanged] = useState(false);
   const [privacyError, setPrivacyError] = useState<string | null>(null);
   const [privacySaving, setPrivacySaving] = useState(false);
   const [privacySaved, setPrivacySaved] = useState(false);
@@ -31,6 +36,7 @@ export default function SettingsPage() {
         if (!res.ok || !body.profile) throw new Error(body.error || "Could not load your settings.");
         setPhoneVisibility(body.profile.isPhonePublic ? "public" : "hidden");
         setEmailVisibility(body.profile.isEmailPublic ? "public" : "hidden");
+        setPhotoVisibility(photoIsPublic(body.profile) ? "public" : "hidden");
       })
       .catch((err: Error) => setPrivacyError(err.message));
   }, []);
@@ -47,6 +53,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           isPhonePublic: phoneVisibility === "public",
           isEmailPublic: emailVisibility === "public",
+          ...(photoChanged ? { isPhotoPublic: photoVisibility === "public" } : {}),
         }),
       });
       const body = await res.json();
@@ -148,6 +155,29 @@ export default function SettingsPage() {
                   <option value="public">Shown in the alumni directory</option>
                   <option value="hidden">Hidden (administrators only)</option>
                 </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="photo-visibility" className="block font-bold text-slate-700 mb-1.5">
+                  Profile Photo
+                </label>
+                <select
+                  id="photo-visibility"
+                  value={photoVisibility ?? ""}
+                  disabled={!photoVisibility}
+                  onChange={(e) => {
+                    setPhotoVisibility(e.target.value as Visibility);
+                    setPhotoChanged(true);
+                  }}
+                  className={selectClass}
+                >
+                  {!photoVisibility && <option value="">Loading…</option>}
+                  <option value="public">Shown to everyone</option>
+                  <option value="hidden">Hidden (others see a plain avatar; only you and the committee see your photo)</option>
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Women&apos;s photos are hidden unless they choose to show them. Your ID card always has your real photo.
+                </p>
               </div>
             </div>
 
