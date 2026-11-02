@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, Mail, MessageSquare, Phone, ScrollText, Users } from "lucide-react";
+import BanglaQrTrxSwitch from "@/components/admin/BanglaQrTrxSwitch";
 import ContactPhonesForm from "@/components/admin/ContactPhonesForm";
 import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
 import PaymentNoticeSwitches from "@/components/admin/PaymentNoticeSwitches";
@@ -68,6 +69,7 @@ export default async function SettingsPage() {
         <section id="payments" className="scroll-mt-28 space-y-4">
           <SectionTitle icon={CreditCard} title="Payments" text="bKash, Nagad, Bangla QR, bank and cash: switch each on or off and give its details. Members pay manually and the committee checks every payment." />
           <PaymentNoticeSwitches />
+          <BanglaQrTrxSwitch />
           <PaymentSettingsForm />
         </section>
       )}

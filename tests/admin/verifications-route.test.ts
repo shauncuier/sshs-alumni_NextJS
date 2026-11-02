@@ -12,6 +12,7 @@ vi.mock("@/lib/session-user", () => ({
   isAdminRole: (role: string) => role === "ADMIN" || role === "SUPER_ADMIN",
 }));
 import { GET, PATCH } from "@/app/api/admin/verifications/route";
+import { setBanglaQrTrxRequired } from "@/lib/payments/bangla-qr-setting";
 
 beforeEach(async () => {
   auth.session = { user: { email: "admin@example.test", role: "ADMIN" } };
@@ -86,7 +87,15 @@ describe("Bangla QR membership payments", () => {
     });
   };
 
-  it("needs the TrxID from our SMS to approve, and stores it", async () => {
+  it("approves without our SMS TrxID unless the setting requires it", async () => {
+    const { request } = await pendingMember();
+    const reg = await qrRegistration("queue@example.test");
+    expect((await patch({ requestId: request.id, status: "VERIFIED", merchantTrxId: "" })).status).toBe(200);
+    expect(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: reg.id } })).toMatchObject({ status: "CONFIRMED", merchantTrxId: null });
+  });
+
+  it("when required, needs the TrxID from our SMS to approve, and stores it", async () => {
+    await setBanglaQrTrxRequired(true, "admin@example.test");
     const { request } = await pendingMember();
     const reg = await qrRegistration("queue@example.test");
 

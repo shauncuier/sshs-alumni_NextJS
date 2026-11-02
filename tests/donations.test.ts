@@ -26,6 +26,7 @@ import { makePdf } from "./helpers/images";
 import { POST as submitDonation } from "@/app/api/donations/route";
 import { PATCH as decideRoute } from "@/app/api/admin/donations/[id]/route";
 import { POST as initiateOnline } from "@/app/api/payments/initiate/route";
+import { setBanglaQrTrxRequired } from "@/lib/payments/bangla-qr-setting";
 
 beforeEach(async () => {
   mail.sent = [];
@@ -132,7 +133,14 @@ describe("Bangla QR donations", () => {
     expect(donation.paymentScreenshotUrl).toMatch(/^\/api\/media\/receipts\/[a-f0-9]{32}\/receipt\.pdf$/);
   });
 
-  it("is verified only with the TrxID from our SMS, which can confirm one payment only", async () => {
+  it("is verified without our SMS TrxID unless the setting requires it", async () => {
+    const campaign = await makeCampaign();
+    const donation = await createManualDonation(qr(campaign.id), null);
+    expect(await decideDonation({ donationId: donation.id, decision: "VERIFY", adminEmail: "a@example.test" })).toMatchObject({ paymentStatus: "COMPLETED", merchantTrxId: null });
+  });
+
+  it("when required, is verified only with the TrxID from our SMS, which can confirm one payment only", async () => {
+    await setBanglaQrTrxRequired(true, "a@example.test");
     const campaign = await makeCampaign();
     const first = await createManualDonation(qr(campaign.id), null);
     const second = await createManualDonation(qr(campaign.id, { transactionId: "000AROXA" }), null);

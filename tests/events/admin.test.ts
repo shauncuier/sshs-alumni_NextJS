@@ -8,6 +8,7 @@ import { registerForEvent } from "../helpers/register";
 import { makeImage, makePdf } from "../helpers/images";
 import { verifiedPhoneToken } from "../helpers/phone";
 import { makeEvent, resetDatabase } from "../helpers/db";
+import { setBanglaQrTrxRequired } from "@/lib/payments/bangla-qr-setting";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -174,7 +175,18 @@ describe("proof of study after the membership decision", () => {
 });
 
 describe("confirming a Bangla QR payment", () => {
-  it("needs the TrxID from our SMS, stores it, and refuses it for a second payment", async () => {
+  it("is confirmed without our SMS TrxID unless the setting requires it", async () => {
+    const event = await makeEvent({ slug: "dinner", registrationFee: 1250 });
+    const user = await prisma.user.create({ data: { email: "qr-c@example.test", passwordHash: "x", status: "VERIFIED" } });
+    const reg = await prisma.eventRegistration.create({
+      data: { eventId: event.id, userId: user.id, status: "PENDING_PAYMENT", paymentMethod: "Bangla QR", transactionId: "000AT941", totalFee: 1250 },
+    });
+    const confirmed = await decideRegistration({ eventId: event.id, registrationId: reg.id, action: "APPROVE", adminEmail: "admin@example.test", merchantTrxId: "  " });
+    expect(confirmed).toMatchObject({ status: "CONFIRMED", merchantTrxId: null });
+  });
+
+  it("when required, needs the TrxID from our SMS, stores it, and refuses it for a second payment", async () => {
+    await setBanglaQrTrxRequired(true, "admin@example.test");
     const event = await makeEvent({ slug: "dinner", registrationFee: 1250 });
     const [a, b] = await Promise.all([
       prisma.user.create({ data: { email: "qr-a@example.test", passwordHash: "x", status: "VERIFIED" } }),

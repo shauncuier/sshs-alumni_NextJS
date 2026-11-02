@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CheckCircle2, CircleHelp, XCircle } from "lucide-react";
 import { checkSms, matchLine, parseWalletSms, type SmsCheck } from "@/lib/payments/bangla-qr";
 
@@ -8,7 +8,8 @@ import { checkSms, matchLine, parseWalletSms, type SmsCheck } from "@/lib/paymen
  * Matching a Bangla QR payment to the association's OK Wallet SMS. The member's own
  * transaction ID never appears in that SMS, so the admin looks for the amount, the
  * last 4 digits and the time, pastes the SMS, and the SMS TrxID is recorded with the
- * confirmation (one SMS confirms one payment).
+ * confirmation (one SMS confirms one payment). It is optional unless Admin → Settings →
+ * Payments requires it (lib/payments/bangla-qr-setting.ts).
  */
 export default function BanglaQrMatch({
   amount,
@@ -30,6 +31,14 @@ export default function BanglaQrMatch({
   const [sms, setSms] = useState("");
   const [check, setCheck] = useState<SmsCheck | null>(null);
   const [smsError, setSmsError] = useState<string | null>(null);
+  const [required, setRequired] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings/bangla-qr-trx", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { required?: boolean } | null) => setRequired(Boolean(body?.required)))
+      .catch(() => {});
+  }, []);
 
   const readSms = (text: string) => {
     setSms(text);
@@ -85,7 +94,9 @@ export default function BanglaQrMatch({
         )}
       </div>
       <div>
-        <label htmlFor={`${idPrefix}-trx`} className="block text-[11px] font-semibold text-slate-700 mb-1">TrxID from our SMS *</label>
+        <label htmlFor={`${idPrefix}-trx`} className="block text-[11px] font-semibold text-slate-700 mb-1">
+          TrxID from our SMS {required ? "*" : <span className="font-normal text-slate-400">(optional)</span>}
+        </label>
         <input
           id={`${idPrefix}-trx`}
           value={value}

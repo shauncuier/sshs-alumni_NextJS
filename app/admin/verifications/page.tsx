@@ -263,17 +263,12 @@ function VerificationReviewContent() {
 
   // A member approved earlier who paid again later (e.g. their old registration was
   // lost): confirming confirms that registration and issues the ticket.
-  // A Bangla QR payment is confirmed with the TrxID from our own SMS (one SMS, one payment).
+  // A Bangla QR payment can be confirmed with the TrxID from our own SMS (one SMS, one
+  // payment); the server says when Admin → Settings → Payments makes it required.
   const needsMerchantTrx = (a: VerificationRequestItem) => a.paymentMethod === "Bangla QR" && a.awaitingPayment;
-  const missingMerchantTrx = (a: VerificationRequestItem) => {
-    if (!needsMerchantTrx(a) || merchantTrx.trim()) return false;
-    setError("Enter the TrxID from our OK Wallet SMS for this payment first (or paste the SMS).");
-    return true;
-  };
 
   const handleConfirmPayment = async (a: VerificationRequestItem) => {
     if (!a.membershipEventId || !a.registrationId) return;
-    if (missingMerchantTrx(a)) return;
     const paid = a.totalFee ? ` of ${formatCurrencyBDT(a.totalFee)}` : "";
     if (!window.confirm(`Confirm the payment${paid} from ${a.fullName}? Check it arrived in the account first.`)) return;
     setBusyId(a.id);
@@ -282,7 +277,7 @@ function VerificationReviewContent() {
     try {
       await confirmMemberPayment(a.membershipEventId, a.registrationId, needsMerchantTrx(a) ? merchantTrx : undefined);
       setRequests((prev) =>
-        prev.map((r) => (r.id === a.id ? { ...r, awaitingPayment: false, paymentStatus: "CONFIRMED", merchantTrxId: needsMerchantTrx(a) ? merchantTrx : r.merchantTrxId } : r))
+        prev.map((r) => (r.id === a.id ? { ...r, awaitingPayment: false, paymentStatus: "CONFIRMED", merchantTrxId: (needsMerchantTrx(a) && merchantTrx) || r.merchantTrxId } : r))
       );
       setSuccessMsg(`Payment from ${a.fullName} confirmed; their ticket is ready.`);
     } catch (err) {
@@ -295,7 +290,6 @@ function VerificationReviewContent() {
   const handleDecide = async (id: string, decision: "VERIFIED" | "REJECTED") => {
     const applicant = requests.find((r) => r.id === id);
     setError(null);
-    if (decision === "VERIFIED" && applicant && missingMerchantTrx(applicant)) return;
     const smsTrx = decision === "VERIFIED" && applicant && needsMerchantTrx(applicant) ? merchantTrx : undefined;
     setBusyId(id);
     setSuccessMsg(null);
@@ -310,7 +304,7 @@ function VerificationReviewContent() {
                 status: decision,
                 awaitingPayment: decision === "VERIFIED" ? false : r.awaitingPayment,
                 paymentStatus: decision === "VERIFIED" ? "CONFIRMED" : "CANCELLED",
-                merchantTrxId: smsTrx ?? r.merchantTrxId,
+                merchantTrxId: smsTrx || r.merchantTrxId,
                 proof: proof ?? r.proof,
               }
             : r

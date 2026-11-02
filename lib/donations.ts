@@ -9,7 +9,8 @@ import { paymentNoticesOn } from "@/lib/payment-notices";
 import { openCampaignOrThrow } from "@/lib/campaigns";
 import { postDonationIncome } from "@/lib/finance/posting";
 import { processReceipt, removeReceiptDir, saveReceipt } from "@/lib/media/receipts";
-import { isBanglaQr, normalizeLast4, normalizeMerchantTrxId, normalizePaidAt } from "@/lib/payments/bangla-qr";
+import { isBanglaQr, normalizeLast4, normalizePaidAt } from "@/lib/payments/bangla-qr";
+import { readMerchantTrxId } from "@/lib/payments/bangla-qr-setting";
 import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 /**
@@ -151,8 +152,8 @@ export async function decideDonation(args: {
     if (current.paymentGateway !== "MANUAL") throw new AppError("NOT_MANUAL", 409, "Only manual donations are verified here.");
     let merchantTrxId: string | undefined;
     if (args.decision === "VERIFY" && isBanglaQr(current.paymentMethod)) {
-      merchantTrxId = normalizeMerchantTrxId(args.merchantTrxId);
-      await assertMerchantTrxIdFree(tx, merchantTrxId, { donationId: current.id });
+      merchantTrxId = await readMerchantTrxId(args.merchantTrxId);
+      if (merchantTrxId) await assertMerchantTrxIdFree(tx, merchantTrxId, { donationId: current.id });
     }
     const changed = await tx.donation.updateMany({
       where: { id: current.id, paymentStatus: "PENDING" },

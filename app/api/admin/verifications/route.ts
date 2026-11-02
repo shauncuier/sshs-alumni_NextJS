@@ -8,7 +8,8 @@ import prisma from "@/lib/prisma";
 import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
-import { isBanglaQr, normalizeMerchantTrxId } from "@/lib/payments/bangla-qr";
+import { isBanglaQr } from "@/lib/payments/bangla-qr";
+import { readMerchantTrxId } from "@/lib/payments/bangla-qr-setting";
 import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 const REQUEST_STATUSES = ["PENDING", "VERIFIED", "REJECTED"] as const;
@@ -156,11 +157,12 @@ export async function PATCH(req: Request) {
               where: { userId: request.userId, status: "PENDING_PAYMENT", event: { isMembershipEvent: true } },
             });
             if (pendingReg) {
-              // Bangla QR: the TrxID in the association's own SMS, so one SMS confirms one payment.
+              // Bangla QR: the TrxID in the association's own SMS (optional unless required in
+              // Admin → Settings → Payments); one SMS confirms one payment.
               let merchantTrxId: string | undefined;
               if (isBanglaQr(pendingReg.paymentMethod)) {
-                merchantTrxId = normalizeMerchantTrxId(body.merchantTrxId);
-                await assertMerchantTrxIdFree(tx, merchantTrxId, { registrationId: pendingReg.id });
+                merchantTrxId = await readMerchantTrxId(body.merchantTrxId);
+                if (merchantTrxId) await assertMerchantTrxIdFree(tx, merchantTrxId, { registrationId: pendingReg.id });
               }
               await tx.eventRegistration.update({
                 where: { id: pendingReg.id },

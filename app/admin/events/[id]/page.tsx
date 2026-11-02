@@ -207,7 +207,6 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
 
   const confirmQr = async () => {
     if (!qrConfirm) return;
-    if (!qrTrx.trim()) return showToast("Enter the TrxID from our OK Wallet SMS (or paste the SMS).", "error");
     if (await send(qrConfirm, "APPROVE", qrTrx)) setQrConfirm(null);
   };
 

@@ -9,7 +9,8 @@ import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
 import { tokenUsageByRegistration } from "./tokens";
 import { postRegistrationIncome, voidRegistrationIncome } from "@/lib/finance/posting";
-import { isBanglaQr, normalizeMerchantTrxId } from "@/lib/payments/bangla-qr";
+import { isBanglaQr } from "@/lib/payments/bangla-qr";
+import { readMerchantTrxId } from "@/lib/payments/bangla-qr-setting";
 import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merchant-trx";
 
 type RegWithUser = EventRegistration & {
@@ -143,8 +144,8 @@ export async function decideRegistration(args: {
 
     let merchantTrxId: string | undefined;
     if (args.action === "APPROVE" && isBanglaQr(reg.paymentMethod)) {
-      merchantTrxId = normalizeMerchantTrxId(args.merchantTrxId);
-      await assertMerchantTrxIdFree(tx, merchantTrxId, { registrationId: reg.id });
+      merchantTrxId = await readMerchantTrxId(args.merchantTrxId);
+      if (merchantTrxId) await assertMerchantTrxIdFree(tx, merchantTrxId, { registrationId: reg.id });
     }
 
     const now = new Date();

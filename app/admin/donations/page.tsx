@@ -126,7 +126,6 @@ export default function AdminDonationsPage() {
 
   const verifyQr = () => {
     if (!qrVerify) return;
-    if (!qrTrx.trim()) return setError("Enter the TrxID from our OK Wallet SMS (or paste the SMS).");
     void decide(qrVerify, "VERIFY", qrTrx);
   };
 
