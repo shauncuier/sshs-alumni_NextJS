@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BadgeCheck, MapPin, Briefcase, UserPlus, Check } from "lucide-react";
 import { AlumniMember } from "@/lib/data";
 import { avatarAt, initialsAvatar } from "@/lib/avatar";
+import { alumniPath } from "@/lib/members/profile-path";
 
 interface AlumniCardProps {
   alumni: AlumniMember;
@@ -42,7 +43,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <Link
-                href={`/alumni/${alumni.id}`}
+                href={alumniPath(alumni)}
                 className="font-bold text-slate-900 group-hover:text-emerald-800 text-base transition-colors"
               >
                 {alumni.fullName}
@@ -142,7 +143,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
 
         <div className="space-y-1 mb-3">
           <Link
-            href={`/alumni/${alumni.id}`}
+            href={alumniPath(alumni)}
             className="font-bold text-slate-900 group-hover:text-emerald-800 text-base leading-snug line-clamp-1 transition-colors"
           >
             {alumni.fullName}
@@ -191,7 +192,7 @@ export default function AlumniCard({ alumni, viewMode = "grid" }: AlumniCardProp
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
           <Link
-            href={`/alumni/${alumni.id}`}
+            href={alumniPath(alumni)}
             className="py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 transition-all border border-slate-200/60"
           >
             Profile

@@ -9,6 +9,7 @@ import MobileNav from "@/components/layout/MobileNav";
 import { searchMembers } from "@/lib/network";
 import { getSessionUser } from "@/lib/session-user";
 import { avatarAt } from "@/lib/avatar";
+import { alumniPath } from "@/lib/members/profile-path";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Alumni network | Praktan Sabujian Parishad" };
@@ -75,7 +76,7 @@ export default async function NetworkPage({ searchParams }: Props) {
                     <img src={avatarAt(m.avatarUrl, 56, m.fullName)} alt={m.fullName} className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shrink-0" loading="lazy" />
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <Link href={`/alumni/${m.profileId}`} className="font-bold text-sm text-slate-900 hover:underline truncate">{m.fullName}</Link>
+                        <Link href={alumniPath({ id: m.profileId, slug: m.profileSlug })} className="font-bold text-sm text-slate-900 hover:underline truncate">{m.fullName}</Link>
                         <BadgeCheck className="w-4 h-4 fill-emerald-600 text-white shrink-0" aria-label="Verified member" />
                       </div>
                       <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold text-[10px] rounded-md inline-block">SSC Batch {m.sscBatch}</span>
@@ -90,7 +91,7 @@ export default async function NetworkPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                    <Link href={`/alumni/${m.profileId}`} className="py-2 text-center border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50">View profile</Link>
+                    <Link href={alumniPath({ id: m.profileId, slug: m.profileSlug })} className="py-2 text-center border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50">View profile</Link>
                     <Link href={`/messages?to=${m.userId}`} className="py-2 text-center bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1">
                       <MessageSquare className="w-3.5 h-3.5" /> Message
                     </Link>

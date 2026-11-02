@@ -2,6 +2,8 @@ import type { ProofSummary } from "@/lib/members/proof-types";
 
 export interface AlumniMember {
   id: string;
+  /** The profile's readable address (lib/members/slug.ts); links fall back to the id. */
+  slug?: string | null;
   fullName: string;
   sscBatch: number;
   graduationYear: number;
@@ -149,6 +151,7 @@ export interface PostItem {
   /** Set for posts from the database (lib/feed.ts). */
   authorId?: string;
   profileId?: string | null;
+  profileSlug?: string | null;
   /** The viewer may delete this post (its author, or a moderator). */
   canDelete?: boolean;
   /** The viewer may change this post's text (its author, or a moderator). */

@@ -35,7 +35,7 @@ const authorSelect = {
   role: true,
   status: true,
   email: true,
-  profile: { select: { id: true, fullName: true, avatarUrl: true, sscBatch: true, profession: true, ...PHOTO_PRIVACY_SELECT } },
+  profile: { select: { id: true, slug: true, fullName: true, avatarUrl: true, sscBatch: true, profession: true, ...PHOTO_PRIVACY_SELECT } },
 } satisfies Prisma.UserSelect;
 
 type PostRow = Prisma.PostGetPayload<{ include: { author: { select: typeof authorSelect } } }>;
@@ -56,6 +56,7 @@ function toPostItem(p: PostRow, viewer: Actor | null, likedIds: Set<string>): Po
     },
     authorId: p.authorId,
     profileId: p.author.profile?.id ?? null,
+    profileSlug: p.author.profile?.slug ?? null,
     timestamp: relativeTime(p.createdAt),
     content: p.content,
     likesCount: p.likesCount,

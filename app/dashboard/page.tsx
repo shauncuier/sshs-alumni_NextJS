@@ -13,8 +13,9 @@ import MyEvents from "@/components/events/MyEvents";
 import type { AlumniMember, EventItem, PostItem } from "@/lib/data";
 import { Calendar, Users, Heart, BadgeCheck, Plus, ShieldCheck, Radio, MessageSquare } from "lucide-react";
 import { avatarAt } from "@/lib/avatar";
+import { alumniPath } from "@/lib/members/profile-path";
 
-type Classmate = Pick<AlumniMember, "id" | "fullName" | "sscBatch" | "locationCity" | "avatarUrl"> & { userId: string };
+type Classmate = Pick<AlumniMember, "id" | "slug" | "fullName" | "sscBatch" | "locationCity" | "avatarUrl"> & { userId: string };
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -350,7 +351,7 @@ export default function DashboardPage() {
                           className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200"
                         />
                         <div className="truncate">
-                          <Link href={`/alumni/${alumnus.id}`} className="font-bold text-slate-900 hover:underline truncate block">
+                          <Link href={alumniPath(alumnus)} className="font-bold text-slate-900 hover:underline truncate block">
                             {alumnus.fullName}
                           </Link>
                           <span className="text-slate-400 text-[11px]">SSC &apos;{alumnus.sscBatch} • {alumnus.locationCity}</span>

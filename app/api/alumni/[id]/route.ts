@@ -18,12 +18,13 @@ export async function GET(
 
     const profile = await prisma.alumniProfile.findFirst({
       where: {
-        OR: [{ id }, { userId: id }],
+        OR: [{ slug: id }, { id }, { userId: id }],
         verificationStatus: "VERIFIED",
       },
       select: {
         id: true,
         userId: true,
+        slug: true,
         fullName: true,
         sscBatch: true,
         graduationYear: true,

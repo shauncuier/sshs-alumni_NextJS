@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BadgeCheck, Heart, Loader2, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import type { PostItem } from "@/lib/data";
 import { avatarAt } from "@/lib/avatar";
+import { alumniPath } from "@/lib/members/profile-path";
 
 interface FeedComment {
   id: string;
@@ -42,7 +43,7 @@ export default function PostCard({ post, onDeleted, onEdit }: PostCardProps) {
   const [error, setError] = useState<string | null>(null);
   // Sample posts (no author id) are display-only.
   const live = Boolean(post.authorId);
-  const profileHref = post.profileId ? `/alumni/${post.profileId}` : "#";
+  const profileHref = post.profileId ? alumniPath({ id: post.profileId, slug: post.profileSlug }) : "#";
 
   const toggleLike = async () => {
     if (!live) return;

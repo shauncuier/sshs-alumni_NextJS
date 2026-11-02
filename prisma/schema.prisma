@@ -118,6 +118,8 @@ model AlumniProfile {
   id     String @id @default(uuid()) @db.VarChar(36)
   userId String @unique @db.VarChar(36)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The profile's address: /alumni/<slug>, e.g. md-nahidul-islam-2008 (lib/members/slug.ts). Kept when the name changes.
+  slug   String? @unique @db.VarChar(120)
 
   fullName           String
   sscBatch           Int // e.g. 2008

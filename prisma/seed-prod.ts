@@ -21,6 +21,7 @@ async function main() {
   for (const email of r.lockedLegacyAccounts) {
     console.log(`Disabled ${email}: it still had the old published default password.`);
   }
+  if (r.profileSlugs) console.log(`Gave ${r.profileSlugs} member profile(s) a readable address.`);
   for (const w of r.warnings) console.warn(`Warning: ${w}`);
   console.log("Done.");
 }

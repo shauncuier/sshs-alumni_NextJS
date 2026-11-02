@@ -5,10 +5,12 @@ import Link from "next/link";
 import { ArrowLeft, MessageSquare, Send, Users } from "lucide-react";
 import { useRealtime } from "@/lib/hooks/useRealtime";
 import { avatarAt } from "@/lib/avatar";
+import { alumniPath } from "@/lib/members/profile-path";
 
 interface Partner {
   userId: string;
   profileId: string | null;
+  profileSlug?: string | null;
   fullName: string;
   sscBatch: number | null;
   avatarUrl: string;
@@ -189,7 +191,7 @@ export default function MessagesClient({ currentUserId, initialTo }: { currentUs
                 {partner?.sscBatch && <p className="text-[11px] text-slate-500">SSC Batch {partner.sscBatch}</p>}
               </div>
               {partner?.profileId && (
-                <Link href={`/alumni/${partner.profileId}`} className="ml-auto text-[11px] font-bold text-emerald-800 shrink-0">View profile</Link>
+                <Link href={alumniPath({ id: partner.profileId, slug: partner.profileSlug })} className="ml-auto text-[11px] font-bold text-emerald-800 shrink-0">View profile</Link>
               )}
             </header>
 

@@ -15,6 +15,7 @@ export const NETWORK_PAGE_SIZE = 24;
 export interface NetworkMember {
   userId: string;
   profileId: string;
+  profileSlug: string | null;
   fullName: string;
   sscBatch: number;
   profession: string;
@@ -30,6 +31,7 @@ export interface NetworkMember {
 export interface MemberBasics {
   userId: string;
   profileId: string | null;
+  profileSlug: string | null;
   fullName: string;
   sscBatch: number | null;
   avatarUrl: string;
@@ -72,6 +74,7 @@ export async function searchMembers(args: { viewerId: string; q?: string | null;
       select: {
         id: true,
         userId: true,
+        slug: true,
         fullName: true,
         sscBatch: true,
         profession: true,
@@ -98,6 +101,7 @@ export async function searchMembers(args: { viewerId: string; q?: string | null;
   const members: NetworkMember[] = rows.map((p) => ({
     userId: p.userId,
     profileId: p.id,
+    profileSlug: p.slug,
     fullName: p.fullName,
     sscBatch: p.sscBatch,
     profession: p.profession,
@@ -116,12 +120,12 @@ export async function memberBasics(userIds: string[]): Promise<Map<string, Membe
   if (unique.length === 0) return new Map();
   const users = await prisma.user.findMany({
     where: { id: { in: unique } },
-    select: { id: true, email: true, profile: { select: { id: true, fullName: true, sscBatch: true, avatarUrl: true, ...PHOTO_PRIVACY_SELECT } } },
+    select: { id: true, email: true, profile: { select: { id: true, slug: true, fullName: true, sscBatch: true, avatarUrl: true, ...PHOTO_PRIVACY_SELECT } } },
   });
   return new Map(
     users.map((u) => {
       const name = u.profile?.fullName || u.email.split("@")[0];
-      return [u.id, { userId: u.id, profileId: u.profile?.id ?? null, fullName: name, sscBatch: u.profile?.sscBatch ?? null, avatarUrl: photo(u.profile?.avatarUrl, name, u.profile ?? {}) }];
+      return [u.id, { userId: u.id, profileId: u.profile?.id ?? null, profileSlug: u.profile?.slug ?? null, fullName: name, sscBatch: u.profile?.sscBatch ?? null, avatarUrl: photo(u.profile?.avatarUrl, name, u.profile ?? {}) }];
     })
   );
 }

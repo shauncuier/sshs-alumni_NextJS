@@ -7,6 +7,7 @@ import { FIRST_BATCH } from "../lib/batches";
 import { normalizePackages, parseTaka } from "../lib/events/pricing";
 import { ensureSuperAdmin, envSuperAdminEmail, type EnsureResult } from "../lib/admin/super-admin";
 import { backfillEventJsonColumns } from "./backfill-events";
+import { ensureProfileSlugs } from "../lib/members/slug";
 import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGuestTypes } from "./membership-event";
 import { demoEvents } from "./demo-events";
 import { countAssociationDemo, removeAssociationDemo } from "./demo-association";
@@ -253,6 +254,8 @@ export interface ProductionSeedResult {
   renamedRows: number;
   repaired: { eventJson: number; registrations: number };
   lockedLegacyAccounts: string[];
+  /** Profiles given their readable address (lib/members/slug.ts). */
+  profileSlugs: number;
   warnings: string[];
 }
 
@@ -268,6 +271,7 @@ export async function runProductionSeed(env: Env = process.env): Promise<Product
   const sponsorsAdded = await seedLaunchSponsors();
   const renamedRows = await renameAssociationInRows();
   const lockedLegacyAccounts = await lockLegacyAccounts();
+  const profileSlugs = await ensureProfileSlugs();
   const warnings = await findDemoLeftovers(env);
-  return { superAdmin, batchesCreated, membershipEventCreated, sponsorsAdded, renamedRows, repaired, lockedLegacyAccounts, warnings };
+  return { superAdmin, batchesCreated, membershipEventCreated, sponsorsAdded, renamedRows, repaired, lockedLegacyAccounts, profileSlugs, warnings };
 }

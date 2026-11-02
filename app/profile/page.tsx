@@ -30,9 +30,11 @@ import { readEducation } from "@/lib/members/education";
 import ExperienceSection from "@/components/profile/ExperienceSection";
 import { readExperience } from "@/lib/members/experience";
 import { dateOfBirthInput } from "@/lib/members/date-of-birth";
+import { alumniPath } from "@/lib/members/profile-path";
 
 interface ProfileRecord {
   id: string;
+  slug?: string | null;
   fullName: string;
   sscBatch: number;
   rollNumber: string | null;
@@ -382,7 +384,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => {
                     // The public profile page, which other people can open.
-                    const url = `${window.location.origin}/alumni/${profile.id}`;
+                    const url = `${window.location.origin}${alumniPath(profile)}`;
                     void navigator.clipboard?.writeText(url).then(() => {
                       setLinkCopied(true);
                       window.setTimeout(() => setLinkCopied(false), 2500);

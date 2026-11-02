@@ -25,6 +25,7 @@ interface BatchPageProps {
 
 interface DirectoryRow {
   id: string;
+  slug?: string | null;
   fullName: string;
   sscBatch: number;
   graduationYear: number;
@@ -46,6 +47,7 @@ interface DirectoryRow {
 function toMember(row: DirectoryRow): AlumniMember {
   return {
     id: row.id,
+    slug: row.slug ?? null,
     fullName: row.fullName,
     email: row.user?.email ?? "",
     sscBatch: row.sscBatch,

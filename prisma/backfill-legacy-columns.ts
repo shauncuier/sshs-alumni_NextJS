@@ -71,6 +71,15 @@ async function main() {
       console.log(`${table}.merchantTrxId: added column and unique key`);
     }
   }
+
+  // AlumniProfile.slug: also unique, added the same way (filled by the production seed).
+  const profileColumns = await columnsOf("AlumniProfile");
+  if (profileColumns.size > 0 && !profileColumns.has("slug")) {
+    await prisma.$executeRawUnsafe(
+      "ALTER TABLE `AlumniProfile` ADD COLUMN `slug` VARCHAR(120) NULL, ADD UNIQUE INDEX `AlumniProfile_slug_key`(`slug`)"
+    );
+    console.log("AlumniProfile.slug: added column and unique key");
+  }
 }
 
 main()

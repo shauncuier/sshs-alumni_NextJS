@@ -16,6 +16,7 @@ const SSC_BATCH_YEARS = Array.from(
 // A directory row from /api/alumni (database), mapped to the card's shape.
 interface DirectoryRow {
   id: string;
+  slug?: string | null;
   fullName: string;
   sscBatch: number;
   graduationYear: number;
@@ -37,6 +38,7 @@ interface DirectoryRow {
 function toMember(row: DirectoryRow): AlumniMember {
   return {
     id: row.id,
+    slug: row.slug ?? null,
     fullName: row.fullName,
     email: row.user.email ?? "",
     sscBatch: row.sscBatch,

@@ -5,6 +5,7 @@ import type { AccountInput } from "@/lib/events/types";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import { normalizeGender } from "@/lib/members/gender";
+import { slugBase, uniqueSlug } from "@/lib/members/slug";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -60,6 +61,7 @@ export async function createMemberAccount(
   const rollNumber = input.rollNumber?.trim() || null;
   const bloodGroup = normalizeBloodGroup(input.bloodGroup);
   if (bloodGroup === undefined) throw new AppError("INVALID_ACCOUNT", 400, "Please choose a blood group from the list, or leave it empty.");
+  const slug = await uniqueSlug(db, slugBase(fullName, batch));
   const user = await db.user.create({
     data: {
       email,
@@ -69,6 +71,7 @@ export async function createMemberAccount(
       profile: {
         create: {
           fullName,
+          slug,
           sscBatch: batch,
           graduationYear: batch,
           profession: input.profession?.trim().slice(0, 191) || "Alumnus",

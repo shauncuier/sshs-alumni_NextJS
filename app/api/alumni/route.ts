@@ -12,6 +12,7 @@ import { getSessionUser } from "@/lib/session-user";
 const DIRECTORY_FIELDS = {
   id: true,
   userId: true,
+  slug: true,
   fullName: true,
   sscBatch: true,
   graduationYear: true,

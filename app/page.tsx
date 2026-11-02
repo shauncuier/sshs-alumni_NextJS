@@ -99,6 +99,7 @@ export default async function HomePage() {
 
   const recentMembers: AlumniMember[] = recentProfiles.map((p) => ({
     id: p.id,
+    slug: p.slug,
     fullName: p.fullName,
     sscBatch: p.sscBatch,
     graduationYear: p.graduationYear || p.sscBatch,

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -19,6 +19,7 @@ import {
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { initialsAvatar } from "@/lib/avatar";
 import { shownAvatar } from "@/lib/members/photo-privacy";
+import { alumniPath } from "@/lib/members/profile-path";
 import { getSessionUser } from "@/lib/session-user";
 import { readEducation } from "@/lib/members/education";
 import EducationSection from "@/components/profile/EducationSection";
@@ -33,16 +34,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const profile = await prisma.alumniProfile.findFirst({
     where: {
-      OR: [{ id }, { userId: id }],
+      OR: [{ slug: id }, { id }, { userId: id }],
       verificationStatus: "VERIFIED",
     },
-    select: { fullName: true, profession: true, sscBatch: true },
+    select: { id: true, slug: true, fullName: true, profession: true, sscBatch: true },
   });
 
   if (!profile) return { title: "Member not found", robots: { index: false } };
   // Members' pages stay out of search engines: a name search should not lead strangers here.
   return pageMetadata({
-    path: `/alumni/${id}`,
+    path: alumniPath(profile),
     image: shareCard("alumni"),
     title: `${profile.fullName}, SSC ${profile.sscBatch}`,
     description: `${profile.fullName}${profile.profession ? `, ${profile.profession}` : ""}. SSC batch ${profile.sscBatch}, Sabuj Shikshayatan Government High School.`,
@@ -66,12 +67,13 @@ export default async function AlumniIndividualPage({ params }: Props) {
 
   const profile = await prisma.alumniProfile.findFirst({
     where: {
-      OR: [{ id }, { userId: id }],
+      OR: [{ slug: id }, { id }, { userId: id }],
       verificationStatus: "VERIFIED",
     },
     select: {
       id: true,
       userId: true,
+      slug: true,
       fullName: true,
       sscBatch: true,
       graduationYear: true,
@@ -111,6 +113,8 @@ export default async function AlumniIndividualPage({ params }: Props) {
   });
 
   if (!profile) notFound();
+  // Old links by id (and the user id) move to the readable address (lib/members/slug.ts).
+  if (profile.slug && decodeURIComponent(id) !== profile.slug) permanentRedirect(alumniPath(profile));
 
   // A hidden photo (lib/members/photo-privacy.ts) only for the member herself and admins.
   const viewer = await getSessionUser().catch(() => null);
