@@ -243,5 +243,5 @@ export const schoolInfo = {
   motto: "Knowledge, Character, and National Dedication",
 };
 
-/** The earliest SSC batch the site accepts: the year after the school opened. */
-export const FIRST_SSC_BATCH = schoolInfo.established + 1;
+/** The earliest SSC batch the site accepts: the school's first SSC batch sat the exam in 1989. */
+export const FIRST_SSC_BATCH = 1989;

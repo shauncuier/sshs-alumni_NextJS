@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getBatch, isBatchYear } from "@/lib/batches";
+import { FIRST_SSC_BATCH } from "@/lib/data";
 
 // One share card per batch: the site's card background (public/og/batch-bg.png, from
 // design/share-cards/make_cards.py) with the batch year in the emblem.
@@ -37,7 +38,7 @@ export default async function Image({ params }: { params: Promise<{ year: string
 
         <div style={{ position: "absolute", left: 72, top: 236, width: 600, display: "flex", flexDirection: "column" }}>
           <div style={{ fontFamily: "InstrumentSerif", fontStyle: "italic", fontSize: 70, lineHeight: 1.02, color: CREAM }}>{valid ? `SSC batch ${year}` : "SSC batches"}</div>
-          <div style={{ fontFamily: "InstrumentSerif", fontStyle: "italic", fontSize: 38, color: GOLD, marginTop: 6 }}>{valid ? `Class of ${year}` : "Since 1977"}</div>
+          <div style={{ fontFamily: "InstrumentSerif", fontStyle: "italic", fontSize: 38, color: GOLD, marginTop: 6 }}>{valid ? `Class of ${year}` : `Since ${FIRST_SSC_BATCH}`}</div>
           <div style={{ width: 80, height: 2, background: GOLD, marginTop: 26, marginBottom: 20 }} />
           <div style={{ fontFamily: "WorkSans", fontSize: 21, lineHeight: 1.5, color: "rgba(244,237,219,0.88)" }}>
             {members > 0

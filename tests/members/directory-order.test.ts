@@ -10,7 +10,7 @@ beforeEach(async () => {
 it("lists seniors first: oldest SSC batch, then by name", async () => {
   const members = [
     { name: "Karim", batch: 2010 },
-    { name: "Rahim", batch: 1985 },
+    { name: "Rahim", batch: 1990 },
     { name: "Abul", batch: 2010 },
     { name: "Jamal", batch: 1999 },
   ];
@@ -20,7 +20,7 @@ it("lists seniors first: oldest SSC batch, then by name", async () => {
   }
   const { alumni } = await (await directory(new Request("http://x/api/alumni"))).json();
   expect(alumni.map((a: { fullName: string; sscBatch: number }) => `${a.sscBatch} ${a.fullName}`)).toEqual([
-    "1985 Rahim",
+    "1990 Rahim",
     "1999 Jamal",
     "2010 Abul",
     "2010 Karim",

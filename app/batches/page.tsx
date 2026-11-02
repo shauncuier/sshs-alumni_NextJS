@@ -9,7 +9,7 @@ import { pageMetadata, shareCard } from "@/lib/seo";
 
 // Every SSC batch with its real member count and the representative admins set.
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = pageMetadata({ image: shareCard("batches"), path: "/batches", title: "SSC batches since 1977", description: "Find your SSC batch at Sabuj Shikshayatan Government High School: classmates, the batch representative and reunion news for every year since 1977." });
+export const metadata: Metadata = pageMetadata({ image: shareCard("batches"), path: "/batches", title: "SSC batches since 1989", description: "Find your SSC batch at Sabuj Shikshayatan Government High School: classmates, the batch representative and reunion news for every year since 1989." });
 
 export default async function BatchesPage() {
   const batches = await listBatches();
