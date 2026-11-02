@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { usePaymentDetails } from "@/components/shared/usePaymentDetails";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -81,7 +81,14 @@ export default function RegistrationForm({
   const isAuthed = sessionStatus === "authenticated" && Boolean(session?.user);
   const needsAccount = !isAuthed && Boolean(event.isMembershipEvent);
   // Step 1 (account details) only exists for signed-out visitors joining.
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStepState] = useState<1 | 2>(1);
+  const formRef = useRef<HTMLFormElement>(null);
+  // Changing step swaps a long form for another: start the new step at its top, not
+  // wherever the old one was scrolled to.
+  const setStep = (next: 1 | 2) => {
+    setStepState(next);
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
@@ -363,7 +370,7 @@ export default function RegistrationForm({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form ref={formRef} onSubmit={submit} className="space-y-4 scroll-mt-24">
       {needsAccount && (
         <div className="flex gap-2 text-[11px] font-bold">
           <span className={step === 1 ? "text-emerald-800" : "text-slate-400"}>1. Your details</span>
