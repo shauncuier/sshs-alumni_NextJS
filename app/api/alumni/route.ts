@@ -82,7 +82,8 @@ export async function GET(req: Request) {
       profiles = await prisma.alumniProfile.findMany({
         where: { AND: filters },
         select: DIRECTORY_FIELDS,
-        orderBy: { sscBatch: "desc" },
+        // Seniors first: oldest SSC batch, then by name within a batch.
+        orderBy: [{ sscBatch: "asc" }, { fullName: "asc" }],
         take: limit,
       });
     } catch (dbErr) {

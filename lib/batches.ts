@@ -31,7 +31,8 @@ export async function listBatches(): Promise<BatchInfo[]> {
   const countByYear = new Map(counts.map((c) => [c.sscBatch, c._count.id]));
   const rowByYear = new Map(rows.map((r) => [r.year, r]));
   const batches: BatchInfo[] = [];
-  for (let y = thisYear; y >= FIRST_BATCH; y--) {
+  // Seniors first: the first batch, then each year up to now.
+  for (let y = FIRST_BATCH; y <= thisYear; y++) {
     const row = rowByYear.get(y);
     batches.push({
       year: y,

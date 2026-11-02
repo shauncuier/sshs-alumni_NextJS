@@ -24,8 +24,9 @@ const patch = (year: number, body: unknown) =>
 describe("batches", () => {
   it("lists every year from the first batch to now, with no invented people", async () => {
     const batches = await listBatches();
-    expect(batches[0].year).toBe(new Date().getFullYear());
-    expect(batches.at(-1)!.year).toBe(FIRST_BATCH);
+    // Seniors first.
+    expect(batches[0].year).toBe(FIRST_BATCH);
+    expect(batches.at(-1)!.year).toBe(new Date().getFullYear());
     for (const b of batches) {
       expect(b).toMatchObject({ totalAlumni: 0, classRepresentative: "", representativePhone: "" });
       expect(b.reunionDate).toBeUndefined();

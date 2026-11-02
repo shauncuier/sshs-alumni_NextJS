@@ -283,7 +283,7 @@ function DirectoryContent() {
               Showing <strong className="text-slate-800 font-bold">{filteredAlumni.length}</strong> alumni profiles
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />}
             </span>
-            <span>Sorted by Recent Activity &amp; Batch</span>
+            <span>Seniors first (by SSC batch)</span>
           </div>
 
           {loadError ? (
