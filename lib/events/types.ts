@@ -84,6 +84,8 @@ export interface RsvpInput {
 
 export interface AccountInput {
   fullName: string;
+  /** The name in Bangla; optional (lib/members/bangla-name.ts). */
+  fullNameBn?: string | null;
   email: string;
   phone?: string | null;
   /** From POST /api/auth/phone-otp/verify; proves the member received an SMS code on `phone`. */

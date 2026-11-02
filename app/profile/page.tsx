@@ -36,6 +36,7 @@ interface ProfileRecord {
   id: string;
   slug?: string | null;
   fullName: string;
+  fullNameBn?: string | null;
   sscBatch: number;
   rollNumber: string | null;
   bloodGroup: string | null;
@@ -85,6 +86,7 @@ interface Batchmate {
 
 interface ProfileForm {
   fullName: string;
+  fullNameBn: string;
   profession: string;
   company: string;
   designation: string;
@@ -131,6 +133,7 @@ function toForm(profile: ProfileRecord): ProfileForm {
     : [];
   return {
     fullName: profile.fullName,
+    fullNameBn: profile.fullNameBn ?? "",
     profession: profile.profession,
     company: profile.company ?? "",
     designation: profile.designation ?? "",
@@ -521,6 +524,18 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
+                        <label htmlFor="pf-name-bn" className="block font-bold text-slate-700 mb-1">Name in Bangla (বাংলায় নাম)</label>
+                        <input id="pf-name-bn"
+                          type="text"
+                          lang="bn"
+                          maxLength={120}
+                          value={profileData.fullNameBn}
+                          onChange={(e) => setProfileData({ ...profileData, fullNameBn: e.target.value })}
+                          placeholder="যেমন: মোঃ রহিম উদ্দিন"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        />
+                      </div>
+                      <div>
                         <label htmlFor="pf-2" className="block font-bold text-slate-700 mb-1">Profession (পেশা) *</label>
                         <input id="pf-2"
                           type="text"
@@ -861,6 +876,9 @@ export default function ProfilePage() {
                       {(isAdmin || isVerified) && <BadgeCheck className="w-4 h-4 text-emerald-600" />} {statusLabel}
                     </span>
                   </div>
+                  {profile?.fullNameBn && (
+                    <p lang="bn" className="text-lg font-bold text-slate-700 -mt-1">{profile.fullNameBn}</p>
+                  )}
 
                   <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />

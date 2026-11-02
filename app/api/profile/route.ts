@@ -9,6 +9,7 @@ import { otpRequired } from "@/lib/otp-setting";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import { normalizeGender } from "@/lib/members/gender";
+import { normalizeBanglaName } from "@/lib/members/bangla-name";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 import type { Prisma } from "@prisma/client";
 import { normalizeEducation } from "@/lib/members/education";
@@ -57,6 +58,7 @@ export async function PUT(req: Request) {
     const body = await readJsonBody(req);
     const {
       fullName,
+      fullNameBn,
       profession,
       company,
       designation,
@@ -157,6 +159,8 @@ export async function PUT(req: Request) {
       // Gender: undefined leaves it, empty clears it. Photo: true shows it, false hides it,
       // null goes back to the default (hidden for women, lib/members/gender.ts).
       const genderValue = gender === undefined ? undefined : normalizeGender(gender);
+      // Bangla name: undefined leaves it, empty clears it.
+      const banglaName = fullNameBn === undefined ? undefined : normalizeBanglaName(fullNameBn);
       if (isPhotoPublic !== undefined && isPhotoPublic !== null && typeof isPhotoPublic !== "boolean") {
         throw new AppError("INVALID_INPUT", 400, "Say whether your photo is shown or hidden.");
       }
@@ -179,6 +183,7 @@ export async function PUT(req: Request) {
         where: { userId: user.id },
         update: {
           fullName: required(fullName),
+          fullNameBn: banglaName,
           profession: required(profession),
           locationCity: required(locationCity),
           locationCountry: optional(locationCountry) || undefined,
@@ -210,6 +215,7 @@ export async function PUT(req: Request) {
         create: {
           userId: user.id,
           fullName: required(fullName) || session.user.name || "Alumnus",
+          fullNameBn: banglaName ?? null,
           sscBatch: batchYear ?? 0,
           graduationYear: batchYear ?? 0,
           profession: required(profession) || "Alumnus",

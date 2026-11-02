@@ -210,7 +210,7 @@ function VerificationReviewContent() {
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchesName = r.fullName.toLowerCase().includes(q);
+        const matchesName = r.fullName.toLowerCase().includes(q) || Boolean(r.fullNameBn?.includes(q));
         const matchesEmail = r.email.toLowerCase().includes(q);
         const matchesBatch = r.sscBatch.toString().includes(q);
         const matchesRoll = r.rollNumber?.toLowerCase().includes(q);
@@ -695,6 +695,9 @@ function VerificationReviewContent() {
                         SSC {activeApplicant.sscBatch}
                       </span>
                     </div>
+                    {activeApplicant.fullNameBn && (
+                      <p lang="bn" className="text-sm font-bold text-emerald-100">{activeApplicant.fullNameBn}</p>
+                    )}
                     <div className="text-xs text-slate-400 mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span>{activeApplicant.email}</span>
                       {activeApplicant.phone && (

@@ -75,6 +75,7 @@ export default async function AlumniIndividualPage({ params }: Props) {
       userId: true,
       slug: true,
       fullName: true,
+      fullNameBn: true,
       sscBatch: true,
       graduationYear: true,
       rollNumber: true,
@@ -186,6 +187,9 @@ export default async function AlumniIndividualPage({ params }: Props) {
                         <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" /> Verified Member
                       </span>
                     </div>
+                    {profile.fullNameBn && (
+                      <p lang="bn" className="text-lg font-bold text-slate-700">{profile.fullNameBn}</p>
+                    )}
 
                     <p className="text-emerald-800 font-semibold text-base sm:text-lg flex items-center justify-center sm:justify-start gap-1.5">
                       <Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />

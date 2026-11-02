@@ -9,6 +9,7 @@ import { processReceipt, removeReceiptDir, saveReceipt } from "@/lib/media/recei
 import { PROOF_NOTE_MAX, isProofType, type ProofType } from "@/lib/members/proof-types";
 import { readVerifiedPhone } from "@/lib/phone-otp";
 import { normalizeGender } from "@/lib/members/gender";
+import { normalizeBanglaName } from "@/lib/members/bangla-name";
 import { readVerifiedEmail } from "@/lib/email-otp";
 import { otpRequired } from "@/lib/otp-setting";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
@@ -148,6 +149,7 @@ export async function registerForEvent(args: {
       account = checkContactVerified(account, await otpRequired());
       parseDateOfBirth(account.dateOfBirth, true);
       if (!normalizeGender(account.gender)) throw new AppError("GENDER_REQUIRED", 400, "Please choose your gender.");
+      normalizeBanglaName(account.fullNameBn); // a wrong one fails here, before any file is saved
       if (!args.photo) throw new AppError("PHOTO_REQUIRED", 400, "Please add a profile photo.");
       const proof = checkProofDetails(args.proof);
       passwordHash = await hashMemberPassword(account.password);

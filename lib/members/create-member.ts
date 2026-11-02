@@ -5,6 +5,7 @@ import type { AccountInput } from "@/lib/events/types";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import { normalizeGender } from "@/lib/members/gender";
+import { normalizeBanglaName } from "@/lib/members/bangla-name";
 import { slugBase, uniqueSlug } from "@/lib/members/slug";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 
@@ -71,6 +72,7 @@ export async function createMemberAccount(
       profile: {
         create: {
           fullName,
+          fullNameBn: normalizeBanglaName(input.fullNameBn),
           slug,
           sscBatch: batch,
           graduationYear: batch,

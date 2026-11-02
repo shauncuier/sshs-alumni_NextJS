@@ -14,6 +14,7 @@ const DIRECTORY_FIELDS = {
   userId: true,
   slug: true,
   fullName: true,
+  fullNameBn: true,
   sscBatch: true,
   graduationYear: true,
   section: true,
@@ -68,6 +69,7 @@ export async function GET(req: Request) {
       filters.push({
         OR: [
           { fullName: { contains: q } },
+          { fullNameBn: { contains: q } },
           { profession: { contains: q } },
           { company: { contains: q } },
           { locationCity: { contains: q } },

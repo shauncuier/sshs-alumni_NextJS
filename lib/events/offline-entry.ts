@@ -5,6 +5,7 @@ import { AppError } from "@/lib/app-error";
 import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
 import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
 import { isProofType, proofTypeLabel } from "@/lib/members/proof-types";
+import { normalizeBanglaName } from "@/lib/members/bangla-name";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
@@ -39,6 +40,8 @@ export interface OfflineEntryInput {
   staff: { id?: string | null; email: string };
   member: {
     fullName: string;
+    /** The name in Bangla when the form has it. */
+    fullNameBn?: string | null;
     email?: string | null;
     phone: string;
     sscBatch: number | string;
@@ -72,6 +75,7 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
   const m = input.member;
   const fullName = text(m.fullName, 120);
   if (!fullName) throw new AppError("INVALID_ACCOUNT", 400, "Please type the member's name.");
+  normalizeBanglaName(m.fullNameBn); // a wrong one fails here, before the photo is saved
   const phone = canonicalPhone(m.phone);
   const typedEmail = text(m.email, 191).toLowerCase();
   if (typedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(typedEmail)) {
@@ -123,6 +127,7 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
           tx,
           {
             fullName,
+            fullNameBn: m.fullNameBn,
             email,
             phone,
             password: randomPassword, // never shown to anyone; the member resets it to sign in

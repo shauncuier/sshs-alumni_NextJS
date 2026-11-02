@@ -122,6 +122,8 @@ model AlumniProfile {
   slug   String? @unique @db.VarChar(120)
 
   fullName           String
+  /// The name in Bangla (নাম বাংলায়), optional (lib/members/bangla-name.ts).
+  fullNameBn         String?            @db.VarChar(120)
   sscBatch           Int // e.g. 2008
   graduationYear     Int // e.g. 2008
   rollNumber         String?

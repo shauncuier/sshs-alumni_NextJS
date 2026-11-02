@@ -111,6 +111,17 @@ describe("joining through the membership event", () => {
     expect(profile.isPhotoPublic).toBeNull();
   });
 
+  it("saves the name in Bangla when given, and refuses one in English letters", async () => {
+    await membershipEvent();
+    await expect(
+      registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, fullNameBn: "Rahim" }, photo, proof, rsvp: paidRsvp })
+    ).rejects.toMatchObject({ status: 400, code: "INVALID_BANGLA_NAME" });
+    expect(await prisma.user.count()).toBe(0);
+    await registerForEvent({ slug: "jubilee", sessionUserId: null, account: { ...account, fullNameBn: "  মোঃ   রহিম " }, photo, proof, rsvp: paidRsvp });
+    const profile = await prisma.alumniProfile.findFirstOrThrow({ where: { user: { email: "new@example.test" } } });
+    expect(profile.fullNameBn).toBe("মোঃ রহিম");
+  });
+
   it("needs a name for every guest and an age for every child", async () => {
     await membershipEvent();
     const bad: [unknown, string][] = [

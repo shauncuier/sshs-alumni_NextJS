@@ -151,4 +151,20 @@ describe("hidden photos on the site", () => {
     expect((await put({ gender: "other" })).status).toBe(400);
     expect((await put({ isPhotoPublic: "yes" })).status).toBe(400);
   });
+
+  it("she sets her name in Bangla from her profile", async () => {
+    const her = await memberWithPhoto();
+    session.user = { id: her.id, email: her.email, role: "ALUMNI" };
+    const put = (body: unknown) =>
+      updateProfile(new Request("http://localhost:3000/api/profile", { method: "PUT", headers: { "content-type": "application/json", origin: "http://localhost:3000" }, body: JSON.stringify(body) }));
+    const saved = async () => (await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: her.id } })).fullNameBn;
+
+    expect((await put({ fullNameBn: "নুসরাত জাহান" })).status).toBe(200);
+    expect(await saved()).toBe("নুসরাত জাহান");
+    expect((await put({ bio: "hi" })).status).toBe(200);
+    expect(await saved()).toBe("নুসরাত জাহান");
+    expect((await put({ fullNameBn: "Nusrat" })).status).toBe(400);
+    expect((await put({ fullNameBn: "" })).status).toBe(200);
+    expect(await saved()).toBeNull();
+  });
 });

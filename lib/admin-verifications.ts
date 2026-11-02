@@ -36,6 +36,7 @@ interface VerificationRequestRow {
     email: string;
     profile: {
       fullName: string;
+      fullNameBn?: string | null;
       phone: string | null;
       phoneVerifiedAt?: string | Date | null;
       avatarUrl: string | null;
@@ -60,6 +61,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
   return {
     id: row.id,
     fullName: profile?.fullName ?? row.user.email,
+    fullNameBn: profile?.fullNameBn ?? "",
     email: row.user.email,
     phone: profile?.phone ?? "",
     phoneVerified: Boolean(profile?.phoneVerifiedAt),

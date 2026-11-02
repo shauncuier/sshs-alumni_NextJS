@@ -177,6 +177,8 @@ export interface NewsItem {
 export interface VerificationRequestItem {
   id: string;
   fullName: string;
+  /** The name in Bangla; empty when not given. */
+  fullNameBn?: string;
   email: string;
   phone: string;
   /** The number was proved by SMS code (false: typed while codes were off). */

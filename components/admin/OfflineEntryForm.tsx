@@ -16,6 +16,7 @@ const card = "bg-white p-5 rounded-2xl border border-slate-200 space-y-4";
 
 const EMPTY = {
   fullName: "",
+  fullNameBn: "",
   email: "",
   phone: "",
   sscBatch: "",
@@ -154,6 +155,10 @@ export default function OfflineEntryForm({ event }: { event: PublicEvent }) {
           <div className="sm:col-span-2">
             <label htmlFor="off-name" className={label}>Full name (in English) *</label>
             <input id="off-name" required maxLength={120} className={input} value={member.fullName} onChange={(e) => set({ fullName: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="off-name-bn" className={label}>Name in Bangla (বাংলায় নাম)</label>
+            <input id="off-name-bn" lang="bn" maxLength={120} className={input} value={member.fullNameBn} onChange={(e) => set({ fullNameBn: e.target.value })} />
           </div>
           <div>
             <label htmlFor="off-phone" className={label}>Mobile number *</label>

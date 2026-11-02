@@ -85,7 +85,7 @@ export default function RegistrationForm({
   const showAccount = needsAccount && step === 1;
   const showRegistration = !needsAccount || step === 2;
 
-  const [account, setAccount] = useState({ fullName: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", gender: "", bloodGroup: "", dateOfBirth: "", profession: "", designation: "", company: "", address: "" });
+  const [account, setAccount] = useState({ fullName: "", fullNameBn: "", email: "", phone: "", password: "", sscBatch: "", rollNumber: "", section: "", gender: "", bloodGroup: "", dateOfBirth: "", profession: "", designation: "", company: "", address: "" });
   const [contactVerification, setContactVerification] = useState<ContactVerification | null>(null);
   const [phoneRequired, setPhoneRequired] = useState(false);
   const codeRequired = useCodeRequired();
@@ -400,8 +400,12 @@ export default function RegistrationForm({
             </div>
           </div>
           <div className="sm:col-span-2">
-            <label htmlFor="reg-name" className={label}>Full name *</label>
+            <label htmlFor="reg-name" className={label}>Full name (in English) *</label>
             <input id="reg-name" required autoComplete="name" className={input} value={account.fullName} onChange={(e) => setAccount({ ...account, fullName: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="reg-name-bn" className={label}>Name in Bangla <span className="font-normal text-slate-400">(বাংলায় নাম)</span></label>
+            <input id="reg-name-bn" lang="bn" maxLength={120} placeholder="যেমন: মোঃ রহিম উদ্দিন" className={input} value={account.fullNameBn} onChange={(e) => setAccount({ ...account, fullNameBn: e.target.value })} />
           </div>
           <div>
             <label htmlFor="reg-email" className={label}>Email *</label>
