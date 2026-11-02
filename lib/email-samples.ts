@@ -3,6 +3,7 @@ import {
   donationReceiptEmail,
   membershipApprovedEmail,
   membershipRejectedEmail,
+  newRegistrationAlertEmail,
   noticeEmail,
   registrationConfirmedEmail,
   registrationReceivedEmail,
@@ -39,6 +40,23 @@ export const EMAIL_SAMPLES: Record<string, () => RenderedEmail> = {
   "membership-rejected": () => membershipRejectedEmail("Rahim Uddin"),
   "donation-receipt": () =>
     donationReceiptEmail({ donorName: "Rahim Uddin", amount: 5000, campaignTitle: "Library books for 2027", receiptId: "DON-2026-0042", paymentMethod: "Nagad", transactionRef: "7KD92LQ1" }),
+  "new-registration-alert": () =>
+    newRegistrationAlertEmail({
+      name: "Rahim Uddin",
+      nameBn: "রহিম উদ্দিন",
+      sscBatch: 1998,
+      email: "rahim@example.com",
+      phone: "01711000000",
+      eventId: "sample-event",
+      eventTitle: registration.eventTitle,
+      newMember: true,
+      headCount: 4,
+      totalFee: 3200,
+      donationAmount: 500,
+      paymentMethod: "bKash",
+      transactionId: "9AB3XK1LQ",
+      awaitingPayment: true,
+    }),
   "contact-message": () =>
     contactMessageEmail({ name: "Rahim Uddin", email: "rahim@example.com", subject: "Batch 1998 reunion", message: "Assalamu alaikum,\nWe want to hold our batch reunion on campus in January. Who should we talk to?", ticketId: "TICK-4F2A9C" }),
   "job-application": () =>

@@ -1,5 +1,6 @@
 import { Prisma, type Event, type EventRegistration } from "@prisma/client";
 import { emailRegistration } from "@/lib/member-emails";
+import { alertNewRegistration } from "@/lib/registration-alerts";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-member";
@@ -364,6 +365,8 @@ export async function registerForEvent(args: {
   await emailRegistration(registration.id, registration.status === "PENDING_PAYMENT" ? "received" : "confirmed");
   // Confirmed at once (a free event): tell them by SMS too. Paid ones get it when the committee confirms.
   if (registration.status !== "PENDING_PAYMENT") await smsRegistrationConfirmed(registration.id);
+  // And the committee (Admin → Settings → Email); never fails the registration either.
+  await alertNewRegistration(registration.id, Boolean(result.createdAccount));
   return { registration, createdAccount: result.createdAccount };
 }
 

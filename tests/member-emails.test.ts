@@ -22,11 +22,13 @@ import { registerForEvent } from "./helpers/register";
 import { renderEmail } from "@/lib/email-templates";
 import { EMAIL_SAMPLES } from "@/lib/email-samples";
 import prisma from "@/lib/prisma";
+import { setRegistrationAlertEmails } from "@/lib/registration-alerts";
 
 beforeEach(async () => {
   mail.sent = [];
   mail.fail = false;
   await resetDatabase();
+  await setRegistrationAlertEmails([], "test"); // committee alerts: tests/registration-alerts.test.ts
   await fs.rm(process.env.UPLOADS_DIR!, { recursive: true, force: true });
 });
 afterAll(async () => {

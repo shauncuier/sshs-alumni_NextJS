@@ -298,6 +298,53 @@ export function contactMessageEmail(m: { name: string; email: string; phone?: st
   });
 }
 
+/** To the committee: someone registered on the site (lib/registration-alerts.ts). Reply-To: the member. */
+export function newRegistrationAlertEmail(r: {
+  name: string;
+  nameBn: string | null;
+  sscBatch: number | null;
+  email: string;
+  phone: string | null;
+  eventId: string;
+  eventTitle: string;
+  newMember: boolean;
+  headCount: number;
+  totalFee: number;
+  donationAmount: number;
+  paymentMethod: string | null;
+  transactionId: string | null;
+  awaitingPayment: boolean;
+}): RenderedEmail {
+  const who = `${r.name}${r.sscBatch ? ` (SSC ${r.sscBatch})` : ""}`;
+  const rows: [string, string][] = [
+    ["Name", r.nameBn ? `${r.name} · ${r.nameBn}` : r.name],
+    ...(r.sscBatch ? ([["SSC batch", String(r.sscBatch)]] as [string, string][]) : []),
+    ["Email", r.email],
+    ...(r.phone ? ([["Mobile", r.phone]] as [string, string][]) : []),
+    ["Event", r.eventTitle],
+    ["People", String(r.headCount)],
+  ];
+  if (r.totalFee + r.donationAmount > 0) rows.push(["Total", taka(r.totalFee + r.donationAmount)]);
+  if (r.paymentMethod) rows.push(["Paid by", r.paymentMethod]);
+  if (r.transactionId) rows.push(["Transaction ID", r.transactionId]);
+  const toCheck = r.newMember || r.awaitingPayment;
+  return renderEmail({
+    subject: `${r.newMember ? "New member" : "New registration"}: ${who}, ${r.eventTitle}`,
+    preheader: toCheck ? "Waiting for the committee's check in Admin → Verifications." : "Confirmed at once; nothing to check.",
+    heading: r.newMember ? "New membership registration" : "New event registration",
+    paragraphs: [
+      r.newMember
+        ? `${who} joined through the website and registered for ${r.eventTitle}. Their membership and payment wait for the committee's check.`
+        : r.awaitingPayment
+          ? `${who} registered for ${r.eventTitle}. The payment waits for the committee's check.`
+          : `${who} registered for ${r.eventTitle}. It was confirmed at once.`,
+    ],
+    rows,
+    button: toCheck ? { label: "Open Verifications", url: siteUrl("/admin/verifications") } : { label: "Open the event", url: siteUrl(`/admin/events/${r.eventId}`) },
+    note: "You get this because your address is on the alert list in Admin → Settings → Email. Reply to this email to write to the member.",
+  });
+}
+
 /** A short notice: job applications, mentorship requests and replies. */
 export function noticeEmail(n: { subject: string; heading: string; paragraphs: string[]; rows?: [string, string][]; quote?: string; button?: { label: string; url: string } }): RenderedEmail {
   return renderEmail({ ...n, preheader: n.paragraphs[0] ?? n.heading });

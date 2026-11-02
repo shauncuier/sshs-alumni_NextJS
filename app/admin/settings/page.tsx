@@ -6,6 +6,7 @@ import ContactPhonesForm from "@/components/admin/ContactPhonesForm";
 import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
 import PaymentNoticeSwitches from "@/components/admin/PaymentNoticeSwitches";
 import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
+import RegistrationAlertsForm from "@/components/admin/RegistrationAlertsForm";
 import SmsTestModeSwitch from "@/components/admin/SmsTestModeSwitch";
 import { getBulkSmsConfig } from "@/lib/bulksmsbd";
 import { getEmailProvider } from "@/lib/email";
@@ -104,6 +105,7 @@ export default async function SettingsPage() {
               <p className="text-slate-600">{email.note}</p>
             </div>
           </div>
+          <RegistrationAlertsForm />
         </section>
       )}
 

@@ -31,12 +31,14 @@ import { decideRegistration } from "@/lib/events/admin";
 import { registerForEvent } from "./helpers/register";
 import { registrationConfirmedSms } from "@/lib/member-sms";
 import { setSmsTestMode } from "@/lib/sms-test-mode";
+import { setRegistrationAlertEmails } from "@/lib/registration-alerts";
 
 beforeEach(async () => {
   sms.sent = [];
   sms.fail = false;
   mail.sent = [];
   await resetDatabase();
+  await setRegistrationAlertEmails([], "test"); // committee alerts: tests/registration-alerts.test.ts
 });
 
 async function pending(phone: string | null = "01711000901") {
