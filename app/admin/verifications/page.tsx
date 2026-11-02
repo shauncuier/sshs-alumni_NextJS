@@ -10,6 +10,7 @@ import BanglaQrMatch from "@/components/admin/BanglaQrMatch";
 import EditRegistrationDialog from "@/components/admin/EditRegistrationDialog";
 import { useSession } from "next-auth/react";
 import { formatTaka } from "@/lib/events/pricing";
+import { smsTime } from "@/lib/payments/bangla-qr";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -1166,12 +1167,20 @@ function VerificationReviewContent() {
                             onChange={setMerchantTrx}
                             idPrefix="verify-bqr"
                           />
-                        ) : activeApplicant.merchantTrxId ? (
+                        ) : (
+                          // The paying account's last 4 digits and time, shown even when no SMS TrxID was recorded.
                           <p className="text-xs text-slate-600">
-                            Confirmed against our OK Wallet SMS, TrxID <span className="font-mono font-bold">{activeApplicant.merchantTrxId}</span>
-                            {activeApplicant.payerAccountLast4 ? ` (paid from …${activeApplicant.payerAccountLast4})` : ""}.
+                            Paid from account{" "}
+                            <span className="font-mono font-bold text-slate-900">{activeApplicant.payerAccountLast4 ? `…${activeApplicant.payerAccountLast4}` : "— (not given)"}</span>
+                            {activeApplicant.payerPaidAt ? ` at ${smsTime(new Date(activeApplicant.payerPaidAt))}` : ""}
+                            {activeApplicant.merchantTrxId && (
+                              <>
+                                {" "}· confirmed against our OK Wallet SMS, TrxID <span className="font-mono font-bold">{activeApplicant.merchantTrxId}</span>
+                              </>
+                            )}
+                            .
                           </p>
-                        ) : null)}
+                        ))}
 
                       {/* Payment Proof Screenshot Preview if uploaded */}
                       {activeApplicant.paymentReceiptUrl && (
