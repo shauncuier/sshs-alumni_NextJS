@@ -18,11 +18,11 @@ type RegWithUser = EventRegistration & {
 };
 
 // The member's latest verification request carries the proof uploaded when joining.
-const WITH_USER = {
+export const WITH_USER = {
   user: { include: { profile: true, verificationRequests: { orderBy: { createdAt: "desc" as const }, take: 1 } } },
 };
 
-function toAdminRegistration(reg: RegWithUser): AdminRegistration {
+export function toAdminRegistration(reg: RegWithUser): AdminRegistration {
   return {
     id: reg.id,
     userId: reg.userId,

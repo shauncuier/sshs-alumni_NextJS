@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import type { VerificationRequestItem } from "@/lib/data";
 import { confirmMemberPayment, decideVerification, fetchVerificationRequests } from "@/lib/admin-verifications";
 import BanglaQrMatch from "@/components/admin/BanglaQrMatch";
+import EditRegistrationDialog from "@/components/admin/EditRegistrationDialog";
+import { useSession } from "next-auth/react";
 import { formatTaka } from "@/lib/events/pricing";
 import {
   ShieldCheck,
@@ -33,6 +35,9 @@ function VerificationReviewContent() {
   const qId = searchParams.get("id");
 
   const [requests, setRequests] = useState<VerificationRequestItem[]>([]);
+  // Only the super admin corrects a registration's package, guests and amount (the API checks too).
+  const isSuperAdmin = useSession().data?.user?.role === "SUPER_ADMIN";
+  const [editingReg, setEditingReg] = useState<{ requestId: string; eventId: string; registrationId: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -346,6 +351,17 @@ function VerificationReviewContent() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] w-full mx-auto">
+      {editingReg && (
+        <EditRegistrationDialog
+          eventId={editingReg.eventId}
+          registrationId={editingReg.registrationId}
+          onClose={() => setEditingReg(null)}
+          onSaved={(reg) => {
+            setRequests((prev) => prev.map((r) => (r.id === editingReg.requestId ? { ...r, totalFee: reg.totalFee } : r)));
+            setEditingReg(null);
+          }}
+        />
+      )}
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
@@ -1101,6 +1117,17 @@ function VerificationReviewContent() {
                               ? `${formatCurrencyBDT(activeApplicant.totalFee)}`
                               : "—"}
                           </div>
+                          {isSuperAdmin && activeApplicant.registrationId && activeApplicant.membershipEventId && activeApplicant.paymentStatus !== "CANCELLED" && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingReg({ requestId: activeApplicant.id, eventId: activeApplicant.membershipEventId!, registrationId: activeApplicant.registrationId! })
+                              }
+                              className="mt-1 text-[11px] font-bold text-amber-900 underline cursor-pointer"
+                            >
+                              Edit registration
+                            </button>
+                          )}
                         </div>
 
                         {/* TrxID with Copy */}

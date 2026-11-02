@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRegistration, PublicEvent, PublicPackage, AgendaEntry } from "@/lib/events/types";
 import ProofOfStudy from "@/components/admin/ProofOfStudy";
 import BanglaQrMatch from "@/components/admin/BanglaQrMatch";
+import EditRegistrationDialog from "@/components/admin/EditRegistrationDialog";
+import { useSession } from "next-auth/react";
 import { Dialog } from "@/components/admin/content-kit";
 import { smsTime } from "@/lib/payments/bangla-qr";
 import { formatTaka, dhakaDateInput, formatGuestLine } from "@/lib/events/pricing";
@@ -74,6 +76,9 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   // Confirming a Bangla QR payment: the registration and the TrxID from our OK Wallet SMS.
   const [qrConfirm, setQrConfirm] = useState<AdminRegistration | null>(null);
   const [qrTrx, setQrTrx] = useState("");
+  // Only the super admin corrects a registration's package, guests and amount (the API checks too).
+  const isSuperAdmin = useSession().data?.user?.role === "SUPER_ADMIN";
+  const [editing, setEditing] = useState<AdminRegistration | null>(null);
 
   const [newPkg, setNewPkg] = useState<PublicPackage>({
     name: "", price: "৳1,000", priceAmount: 1000, description: "", includes: [], isPopular: false, adults: 1, children: 0, guestsFree: false,
@@ -237,6 +242,18 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
       <Toast toast={toast} />
+      {editing && event && (
+        <EditRegistrationDialog
+          eventId={event.id}
+          registrationId={editing.id}
+          onClose={() => setEditing(null)}
+          onSaved={(reg) => {
+            setEditing(null);
+            showToast(`Saved: ${reg.name}, ${reg.headCount} ${reg.headCount === 1 ? "person" : "people"}, ${formatTaka(reg.totalFee)}.`);
+            void load();
+          }}
+        />
+      )}
       {qrConfirm && (
         <Dialog title={`Confirm the Bangla QR payment from ${qrConfirm.name}`} onClose={() => setQrConfirm(null)}>
           <BanglaQrMatch
@@ -1189,6 +1206,11 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
                             Tokens
                           </a>
                         </>
+                      )}
+                      {isSuperAdmin && a.status !== "CANCELLED" && (
+                        <button disabled={busyId === a.id} onClick={() => setEditing(a)} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 font-bold disabled:opacity-50">
+                          Edit
+                        </button>
                       )}
                       {(a.status === "PENDING_PAYMENT" || a.status === "CONFIRMED") && (
                         <button disabled={busyId === a.id} onClick={() => decide(a, "CANCEL")} className="min-h-[40px] md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold disabled:opacity-50">

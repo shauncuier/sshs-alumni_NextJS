@@ -99,6 +99,43 @@ export async function voidRegistrationIncome(tx: Tx, registrationId: string, rea
   return voided.count;
 }
 
+/**
+ * After the super admin corrects a confirmed registration's fee: voids the fee income
+ * posted so far and posts the corrected amount as a new line ("fee-2", "fee-3", …), since
+ * approved vouchers are never edited. Returns true when a new line was posted.
+ */
+export async function repostRegistrationFee(tx: Tx, registrationId: string, reason: string, actorEmail: string): Promise<boolean> {
+  const reg = await tx.eventRegistration.findUnique({
+    where: { id: registrationId },
+    include: { event: { select: { id: true, title: true, isMembershipEvent: true } }, user: { select: { email: true, profile: { select: { fullName: true, sscBatch: true } } } } },
+  });
+  if (!reg || !PAID.includes(reg.status)) return false;
+  await ensureFinanceDefaults(tx);
+  const feeLines = await tx.financeEntry.findMany({
+    where: { source: "REGISTRATION", sourceId: reg.id, sourceLine: { startsWith: "fee" } },
+    select: { sourceLine: true },
+  });
+  await tx.financeEntry.updateMany({
+    where: { source: "REGISTRATION", sourceId: reg.id, sourceLine: { startsWith: "fee" }, status: { not: "VOID" } },
+    data: { status: "VOID", voidedBy: actorEmail, voidedAt: new Date(), voidReason: reason.slice(0, 300) },
+  });
+  const who = reg.user.profile ? `${reg.user.profile.fullName} (SSC ${reg.user.profile.sscBatch})` : reg.user.email;
+  return postLine(tx, {
+    source: "REGISTRATION",
+    sourceId: reg.id,
+    sourceLine: feeLines.length === 0 ? "fee" : `fee-${feeLines.length + 1}`,
+    amount: toPoisha(reg.totalFee),
+    category: reg.event.isMembershipEvent ? "membership_fees" : "registration_fees",
+    method: reg.paymentMethod,
+    date: reg.confirmedAt ?? reg.createdAt,
+    eventId: reg.event.id,
+    party: who,
+    description: `${reg.event.title}: ${reg.packageName ? `${reg.packageName}, ` : ""}${reg.headCount} ${reg.headCount === 1 ? "person" : "people"} (corrected)`,
+    reference: reg.transactionId,
+    actor: actorEmail,
+  });
+}
+
 /** Posts a verified (completed) donation. */
 export async function postDonationIncome(tx: Tx, donationId: string, actorEmail: string): Promise<number> {
   const d = await tx.donation.findUnique({ where: { id: donationId }, include: { campaign: { select: { title: true } } } });
