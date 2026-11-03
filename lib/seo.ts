@@ -4,6 +4,7 @@ import type { PublicEvent } from "@/lib/events/types";
 import { memberFeeLabel, memberFeeRange } from "@/lib/events/pricing";
 import type { AlumniStoryItem, NewsItem } from "@/lib/data";
 import type { JobListing } from "@/lib/career-data";
+import { DEFAULT_CONTACT_PHONES } from "@/lib/contact-phones-shared";
 
 /**
  * Search and share metadata in one place. People search for the school by name
@@ -182,9 +183,45 @@ export function jobPostingJsonLd(j: JobListing) {
   };
 }
 
-/** The association, for search engines (JSON-LD), with the school it belongs to. */
+/** The school campus, where the association also meets and keeps its office. */
+const CAMPUS_ADDRESS = {
+  "@type": "PostalAddress",
+  streetAddress: "Hafiz Jute Mills, South Sonaichhari",
+  addressLocality: "Sitakunda",
+  addressRegion: "Chattogram",
+  addressCountry: "BD",
+};
+
+/** The school itself, so pages can refer to it by @id. */
+function schoolNode() {
+  return {
+    "@type": "HighSchool",
+    "@id": `${siteOrigin()}/#school`,
+    name: schoolInfo.name,
+    alternateName: [schoolInfo.bengaliName, "Sabuj Shikshayatan High School"],
+    foundingDate: String(schoolInfo.established),
+    url: schoolInfo.website,
+    sameAs: [schoolInfo.facebookPage],
+    telephone: schoolInfo.phone,
+    email: schoolInfo.email,
+    address: CAMPUS_ADDRESS,
+    identifier: { "@type": "PropertyValue", propertyID: "EIIN", value: schoolInfo.eiin },
+  };
+}
+
+/** The school as its own structured-data block (home and school pages). */
+export function schoolJsonLd() {
+  return { "@context": "https://schema.org", ...schoolNode() };
+}
+
+/**
+ * The association, for search engines and AI agents (JSON-LD), with the school it
+ * belongs to. The phone numbers are the defaults from lib/contact-phones-shared.ts: the
+ * root layout is static, so it cannot read the list an admin saved.
+ */
 export function organizationJsonLd() {
   const origin = siteOrigin();
+  const [main, ...others] = DEFAULT_CONTACT_PHONES;
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -193,24 +230,20 @@ export function organizationJsonLd() {
     alternateName: [ASSOCIATION_NAME_BN, ASSOCIATION_SHORT_NAME_BN],
     url: origin,
     logo: `${origin}/icon-512.png`,
+    foundingDate: "2015",
     email: schoolInfo.associationEmail,
+    telephone: main.number,
+    address: CAMPUS_ADDRESS,
+    contactPoint: [main, ...others].map((p) => ({
+      "@type": "ContactPoint",
+      telephone: p.number,
+      email: schoolInfo.associationEmail,
+      contactType: "customer support",
+      areaServed: "BD",
+      availableLanguage: ["bn", "en"],
+    })),
     sameAs: [schoolInfo.facebookGroup],
-    parentOrganization: {
-      "@type": "HighSchool",
-      name: schoolInfo.name,
-      alternateName: [schoolInfo.bengaliName, "Sabuj Shikshayatan High School"],
-      foundingDate: String(schoolInfo.established),
-      url: schoolInfo.website,
-      sameAs: [schoolInfo.facebookPage],
-      address: {
-        "@type": "PostalAddress",
-        streetAddress: "Hafiz Jute Mills, South Sonaichhari",
-        addressLocality: "Sitakunda",
-        addressRegion: "Chattogram",
-        addressCountry: "BD",
-      },
-      identifier: { "@type": "PropertyValue", propertyID: "EIIN", value: schoolInfo.eiin },
-    },
+    parentOrganization: schoolNode(),
   };
 }
 

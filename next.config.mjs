@@ -76,6 +76,12 @@ const nextConfig = {
       ...bareDomainRedirect(),
     ];
   },
+  async rewrites() {
+    return {
+      // AI agents that ask for Markdown get the home page as Markdown (app/index.md).
+      beforeFiles: [{ source: "/", has: [{ type: "header", key: "accept", value: ".*text/markdown.*" }], destination: "/index.md" }],
+    };
+  },
   async headers() {
     const dev = process.env.NODE_ENV === "development";
     // Google Analytics (components/shared/GoogleAnalytics.tsx): the gtag script and the
@@ -132,6 +138,8 @@ const nextConfig = {
     const staticAsset = [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" }];
     return [
       { source: "/:path*", headers },
+      // "/" answers HTML or Markdown depending on Accept, so caches must keep them apart.
+      { source: "/", headers: [{ key: "Vary", value: "Accept" }] },
       { source: "/:file(.*\\.(?:png|jpg|jpeg|webp|svg|ico))", headers: staticAsset },
       { source: "/og/:file*", headers: staticAsset },
     ];

@@ -265,6 +265,10 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-8 text-center md:text-left">
           <p>
             © {new Date().getFullYear()} Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). All rights reserved.
+            {" "}
+            <Link prefetch={false} href="/terms" className="text-slate-400 hover:text-emerald-300 underline-offset-2 hover:underline whitespace-nowrap">
+              Terms &amp; privacy
+            </Link>
           </p>
           <p className="text-slate-400 shrink-0">
             Designed &amp; developed by <a href="https://3s-soft.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">3s-Soft</a>

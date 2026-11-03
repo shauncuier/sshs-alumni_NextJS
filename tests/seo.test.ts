@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import JsonLd from "@/components/shared/JsonLd";
-import { breadcrumbJsonLd, clip, ownImageOr, shareCard, eventDescription, eventJsonLd, jobPostingJsonLd, newsArticleJsonLd, organizationJsonLd, pageMetadata, SITE_NAME, websiteJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, clip, ownImageOr, shareCard, eventDescription, eventJsonLd, jobPostingJsonLd, newsArticleJsonLd, organizationJsonLd, pageMetadata, schoolJsonLd, SITE_NAME, websiteJsonLd } from "@/lib/seo";
+import { GET as robotsTxt } from "@/app/robots.txt/route";
 import type { JobListing } from "@/lib/career-data";
 import type { NewsItem } from "@/lib/data";
 import type { PublicEvent } from "@/lib/events/types";
@@ -67,6 +68,21 @@ describe("structured data", () => {
     const ld = organizationJsonLd();
     expect(ld.parentOrganization.alternateName).toContain("Sabuj Shikshayatan High School");
     expect(ld.parentOrganization.identifier).toMatchObject({ propertyID: "EIIN", value: "105070" });
+  });
+
+  it("gives agents the association's phone and address, and the school as its own node", () => {
+    const ld = organizationJsonLd();
+    expect(ld.telephone).toMatch(/^\+880 /);
+    expect(ld.address).toMatchObject({ "@type": "PostalAddress", addressLocality: "Sitakunda", addressCountry: "BD" });
+    expect(ld.contactPoint.length).toBeGreaterThan(0);
+    expect(schoolJsonLd()).toMatchObject({ "@type": "HighSchool", "@id": ld.parentOrganization["@id"] });
+  });
+
+  it("says in robots.txt that pages may be searched and quoted, not used for training", async () => {
+    const body = await robotsTxt().text();
+    expect(body).toContain("Content-Signal: search=yes, ai-input=yes, ai-train=no");
+    expect(body).toContain("Disallow: /admin/");
+    expect(body).toMatch(/Sitemap: .+\/sitemap\.xml/);
   });
 
   it("can never be closed early by text from the database", () => {

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin, websiteJsonLd } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
+import WebMcpTools from "@/components/shared/WebMcpTools";
 import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
 import ClarityAnalytics from "@/components/shared/ClarityAnalytics";
 
@@ -58,6 +59,7 @@ export default function RootLayout({
         <JsonLd data={websiteJsonLd()} />
         <GoogleAnalytics />
         <ClarityAnalytics />
+        <WebMcpTools />
         {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}
         <Suspense fallback={null}>
           <NavigationProgress />

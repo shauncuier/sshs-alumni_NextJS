@@ -29,7 +29,8 @@ import { eventDateShort } from "@/lib/events/date-label";
 import prisma from "@/lib/prisma";
 import { schoolInfo, type AlumniMember } from "@/lib/data";
 import { ArrowRight, Briefcase, CalendarDays, GraduationCap, Heart, MapPin, Megaphone, Newspaper, Quote, Sparkles, Target, Users } from "lucide-react";
-import { pageMetadata, shareCard } from "@/lib/seo";
+import { eventJsonLd, pageMetadata, schoolJsonLd, shareCard } from "@/lib/seo";
+import JsonLd from "@/components/shared/JsonLd";
 import { avatarAt } from "@/lib/avatar";
 import { shownAvatar } from "@/lib/members/photo-privacy";
 import Picture from "@/components/shared/Picture";
@@ -134,6 +135,11 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+      {/* The school and the coming events, for search engines and AI agents. */}
+      <JsonLd data={schoolJsonLd()} />
+      {[heroEvent, ...upcomingEvents].filter((e): e is NonNullable<typeof heroEvent> => e !== null && e.date >= today).map((e) => (
+        <JsonLd key={e.id} data={eventJsonLd(e)} />
+      ))}
       <Navbar />
 
       <main className="flex-1">
