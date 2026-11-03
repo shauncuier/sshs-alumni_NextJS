@@ -174,3 +174,54 @@ export async function seedSchoolPeople(): Promise<number> {
   await prisma.setting.create({ data: { key: SEEDED_KEY, value: new Date().toISOString() } });
   return FIRST_SCHOOL_PEOPLE.length;
 }
+
+/**
+ * One-time corrections from the association (November 2026) to people already imported:
+ * "জনাব" before every name, women's too ("জনাবা" is not a word, per the Bangla Academy
+ * dictionary, and "মিসেস" becomes "জনাব" to match), Ranjit Sir's name as he writes it, and a
+ * new photo of Zaheda Akter. A setting marks it as done, so later admin edits are kept.
+ * Returns how many people changed.
+ */
+export async function fixSchoolPeopleNames(): Promise<number> {
+  const key = "teachers.fix.honorifics-2026-11";
+  if (await prisma.setting.findUnique({ where: { key } })) return 0;
+  let changed = 0;
+  for (const p of await prisma.schoolPerson.findMany()) {
+    let nameBn = p.nameBn.replace(/^(জনাবা|মিসেস)\s+/, "জনাব ");
+    if (p.nameEn === "Ranjit Chakraborty" && /রনজিৎ চক্রবর্তী$/.test(nameBn)) nameBn = "শ্রী রনজিত চক্রবর্তী";
+    const photoUrl = p.nameEn === "Zaheda Akter" && p.photoUrl === "/teachers/zaheda-akter.jpg" ? "/teachers/zaheda-akter-2.jpg" : p.photoUrl;
+    if (nameBn === p.nameBn && photoUrl === p.photoUrl) continue;
+    await prisma.schoolPerson.update({ where: { id: p.id }, data: { nameBn, photoUrl } });
+    changed++;
+  }
+  await prisma.setting.create({ data: { key, value: new Date().toISOString() } });
+  return changed;
+}
+
+export interface TeacherDirectory {
+  /** Every shown head teacher in the order they served, today's last. */
+  heads: SchoolPersonView[];
+  currentHead: SchoolPersonView | null;
+  formerHeads: SchoolPersonView[];
+  today: { teachers: SchoolPersonView[]; staff: SchoolPersonView[] };
+  former: { teachers: SchoolPersonView[]; staff: SchoolPersonView[] };
+  /** Teachers and staff who have passed away (late head teachers stay with the head teachers). */
+  inMemory: SchoolPersonView[];
+}
+
+/** The shown people for the /teachers pages, split the way those pages show them. */
+export async function getTeacherDirectory(): Promise<TeacherDirectory> {
+  const shown = (await listSchoolPeople()).filter(isShown);
+  const heads = shown.filter((p) => p.kind === "HEAD_TEACHER");
+  const of = (kind: SchoolPersonView["kind"], status: SchoolPersonView["status"]) => shown.filter((p) => p.kind === kind && p.status === status);
+  return {
+    heads,
+    currentHead: heads.find((p) => p.status === "CURRENT") ?? null,
+    formerHeads: heads.filter((p) => p.status !== "CURRENT"),
+    today: { teachers: of("TEACHER", "CURRENT"), staff: of("STAFF", "CURRENT") },
+    former: { teachers: of("TEACHER", "FORMER"), staff: of("STAFF", "FORMER") },
+    inMemory: shown.filter((p) => (p.kind === "TEACHER" || p.kind === "STAFF") && p.status === "LATE"),
+  };
+}
+
+export const EMPTY_DIRECTORY: TeacherDirectory = { heads: [], currentHead: null, formerHeads: [], today: { teachers: [], staff: [] }, former: { teachers: [], staff: [] }, inMemory: [] };

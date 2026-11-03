@@ -8,7 +8,7 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 });
 
 import prisma from "@/lib/prisma";
-import { createSchoolPerson, deleteSchoolPerson, getHomeTribute, getSchoolPeople, listSchoolPeople, seedSchoolPeople, updateSchoolPerson } from "@/lib/teachers";
+import { createSchoolPerson, deleteSchoolPerson, fixSchoolPeopleNames, getHomeTribute, getSchoolPeople, getTeacherDirectory, listSchoolPeople, seedSchoolPeople, updateSchoolPerson } from "@/lib/teachers";
 import { FIRST_SCHOOL_PEOPLE } from "@/lib/teachers-seed";
 import { GET as listRoute, POST as createRoute } from "@/app/api/admin/teachers/route";
 import { PATCH as updateRoute } from "@/app/api/admin/teachers/[id]/route";
@@ -76,6 +76,38 @@ describe("teachers", () => {
     await deleteSchoolPerson(all[0].id);
     expect(await seedSchoolPeople()).toBe(0);
     expect(await prisma.schoolPerson.count()).toBe(FIRST_SCHOOL_PEOPLE.length - 1);
+  });
+
+  it("splits the /teachers pages: today, former head teachers, former teachers and staff, in memory", async () => {
+    await createSchoolPerson({ kind: "HEAD_TEACHER", status: "LATE", nameBn: "প্রথম প্রধান" });
+    await createSchoolPerson({ kind: "HEAD_TEACHER", status: "CURRENT", nameBn: "এখনকার প্রধান" });
+    await createSchoolPerson({ kind: "TEACHER", status: "CURRENT", nameBn: "শিক্ষক এখন" });
+    await createSchoolPerson({ kind: "STAFF", status: "CURRENT", nameBn: "স্টাফ এখন" });
+    await createSchoolPerson({ kind: "TEACHER", status: "FORMER", nameBn: "সাবেক শিক্ষক" });
+    await createSchoolPerson({ kind: "STAFF", status: "FORMER", nameBn: "সাবেক স্টাফ" });
+    await createSchoolPerson({ kind: "TEACHER", status: "LATE", nameBn: "মরহুম শিক্ষক" });
+    const d = await getTeacherDirectory();
+    expect(d.currentHead?.nameBn).toBe("এখনকার প্রধান");
+    expect(names(d.formerHeads)).toEqual(["প্রথম প্রধান"]);
+    expect([names(d.today.teachers), names(d.today.staff)]).toEqual([["শিক্ষক এখন"], ["স্টাফ এখন"]]);
+    expect([names(d.former.teachers), names(d.former.staff)]).toEqual([["সাবেক শিক্ষক"], ["সাবেক স্টাফ"]]);
+    expect(names(d.inMemory)).toEqual(["মরহুম শিক্ষক"]);
+  });
+
+  it("puts জনাব before every name once, and leaves later edits alone", async () => {
+    const a = await createSchoolPerson({ kind: "TEACHER", status: "FORMER", nameBn: "জনাবা গীতা দাশ গুপ্তা" });
+    const b = await createSchoolPerson({ kind: "TEACHER", status: "CURRENT", nameBn: "মিসেস কানিজ ফাতেমা" });
+    const c = await createSchoolPerson({ kind: "TEACHER", status: "FORMER", nameBn: "জনাব রনজিৎ চক্রবর্তী", nameEn: "Ranjit Chakraborty" });
+    const e = await createSchoolPerson({ kind: "TEACHER", status: "FORMER", nameBn: "জনাব জাহেদা আকতার", nameEn: "Zaheda Akter", photoUrl: "/teachers/zaheda-akter.jpg" });
+    expect(await fixSchoolPeopleNames()).toBe(4);
+    const byId = Object.fromEntries((await listSchoolPeople()).map((p) => [p.id, p]));
+    expect(byId[a.id].nameBn).toBe("জনাব গীতা দাশ গুপ্তা");
+    expect(byId[b.id].nameBn).toBe("জনাব কানিজ ফাতেমা");
+    expect(byId[c.id].nameBn).toBe("শ্রী রনজিত চক্রবর্তী");
+    expect(byId[e.id].photoUrl).toBe("/teachers/zaheda-akter-2.jpg");
+    await updateSchoolPerson(b.id, { nameBn: "মিসেস কানিজ ফাতেমা" });
+    expect(await fixSchoolPeopleNames()).toBe(0);
+    expect((await listSchoolPeople()).find((p) => p.id === b.id)?.nameBn).toBe("মিসেস কানিজ ফাতেমা");
   });
 
   it("lets admins and moderators manage the list, and no one else", async () => {

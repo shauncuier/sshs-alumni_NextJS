@@ -15,6 +15,7 @@ async function main() {
   if (r.renamedRows) console.log(`Renamed the association in ${r.renamedRows} row(s).`);
   for (const name of r.sponsorsAdded) console.log(`Added sponsor ${name} (edit it in /admin/sponsors).`);
   if (r.teachersAdded) console.log(`Imported ${r.teachersAdded} teachers from the 2015 souvenir (edit them in /admin/teachers).`);
+  if (r.teachersFixed) console.log(`Corrected the names or photos of ${r.teachersFixed} teachers.`);
   console.log(r.membershipEventCreated ? "Membership event created. Add its payment instructions in /admin/events before opening joining." : "Membership event already exists; left unchanged.");
   if (r.repaired.eventJson || r.repaired.registrations) {
     console.log(`Repaired ${r.repaired.eventJson} event JSON value(s) and ${r.repaired.registrations} legacy free registration(s).`);
