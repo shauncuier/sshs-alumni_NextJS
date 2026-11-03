@@ -7,9 +7,9 @@ type Setting = { required: boolean; updatedAt: string | null; updatedBy: string 
 
 /**
  * Admin → Settings → Payments: whether confirming a Bangla QR payment needs the TrxID
- * from our OK Wallet SMS. See lib/payments/bangla-qr-setting.ts.
+ * from our OK Wallet SMS. See lib/payments/bangla-qr-setting.ts. Only the super admin may change it.
  */
-export default function BanglaQrTrxSwitch() {
+export default function BanglaQrTrxSwitch({ readOnly = false }: { readOnly?: boolean }) {
   const [setting, setSetting] = useState<Setting | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export default function BanglaQrTrxSwitch() {
             type="checkbox"
             className="w-4 h-4 rounded text-emerald-700 cursor-pointer"
             checked={on}
-            disabled={!setting || busy}
+            disabled={!setting || busy || readOnly}
             onChange={(e) => void change(e.target.checked)}
           />
           Require the TrxID from our OK Wallet SMS for Bangla QR payments
@@ -66,6 +66,7 @@ export default function BanglaQrTrxSwitch() {
               ? "A Bangla QR payment is confirmed only with the TrxID from our SMS, so one SMS can confirm one payment."
               : "Optional: you can confirm a Bangla QR payment without it. A TrxID you do enter is still checked and can confirm one payment only."}
           {setting?.updatedBy && ` Last changed by ${setting.updatedBy}.`}
+          {readOnly && " Only the super admin can change this."}
         </p>
         {error && <p role="alert" className="mt-1 font-bold text-rose-700">{error}</p>}
       </div>

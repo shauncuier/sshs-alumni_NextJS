@@ -42,7 +42,7 @@ export default function AppSidebar() {
       : userStatus === "REJECTED"
         ? "Not approved"
         : "Verification pending";
-  const isGateStaff = isAdmin || userRole === "MODERATOR";
+  const isGateStaff = isAdmin || userRole === "MODERATOR" || userRole === "GATE";
 
   const links = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },

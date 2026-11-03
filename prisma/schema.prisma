@@ -12,6 +12,8 @@ enum Role {
   MODERATOR
   /// Keeps the association's accounts (/admin/accounts) and nothing else.
   TREASURER
+  /// Event-day volunteer: uses the gate scanner to check tickets in, and nothing else.
+  GATE
   ALUMNI
 }
 

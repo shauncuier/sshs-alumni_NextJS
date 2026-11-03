@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AppError } from "@/lib/app-error";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { requireArea } from "@/lib/admin/require-admin";
@@ -22,6 +23,8 @@ export async function PUT(req: Request) {
   try {
     requireSameOrigin(req);
     const me = await requireAdmin();
+    // Payment details decide where members' money goes, so only the super admin changes them.
+    if (me.role !== "SUPER_ADMIN") throw new AppError("FORBIDDEN", 403, "Only the super admin can change the payment details.");
     const { before, after } = await updatePaymentSettings(await readJsonBody(req), me.email);
     const fields = (["bkashNumber", "bkashType", "nagadNumber", "nagadType", "bankDetails", "banglaQrImage", "banglaQrMerchant", "note"] as const).filter((k) => before[k] !== after[k]);
     // Payment numbers decide where members' money goes: log old and new values.

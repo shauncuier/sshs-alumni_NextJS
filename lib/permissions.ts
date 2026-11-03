@@ -40,11 +40,15 @@ const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jo
 // The treasurer keeps the accounts and sees nothing else of the admin panel.
 const TREASURER_AREAS: readonly AdminArea[] = ["accounts"];
 
+// Event-day gate volunteers only scan tickets.
+const GATE_AREAS: readonly AdminArea[] = ["gate"];
+
 const AREAS_BY_ROLE: Record<string, readonly AdminArea[]> = {
   SUPER_ADMIN: ADMIN_AREAS,
   ADMIN: ADMIN_AREAS,
   MODERATOR: MODERATOR_AREAS,
   TREASURER: TREASURER_AREAS,
+  GATE: GATE_AREAS,
 };
 
 export function can(role: string | null | undefined, area: AdminArea): boolean {

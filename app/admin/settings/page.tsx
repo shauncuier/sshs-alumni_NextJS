@@ -69,8 +69,8 @@ export default async function SettingsPage() {
         <section id="payments" className="scroll-mt-28 space-y-4">
           <SectionTitle icon={CreditCard} title="Payments" text="bKash, Nagad, Bangla QR, bank and cash: switch each on or off and give its details. Members pay manually and the committee checks every payment." />
           <PaymentNoticeSwitches />
-          <BanglaQrTrxSwitch />
-          <PaymentSettingsForm />
+          <BanglaQrTrxSwitch readOnly={me.role !== "SUPER_ADMIN"} />
+          <PaymentSettingsForm readOnly={me.role !== "SUPER_ADMIN"} />
         </section>
       )}
 

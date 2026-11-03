@@ -13,6 +13,7 @@ import { getPublicEventBySlug } from "@/lib/events/service";
 import { registerForEvent } from "./helpers/register";
 import { GET as publicRoute } from "@/app/api/payment-settings/route";
 import { GET as adminGet, PUT as adminPut } from "@/app/api/admin/payment-settings/route";
+import { PUT as adminQrTrx } from "@/app/api/admin/settings/bangla-qr-trx/route";
 import { findDemoLeftovers } from "../prisma/seed-core";
 
 beforeEach(async () => {
@@ -44,15 +45,23 @@ describe("payment details", () => {
     await expect(updatePaymentSettings({ banglaQrImage: "https://evil.example/qr.png" }, "a@x")).rejects.toMatchObject({ status: 400 });
   });
 
-  it("only admins change them; every change is logged with old and new values; anyone can read them", async () => {
+  it("only the super admin changes them; admins may look; every change is logged with old and new values; anyone can read them", async () => {
     expect((await adminPut(put(details))).status).toBe(403);
     const mod = await makeMember({ role: "MODERATOR" });
     session.user = { id: mod.id, email: mod.email, role: "MODERATOR" };
     expect((await adminPut(put(details))).status).toBe(403);
     expect((await adminGet()).status).toBe(403);
 
+    // An admin sees the details but cannot change where the money goes.
     const admin = await makeMember({ role: "ADMIN" });
     session.user = { id: admin.id, email: admin.email, role: "ADMIN" };
+    expect((await adminGet()).status).toBe(200);
+    expect((await adminPut(put(details))).status).toBe(403);
+    expect((await adminQrTrx(put({ required: false }))).status).toBe(403);
+
+    const owner = await makeMember({ role: "SUPER_ADMIN" });
+    session.user = { id: owner.id, email: owner.email, role: "SUPER_ADMIN" };
+    expect((await adminQrTrx(put({ required: false }))).status).toBe(200);
     expect((await adminPut(put(details))).status).toBe(200);
     const log = await prisma.activityLog.findFirstOrThrow({ where: { action: "payment_settings.updated" } });
     expect(JSON.stringify(log.metadata)).toContain("01711000111");

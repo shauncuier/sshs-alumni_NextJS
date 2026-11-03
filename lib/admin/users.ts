@@ -20,7 +20,7 @@ import { normalizeGender } from "@/lib/members/gender";
  * Every change bumps sessionVersion, so the member's open sessions end at once.
  */
 
-export const ASSIGNABLE_ROLES = ["ALUMNI", "MODERATOR", "TREASURER", "ADMIN"] as const;
+export const ASSIGNABLE_ROLES = ["ALUMNI", "GATE", "MODERATOR", "TREASURER", "ADMIN"] as const;
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 export const USER_PAGE_SIZE = 25;
 const MIN_PASSWORD_LENGTH = 8;
@@ -87,7 +87,7 @@ export function manageBlock(actor: Actor, target: Target): string | null {
 
 /** Why `actor` may not give someone `role`, or null when they may. */
 export function roleGrantBlock(actor: Actor, role: unknown): string | null {
-  if (!isAssignableRole(role)) return "Please choose Alumni, Moderator, Treasurer or Admin.";
+  if (!isAssignableRole(role)) return "Please choose Alumni, Gate volunteer, Moderator, Treasurer or Admin.";
   if (role === "ADMIN" && actor.role !== "SUPER_ADMIN") return "Only the super admin can make someone an admin.";
   if (role === "TREASURER" && actor.role !== "SUPER_ADMIN") return "Only the super admin can make someone treasurer.";
   return null;
@@ -96,7 +96,7 @@ export function roleGrantBlock(actor: Actor, role: unknown): string | null {
 export async function listUsers(args: { q?: string | null; role?: string | null; status?: string | null; page?: number }) {
   const q = args.q?.trim() ?? "";
   const where: Prisma.UserWhereInput = {};
-  if (args.role && ["SUPER_ADMIN", "ADMIN", "MODERATOR", "TREASURER", "ALUMNI"].includes(args.role)) where.role = args.role as Role;
+  if (args.role && ["SUPER_ADMIN", "ADMIN", "MODERATOR", "TREASURER", "GATE", "ALUMNI"].includes(args.role)) where.role = args.role as Role;
   if (args.status === "DISABLED") where.disabledAt = { not: null };
   else if (args.status && ["PENDING", "VERIFIED", "REJECTED"].includes(args.status)) {
     where.status = args.status as VerificationStatus;

@@ -52,6 +52,9 @@ describe("permission map", () => {
     expect(areaForPath("/admin/constitution")).toBe("committee");
     expect(areaForPath("/admin/sponsors")).toBe("committee");
     expect(areaForPath("/admin/teachers")).toBe("teachers");
+    // Gate volunteers scan tickets and nothing else, and land on the scanner.
+    expect(ADMIN_AREAS.filter((a) => can("GATE", a))).toEqual(["gate"]);
+    expect(homeForRole("GATE")).toBe("/gate");
     expect(can("MODERATOR", "teachers")).toBe(true);
     expect(areaForPath("/admin/notices")).toBe("notices");
     expect(areaForPath("/admin/unknown-thing")).toBeNull();

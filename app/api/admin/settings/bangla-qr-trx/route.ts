@@ -23,6 +23,8 @@ export async function PUT(req: Request) {
   try {
     requireSameOrigin(req);
     const me = await requireAdmin();
+    // Whether a payment needs our SMS TrxID guards against fake payments: the super admin's call.
+    if (me.role !== "SUPER_ADMIN") throw new AppError("FORBIDDEN", 403, "Only the super admin can change this payment setting.");
     const body = (await readJsonBody(req)) as { required?: unknown };
     if (typeof body?.required !== "boolean") throw new AppError("INVALID_INPUT", 400, "Say whether the TrxID is required or not.");
     const setting = await setBanglaQrTrxRequired(body.required, me.email);

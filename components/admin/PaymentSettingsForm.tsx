@@ -22,8 +22,11 @@ const input = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
 const ghost = "px-3 py-2 min-h-[40px] border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer";
 
-/** Every way members can pay, for the whole site: each method switched on or off, with its details. */
-export default function PaymentSettingsForm() {
+/**
+ * Every way members can pay, for the whole site: each method switched on or off, with its details.
+ * Read-only for everyone but the super admin (the server refuses their changes too).
+ */
+export default function PaymentSettingsForm({ readOnly = false }: { readOnly?: boolean }) {
   const [form, setForm] = useState<Settings | null>(null);
   const [types, setTypes] = useState<string[]>(["Personal", "Agent", "Merchant"]);
   const [saving, setSaving] = useState(false);
@@ -128,6 +131,14 @@ export default function PaymentSettingsForm() {
         </p>
       </div>
 
+      {readOnly && (
+        <p role="status" className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
+          Only the super admin can change the payment details, because they decide where members&apos; money goes.
+        </p>
+      )}
+
+      <fieldset disabled={readOnly} className="space-y-4 min-w-0">
+
       {form.enabledMethods.length === 0 && (
         <p role="status" className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
           No method is switched on: paid events stay closed (&quot;Payment details coming soon&quot;) unless an event gives its own instructions.
@@ -199,13 +210,17 @@ export default function PaymentSettingsForm() {
         <textarea id="ps-note" rows={2} className={input} value={form.note} maxLength={1000} onChange={(e) => set("note", e.target.value)} placeholder="Write your name and batch in the reference." />
       </div>
 
+      </fieldset>
+
       {error && <p role="alert" className="text-xs font-bold text-rose-700">{error}</p>}
       {notice && <p role="status" className="text-xs font-bold text-emerald-800">{notice}</p>}
+      {!readOnly && (
       <div className="flex justify-end">
         <button type="submit" disabled={saving || uploading} className="px-4 py-2.5 min-h-[44px] bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save payment settings
         </button>
       </div>
+      )}
     </form>
   );
 }

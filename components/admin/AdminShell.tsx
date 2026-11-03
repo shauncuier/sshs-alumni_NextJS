@@ -175,7 +175,7 @@ export default function AdminShell({ children, user }: AdminShellProps) {
   }
 
   const effectiveRole = user?.role || session?.user?.role;
-  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : effectiveRole === "MODERATOR" ? "Moderator" : effectiveRole === "TREASURER" ? "Treasurer" : "Administrator";
+  const roleLabel = effectiveRole === "SUPER_ADMIN" ? "Super Admin" : effectiveRole === "MODERATOR" ? "Moderator" : effectiveRole === "TREASURER" ? "Treasurer" : effectiveRole === "GATE" ? "Gate volunteer" : "Administrator";
   // Only the sections this role may use (lib/permissions.ts); pages and APIs check the same map.
   const navItems = ALL_ITEMS.filter((item) => can(effectiveRole, item.area));
   const userEmail = user?.email ?? null;
