@@ -658,6 +658,48 @@ model Sponsor {
   @@index([isPublished, category, sortOrder])
 }
 
+enum SchoolPersonKind {
+  FOUNDER
+  HEAD_TEACHER
+  TEACHER
+  STAFF
+}
+
+enum SchoolPersonStatus {
+  CURRENT
+  FORMER
+  LATE
+  /// Not known yet: hidden from the public pages until an admin sets it (founders excepted).
+  UNKNOWN
+}
+
+/// The school's founders, head teachers, teachers and office staff on /school and the
+/// home page tribute, managed in /admin/teachers (lib/teachers.ts).
+model SchoolPerson {
+  id          String             @id @default(uuid()) @db.VarChar(36)
+  kind        SchoolPersonKind   @default(TEACHER)
+  status      SchoolPersonStatus @default(UNKNOWN)
+  /// Name as shown first, in Bangla, with মরহুম / প্রয়াত for someone who has passed away.
+  nameBn      String             @db.VarChar(200)
+  nameEn      String?            @db.VarChar(200)
+  /// Post in Bangla, e.g. "সহকারী শিক্ষক".
+  roleBn      String?            @db.VarChar(200)
+  roleEn      String?            @db.VarChar(200)
+  /// Free text such as "1980 – 2004".
+  tenure      String?            @db.VarChar(100)
+  photoUrl    String?            @db.VarChar(500)
+  /// For admins only: where a fact came from, or what is still to check.
+  note        String?            @db.VarChar(500)
+  /// Shown in the "With gratitude" panel on the home page.
+  onHomePage  Boolean            @default(false)
+  isPublished Boolean            @default(true)
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @default(now()) @updatedAt
+
+  @@index([isPublished, kind, sortOrder])
+}
+
 /// Constitution versions on /constitution, each a PDF, managed in /admin/constitution
 /// (lib/constitution.ts).
 model ConstitutionDocument {

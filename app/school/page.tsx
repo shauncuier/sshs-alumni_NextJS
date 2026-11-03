@@ -8,11 +8,16 @@ import { pageMetadata, shareCard } from "@/lib/seo";
 import Picture from "@/components/shared/Picture";
 import Link from "next/link";
 import PersonTile from "@/components/school/PersonTile";
-import { ANWAR_ALI_MOMENTS, FORMER_TEACHERS, SCHOOL_FOUNDERS, SCHOOL_MEMOIRS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
+import { ANWAR_ALI_MOMENTS, SCHOOL_MEMOIRS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
+import { getSchoolPeople } from "@/lib/teachers";
 
 export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
 
-export default function SchoolPage() {
+// The teachers come from the database (Admin → Teachers), so render on each request.
+export const dynamic = "force-dynamic";
+
+export default async function SchoolPage() {
+  const people = await getSchoolPeople().catch(() => ({ leaders: [], current: [], former: [], staff: [] }));
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />
@@ -157,38 +162,50 @@ export default function SchoolPage() {
             <p className="text-xs text-slate-500">From the souvenir of the 2015 alumni reunion (পুনর্মিলনী ২০১৫).</p>
           </div>
 
-          {/* FOUNDERS AND HEAD TEACHERS */}
-          <div id="founders" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-6">
-            <div className="space-y-1">
-              <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">প্রতিষ্ঠাতা ও প্রধান শিক্ষক</p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Founders and head teachers</h2>
+          {/* FOUNDERS AND HEAD TEACHERS (Admin → Teachers) */}
+          {people.leaders.length > 0 && (
+            <div id="founders" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-6">
+              <div className="space-y-1">
+                <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">প্রতিষ্ঠাতা ও প্রধান শিক্ষক</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Founders and head teachers</h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-8">
+                {people.leaders.map((p) => (
+                  <PersonTile key={p.id} person={p} size="lg" />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+                {ANWAR_ALI_MOMENTS.map((src) => (
+                  <img key={src} loading="lazy" decoding="async" src={src} alt="Anwar Ali Sir speaking at a school event" className="w-full h-56 sm:h-72 rounded-2xl object-cover object-top shadow-md" />
+                ))}
+                <p className="col-span-2 text-center text-xs text-slate-500">Anwar Ali Sir at a school event</p>
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {SCHOOL_FOUNDERS.map((p) => (
-                <PersonTile key={p.name} person={p} size="lg" />
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-              {ANWAR_ALI_MOMENTS.map((src) => (
-                <img key={src} loading="lazy" decoding="async" src={src} alt="Anwar Ali Sir speaking at a school event" className="w-full h-56 sm:h-72 rounded-2xl object-cover object-top shadow-md" />
-              ))}
-              <p className="col-span-2 text-center text-xs text-slate-500">Anwar Ali Sir at a school event</p>
-            </div>
-          </div>
+          )}
 
-          {/* FORMER TEACHERS: the 2015 souvenir's list */}
-          <div id="teachers" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-6">
-            <div className="space-y-1">
-              <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">প্রাক্তন শিক্ষকবৃন্দ</p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Former teachers</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
-              {FORMER_TEACHERS.map((p) => (
-                <PersonTile key={p.name} person={p} />
+          {/* TEACHERS AND STAFF, now and before */}
+          <div id="teachers" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-12">
+            {[
+              { list: people.current, bn: "বর্তমান শিক্ষকবৃন্দ", en: "Our teachers today" },
+              { list: people.staff, bn: "অফিস স্টাফ", en: "Office staff" },
+              { list: people.former, bn: "প্রাক্তন শিক্ষকবৃন্দ", en: "Former teachers" },
+            ]
+              .filter((section) => section.list.length > 0)
+              .map((section) => (
+                <div key={section.en} className="space-y-6">
+                  <div className="space-y-1">
+                    <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">{section.bn}</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{section.en}</h2>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
+                    {section.list.map((p) => (
+                      <PersonTile key={p.id} person={p} />
+                    ))}
+                  </div>
+                </div>
               ))}
-            </div>
             <p className="text-xs text-slate-500 text-center">
-              Photos from the 2015 reunion souvenir. Missing someone, or have a better photo?{" "}
+              Most photos are from the 2015 reunion souvenir. Missing someone, or have a better photo?{" "}
               <Link href="/contact" className="font-bold text-emerald-800 hover:text-emerald-700">
                 Contact us
               </Link>

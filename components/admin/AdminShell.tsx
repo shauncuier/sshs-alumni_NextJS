@@ -66,6 +66,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { name: "Honor board", short: "Honor board", href: "/admin/honor-board", icon: Medal, area: "committee" },
       { name: "Constitution", short: "Constitution", href: "/admin/constitution", icon: FileText, area: "committee" },
       { name: "Sponsors", short: "Sponsors", href: "/admin/sponsors", icon: Handshake, area: "committee" },
+      { name: "Teachers", short: "Teachers", href: "/admin/teachers", icon: GraduationCap, area: "teachers" },
     ],
   },
   { label: "Messages", items: [{ name: "Bulk SMS", short: "SMS", href: "/admin/sms", icon: MessageSquare, area: "sms" }] },

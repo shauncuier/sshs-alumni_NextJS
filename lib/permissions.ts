@@ -4,7 +4,7 @@
  * allowed), so the three can never disagree. Safe to import in the browser.
  *
  * Admins and the super admin use everything. Moderators run public content and
- * the event gate: news, notices, gallery, stories, jobs, mentors, feed moderation and the gate scanner,
+ * the event gate: news, notices, gallery, stories, jobs, mentors, the school's teachers, feed moderation and the gate scanner,
  * but never members, money, messages to members, settings or the activity log.
  */
 
@@ -28,13 +28,14 @@ export const ADMIN_AREAS = [
   "logs",
   "gate",
   "committee",
+  "teachers",
   "notices",
   "accounts",
   "settings",
 ] as const;
 export type AdminArea = (typeof ADMIN_AREAS)[number];
 
-const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate", "notices"];
+const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate", "notices", "teachers"];
 
 // The treasurer keeps the accounts and sees nothing else of the admin panel.
 const TREASURER_AREAS: readonly AdminArea[] = ["accounts"];

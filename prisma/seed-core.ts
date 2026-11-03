@@ -12,6 +12,7 @@ import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGu
 import { demoEvents } from "./demo-events";
 import { countAssociationDemo, removeAssociationDemo } from "./demo-association";
 import { seedLaunchSponsors } from "../lib/sponsors";
+import { seedSchoolPeople } from "../lib/teachers";
 
 /**
  * Seed steps shared by the demo seed (prisma/seed.ts, local development) and the
@@ -251,6 +252,8 @@ export interface ProductionSeedResult {
   batchesCreated: number;
   membershipEventCreated: boolean;
   sponsorsAdded: string[];
+  /** Teachers imported from the 2015 souvenir list (only on the first run). */
+  teachersAdded: number;
   renamedRows: number;
   repaired: { eventJson: number; registrations: number };
   lockedLegacyAccounts: string[];
@@ -269,9 +272,10 @@ export async function runProductionSeed(env: Env = process.env): Promise<Product
   const repaired = await repairLegacyRows();
   const membershipEventCreated = await seedMembershipEvent();
   const sponsorsAdded = await seedLaunchSponsors();
+  const teachersAdded = await seedSchoolPeople();
   const renamedRows = await renameAssociationInRows();
   const lockedLegacyAccounts = await lockLegacyAccounts();
   const profileSlugs = await ensureProfileSlugs();
   const warnings = await findDemoLeftovers(env);
-  return { superAdmin, batchesCreated, membershipEventCreated, sponsorsAdded, renamedRows, repaired, lockedLegacyAccounts, profileSlugs, warnings };
+  return { superAdmin, batchesCreated, membershipEventCreated, sponsorsAdded, teachersAdded, renamedRows, repaired, lockedLegacyAccounts, profileSlugs, warnings };
 }

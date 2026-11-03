@@ -34,7 +34,8 @@ import { avatarAt } from "@/lib/avatar";
 import { shownAvatar } from "@/lib/members/photo-privacy";
 import Picture from "@/components/shared/Picture";
 import PersonTile from "@/components/school/PersonTile";
-import { SCHOOL_FOUNDERS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
+import { SCHOOL_STORY_TEASER } from "@/lib/school-history";
+import { getHomeTribute } from "@/lib/teachers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -55,6 +56,7 @@ export default async function HomePage() {
   // Anyone signed in has already joined (or applied), so the closing "join" band is for visitors only.
   const signedIn = Boolean((await getServerSession(authOptions))?.user);
   const sponsor = await getFeaturedSponsor().catch(() => null);
+  const tribute = await getHomeTribute().catch(() => []);
   const yearsSinceFounding = new Date().getFullYear() - schoolInfo.established;
   // Members the public directory lists: verified profiles of accounts that are not disabled.
   const listed = { verificationStatus: "VERIFIED" as const, user: { disabledAt: null } };
@@ -298,7 +300,8 @@ export default async function HomePage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            {/* With gratitude: the people who started the school and led it (lib/school-history.ts) */}
+            {/* With gratitude: the people who started the school and led it (Admin → Teachers) */}
+            {tribute.length > 0 && (
             <div className="lg:col-span-6">
               <div className="rounded-3xl bg-[#06281e] text-white p-6 sm:p-8 shadow-md border border-emerald-800">
                 <div className="text-center mb-6 space-y-1">
@@ -306,16 +309,17 @@ export default async function HomePage() {
                   <p className="text-xs text-emerald-100/80">With gratitude to the people who built our school and shaped who we are.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                  {SCHOOL_FOUNDERS.map((p) => (
-                    <PersonTile key={p.name} person={p} size="lg" dark />
+                  {tribute.map((p) => (
+                    <PersonTile key={p.id} person={p} size="lg" dark />
                   ))}
                 </div>
                 <Link href="/school#teachers" className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-amber-300 hover:text-amber-200">
-                  <span>Our former teachers</span>
+                  <span>Our teachers</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
+            )}
           </div>
         </section>
 

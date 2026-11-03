@@ -1,70 +1,8 @@
-// The school's founders, former teachers and its story, from the souvenir of the 2015 alumni reunion
-// (পুনর্মিলনী ২০১৫, প্রাক্তন ছাত্র-ছাত্রী পরিষদ). Text is as printed there.
-
-export type SchoolPerson = {
-  nameBn: string;
-  name: string;
-  roleBn: string;
-  role: string;
-  tenure?: string;
-  /** A file under /public/teachers, or null until we have a photo. */
-  photo: string | null;
-};
-
-/** The people who started the school and led it, shown on the home page and /school. */
-export const SCHOOL_FOUNDERS: SchoolPerson[] = [
-  {
-    nameBn: "জনাব আবুল কালাম মোহাম্মদ শামসুদ্দিন",
-    name: "A.K.M. Shamsuddin",
-    roleBn: "প্রতিষ্ঠাতা · তৎকালীন প্রকল্প প্রধান, হাফিজ জুট মিলস",
-    role: "Founder · project head, Hafiz Jute Mills",
-    photo: null,
-  },
-  {
-    nameBn: "জনাব জিয়া উদ্দিন আহমদ",
-    name: "Zia Uddin Ahmed",
-    roleBn: "উদ্যোক্তা · শ্রম ও কল্যাণ বিভাগ",
-    role: "Started the school in 1974",
-    photo: "/teachers/zia-uddin-ahmed.jpg",
-  },
-  {
-    nameBn: "জনাব মোঃ মোস্তাফিজুর রহমান",
-    name: "Md. Mostafizur Rahman",
-    roleBn: "প্রতিষ্ঠাকালীন প্রধান শিক্ষক",
-    role: "Founding head teacher",
-    photo: null,
-  },
-  {
-    nameBn: "জনাব আনোয়ার আলী",
-    name: "Anwar Ali",
-    roleBn: "প্রধান শিক্ষক",
-    role: "Head teacher",
-    tenure: "1980 – 2004",
-    photo: "/teachers/anwar-ali.jpg",
-  },
-];
+// The school's story, from the souvenir of the 2015 alumni reunion (পুনর্মিলনী ২০১৫, প্রাক্তন ছাত্র-ছাত্রী
+// পরিষদ). Text is as printed there. The people themselves are in the database (lib/teachers.ts).
 
 /** Anwar Ali Sir speaking at a school event. */
 export const ANWAR_ALI_MOMENTS = ["/teachers/anwar-ali-speech-1.jpg", "/teachers/anwar-ali-speech-2.jpg"];
-
-/** "প্রাক্তন প্রধান শিক্ষক ও সহকারি শিক্ষকদের তালিকা", in the souvenir's order (head teachers are in SCHOOL_FOUNDERS). */
-export const FORMER_TEACHERS: SchoolPerson[] = [
-  { nameBn: "জনাবা গীতা দাশ গুপ্তা", name: "Gita Das Gupta", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/gita-das-gupta.jpg" },
-  { nameBn: "জনাবা মঞ্জুশ্রী চক্রবর্তী", name: "Manjushree Chakraborty", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/manjushree-chakraborty.jpg" },
-  { nameBn: "জনাব রনজিৎ চক্রবর্তী", name: "Ranjit Chakraborty", roleBn: "সহ-প্রধান শিক্ষক", role: "Assistant head teacher", photo: null },
-  { nameBn: "জনাব আবদুল মান্নান", name: "Abdul Mannan", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/abdul-mannan.jpg" },
-  { nameBn: "জনাব নান্টু রঞ্জন দাশ", name: "Nantu Ranjan Das", roleBn: "সহ-প্রধান শিক্ষক", role: "Assistant head teacher", photo: "/teachers/nantu-ranjan-das.jpg" },
-  { nameBn: "জনাব জালাল উদ্দিন আহম্মেদ", name: "Jalal Uddin Ahmed", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/jalal-uddin-ahmed.jpg" },
-  { nameBn: "মাওলানা আব্দুল হালীম হেলালী", name: "Maulana Abdul Halim Helali", roleBn: "ধর্মীয় শিক্ষক", role: "Religious studies teacher", photo: "/teachers/abdul-halim-helali.jpg" },
-  { nameBn: "মরহুম মোজাহেরুল ইসলাম", name: "Late Mozaherul Islam", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/mozaherul-islam.jpg" },
-  { nameBn: "জনাব হরে কৃষ্ণ দাশ", name: "Hare Krishna Das", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/hare-krishna-das.jpg" },
-  { nameBn: "জনাবা মঞ্জুশ্রী রানী পাল", name: "Manjushree Rani Pal", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/manjushree-rani-pal.jpg" },
-  { nameBn: "জনাব যজ্ঞেশ্বর দাশ", name: "Jaggeshwar Das", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/jaggeshwar-das.jpg" },
-  { nameBn: "জনাব ওসমান গনি", name: "Osman Gani", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/osman-gani.jpg" },
-  { nameBn: "মাওলানা মুসলেহ উদ্দিন", name: "Maulana Musleh Uddin", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: null },
-  { nameBn: "জনাব সলিম উদ্দিন চৌধুরী", name: "Salim Uddin Chowdhury", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/salim-uddin-chowdhury.jpg" },
-  { nameBn: "জনাব আহসান হাবীব", name: "Ahsan Habib", roleBn: "সহকারী শিক্ষক", role: "Assistant teacher", photo: "/teachers/ahsan-habib.jpg" },
-];
 
 /** The short version for the home page. */
 export const SCHOOL_STORY_TEASER = {
