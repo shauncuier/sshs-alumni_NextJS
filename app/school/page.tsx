@@ -6,6 +6,9 @@ import { schoolInfo } from "@/lib/data";
 import { GraduationCap, ExternalLink } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import Picture from "@/components/shared/Picture";
+import Link from "next/link";
+import PersonTile from "@/components/school/PersonTile";
+import { ANWAR_ALI_MOMENTS, FORMER_TEACHERS, SCHOOL_FOUNDERS, SCHOOL_MEMOIRS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
 
 export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
 
@@ -106,6 +109,91 @@ export default function SchoolPage() {
               <h3 className="font-bold text-base text-slate-900">Sitakunda, Chattogram</h3>
               <p className="text-xs text-slate-500">{schoolInfo.location}</p>
             </div>
+          </div>
+
+          {/* OUR STORY: two memoirs from the 2015 reunion souvenir */}
+          <div id="story" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-6">
+            <div className="space-y-1">
+              <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">আমাদের গল্প</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Our story: from a cowshed to a school</h2>
+              <p className="text-sm text-slate-600">{SCHOOL_STORY_TEASER.en}</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {SCHOOL_MEMOIRS.map((m) => (
+                <article key={m.id} className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-4 shadow-sm">
+                  <header className="flex items-start gap-4">
+                    {m.photo && (
+                      <img loading="lazy" decoding="async" src={m.photo} alt={m.author} className="w-16 h-20 rounded-xl object-cover object-top ring-2 ring-amber-300/70 shrink-0" />
+                    )}
+                    <div lang="bn" className="space-y-1">
+                      <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">{m.title}</h3>
+                      {m.subtitle && <p className="text-xs text-slate-500">{m.subtitle}</p>}
+                      <p className="text-sm font-semibold text-emerald-800">
+                        {m.author} <span className="font-normal text-slate-500">· {m.authorRole}</span>
+                      </p>
+                    </div>
+                  </header>
+                  <div lang="bn" className="space-y-3 text-sm sm:text-[15px] text-slate-700 leading-relaxed">
+                    {m.paragraphs.slice(0, 2).map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
+                  </div>
+                  {m.paragraphs.length > 2 && (
+                    <details className="group">
+                      <summary lang="bn" className="cursor-pointer text-sm font-bold text-emerald-800 hover:text-emerald-700 list-none">
+                        <span className="group-open:hidden">পুরোটা পড়ুন · Read all</span>
+                        <span className="hidden group-open:inline">সংক্ষেপ করুন · Show less</span>
+                      </summary>
+                      <div lang="bn" className="space-y-3 text-sm sm:text-[15px] text-slate-700 leading-relaxed mt-3">
+                        {m.paragraphs.slice(2).map((p, i) => (
+                          <p key={i}>{p}</p>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </article>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500">From the souvenir of the 2015 alumni reunion (পুনর্মিলনী ২০১৫).</p>
+          </div>
+
+          {/* FOUNDERS AND HEAD TEACHERS */}
+          <div id="founders" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-6">
+            <div className="space-y-1">
+              <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">প্রতিষ্ঠাতা ও প্রধান শিক্ষক</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Founders and head teachers</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {SCHOOL_FOUNDERS.map((p) => (
+                <PersonTile key={p.name} person={p} size="lg" />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {ANWAR_ALI_MOMENTS.map((src) => (
+                <img key={src} loading="lazy" decoding="async" src={src} alt="Anwar Ali Sir speaking at a school event" className="w-full h-56 sm:h-72 rounded-2xl object-cover object-top shadow-md" />
+              ))}
+              <p className="col-span-2 text-center text-xs text-slate-500">Anwar Ali Sir at a school event</p>
+            </div>
+          </div>
+
+          {/* FORMER TEACHERS: the 2015 souvenir's list */}
+          <div id="teachers" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-6">
+            <div className="space-y-1">
+              <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">প্রাক্তন শিক্ষকবৃন্দ</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Former teachers</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
+              {FORMER_TEACHERS.map((p) => (
+                <PersonTile key={p.name} person={p} />
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 text-center">
+              Photos from the 2015 reunion souvenir. Missing someone, or have a better photo?{" "}
+              <Link href="/contact" className="font-bold text-emerald-800 hover:text-emerald-700">
+                Contact us
+              </Link>
+              .
+            </p>
           </div>
         </section>
       </main>

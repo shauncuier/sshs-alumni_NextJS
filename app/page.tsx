@@ -33,6 +33,8 @@ import { pageMetadata, shareCard } from "@/lib/seo";
 import { avatarAt } from "@/lib/avatar";
 import { shownAvatar } from "@/lib/members/photo-privacy";
 import Picture from "@/components/shared/Picture";
+import PersonTile from "@/components/school/PersonTile";
+import { SCHOOL_FOUNDERS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -135,6 +137,9 @@ export default async function HomePage() {
       <main className="flex-1">
         {/* 1. HERO */}
         <section className="relative bg-[#06281e] text-white overflow-hidden py-16 lg:py-24">
+          {/* The school campus behind the hero, darkened so the text stays readable. */}
+          <Image src="/school-campus.jpg" alt="" fill priority sizes="100vw" className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#06281e]/90 via-[#06281e]/70 to-[#06281e]/30" />
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
@@ -262,10 +267,15 @@ export default async function HomePage() {
                 <span>Since {schoolInfo.established}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">One school, generations of friends</h2>
+              <p lang="bn" className="text-slate-800 text-base leading-relaxed font-medium">{SCHOOL_STORY_TEASER.bn}</p>
               <p className="text-slate-600 text-sm leading-relaxed">
-                {schoolInfo.name} ({schoolInfo.bengaliName}) in {schoolInfo.location} has taught students for {yearsSinceFounding} years.
-                The alumni association keeps its former students in touch with each other and with the school.
+                {SCHOOL_STORY_TEASER.en} Today {schoolInfo.name} ({schoolInfo.bengaliName}) has taught students for {yearsSinceFounding} years,
+                and the alumni association keeps them in touch with each other and with the school.
               </p>
+              <Link href="/school#story" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-800 hover:text-emerald-700">
+                <span>Read our story · আমাদের গল্প</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                 {[
                   { href: "/batches", label: "Find your batch and classmates" },
@@ -288,9 +298,22 @@ export default async function HomePage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
+            {/* With gratitude: the people who started the school and led it (lib/school-history.ts) */}
             <div className="lg:col-span-6">
-              <div className="rounded-3xl overflow-hidden shadow-md border border-slate-200">
-                <Image src="/about-school.jpg" alt={`${schoolInfo.name}: fifty batches since ${schoolInfo.established}`} width={2752} height={1536} sizes="(max-width: 1024px) 100vw, 50vw" className="w-full h-64 sm:h-80 object-cover object-[center_85%]" />
+              <div className="rounded-3xl bg-[#06281e] text-white p-6 sm:p-8 shadow-md border border-emerald-800">
+                <div className="text-center mb-6 space-y-1">
+                  <p lang="bn" className="text-amber-300 font-bold text-lg">শ্রদ্ধাঞ্জলি</p>
+                  <p className="text-xs text-emerald-100/80">With gratitude to the people who built our school and shaped who we are.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                  {SCHOOL_FOUNDERS.map((p) => (
+                    <PersonTile key={p.name} person={p} size="lg" dark />
+                  ))}
+                </div>
+                <Link href="/school#teachers" className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-amber-300 hover:text-amber-200">
+                  <span>Our former teachers</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             </div>
           </div>
