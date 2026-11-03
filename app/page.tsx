@@ -139,8 +139,10 @@ export default async function HomePage() {
       <main className="flex-1">
         {/* 1. HERO */}
         <section className="relative bg-[#06281e] text-white overflow-hidden py-16 lg:py-24">
-          {/* The school campus behind the hero, darkened so the text stays readable. */}
-          <Image src="/school-campus.jpg" alt="" fill priority sizes="100vw" className="object-cover" />
+          {/* The school campus behind the hero, darkened so the text stays readable. It is the
+              page's largest paint, so it loads first; phones get a 640px copy (~23 KB), since the
+              overlay hides most of it there. */}
+          <Image src="/school-campus.jpg" alt="" fill priority sizes="(max-width: 640px) 640px, 100vw" className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#06281e]/90 via-[#06281e]/70 to-[#06281e]/30" />
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -184,11 +186,12 @@ export default async function HomePage() {
                 )}
               </div>
 
-              {/* Membership / next big event, from the events table */}
+              {/* Membership / next big event, from the events table. Its picture loads after the
+                  hero photo: on phones it sits below the fold and would only slow that down. */}
               <div className="lg:col-span-5">
                 <div className="relative mx-auto max-w-md lg:max-w-none rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-[#041a13]">
                   {heroEvent?.bannerImage && !heroEvent.bannerImage.startsWith("/golden-jubilee") ? (
-                    <Picture src={heroEvent.bannerImage} alt="" sizes="(max-width: 1024px) 100vw, 40vw" priority className="w-full h-[360px] sm:h-[400px] object-cover" />
+                    <Picture src={heroEvent.bannerImage} alt="" sizes="(max-width: 1024px) 100vw, 40vw" className="w-full h-[360px] sm:h-[400px] object-cover" />
                   ) : (
                     <Image
                       src="/golden-jubilee-art.jpg"
@@ -196,8 +199,6 @@ export default async function HomePage() {
                       width={1376}
                       height={768}
                       sizes="(max-width: 1024px) 100vw, 40vw"
-                      loading="eager"
-                      fetchPriority="high"
                       className="w-full h-[360px] sm:h-[400px] object-cover"
                     />
                   )}
