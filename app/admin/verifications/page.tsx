@@ -1156,31 +1156,33 @@ function VerificationReviewContent() {
                         </div>
                       </div>
 
-                      {activeApplicant.paymentMethod === "Bangla QR" &&
-                        (activeApplicant.awaitingPayment ? (
-                          <BanglaQrMatch
-                            amount={activeApplicant.totalFee ?? 0}
-                            last4={activeApplicant.payerAccountLast4 ?? null}
-                            paidAt={activeApplicant.payerPaidAt ?? null}
-                            memberTrxId={activeApplicant.transactionId ?? null}
-                            value={merchantTrx}
-                            onChange={setMerchantTrx}
-                            idPrefix="verify-bqr"
-                          />
-                        ) : (
-                          // The paying account's last 4 digits and time, shown even when no SMS TrxID was recorded.
+                      {activeApplicant.paymentMethod === "Bangla QR" && (
+                        <>
+                          {/* The paying account's last 4 digits and time, before and after confirming. */}
                           <p className="text-xs text-slate-600">
                             Paid from account{" "}
                             <span className="font-mono font-bold text-slate-900">{activeApplicant.payerAccountLast4 ? `…${activeApplicant.payerAccountLast4}` : "— (not given)"}</span>
                             {activeApplicant.payerPaidAt ? ` at ${smsTime(new Date(activeApplicant.payerPaidAt))}` : ""}
-                            {activeApplicant.merchantTrxId && (
+                            {!activeApplicant.awaitingPayment && activeApplicant.merchantTrxId && (
                               <>
                                 {" "}· confirmed against our OK Wallet SMS, TrxID <span className="font-mono font-bold">{activeApplicant.merchantTrxId}</span>
                               </>
                             )}
                             .
                           </p>
-                        ))}
+                          {activeApplicant.awaitingPayment && (
+                            <BanglaQrMatch
+                              amount={activeApplicant.totalFee ?? 0}
+                              last4={activeApplicant.payerAccountLast4 ?? null}
+                              paidAt={activeApplicant.payerPaidAt ?? null}
+                              memberTrxId={activeApplicant.transactionId ?? null}
+                              value={merchantTrx}
+                              onChange={setMerchantTrx}
+                              idPrefix="verify-bqr"
+                            />
+                          )}
+                        </>
+                      )}
 
                       {/* Payment Proof Screenshot Preview if uploaded */}
                       {activeApplicant.paymentReceiptUrl && (
