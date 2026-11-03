@@ -33,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
     links: [
       { name: "About the association", href: "/about", icon: Users, desc: "Who we are and what we do" },
       { name: "Our school", href: "/school", icon: Building2, desc: "History of the school, EIIN 105070" },
+      { name: "Our teachers", href: "/teachers", icon: GraduationCap, desc: "Head teachers, teachers and staff, then and now" },
       { name: "Constitution", href: "/constitution", icon: ScrollText, desc: "The association's rules, as PDF" },
       { name: "Past committees", href: "/committee/past", icon: History, desc: "Committees of earlier terms" },
       { name: "Honor board", href: "/honor-board", icon: Medal, desc: "The people who led the association" },

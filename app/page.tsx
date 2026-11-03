@@ -313,7 +313,7 @@ export default async function HomePage() {
                     <PersonTile key={p.id} person={p} size="lg" dark />
                   ))}
                 </div>
-                <Link href="/school#teachers" className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-amber-300 hover:text-amber-200">
+                <Link href="/teachers" className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-amber-300 hover:text-amber-200">
                   <span>Our teachers</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>

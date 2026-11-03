@@ -3,7 +3,7 @@ import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { schoolInfo } from "@/lib/data";
-import { GraduationCap, ExternalLink } from "lucide-react";
+import { ArrowRight, GraduationCap, ExternalLink } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import Picture from "@/components/shared/Picture";
 import Link from "next/link";
@@ -183,34 +183,27 @@ export default async function SchoolPage() {
             </div>
           )}
 
-          {/* TEACHERS AND STAFF, now and before */}
-          <div id="teachers" className="scroll-mt-24 pt-6 border-t border-slate-200 space-y-12">
-            {[
-              { list: people.current, bn: "বর্তমান শিক্ষকবৃন্দ", en: "Our teachers today" },
-              { list: people.staff, bn: "অফিস স্টাফ", en: "Office staff" },
-              { list: people.former, bn: "প্রাক্তন শিক্ষকবৃন্দ", en: "Former teachers" },
-            ]
-              .filter((section) => section.list.length > 0)
-              .map((section) => (
-                <div key={section.en} className="space-y-6">
-                  <div className="space-y-1">
-                    <p lang="bn" className="text-xs font-bold uppercase tracking-wider text-emerald-700">{section.bn}</p>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{section.en}</h2>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
-                    {section.list.map((p) => (
-                      <PersonTile key={p.id} person={p} />
-                    ))}
-                  </div>
+          {/* TEACHERS: the full list is on /teachers */}
+          <div id="teachers" className="scroll-mt-24 pt-6 border-t border-slate-200">
+            <Link href="/teachers" className="group flex flex-col sm:flex-row items-center justify-between gap-4 rounded-3xl bg-[#06281e] text-white p-6 sm:p-8 hover:bg-[#0b3d2c] transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="flex -space-x-3">
+                  {[...people.current, ...people.former].filter((p) => p.photoUrl).slice(0, 5).map((p) => (
+                    <img key={p.id} loading="lazy" decoding="async" src={p.photoUrl!} alt="" className="w-11 h-11 rounded-full object-cover object-top border-2 border-[#06281e]" />
+                  ))}
                 </div>
-              ))}
-            <p className="text-xs text-slate-500 text-center">
-              Most photos are from the 2015 reunion souvenir. Missing someone, or have a better photo?{" "}
-              <Link href="/contact" className="font-bold text-emerald-800 hover:text-emerald-700">
-                Contact us
-              </Link>
-              .
-            </p>
+                <div>
+                  <p lang="bn" className="text-xs font-bold text-amber-300">শিক্ষকমণ্ডলী</p>
+                  <p className="text-lg sm:text-xl font-extrabold">Our teachers, today and before</p>
+                  <p className="text-xs text-emerald-100/80">
+                    {people.current.length} teaching today · {people.former.length} former teachers{people.staff.length > 0 ? ` · ${people.staff.length} office staff` : ""}
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-400 group-hover:bg-amber-300 text-slate-950 font-black text-sm shrink-0">
+                See all teachers <ArrowRight className="w-4 h-4" />
+              </span>
+            </Link>
           </div>
         </section>
       </main>

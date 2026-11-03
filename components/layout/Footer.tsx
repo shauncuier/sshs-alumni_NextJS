@@ -179,6 +179,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link prefetch={false} href="/teachers" className="hover:text-emerald-300 transition-colors">
+                  Our Teachers
+                </Link>
+              </li>
+              <li>
                 <Link prefetch={false} href="/notices" className="hover:text-emerald-300 transition-colors">
                   Notice Board
                 </Link>

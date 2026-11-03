@@ -184,7 +184,7 @@ export default function AdminTeachersPage() {
           <button onClick={() => void load()} disabled={loading} className={ghost} title="Refresh">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
-          <Link href="/school#teachers" target="_blank" className={ghost}><ExternalLink className="w-3.5 h-3.5" /> View</Link>
+          <Link href="/teachers" target="_blank" className={ghost}><ExternalLink className="w-3.5 h-3.5" /> View</Link>
           <button onClick={() => setEditing(EMPTY)} className={`${primary} flex-1 sm:flex-none`}>
             <Plus className="w-4 h-4" /> Add person
           </button>
