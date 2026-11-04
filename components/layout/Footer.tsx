@@ -5,6 +5,7 @@ import { MapPin, Phone, Mail, Globe, ExternalLink } from "lucide-react";
 import { schoolInfo } from "@/lib/data";
 import AssociationPhones from "@/components/shared/AssociationPhones";
 import FacebookIcon from "@/components/shared/FacebookIcon";
+import YouTubeIcon from "@/components/shared/YouTubeIcon";
 import SponsorCredit from "@/components/layout/SponsorCredit";
 
 // Site-wide links do not prefetch: on mobile data, prefetching every menu and footer link
@@ -103,6 +104,12 @@ export default function Footer() {
                     School Facebook page
                   </a>
                 </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <YouTubeIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                <a href={schoolInfo.youtubeChannel} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                  YouTube channel
+                </a>
               </div>
             </div>
 

@@ -239,6 +239,8 @@ export const schoolInfo = {
   /** The school's Facebook page and the alumni association's Facebook group. */
   facebookPage: "https://www.facebook.com/ssghschool",
   facebookGroup: "https://www.facebook.com/groups/sshsalumniassociation",
+  /** The alumni association's YouTube channel (the jubilee promo and the registration guide). */
+  youtubeChannel: "https://www.youtube.com/@PraktanSabujianParishad",
   tagline: "Connecting Generations, Preserving Heritage, Shaping the Future",
   motto: "Knowledge, Character, and National Dedication",
 };

@@ -242,7 +242,7 @@ export function organizationJsonLd() {
       areaServed: "BD",
       availableLanguage: ["bn", "en"],
     })),
-    sameAs: [schoolInfo.facebookGroup],
+    sameAs: [schoolInfo.facebookGroup, schoolInfo.youtubeChannel],
     parentOrganization: schoolNode(),
   };
 }

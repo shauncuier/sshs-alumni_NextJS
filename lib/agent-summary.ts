@@ -40,6 +40,7 @@ export async function siteMarkdown(): Promise<string> {
     `- School phone: ${schoolInfo.phone}`,
     `- School website: ${schoolInfo.website}`,
     `- Facebook group: ${schoolInfo.facebookGroup}`,
+    `- YouTube channel: ${schoolInfo.youtubeChannel}`,
     "",
     "## Upcoming events",
     "",

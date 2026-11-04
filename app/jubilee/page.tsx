@@ -11,6 +11,7 @@ import { getMemberSession } from "@/lib/session-user";
 import { eventDescription, pageMetadata, shareCard } from "@/lib/seo";
 import { schoolInfo } from "@/lib/data";
 import FacebookIcon from "@/components/shared/FacebookIcon";
+import YouTubeIcon from "@/components/shared/YouTubeIcon";
 import YouTubeEmbed from "@/components/shared/YouTubeEmbed";
 
 /** The Golden Jubilee promo and the registration walkthrough, on the association's YouTube channel. */
@@ -266,6 +267,9 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
           <p className="flex flex-wrap gap-x-5 gap-y-2">
             <a href={schoolInfo.facebookGroup} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-white hover:text-amber-300">
               <FacebookIcon className="w-3.5 h-3.5" /> Alumni Facebook group
+            </a>
+            <a href={schoolInfo.youtubeChannel} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-white hover:text-amber-300">
+              <YouTubeIcon className="w-3.5 h-3.5" /> YouTube channel
             </a>
             {event && (
               <Link href={`/events/${event.slug}`} className="font-semibold text-white hover:text-amber-300">
