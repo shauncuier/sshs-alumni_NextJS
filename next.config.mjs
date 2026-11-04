@@ -109,7 +109,9 @@ const nextConfig = {
       `script-src 'self' 'unsafe-inline' ${ga.script} ${clarity.script}` + (dev ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
       // Initials avatars are inline data: SVGs (lib/avatar.ts).
-      `img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org ${ga.img} ${clarity.img}`,
+      // The YouTube promo on /jubilee (components/shared/YouTubeEmbed.tsx): its thumbnail, then the player.
+      `img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://i.ytimg.com ${ga.img} ${clarity.img}`,
+      "frame-src 'self' https://www.youtube-nocookie.com",
       "font-src 'self' data:",
       // Live updates use same-origin Server-Sent Events; the dev server also needs its HMR socket.
       `connect-src 'self' ${ga.connect} ${clarity.connect}` + (dev ? " ws: wss:" : ""),

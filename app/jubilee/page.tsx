@@ -11,6 +11,11 @@ import { getMemberSession } from "@/lib/session-user";
 import { eventDescription, pageMetadata, shareCard } from "@/lib/seo";
 import { schoolInfo } from "@/lib/data";
 import FacebookIcon from "@/components/shared/FacebookIcon";
+import YouTubeEmbed from "@/components/shared/YouTubeEmbed";
+
+/** The Golden Jubilee promo and the registration walkthrough, on the association's YouTube channel. */
+const PROMO_VIDEO_ID = "pouConmPHcc";
+const GUIDE_VIDEO_ID = "05qE5pFfJQg";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +206,15 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
           )}
         </section>
 
+        {/* The promo video (loads only when tapped) */}
+        <section className="max-w-3xl mx-auto px-4 pt-8 space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 lang="bn" className="text-lg font-extrabold text-slate-900">ভিডিওতে দেখুন</h2>
+            <span className="text-sm font-bold text-slate-400">Watch the promo</span>
+          </div>
+          <YouTubeEmbed id={PROMO_VIDEO_ID} title="সুবর্ণ জয়ন্তী ২০২৬ · Golden Jubilee promo" />
+        </section>
+
         {/* How it works: three short steps */}
         {!paid && (
           <section className="max-w-3xl mx-auto px-4 pt-8">
@@ -220,6 +234,17 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
         {/* The form */}
         {!paid && (
           <section id="register" className="max-w-3xl mx-auto px-4 pt-8 pb-12 space-y-3 scroll-mt-4">
+            <details className="group rounded-2xl border border-slate-200 bg-white">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-emerald-900">
+                <span>
+                  <span lang="bn">কীভাবে ফর্ম পূরণ করবেন</span> <span className="text-slate-400 font-semibold">· How to fill in the form (1:32)</span>
+                </span>
+                <span aria-hidden className="text-emerald-700 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="px-3 pb-3">
+                <YouTubeEmbed id={GUIDE_VIDEO_ID} title="রেজিস্ট্রেশন গাইড · Registration guide" />
+              </div>
+            </details>
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="text-lg font-extrabold text-slate-900">Registration form</h2>
               <span lang="bn" className="text-sm font-bold text-slate-400">রেজিস্ট্রেশন ফর্ম</span>
