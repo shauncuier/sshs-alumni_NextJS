@@ -1,6 +1,6 @@
 """Build src/timings.json from an ElevenLabs word-timing file (words.json).
 
-Usage: python -I scripts/timings.py path/to/words.json
+Usage: python -I scripts/timings.py path/to/words.json [promo|form]
 
 Scene starts and the cues inside each scene (when a card appears) come from
 when the voiceover says each word, so a new voice or take only needs this
@@ -23,14 +23,14 @@ def find(prefix: str) -> dict:
     """The next word (from the current position) that starts with `prefix`."""
     global pos
     for i in range(pos, len(words)):
-        if words[i]["text"].startswith(prefix):
+        if words[i]["text"].lstrip("\"'“”‘’(").startswith(prefix):
             pos = i + 1
             return words[i]
     raise SystemExit(f"word not found after #{pos}: {prefix}")
 
 
 # (scene, first word of its sentence, cue words inside the scene)
-PLAN = [
+PROMO = [
     ("intro", "১৯৭৬", []),
     ("campus", "পঞ্চাশ", []),
     ("teachers", "যে", []),
@@ -42,6 +42,25 @@ PLAN = [
     ("deadline", "রেজিস্ট্রেশন", []),
     ("cta", "এখনই", ["exsabujian", "পঞ্চাশ"]),
 ]
+
+FORM = [
+    ("intro", "সুবর্ণ", []),
+    ("open", "প্রথমে", ["exsabujian", "তারপর"]),
+    ("details", "প্রথম", ["মুখের", "ইংরেজি", "বাংলা"]),
+    ("contact", "এরপর", ["ইমেইল", "পাসওয়ার্ড", "মোবাইল"]),
+    ("profile", "এবার", ["এসএসসি", "বিভাগ", "লিঙ্গ", "জন্ম", "পেশা", "ঠিকানাও"]),
+    ("proof", "স্কুলে", ["এসএসসি", "মার্কশিটের", "এটা"]),
+    ("continue", "তারপর", ["Continue"]),
+    ("step2", "দ্বিতীয়", ["সাথে", "টি", "মোট"]),
+    ("pay", "পেমেন্ট", ["বাংলা", "যেকোনো"]),
+    ("paydetails", "যে", ["শেষ", "পেমেন্টের", "রসিদের"]),
+    ("submit", "সবশেষে", ["Join"]),
+    ("ticket", "কমিটি", ["ইমেইলে", "ড্যাশবোর্ডেও", "অনুষ্ঠানের"]),
+    ("end", "রেজিস্ট্রেশন", ["কোনো"]),
+]
+
+which = sys.argv[2] if len(sys.argv) > 2 else "promo"
+PLAN = FORM if which == "form" else PROMO
 
 out = {"scenes": {}, "cues": {}, "sentences": []}
 for scene, first, cues in PLAN:
@@ -57,9 +76,10 @@ for scene, first, cues in PLAN:
 for i, s in enumerate(out["sentences"]):
     nxt = out["sentences"][i + 1]["from"] if i + 1 < len(out["sentences"]) else words[-1]["end"]
     s["to"] = round(nxt, 2)
-out["fees_family"] = out["cues"]["fees"][3]
 out["voEnd"] = round(words[-1]["end"], 2)
 
-dest = Path(__file__).resolve().parent.parent / "src" / "timings.json"
+src = Path(__file__).resolve().parent.parent / "src"
+dest = src / "form" / "timings.json" if which == "form" else src / "timings.json"
+dest.parent.mkdir(exist_ok=True)
 dest.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 print(json.dumps(out, ensure_ascii=False, indent=2))
