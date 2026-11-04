@@ -1,6 +1,6 @@
 """Build src/timings.json from an ElevenLabs word-timing file (words.json).
 
-Usage: python -I scripts/timings.py path/to/words.json [promo|form]
+Usage: python -I scripts/timings.py path/to/words.json [promo|form|online]
 
 Scene starts and the cues inside each scene (when a card appears) come from
 when the voiceover says each word, so a new voice or take only needs this
@@ -59,8 +59,21 @@ FORM = [
     ("end", "রেজিস্ট্রেশন", ["কোনো"]),
 ]
 
+ONLINE = [
+    ("intro", "অনলাইনে", []),
+    ("offline", "অফলাইনে", ["কাগজের", "কমিটির", "হাতে", "তারপর"]),
+    ("online", "অনলাইনে", ["ঘরে", "যেকোনো", "মাত্র"]),
+    ("pay", "বাংলা", ["নিজের", "ভুলের"]),
+    ("track", "ড্যাশবোর্ডে", ["যাচাই", "ইমেইলে", "গেটে"]),
+    ("member", "সাথে", ["সদস্যপদ"]),
+    ("privacy", "আপনার", ["মোবাইল", "দেখতে"]),
+    ("women", "নারী", ["তাঁদের", "অন্যরা", "আসল"]),
+    ("settings", "চাইলে", ["সেটিংস", "এসএসসি"]),
+    ("cta", "তাই", ["আজই", "exsabujian"]),
+]
+
 which = sys.argv[2] if len(sys.argv) > 2 else "promo"
-PLAN = FORM if which == "form" else PROMO
+PLAN = {"form": FORM, "online": ONLINE}.get(which, PROMO)
 
 out = {"scenes": {}, "cues": {}, "sentences": []}
 for scene, first, cues in PLAN:
@@ -79,7 +92,7 @@ for i, s in enumerate(out["sentences"]):
 out["voEnd"] = round(words[-1]["end"], 2)
 
 src = Path(__file__).resolve().parent.parent / "src"
-dest = src / "form" / "timings.json" if which == "form" else src / "timings.json"
+dest = src / which / "timings.json" if which in ("form", "online") else src / "timings.json"
 dest.parent.mkdir(exist_ok=True)
 dest.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 print(json.dumps(out, ensure_ascii=False, indent=2))
