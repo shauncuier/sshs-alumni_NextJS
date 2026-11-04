@@ -1,0 +1,118 @@
+{
+  "scenes": {
+    "intro": 0.0,
+    "campus": 6.99,
+    "teachers": 13.4,
+    "title": 20.2,
+    "date": 25.07,
+    "programme": 29.24,
+    "kit": 36.2,
+    "fees": 43.23,
+    "deadline": 48.83,
+    "cta": 51.51
+  },
+  "cues": {
+    "intro": [
+      0.13
+    ],
+    "campus": [
+      7.03
+    ],
+    "teachers": [
+      13.44
+    ],
+    "title": [
+      20.23
+    ],
+    "date": [
+      25.11,
+      26.24,
+      28.08
+    ],
+    "programme": [
+      29.28,
+      30.24,
+      31.36,
+      32.64,
+      33.8,
+      35.32
+    ],
+    "kit": [
+      36.24,
+      36.92,
+      37.64,
+      39.0,
+      40.16,
+      40.88,
+      42.56
+    ],
+    "fees": [
+      43.27,
+      44.32,
+      46.0,
+      47.4
+    ],
+    "deadline": [
+      48.87
+    ],
+    "cta": [
+      51.57,
+      53.12,
+      56.22
+    ]
+  },
+  "sentences": [
+    {
+      "scene": "intro",
+      "from": 0.13,
+      "to": 7.03
+    },
+    {
+      "scene": "campus",
+      "from": 7.03,
+      "to": 13.44
+    },
+    {
+      "scene": "teachers",
+      "from": 13.44,
+      "to": 20.23
+    },
+    {
+      "scene": "title",
+      "from": 20.23,
+      "to": 25.11
+    },
+    {
+      "scene": "date",
+      "from": 25.11,
+      "to": 29.28
+    },
+    {
+      "scene": "programme",
+      "from": 29.28,
+      "to": 36.24
+    },
+    {
+      "scene": "kit",
+      "from": 36.24,
+      "to": 43.27
+    },
+    {
+      "scene": "fees",
+      "from": 43.27,
+      "to": 48.87
+    },
+    {
+      "scene": "deadline",
+      "from": 48.87,
+      "to": 51.57
+    },
+    {
+      "scene": "cta",
+      "from": 51.57,
+      "to": 59.76
+    }
+  ],
+  "fees_family": 47.4,
+  "voEnd": 59.76
+}

@@ -26,7 +26,7 @@ import {
   Users,
   UtensilsCrossed,
 } from "lucide-react";
-import { bn, colors, fonts, goldText } from "./theme";
+import { bn, colors, cue, fonts, goldText } from "./theme";
 import { Appear, GoldRule, useVertical } from "./ui";
 
 /** Space kept free at the bottom for subtitles. */
@@ -267,9 +267,9 @@ export const DateScene: React.FC = () => {
   const s = v ? 54 : 50;
   return (
     <Center gap={v ? 30 : 22}>
-      <InfoCard delay={0.05} icon={<CalendarDays size={s} color={colors.gold} />} title={`${bn(26)} ডিসেম্বর ${bn(2026)}`} sub="26 December 2026" />
-      <InfoCard delay={1.15} icon={<Clock size={s} color={colors.gold} />} title={`সকাল ${bn(8)}টা – রাত ${bn(9)}টা`} sub="8:00 AM – 9:00 PM" />
-      <InfoCard delay={3.2} icon={<MapPin size={s} color={colors.gold} />} title="স্কুল ক্যাম্পাস, সীতাকুণ্ড" sub="School campus · Sitakunda, Chattogram" />
+      <InfoCard delay={cue("date", 0)} icon={<CalendarDays size={s} color={colors.gold} />} title={`${bn(26)} ডিসেম্বর ${bn(2026)}`} sub="26 December 2026" />
+      <InfoCard delay={cue("date", 1)} icon={<Clock size={s} color={colors.gold} />} title={`সকাল ${bn(8)}টা – রাত ${bn(9)}টা`} sub="8:00 AM – 9:00 PM" />
+      <InfoCard delay={cue("date", 2)} icon={<MapPin size={s} color={colors.gold} />} title="স্কুল ক্যাম্পাস, সীতাকুণ্ড" sub="School campus · Sitakunda, Chattogram" />
     </Center>
   );
 };
@@ -324,12 +324,12 @@ export const ProgrammeScene: React.FC = () => (
   <ItemGrid
     heading="দিনভর আয়োজন"
     items={[
-      { icon: Megaphone, bn: "জয়ন্তী র‍্যালি", en: "Jubilee rally", at: 0.05 },
-      { icon: Flag, bn: "পতাকা উত্তোলন", en: "Flag hoisting", at: 1.1 },
-      { icon: Award, bn: "শিক্ষক সম্মাননা", en: "Honouring teachers", at: 2.1 },
-      { icon: Users, bn: "ব্যাচ রিইউনিয়ন", en: "Batch reunions", at: 3.35 },
-      { icon: Music, bn: "সাংস্কৃতিক অনুষ্ঠান", en: "Cultural programme", at: 4.6 },
-      { icon: Ticket, bn: "র‍্যাফেল ড্র", en: "Raffle draw", at: 6.0 },
+      { icon: Megaphone, bn: "জয়ন্তী র‍্যালি", en: "Jubilee rally", at: cue("programme", 0) },
+      { icon: Flag, bn: "পতাকা উত্তোলন", en: "Flag hoisting", at: cue("programme", 1) },
+      { icon: Award, bn: "শিক্ষক সম্মাননা", en: "Honouring teachers", at: cue("programme", 2) },
+      { icon: Users, bn: "ব্যাচ রিইউনিয়ন", en: "Batch reunions", at: cue("programme", 3) },
+      { icon: Music, bn: "সাংস্কৃতিক অনুষ্ঠান", en: "Cultural programme", at: cue("programme", 4) },
+      { icon: Ticket, bn: "র‍্যাফেল ড্র", en: "Raffle draw", at: cue("programme", 5) },
     ]}
   />
 );
@@ -339,12 +339,12 @@ export const KitScene: React.FC = () => (
   <ItemGrid
     heading="রেজিস্ট্রেশনে যা থাকছে"
     items={[
-      { icon: Coffee, bn: "সকালের নাস্তা", en: "Breakfast", at: 0.8 },
-      { icon: UtensilsCrossed, bn: "দুপুরের খাবার", en: "Lunch", at: 1.55 },
-      { icon: CookingPot, bn: "বিরিয়ানি ডিনার", en: "Biryani dinner", at: 3.0 },
-      { icon: Shirt, bn: "জয়ন্তী টি-শার্ট", en: "Jubilee T-shirt", at: 3.8 },
-      { icon: BookOpen, bn: "স্মারকগ্রন্থ", en: "Souvenir book", at: 4.85 },
-      { icon: Gift, bn: "স্মারক উপহার", en: "Commemorative gift", at: 6.0 },
+      { icon: Coffee, bn: "সকালের নাস্তা", en: "Breakfast", at: cue("kit", 1) },
+      { icon: UtensilsCrossed, bn: "দুপুরের খাবার", en: "Lunch", at: cue("kit", 2) },
+      { icon: CookingPot, bn: "বিরিয়ানি ডিনার", en: "Biryani dinner", at: cue("kit", 3) },
+      { icon: Shirt, bn: "জয়ন্তী টি-শার্ট", en: "Jubilee T-shirt", at: cue("kit", 4) },
+      { icon: BookOpen, bn: "স্মারকগ্রন্থ", en: "Souvenir book", at: cue("kit", 5) },
+      { icon: Gift, bn: "স্মারক উপহার", en: "Commemorative gift", at: cue("kit", 6) },
     ]}
   />
 );
@@ -396,9 +396,9 @@ export const FeesScene: React.FC = () => {
       <Appear delay={0}>
         <div style={{ fontFamily: fonts.bnSerif, fontWeight: 800, fontSize: v ? 70 : 58, ...goldText, lineHeight: 1.3, marginBottom: 6 }}>রেজিস্ট্রেশন ফি</div>
       </Appear>
-      <FeeRow label={`ব্যাচ ${bn(2015)}–${bn(2026)}`} amount={1250} delay={0.55} />
-      <FeeRow label={`ব্যাচ ${bn(1989)}–${bn(2014)}`} amount={1500} delay={2.2} />
-      <Appear delay={4.2}>
+      <FeeRow label={`ব্যাচ ${bn(2015)}–${bn(2026)}`} amount={1250} delay={cue("fees", 1, 0.4)} />
+      <FeeRow label={`ব্যাচ ${bn(1989)}–${bn(2014)}`} amount={1500} delay={cue("fees", 2, 0.4)} />
+      <Appear delay={cue("fees", 3)}>
         <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", marginTop: 10 }}>
           <span style={chip}>স্বামী/স্ত্রী +{taka(600)}</span>
           <span style={chip}>সন্তান ({bn(5)}+ বছর) +{taka(600)}</span>
@@ -458,7 +458,7 @@ export const CtaScene: React.FC = () => {
       <Appear delay={0.15}>
         <div style={{ fontFamily: fonts.bnSerif, fontWeight: 800, fontSize: v ? 96 : 84, ...goldText, lineHeight: 1.25 }}>এখনই রেজিস্ট্রেশন করুন</div>
       </Appear>
-      <Appear delay={1.1} from="scale">
+      <Appear delay={cue("cta", 1, 0.3)} from="scale">
         <div style={{ position: "relative" }}>
           <div
             style={{
@@ -486,12 +486,12 @@ export const CtaScene: React.FC = () => {
           </div>
         </div>
       </Appear>
-      <Appear delay={4.45}>
+      <Appear delay={cue("cta", 2)}>
         <div style={{ fontFamily: fonts.bn, fontWeight: 600, fontSize: v ? 50 : 44, color: colors.cream, lineHeight: 1.35, maxWidth: v ? 900 : 1400 }}>
           {bn(50)} বছরের উৎসবে দেখা হবে প্রিয় ক্যাম্পাসে
         </div>
       </Appear>
-      <Appear delay={5.2}>
+      <Appear delay={cue("cta", 2) + 0.7}>
         <div style={{ fontFamily: fonts.en, fontSize: v ? 28 : 24, color: colors.mint }}>info@exsabujian.org · Praktan Sabujian Parishad</div>
       </Appear>
     </Center>

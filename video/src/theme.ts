@@ -3,11 +3,14 @@ import { loadFont as loadSerifBn } from "@remotion/google-fonts/NotoSerifBengali
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
 import { loadFont as loadWorkSans } from "@remotion/google-fonts/WorkSans";
 
+import timings from "./timings.json";
+
 export const FPS = 30;
 
 /** The voiceover starts this many seconds into the video. */
 export const VO_OFFSET = 0.5;
-export const DURATION_S = 63;
+/** Voiceover plus a short hold on the closing card. */
+export const DURATION_S = Math.ceil(timings.voEnd + VO_OFFSET + 2.5);
 
 export const fonts = {
   bn: loadHind("normal", { weights: ["400", "600", "700"], subsets: ["bengali", "latin"] }).fontFamily,
@@ -39,36 +42,37 @@ const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
 /** "2026" → "২০২৬" */
 export const bn = (s: string | number) => String(s).replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)]);
 
+type SceneKey = "intro" | "campus" | "teachers" | "title" | "date" | "programme" | "kit" | "fees" | "deadline" | "cta";
+
 /**
- * Scene start times in seconds of the whole video, taken from the voiceover's
- * word timings (voiceover take 2, eleven_v4, voice "Rakib") plus VO_OFFSET.
+ * Scene starts (seconds of the whole video) and the cues inside each scene, from
+ * the voiceover's word timings: src/timings.json, made by scripts/timings.py.
  */
 export const SCENES = {
-  intro: 0,
-  campus: 7.4,
-  teachers: 14.0,
-  title: 20.9,
-  date: 25.75,
-  programme: 30.15,
-  kit: 37.1,
-  fees: 44.15,
-  deadline: 49.75,
-  cta: 52.45,
+  ...(Object.fromEntries(Object.entries(timings.scenes).map(([k, t]) => [k, t + (k === "intro" ? 0 : VO_OFFSET)])) as Record<SceneKey, number>),
   end: DURATION_S,
-} as const;
+};
+
+/** When (seconds into `scene`) the voiceover says cue word `i` of that scene; 0 = its first word. */
+export const cue = (scene: SceneKey, i: number, lead = 0.1) =>
+  Math.max(0, (timings.cues[scene][i] ?? 0) + VO_OFFSET - SCENES[scene] - lead);
+
+const at = (scene: SceneKey, i = 0) => timings.cues[scene][i] + VO_OFFSET;
+const sentence = (scene: SceneKey) => timings.sentences.find((s) => s.scene === scene)!;
+const span = (scene: SceneKey) => ({ from: sentence(scene).from + VO_OFFSET - 0.1, to: sentence(scene).to + VO_OFFSET - 0.1 });
 
 /** English subtitles, absolute seconds. */
 export const CAPTIONS: { from: number; to: number; text: string }[] = [
-  { from: 0.6, to: 7.35, text: "1976. Amid the green of Sitakunda, Sabuj Shikshayatan began its journey." },
-  { from: 7.45, to: 13.95, text: "Fifty years on, the same field, the same classrooms and countless memories call us back." },
-  { from: 14.0, to: 20.85, text: "To honour the teachers who showed us the way… and to find our old friends again—" },
-  { from: 20.95, to: 25.7, text: "Praktan Sabujian Parishad presents the Golden Jubilee 2026." },
-  { from: 25.75, to: 30.1, text: "26 December, 8 AM to 9 PM, at the school campus." },
-  { from: 30.15, to: 37.05, text: "Jubilee rally, flag hoisting, honouring our teachers, batch reunions, a cultural show and a raffle draw." },
-  { from: 37.1, to: 44.1, text: "Breakfast, lunch, biryani dinner, the Jubilee T-shirt, the souvenir book and a commemorative gift." },
-  { from: 44.15, to: 48.3, text: "Registration fee: Tk 1,250 to Tk 1,500." },
-  { from: 48.35, to: 49.7, text: "Bring your family along." },
-  { from: 49.75, to: 52.4, text: "Registration is open until 30 November." },
-  { from: 52.45, to: 56.85, text: "Register now at exsabujian.org/jubilee" },
-  { from: 56.85, to: 61.2, text: "See you on our beloved campus for the 50-year celebration." },
+  { ...span("intro"), text: "1976. Amid the green of Sitakunda, Sabuj Shikshayatan began its journey." },
+  { ...span("campus"), text: "Fifty years on, the same field, the same classrooms and countless memories call us back." },
+  { ...span("teachers"), text: "To honour the teachers who showed us the way… and to find our old friends again—" },
+  { ...span("title"), text: "Praktan Sabujian Parishad presents the Golden Jubilee 2026." },
+  { ...span("date"), text: "26 December, 8 AM to 9 PM, at the school campus." },
+  { ...span("programme"), text: "Jubilee rally, flag hoisting, honouring our teachers, batch reunions, a cultural show and a raffle draw." },
+  { ...span("kit"), text: "Breakfast, lunch, biryani dinner, the Jubilee T-shirt, the souvenir book and a commemorative gift." },
+  { from: span("fees").from, to: at("fees", 3) - 0.1, text: "Registration fee: Tk 1,250 to Tk 1,500." },
+  { from: at("fees", 3) - 0.1, to: span("fees").to, text: "Bring your family along." },
+  { ...span("deadline"), text: "Registration is open until 30 November." },
+  { from: span("cta").from, to: at("cta", 2) - 0.1, text: "Register now at exsabujian.org/jubilee" },
+  { from: at("cta", 2) - 0.1, to: timings.voEnd + VO_OFFSET + 1.2, text: "See you on our beloved campus for the 50-year celebration." },
 ];

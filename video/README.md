@@ -11,6 +11,6 @@ and `eslint.config.mjs` exclude `video/`.
 ```bash
 npm i
 npm run dev                                                   # Remotion Studio
-npx remotion render Jubilee16x9 out/jubilee-promo-16x9.mp4 --crf=20
-npx remotion render Jubilee9x16 out/jubilee-promo-9x16.mp4 --crf=20
+npx remotion render Jubilee16x9 out/jubilee-promo-16x9.mp4
+npx remotion render Jubilee9x16 out/jubilee-promo-9x16.mp4
 ```

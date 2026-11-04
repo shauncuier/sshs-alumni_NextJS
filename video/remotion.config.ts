@@ -11,3 +11,9 @@ Config.setRspack(true);
 Config.setVideoImageFormat("jpeg");
 Config.setOverwriteOutput(true);
 Config.setDefaultPremountInSeconds(2);
+
+// Use the GPU: ANGLE for Chrome's drawing and NVENC (GTX 1050 Ti) for H.264.
+// NVENC can't take a CRF, so quality is set by bitrate. About 25% faster than CPU here.
+Config.setChromiumOpenGlRenderer("angle");
+Config.setHardwareAcceleration("if-possible");
+Config.setVideoBitrate("10M");
