@@ -14,9 +14,10 @@ import FacebookIcon from "@/components/shared/FacebookIcon";
 import YouTubeIcon from "@/components/shared/YouTubeIcon";
 import YouTubeEmbed from "@/components/shared/YouTubeEmbed";
 
-/** The Golden Jubilee promo and the registration walkthrough, on the association's YouTube channel. */
+/** The Golden Jubilee promo, why to register online, and the registration walkthrough, on the association's YouTube channel. */
 const PROMO_VIDEO_ID = "pouConmPHcc";
 const GUIDE_VIDEO_ID = "05qE5pFfJQg";
+const WHY_ONLINE_VIDEO_ID = "3-Zg-JoLd8c";
 
 export const dynamic = "force-dynamic";
 
@@ -214,6 +215,17 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             <span className="text-sm font-bold text-slate-400">Watch the promo</span>
           </div>
           <YouTubeEmbed id={PROMO_VIDEO_ID} title="সুবর্ণ জয়ন্তী ২০২৬ · Golden Jubilee promo" />
+          <details className="group rounded-2xl border border-slate-200 bg-white">
+            <summary className="cursor-pointer list-none flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-emerald-900">
+              <span>
+                <span lang="bn">কেন অনলাইনে? আপনার তথ্যের নিরাপত্তা</span> <span className="text-slate-400 font-semibold">· Why online, and your privacy (1:10)</span>
+              </span>
+              <span aria-hidden className="text-emerald-700 group-open:rotate-180 transition-transform">▾</span>
+            </summary>
+            <div className="px-3 pb-3">
+              <YouTubeEmbed id={WHY_ONLINE_VIDEO_ID} title="কেন অনলাইনে রেজিস্ট্রেশন · Why register online" />
+            </div>
+          </details>
         </section>
 
         {/* How it works: three short steps */}
