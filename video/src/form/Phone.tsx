@@ -428,7 +428,7 @@ const Step2: React.FC<{ t: number }> = ({ t }) => {
           gap: 3,
         }}
       >
-        {row("Alumnus (batch 2005)", "৳1,500")}
+        {row("Alumnus (batch 2013)", "৳1,500")}
         {spouse > 0 && row("Spouse × 1", "৳600")}
         <div style={{ borderTop: `1px solid ${C.slate200}`, marginTop: 2, paddingTop: 3 }}>{row("Registration", spouse ? "৳2,100" : "৳1,500")}</div>
         {row("Total to pay", spouse ? "৳2,100" : "৳1,500", true)}
@@ -599,8 +599,8 @@ const TicketScreen: React.FC<{ t: number }> = ({ t }) => {
           <div style={{ padding: 8, borderRadius: 16, border: `3px solid rgba(16,185,129,${0.3 + 0.5 * pulse})` }}>
             <FakeQr size={190} t={0} />
           </div>
-          <div style={{ fontFamily: sans, fontWeight: 800, fontSize: 18, color: C.slate900 }}>Rahim Uddin</div>
-          <div style={{ fontFamily: bnSans, fontSize: 14, color: C.slate700, marginTop: -6 }}>রহিম উদ্দিন · SSC 2005</div>
+          <div style={{ fontFamily: sans, fontWeight: 800, fontSize: 18, color: C.slate900 }}>Jashedul Islam Shaun</div>
+          <div style={{ fontFamily: bnSans, fontSize: 14, color: C.slate700, marginTop: -6 }}>জাশেদুল ইসলাম শাওন · SSC 2013</div>
           <div style={{ fontFamily: sans, fontSize: 12, color: C.slate500 }}>2 people · T-shirt L · Show this QR at the gate</div>
         </div>
       </div>

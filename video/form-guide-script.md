@@ -3,8 +3,8 @@
 About 80 s. Bangla voiceover (voice iLBn9rrLQfwXBfBvaJGt), English subtitles.
 Visual: a phone showing the real /jubilee form, recreated in the video. A finger/cursor
 taps fields, text types itself in, dropdowns open, files attach, the screen scrolls.
-Sample user is made up: Rahim Uddin / রহিম উদ্দিন, rahim@example.com, 01700-000000,
-SSC 2005, placeholder avatar (no real person's photo or data).
+Sample user: Jashedul Islam Shaun / জাশেদুল ইসলাম শাওন, shaun@example.com, 01835927634,
+SSC 2013, placeholder avatar. Name and number are the user's own, by request; email is a dummy.
 
 | # | On screen | Bangla VO | English subtitle |
 |---|-----------|-----------|------------------|

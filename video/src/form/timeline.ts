@@ -138,17 +138,17 @@ busy = STEP1_AT;
 
 const photoTap = tapOnly("step1", "photo", S1.photo, T("details", 1), 268, 34);
 export const PHOTO_AT = photoTap + 0.45;
-tapType("step1", "nameEn", S1.nameEn, T("details", 2), 0.8, "Rahim Uddin");
-tapType("step1", "nameBn", S1.nameBn, T("details", 3), 0.8, "রহিম উদ্দিন");
+tapType("step1", "nameEn", S1.nameEn, T("details", 2), 1.1, "Jashedul Islam Shaun");
+tapType("step1", "nameBn", S1.nameBn, T("details", 3), 1.0, "জাশেদুল ইসলাম শাওন");
 
-tapType("step1", "email", S1.email, T("contact", 1), 0.9, "rahim@example.com");
+tapType("step1", "email", S1.email, T("contact", 1), 0.9, "shaun@example.com");
 tapType("step1", "password", S1.password, T("contact", 2), 0.5, "••••••••••");
-tapType("step1", "phone", S1.phone, T("contact", 3), 0.8, "01700000000");
+tapType("step1", "phone", S1.phone, T("contact", 3), 0.8, "01835927634");
 
-pick("step1", "batch", S1.batch, T("profile", 1), "SSC batch", ["SSC Batch 2007", "SSC Batch 2006", "SSC Batch 2005", "SSC Batch 2004", "SSC Batch 2003"], 2);
+pick("step1", "batch", S1.batch, T("profile", 1), "SSC batch", ["SSC Batch 2015", "SSC Batch 2014", "SSC Batch 2013", "SSC Batch 2012", "SSC Batch 2011"], 2);
 pick("step1", "group", S1.group, T("profile", 2), "Group (বিভাগ)", ["Science (বিজ্ঞান বিভাগ)", "Business Studies (ব্যবসায় শিক্ষা)", "Humanities (মানবিক বিভাগ)"], 0);
 pick("step1", "gender", S1.gender, T("profile", 3), "Gender (লিঙ্গ)", ["Male (পুরুষ)", "Female (মহিলা)"], 0);
-tapType("step1", "dob", S1.dob, T("profile", 4), 0.6, "12/03/1989");
+tapType("step1", "dob", S1.dob, T("profile", 4), 0.6, "12/03/1997");
 tapType("step1", "profession", S1.profession, T("profile", 5), 0.45, "Engineer");
 tapType("step1", "address", S1.address, T("profile", 6), 0.8, "Sitakunda, Chattogram");
 
