@@ -1,6 +1,6 @@
 """Build src/timings.json from an ElevenLabs word-timing file (words.json).
 
-Usage: python -I scripts/timings.py path/to/words.json [promo|form|online]
+Usage: python -I scripts/timings.py path/to/words.json [promo|form|online|deadline|souvenir]
 
 Scene starts and the cues inside each scene (when a card appears) come from
 when the voiceover says each word, so a new voice or take only needs this
@@ -72,8 +72,29 @@ ONLINE = [
     ("cta", "তাই", ["আজই", "exsabujian"]),
 ]
 
+DEADLINE = [
+    ("intro", "সবুজ", ["১৯৭৬"]),
+    ("event", "আগামী", ["২৬", "সুবর্ণ"]),
+    ("programme", "জয়ন্তী", ["শিক্ষক", "ব্যাচ", "সাংস্কৃতিক", "সাথে", "স্মারকগ্রন্থ", "স্মারক", "সারাদিনের"]),
+    ("deadline", "রেজিস্ট্রেশনের", ["৩০", "এই", "বন্ধ"]),
+    ("today", "শেষ", ["আজই"]),
+    ("cta", "exsabujian", ["প্রাক্তন"]),
+]
+
+SOUVENIR = [
+    ("intro", "পঞ্চাশ", ["হাজারো", "অগণিত"]),
+    ("book", "সুবর্ণ", ["স্মরণিকা", "পাতায়"]),
+    ("kinds", "স্মৃতিচারণ", ["গল্প", "কবিতা", "প্রবন্ধ", "প্রাক্তন", "শিক্ষকমণ্ডলী"]),
+    ("form", "লেখা", ["exsabujian", "নাম", "লগইন"]),
+    ("photos", "পুরনো", ["info", "এসএসসি"]),
+    ("deadline", "লেখা", ["৫"]),
+    ("pen", "আপনার", ["সোনালি"]),
+    ("end", "প্রকাশনা", ["প্রাক্তন"]),
+]
+
+PLANS = {"form": FORM, "online": ONLINE, "deadline": DEADLINE, "souvenir": SOUVENIR}
 which = sys.argv[2] if len(sys.argv) > 2 else "promo"
-PLAN = {"form": FORM, "online": ONLINE}.get(which, PROMO)
+PLAN = PLANS.get(which, PROMO)
 
 out = {"scenes": {}, "cues": {}, "sentences": []}
 for scene, first, cues in PLAN:
@@ -92,7 +113,7 @@ for i, s in enumerate(out["sentences"]):
 out["voEnd"] = round(words[-1]["end"], 2)
 
 src = Path(__file__).resolve().parent.parent / "src"
-dest = src / which / "timings.json" if which in ("form", "online") else src / "timings.json"
+dest = src / which / "timings.json" if which in PLANS else src / "timings.json"
 dest.parent.mkdir(exist_ok=True)
 dest.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 print(json.dumps(out, ensure_ascii=False, indent=2))
