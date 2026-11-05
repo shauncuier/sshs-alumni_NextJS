@@ -1,10 +1,11 @@
-import { Composition } from "remotion";
+import { Composition, Still } from "remotion";
 import { DURATION_FRAMES, Promo } from "./Promo";
 import { FPS } from "./theme";
 import { FORM_DURATION_FRAMES, FormGuide } from "./form/FormGuide";
 import { ONLINE_DURATION_FRAMES, OnlineVideo } from "./online/OnlineVideo";
 import { DEADLINE_DURATION_FRAMES, DeadlineVideo } from "./premium/Deadline";
 import { SOUVENIR_DURATION_FRAMES, SouvenirVideo } from "./premium/Souvenir";
+import { DeadlineThumb, SouvenirThumb } from "./premium/Thumbnails";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -19,6 +20,8 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="Deadline9x16" component={DeadlineVideo} durationInFrames={DEADLINE_DURATION_FRAMES} fps={FPS} width={1080} height={1920} />
       <Composition id="Souvenir16x9" component={SouvenirVideo} durationInFrames={SOUVENIR_DURATION_FRAMES} fps={FPS} width={1920} height={1080} />
       <Composition id="Souvenir9x16" component={SouvenirVideo} durationInFrames={SOUVENIR_DURATION_FRAMES} fps={FPS} width={1080} height={1920} />
+      <Still id="ThumbDeadline" component={DeadlineThumb} width={1280} height={720} />
+      <Still id="ThumbSouvenir" component={SouvenirThumb} width={1280} height={720} />
     </>
   );
 };
