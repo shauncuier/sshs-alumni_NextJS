@@ -82,7 +82,9 @@ export async function postRegistrationIncome(tx: Tx, registrationId: string, act
       sourceLine: "fee",
       amount: toPoisha(reg.totalFee),
       category: reg.event.isMembershipEvent ? "membership_fees" : "registration_fees",
-      description: `${reg.event.title}: ${reg.packageName ? `${reg.packageName}, ` : ""}${reg.headCount} ${reg.headCount === 1 ? "person" : "people"}`,
+      description: `${reg.event.title}: ${reg.packageName ? `${reg.packageName}, ` : ""}${reg.headCount} ${reg.headCount === 1 ? "person" : "people"}${
+        reg.discountAmount > 0 ? `, after a ${toPoisha(reg.discountAmount) / 100} taka discount${reg.discountCode ? ` (${reg.discountCode})` : ""}` : ""
+      }`,
     })
   )
     posted++;

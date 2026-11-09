@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { repostRegistrationFee } from "@/lib/finance/posting";
 import { toAdminRegistration, WITH_USER } from "./admin";
-import { computeFee, formatTaka, isChildGuestType, MAX_CHILD_GUEST_AGE, storedGuests } from "./pricing";
+import { computeFee, formatTaka, isChildGuestType, MAX_CHILD_GUEST_AGE, storedDiscountRule, storedGuests } from "./pricing";
 import { eventFeeRules } from "./service";
 import { ensureTokens } from "./tokens";
 import type { AdminRegistration, GuestLine, GuestPerson } from "./types";
@@ -67,14 +67,16 @@ export async function editRegistration(args: RegistrationEdit): Promise<Registra
   const override = readAmount(args.amountOverride);
 
   const { before, after } = await prisma.$transaction(async (tx) => {
-    const reg = await tx.eventRegistration.findUnique({ where: { id: args.registrationId }, include: { event: true, user: { include: { profile: { select: { sscBatch: true } } } } } });
+    const reg = await tx.eventRegistration.findUnique({ where: { id: args.registrationId }, include: { event: true, discount: { select: { type: true, value: true } }, user: { include: { profile: { select: { sscBatch: true } } } } } });
     if (!reg || reg.eventId !== args.eventId) throw new AppError("REGISTRATION_NOT_FOUND", 404, "Registration not found.");
     if (reg.status === "CANCELLED") throw new AppError("INVALID_TRANSITION", 409, "This registration is cancelled.");
 
     const price = computeFee(
       eventFeeRules(reg.event),
       { packageName: args.packageName ?? null, guests: args.guests ?? {}, donationAmount: reg.donationAmount },
-      { sscBatch: reg.user.profile?.sscBatch }
+      { sscBatch: reg.user.profile?.sscBatch },
+      // The discount the member registered with still applies to the corrected package.
+      storedDiscountRule(reg)
     );
     const previous = storedGuests(reg);
     const guests = withPeople(price.guests, args.guestPeople, previous);
@@ -93,6 +95,8 @@ export async function editRegistration(args: RegistrationEdit): Promise<Registra
         headCount: price.headCount,
         guestCount: price.headCount,
         totalFee,
+        // An amount typed by the admin is what was paid: no separate discount on the slip.
+        discountAmount: override === null ? price.discount : 0,
       },
     });
     if (write.count === 0) throw new AppError("INVALID_TRANSITION", 409, "Another admin just changed this registration. Refresh and try again.");

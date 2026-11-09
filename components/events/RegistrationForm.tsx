@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { usePaymentDetails } from "@/components/shared/usePaymentDetails";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { computeFee, formatTaka, isChildGuestType, MAX_CHILD_GUEST_AGE, normalizePackages } from "@/lib/events/pricing";
+import { computeFee, discountOff, formatTaka, isChildGuestType, MAX_CHILD_GUEST_AGE, normalizePackages } from "@/lib/events/pricing";
+import type { PublicDiscount } from "@/lib/events/discounts";
 import { PAYMENT_METHODS, type MemberRegistration, type PublicEvent } from "@/lib/events/types";
 import { PROOF_ACCEPT, PROOF_MAX_BYTES, PROOF_TYPES } from "@/lib/members/proof-types";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
@@ -114,6 +115,13 @@ export default function RegistrationForm({
   const [volunteerSubcommittee, setVolunteerSubcommittee] = useState<string>(SUBCOMMITTEES[0].id);
   const [volunteerNotes, setVolunteerNotes] = useState("");
   const [donation, setDonation] = useState("");
+  // Discounts (lib/events/discounts.ts): the automatic ones running now, and a coupon the
+  // member applied. The server checks both again on submit.
+  const [offer, setOffer] = useState<{ automatic: PublicDiscount[]; couponsAvailable: boolean } | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<PublicDiscount | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [paymentMethodChoice, setPaymentMethod] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState("");
   // Bangla QR: the payer's app and our OK Wallet number the payment differently, so it
@@ -135,6 +143,39 @@ export default function RegistrationForm({
   const [existingAccount, setExistingAccount] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [joined, setJoined] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/events/${event.slug}/discounts`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d) setOffer(d);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [event.slug]);
+
+  const applyCoupon = async () => {
+    setCouponError(null);
+    setCouponBusy(true);
+    try {
+      const res = await fetch(`/api/events/${event.slug}/discounts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "This code can't be used.");
+      setCoupon(data.coupon);
+    } catch (err) {
+      setCoupon(null);
+      setCouponError((err as Error).message);
+    } finally {
+      setCouponBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!photo) {
@@ -249,19 +290,23 @@ export default function RegistrationForm({
   const memberBatch = needsAccount ? account.sscBatch || null : (session?.user as { batchYear?: number } | undefined)?.batchYear ?? null;
   const batchPriced = event.batchFees.length > 0 && !packageName;
   let total: ReturnType<typeof computeFee> | null = null;
+  // The discount the preview uses: the biggest of the applied coupon and the automatic ones.
+  let applied: PublicDiscount | null = null;
   try {
-    total = computeFee(
-      {
-        registrationFee: event.registrationFeeAmount,
-        extraAdultFee: event.extraAdultFee,
-        childFee: event.childFee,
-        packages: normalizePackages(event.packages.map((p) => ({ ...p, price: p.priceAmount }))),
-        guestTypes: event.customGuestTypes ? event.guestTypes : [],
-        batchFees: event.batchFees,
-      },
-      { packageName, guests: guestCounts, donationAmount: donation ? Number(donation) : 0 },
-      { sscBatch: memberBatch }
-    );
+    const feeEvent = {
+      registrationFee: event.registrationFeeAmount,
+      extraAdultFee: event.extraAdultFee,
+      childFee: event.childFee,
+      packages: normalizePackages(event.packages.map((p) => ({ ...p, price: p.priceAmount }))),
+      guestTypes: event.customGuestTypes ? event.guestTypes : [],
+      batchFees: event.batchFees,
+    };
+    const choice = { packageName, guests: guestCounts, donationAmount: donation ? Number(donation) : 0 };
+    const full = computeFee(feeEvent, choice, { sscBatch: memberBatch });
+    for (const d of [...(coupon ? [coupon] : []), ...(offer?.automatic ?? [])]) {
+      if (discountOff(d, full.memberPrice) > (applied ? discountOff(applied, full.memberPrice) : 0)) applied = d;
+    }
+    total = applied ? computeFee(feeEvent, choice, { sscBatch: memberBatch }, applied) : full;
   } catch {
     total = null;
   }
@@ -305,6 +350,7 @@ export default function RegistrationForm({
             mealPreference: mealPreference || null,
             notes: volunteerNoteFormatted,
             donationAmount: donation ? Number(donation) : 0,
+            couponCode: coupon?.code ?? null,
             paymentMethod: paid ? paymentMethod : null,
             transactionId: paid ? transactionId : null,
             payerAccountLast4: paid && paymentMethod === "Bangla QR" ? payerLast4 : null,
@@ -653,6 +699,66 @@ export default function RegistrationForm({
             <input id="reg-donation" type="number" min={0} step={1} className={input} value={donation} onChange={(e) => setDonation(e.target.value)} placeholder="Any amount you'd like to give" />
           </div>
 
+          {offer?.automatic.map((d) => (
+            <p key={d.label} className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+              <strong>{d.label}:</strong> {d.type === "PERCENT" ? `${d.value}%` : formatTaka(d.value)} off your own fee
+              {d.endsAt ? ` until ${new Date(d.endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "Asia/Dhaka" })}` : ""}. Applied below.
+            </p>
+          ))}
+          {(offer?.couponsAvailable || coupon) && (
+            <div>
+              <label htmlFor="reg-coupon" className={label}>Coupon code (optional)</label>
+              {coupon ? (
+                <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-xs">
+                  <span className="text-emerald-900">
+                    <strong className="font-mono">{coupon.code}</strong> · {coupon.label}: {coupon.type === "PERCENT" ? `${coupon.value}%` : formatTaka(coupon.value)} off your own fee
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoupon(null);
+                      setCouponInput("");
+                    }}
+                    className="font-bold text-emerald-800 underline shrink-0"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    id="reg-coupon"
+                    className={`${input} font-mono uppercase`}
+                    value={couponInput}
+                    maxLength={40}
+                    autoComplete="off"
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (couponInput.trim()) void applyCoupon();
+                      }
+                    }}
+                    placeholder="e.g. BATCH2013"
+                    aria-describedby={couponError ? "reg-coupon-error" : undefined}
+                  />
+                  <button
+                    type="button"
+                    disabled={couponBusy || !couponInput.trim()}
+                    onClick={() => void applyCoupon()}
+                    className="px-4 rounded-xl bg-emerald-800 text-white text-xs font-bold disabled:opacity-50 shrink-0"
+                  >
+                    {couponBusy ? "Checking…" : "Apply"}
+                  </button>
+                </div>
+              )}
+              {couponError && <p id="reg-coupon-error" role="alert" className="mt-1 text-xs font-bold text-rose-700">{couponError}</p>}
+              {coupon && applied && applied !== coupon && (
+                <p className="mt-1 text-[11px] text-slate-600">{applied.label} saves you more, so it applies instead. Only one discount is used.</p>
+              )}
+            </div>
+          )}
+
           {/* Volunteer Squad Opt-In */}
           <div className="p-3.5 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/70 to-emerald-100/30 text-xs space-y-3">
             <label className="flex items-start gap-3 cursor-pointer select-none">
@@ -722,12 +828,18 @@ export default function RegistrationForm({
           )}
           {total && !(batchPriced && !memberBatch) && (
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-              {total.guests.length > 0 || batchPriced ? (
+              {total.guests.length > 0 || batchPriced || total.discount > 0 ? (
                 <>
                   <div className="flex justify-between">
                     <span>{total.pkg ? total.pkg.name : batchPriced ? `Alumnus (batch ${memberBatch})` : "Member"}</span>
-                    <strong>{formatTaka(total.pkg ? total.pkg.price : total.fee - total.guests.reduce((sum, g) => sum + g.count * g.price, 0))}</strong>
+                    <strong>{formatTaka(total.memberPrice)}</strong>
                   </div>
+                  {total.discount > 0 && applied && (
+                    <div className="flex justify-between text-emerald-800">
+                      <span>{applied.label}{applied.code ? ` (${applied.code})` : ""}</span>
+                      <strong>−{formatTaka(total.discount)}</strong>
+                    </div>
+                  )}
                   {total.guests.map((g) => (
                     <div key={g.name} className="flex justify-between">
                       <span>{g.name} × {g.count}</span>

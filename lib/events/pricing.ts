@@ -173,9 +173,35 @@ export interface FeeResult {
   /** Guests added beyond the member (and the package), with the price each paid. */
   guests: GuestLine[];
   headCount: number;
+  /** The member's own price (package or batch fee) before any discount. */
+  memberPrice: number;
+  /** Taka taken off the member's own price by a discount (lib/events/discounts.ts). */
+  discount: number;
   fee: number;
   donation: number;
   total: number;
+}
+
+/** A discount on the member's own price: a percentage, or a fixed number of taka. */
+export interface FeeDiscount {
+  type: "PERCENT" | "AMOUNT";
+  value: number;
+}
+
+/**
+ * The discount a saved registration keeps when an admin edits it: its discount's rule, or,
+ * when that discount was deleted since, the taka it took off.
+ */
+export function storedDiscountRule(reg: { discount?: FeeDiscount | null; discountAmount: number }): FeeDiscount | null {
+  if (reg.discount) return { type: reg.discount.type, value: reg.discount.value };
+  return reg.discountAmount > 0 ? { type: "AMOUNT", value: reg.discountAmount } : null;
+}
+
+/** Whole taka a discount takes off a price: never more than the price itself. */
+export function discountOff(discount: FeeDiscount | null | undefined, price: number): number {
+  if (!discount || !(price > 0) || !(discount.value > 0)) return 0;
+  const off = discount.type === "PERCENT" ? Math.round((price * Math.min(discount.value, 100)) / 100) : Math.round(discount.value);
+  return Math.min(price, Math.max(0, off));
 }
 
 function guestCountFor(value: unknown, type: GuestTypeDef): number {
@@ -204,7 +230,9 @@ export function computeFee(
     donationAmount?: number;
   },
   /** The member's SSC batch: picks their fee from the event's batch ranges. */
-  member: { sscBatch?: number | string | null } = {}
+  member: { sscBatch?: number | string | null } = {},
+  /** Taken off the member's own price only; guests always pay their full price. */
+  discount: FeeDiscount | null = null
 ): FeeResult {
   const types = guestTypesOf(event);
   const custom = Boolean(event.guestTypes && event.guestTypes.length > 0);
@@ -231,8 +259,9 @@ export function computeFee(
   }
 
   const base = pkg ? pkg.price : memberFee(event, member.sscBatch);
+  const off = discountOff(discount, base);
   const guestFees = pkg?.guestsFree ? 0 : lines.reduce((sum, l) => sum + l.count * l.price, 0);
-  const fee = base + guestFees;
+  const fee = base - off + guestFees;
   const added = lines.reduce((sum, l) => sum + l.count, 0);
   const headCount = (pkg ? pkg.adults + pkg.children : 1) + added;
   return {
@@ -241,6 +270,8 @@ export function computeFee(
     extraChildren: custom ? 0 : lines[1].count,
     guests: lines.filter((l) => l.count > 0).map((l) => (pkg?.guestsFree ? { ...l, price: 0 } : l)),
     headCount,
+    memberPrice: base,
+    discount: off,
     fee,
     donation,
     total: fee + donation,

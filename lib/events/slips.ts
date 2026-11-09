@@ -29,6 +29,9 @@ export interface PaymentSlipData {
   venue: string;
   headCount: number;
   lines: SlipLine[];
+  /** Taka a discount took off the member's price, and the coupon code (null when automatic). */
+  discount: number;
+  discountCode: string | null;
   fee: number;
   donation: number;
   total: number;
@@ -50,7 +53,8 @@ async function toSlip(reg: SlipReg): Promise<PaymentSlipData> {
   const guests = storedGuests(reg);
   const guestTotal = guests.reduce((n, g) => n + g.count * g.price, 0);
   const lines: SlipLine[] = [
-    { label: reg.packageName || "Alumnus (member)", count: 1, amount: Math.max(0, reg.totalFee - guestTotal) },
+    // The member's own price before the discount; the discount is its own row.
+    { label: reg.packageName || "Alumnus (member)", count: 1, amount: Math.max(0, reg.totalFee + reg.discountAmount - guestTotal) },
     ...guests.map((g) => ({ label: guestWho(g) ? `${g.name}: ${guestWho(g)}` : g.name, count: g.count, amount: g.count * g.price })),
   ];
   const p = reg.user.profile;
@@ -68,6 +72,8 @@ async function toSlip(reg: SlipReg): Promise<PaymentSlipData> {
     venue: [reg.event.venue, reg.event.locationCity].filter(Boolean).join(", "),
     headCount: reg.headCount,
     lines,
+    discount: reg.discountAmount,
+    discountCode: reg.discountCode,
     fee: reg.totalFee,
     donation: reg.donationAmount,
     total: reg.totalFee + reg.donationAmount,

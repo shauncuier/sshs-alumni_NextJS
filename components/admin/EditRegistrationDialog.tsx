@@ -73,7 +73,8 @@ export default function EditRegistrationDialog({
         batchFees: event.batchFees,
       },
       { packageName: pkg || null, guests },
-      { sscBatch: reg.batch }
+      { sscBatch: reg.batch },
+      reg.discountRule
     );
   } catch (err) {
     priceError = (err as Error).message;

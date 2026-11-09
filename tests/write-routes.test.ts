@@ -41,6 +41,7 @@ describe("every write route", () => {
   it("writes to the activity log, unless listed as exempt", () => {
     const NOT_LOGGED: Record<string, string> = {
       "app/api/auth/register/route.ts": "always answers 410; changes nothing",
+      "app/api/events/[slug]/discounts/route.ts": "checks a coupon code for the form; changes nothing (rate limited)",
       "app/api/media/ocr/route.ts": "reads text from an image; changes nothing",
       "app/api/payments/sslcommerz/ipn/route.ts": "logged inside lib/payments/finalize.ts",
       "app/api/payments/sslcommerz/success/route.ts": "logged inside lib/payments/finalize.ts",

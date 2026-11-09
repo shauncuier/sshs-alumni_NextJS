@@ -104,6 +104,13 @@ export default function PaymentSlip({ slip }: { slip: PaymentSlipData }) {
                   <td style={{ ...cell, textAlign: "right" }}>{formatTaka(l.amount)}</td>
                 </tr>
               ))}
+              {slip.discount > 0 && (
+                <tr>
+                  <td style={cell}>ছাড় · Discount{slip.discountCode ? ` (${slip.discountCode})` : ""}</td>
+                  <td style={cell} />
+                  <td style={{ ...cell, textAlign: "right" }}>−{formatTaka(slip.discount)}</td>
+                </tr>
+              )}
               {slip.donation > 0 && (
                 <tr><td style={cell}>অনুদান · Donation</td><td style={cell} /><td style={{ ...cell, textAlign: "right" }}>{formatTaka(slip.donation)}</td></tr>
               )}

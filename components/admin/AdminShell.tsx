@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { can, type AdminArea } from "@/lib/permissions";
-import { ArrowLeft, BookOpen, BookText, Briefcase, Calculator, Calendar, ChevronDown, FilePlus2, FileText, GraduationCap, Handshake, Heart, HeartHandshake, IdCard, Images, Landmark, Layers, LayoutDashboard, Medal, Megaphone, Menu, MessageSquare, Newspaper, QrCode, ScrollText, Settings, ShieldCheck, UserCheck, Users, X } from "lucide-react";
+import { ArrowLeft, BookOpen, BookText, Briefcase, Calculator, Calendar, ChevronDown, FilePlus2, FileText, GraduationCap, Handshake, Heart, HeartHandshake, IdCard, Images, Landmark, Layers, LayoutDashboard, Medal, Megaphone, Menu, MessageSquare, Newspaper, QrCode, ScrollText, Settings, ShieldCheck, TicketPercent, UserCheck, Users, X } from "lucide-react";
 
 export interface AdminShellUser {
   email: string | null;
@@ -37,6 +37,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { name: "Events", short: "Events", href: "/admin/events", icon: Calendar, area: "events" },
       { name: "Paper forms", short: "Paper form", href: "/admin/events/offline", icon: FilePlus2, area: "events" },
+      { name: "Discounts", short: "Discounts", href: "/admin/events/discounts", icon: TicketPercent, area: "events" },
       { name: "Gate scanner", short: "Gate", href: "/gate", icon: QrCode, area: "gate" },
     ],
   },

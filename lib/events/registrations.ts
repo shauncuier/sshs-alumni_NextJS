@@ -15,6 +15,7 @@ import { readVerifiedEmail } from "@/lib/email-otp";
 import { otpRequired } from "@/lib/otp-setting";
 import { CLOSED_MESSAGES, registrationClosedReason } from "./availability";
 import { attachGuestPeople, computeFee, storedGuests } from "./pricing";
+import { chooseDiscount } from "./discounts";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 import { availableMethods, getPaymentSettings } from "@/lib/payment-settings";
 import { eventFeeRules } from "./service";
@@ -91,6 +92,8 @@ async function toMemberRegistration(reg: EventRegistration & { event: Event }): 
     guests: storedGuests(reg),
     headCount: reg.headCount,
     totalFee: reg.totalFee,
+    discountAmount: reg.discountAmount,
+    discountCode: reg.discountCode,
     donationAmount: reg.donationAmount,
     paymentMethod: reg.paymentMethod,
     transactionId: reg.transactionId,
@@ -261,11 +264,18 @@ export async function registerForEvent(args: {
 
       // The member's fee depends on their SSC batch: the one on the join form, or their profile's.
       const sscBatch = account?.sscBatch ?? (await tx.alumniProfile.findUnique({ where: { userId }, select: { sscBatch: true } }))?.sscBatch;
-      const price = computeFee(rules, args.rsvp, { sscBatch });
+      const fullPrice = computeFee(rules, args.rsvp, { sscBatch });
+      // A coupon typed on the form, or an automatic discount running now (lib/events/discounts.ts).
+      const chosen = await chooseDiscount(tx, { eventId: event.id, userId, code: args.rsvp.couponCode, memberPrice: fullPrice.memberPrice, now });
+      const price = chosen ? computeFee(rules, args.rsvp, { sscBatch }, chosen.fee) : fullPrice;
       // Online registrations name every guest (and give each child's age).
       const guests = attachGuestPeople(price.guests, args.rsvp.guestPeople);
       if (event.isMembershipEvent && price.fee <= 0) {
-        throw new AppError("MEMBERSHIP_MUST_BE_PAID", 400, "Membership registration requires a fee.");
+        throw new AppError(
+          "MEMBERSHIP_MUST_BE_PAID",
+          400,
+          chosen ? "A discount can't make the membership free. Please remove the code." : "Membership registration requires a fee."
+        );
       }
       if (reservedHeads + price.headCount > event.maxAttendees) {
         throw new AppError("REGISTRATION_CLOSED", 409, CLOSED_MESSAGES.FULL);
@@ -320,6 +330,9 @@ export async function registerForEvent(args: {
           headCount: price.headCount,
           guestCount: price.headCount,
           totalFee: price.fee,
+          discountId: chosen?.discount.id ?? null,
+          discountCode: chosen?.discount.kind === "COUPON" ? chosen.discount.code : null,
+          discountAmount: price.discount,
           donationAmount: price.donation,
           tshirtSize: args.rsvp.tshirtSize?.trim() || null,
           mealPreference: args.rsvp.mealPreference?.trim() || null,

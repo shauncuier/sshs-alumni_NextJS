@@ -3,7 +3,7 @@ import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails"
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import { toProofSummary } from "@/lib/members/proof-types";
-import { storedGuests } from "./pricing";
+import { storedDiscountRule, storedGuests } from "./pricing";
 import { getPublicEventBySlug } from "./service";
 import type { AdminRegistration, PublicEvent, RegistrationStatusValue } from "./types";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
@@ -15,11 +15,13 @@ import { assertMerchantTrxIdFree, isMerchantTrxClash } from "@/lib/payments/merc
 
 type RegWithUser = EventRegistration & {
   user: User & { profile: AlumniProfile | null; verificationRequests: VerificationRequest[] };
+  discount?: { type: "PERCENT" | "AMOUNT"; value: number } | null;
 };
 
 // The member's latest verification request carries the proof uploaded when joining.
 export const WITH_USER = {
   user: { include: { profile: true, verificationRequests: { orderBy: { createdAt: "desc" as const }, take: 1 } } },
+  discount: { select: { type: true, value: true } },
 };
 
 export function toAdminRegistration(reg: RegWithUser): AdminRegistration {
@@ -42,6 +44,9 @@ export function toAdminRegistration(reg: RegWithUser): AdminRegistration {
     source: reg.source,
     headCount: reg.headCount,
     totalFee: reg.totalFee,
+    discountAmount: reg.discountAmount,
+    discountCode: reg.discountCode,
+    discountRule: storedDiscountRule(reg),
     donationAmount: reg.donationAmount,
     tshirtSize: reg.tshirtSize,
     mealPreference: reg.mealPreference,

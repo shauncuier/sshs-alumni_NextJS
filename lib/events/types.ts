@@ -79,6 +79,8 @@ export interface RsvpInput {
   payerAccountLast4?: string | null;
   payerPaidAt?: string | null;
   donationAmount?: number;
+  /** A coupon code typed on the form (lib/events/discounts.ts); checked again on the server. */
+  couponCode?: string | null;
   notes?: string | null;
 }
 
@@ -186,6 +188,9 @@ export interface MemberRegistration {
   guests: GuestLine[];
   headCount: number;
   totalFee: number;
+  /** Taka a discount took off, and the coupon code used (null for an automatic discount). */
+  discountAmount: number;
+  discountCode: string | null;
   donationAmount: number;
   paymentMethod: string | null;
   transactionId: string | null;
@@ -213,6 +218,10 @@ export interface AdminRegistration {
   source: string | null;
   headCount: number;
   totalFee: number;
+  discountAmount: number;
+  discountCode: string | null;
+  /** The discount kept when the super admin edits the registration (lib/events/edit-registration.ts). */
+  discountRule: { type: "PERCENT" | "AMOUNT"; value: number } | null;
   donationAmount: number;
   tshirtSize: string | null;
   mealPreference: string | null;

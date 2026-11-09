@@ -277,9 +277,53 @@ model Event {
   registrations  EventRegistration[]
   financeEntries FinanceEntry[]
   budgetLines    EventBudgetLine[]
+  discounts      Discount[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum DiscountKind {
+  /// The member types a code on the registration form.
+  COUPON
+  /// No code: applies to everyone who registers while it runs (e.g. early bird).
+  AUTOMATIC
+}
+
+enum DiscountType {
+  PERCENT
+  AMOUNT
+}
+
+/// A reduction of the member's own fee (package or batch price; guests pay in full),
+/// managed in /admin/events/discounts (lib/events/discounts.ts). It works from startsAt
+/// to endsAt and stops by itself afterwards. Only one discount applies per
+/// registration: the biggest of the coupon typed and the automatic ones.
+model Discount {
+  id        String       @id @default(uuid()) @db.VarChar(36)
+  kind      DiscountKind
+  /// COUPON only: stored in capitals, matched without regard to case.
+  code      String?      @unique @db.VarChar(40)
+  /// Shown to members, e.g. "Early bird" or "Batch 2013 offer".
+  label     String       @db.VarChar(120)
+  type      DiscountType
+  /// PERCENT: 1–100. AMOUNT: whole taka.
+  value     Float
+  /// One event, or null for every event.
+  eventId   String?      @db.VarChar(36)
+  event     Event?       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  /// How many registrations may use it in all (cancelled ones don't count); null = no limit.
+  maxUses   Int?
+  isActive  Boolean      @default(true)
+  createdBy String?      @db.VarChar(191)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+
+  registrations EventRegistration[]
+
+  @@index([eventId, kind])
 }
 
 model EventRegistration {
@@ -300,7 +344,13 @@ model EventRegistration {
   source            String?            @db.VarChar(80)
   headCount         Int                @default(1)
   tshirtSize        String?
+  /// What the member pays for the registration: after the discount, without the donation.
   totalFee          Float              @default(0)
+  /// The discount used (lib/events/discounts.ts), its code as typed, and the taka it took off.
+  discountId        String?            @db.VarChar(36)
+  discount          Discount?          @relation(fields: [discountId], references: [id], onDelete: SetNull)
+  discountCode      String?            @db.VarChar(40)
+  discountAmount    Float              @default(0)
   donationAmount    Float              @default(0)
   paymentMethod     String?
   /// The ID the member typed from their own app's receipt.
