@@ -48,9 +48,9 @@ export default function PresentationPage() {
       id: 1,
       tag: "Executive Overview",
       title: "Connecting Generations",
-      subtitle: "The Official Praktan Sabujian Parishad Digital Platform (EIIN: 105070)",
+      subtitle: "The Official প্রাক্তন সবুজিয়ান পরিষদ Digital Platform",
       speakerNotes:
-        "Good morning/afternoon everyone. Today, I'm proud to present the complete digital platform built for Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School. Over our development cycle, we have unified over 40 graduation batches (1985–2025) into a single, secure, and modern digital ecosystem. The application is now in Release Candidate status with 63 compiled routes and zero technical debt.",
+        "Good morning/afternoon everyone. Today, I'm proud to present the complete digital platform built for প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School. Over our development cycle, we have unified over 40 graduation batches (1985–2025) into a single, secure, and modern digital ecosystem. The application is now in Release Candidate status with 63 compiled routes and zero technical debt.",
       demoUrl: "/",
       demoLabel: "Launch Live Homepage",
       content: (
@@ -226,7 +226,7 @@ export default function PresentationPage() {
             </h4>
             <ul className="space-y-2 text-sm text-slate-300">
               <li><strong>Dynamic Homepage:</strong> Hero banner, quick stats, upcoming reunions, and alumni spotlight.</li>
-              <li><strong>School History & Legacy:</strong> EIIN 105070 documentation, headmaster tribute, campus timeline.</li>
+              <li><strong>School History & Legacy:</strong> School documentation, headmaster tribute, campus timeline.</li>
               <li><strong>Alumni Directory:</strong> Instant search by graduation batch (1985–2025), profession, blood group, city.</li>
               <li><strong>Batch Hubs (`/batches/[year]`):</strong> Dedicated batch pages with batch leaders and classmate rosters.</li>
               <li><strong>Stories & Gallery:</strong> Alumni memoirs, notable alumni hall of fame, and interactive photo lightbox.</li>
@@ -751,7 +751,7 @@ export default function PresentationPage() {
             <div className="w-7 h-7 rounded-md bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-xs font-serif font-black">
               SS
             </div>
-            <span>Praktan Sabujian Parishad</span>
+            <span>প্রাক্তন সবুজিয়ান পরিষদ</span>
           </Link>
           <span className="text-slate-600">|</span>
           <span className="text-xs text-slate-300 font-medium hidden sm:inline">

@@ -16,12 +16,12 @@ import { smsTestModeOn } from "@/lib/sms-test-mode";
 /** "Your registration is confirmed" with the dashboard link, in English so it fits one SMS (160 characters). */
 export function registrationConfirmedSms(eventTitle: string): string {
   const what = /jubilee/i.test(eventTitle) ? "Golden Jubilee registration" : "event registration";
-  return `Praktan Sabujian Parishad: your ${what} is confirmed. Ticket & payment slip: ${siteUrl("/dashboard")}`;
+  return `প্রাক্তন সবুজিয়ান পরিষদ: your ${what} is confirmed. Ticket & payment slip: ${siteUrl("/dashboard")}`;
 }
 
 /** "We received your donation", with the receipt number, in one SMS. */
 export function donationReceivedSms(amount: number, receiptId: string): string {
-  return `Praktan Sabujian Parishad: we received your donation of Tk ${Math.round(amount).toLocaleString("en-US")}. Thank you! Receipt ${receiptId}`;
+  return `প্রাক্তন সবুজিয়ান পরিষদ: we received your donation of Tk ${Math.round(amount).toLocaleString("en-US")}. Thank you! Receipt ${receiptId}`;
 }
 
 export type SmsOutcome = "sent" | "off" | "test-mode" | "no-phone" | "failed";

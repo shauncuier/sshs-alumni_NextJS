@@ -11,7 +11,7 @@ import PersonTile from "@/components/school/PersonTile";
 import { ANWAR_ALI_MOMENTS, SCHOOL_MEMOIRS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
 import { getSchoolPeople } from "@/lib/teachers";
 
-export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976, EIIN 105070." });
+export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976," });
 
 // The teachers come from the database (Admin → Teachers), so render on each request.
 export const dynamic = "force-dynamic";
@@ -35,7 +35,7 @@ export default async function SchoolPage() {
                 About Sabuj Shikshayatan Government High School
               </h1>
               <p className="text-emerald-100 text-sm leading-relaxed">
-                {schoolInfo.bengaliName} — {schoolInfo.location}. EIIN {schoolInfo.eiin}. Established {schoolInfo.established}.
+                {schoolInfo.bengaliName} — {schoolInfo.location}. Established {schoolInfo.established}.
               </p>
             </div>
           </div>
@@ -66,7 +66,6 @@ export default async function SchoolPage() {
                   ["Former name", "Sabuj Shikshayatan High School (সবুজ শিক্ষায়তন উচ্চ বিদ্যালয়)"],
                   ["Founded", String(schoolInfo.established)],
                   ["Government school since", "July 2025"],
-                  ["EIIN", schoolInfo.eiin],
                   ["Education board", schoolInfo.board],
                   ["Address", "Hafiz Jute Mills, Baro Aulia, South Sonaichhari, Sitakunda, Chattogram"],
                 ].map(([label, value]) => (
@@ -100,7 +99,6 @@ export default async function SchoolPage() {
             <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-2">
               <span className="text-xs font-bold text-emerald-700 uppercase">Board Affiliation</span>
               <h3 className="font-bold text-base text-slate-900">{schoolInfo.board}</h3>
-              <p className="text-xs text-slate-500">EIIN {schoolInfo.eiin}.</p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-2">

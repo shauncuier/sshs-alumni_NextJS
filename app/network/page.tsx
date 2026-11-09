@@ -12,7 +12,7 @@ import { avatarAt } from "@/lib/avatar";
 import { alumniPath } from "@/lib/members/profile-path";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Alumni network | Praktan Sabujian Parishad" };
+export const metadata = { title: "Alumni network | প্রাক্তন সবুজিয়ান পরিষদ" };
 
 type Props = { searchParams: Promise<{ q?: string; batch?: string; page?: string }> };
 

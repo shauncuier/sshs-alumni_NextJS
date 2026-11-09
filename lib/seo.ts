@@ -14,19 +14,18 @@ import { DEFAULT_CONTACT_PHONES } from "@/lib/contact-phones-shared";
  * instead of merging it.
  */
 
-export const SITE_NAME = "Praktan Sabujian Parishad";
-export const ASSOCIATION_NAME = "Praktan Sabujian Parishad";
-export const ASSOCIATION_NAME_BN = "প্রাক্তন সবুজিয়ান পরিষদ";
-export const ASSOCIATION_SHORT_NAME_BN = "সবুজিয়ান পরিষদ";
+export const SITE_NAME = "প্রাক্তন সবুজিয়ান পরিষদ";
+/** The association's only name, in Bangla (no English or short form). */
+export const ASSOCIATION_NAME = "প্রাক্তন সবুজিয়ান পরিষদ";
 /** The 1200x630 share cards in public/og (design/share-cards/make_cards.py), one per section. */
 export const SHARE_CARDS = {
-  home: "Praktan Sabujian Parishad",
+  home: "প্রাক্তন সবুজিয়ান পরিষদ",
   jubilee: "Golden Jubilee 2026 of Sabuj Shikshayatan Government High School",
   events: "Events and reunions of the Sabuj Shikshayatan alumni",
   alumni: "Sabuj Shikshayatan alumni directory",
   batches: "SSC batches of Sabuj Shikshayatan Government High School",
   school: "Sabuj Shikshayatan Government High School, since 1976",
-  about: "About Praktan Sabujian Parishad",
+  about: "About প্রাক্তন সবুজিয়ান পরিষদ",
   news: "News and notices from the Sabuj Shikshayatan alumni",
   stories: "Stories from Sabuj Shikshayatan alumni",
   achievements: "Achievements of Sabuj Shikshayatan alumni",
@@ -34,7 +33,7 @@ export const SHARE_CARDS = {
   donate: "Give back to Sabuj Shikshayatan Government High School",
   careers: "Jobs shared by Sabuj Shikshayatan alumni",
   mentorship: "Mentorship from Sabuj Shikshayatan alumni",
-  register: "Join Praktan Sabujian Parishad",
+  register: "Join প্রাক্তন সবুজিয়ান পরিষদ",
   contact: "Contact the Sabuj Shikshayatan alumni committee",
   volunteer: "Volunteer for the Sabuj Shikshayatan alumni",
 } as const;
@@ -67,7 +66,7 @@ export function pageMetadata(p: {
   path: string;
   title: string;
   description: string;
-  /** The title is complete; no " | Praktan Sabujian Parishad" suffix. */
+  /** The title is complete; no " | প্রাক্তন সবুজিয়ান পরিষদ" suffix. */
   absoluteTitle?: boolean;
   /** The share image; "file" leaves it to the segment's opengraph-image file. */
   image?: { url: string; width?: number; height?: number; alt?: string } | "file" | null;
@@ -107,7 +106,6 @@ export function websiteJsonLd() {
     "@type": "WebSite",
     "@id": `${origin}/#website`,
     name: ASSOCIATION_NAME,
-    alternateName: [ASSOCIATION_NAME_BN, ASSOCIATION_SHORT_NAME_BN],
     url: origin,
     inLanguage: ["en", "bn"],
     publisher: association(),
@@ -227,7 +225,6 @@ export function organizationJsonLd() {
     "@type": "Organization",
     "@id": `${origin}/#association`,
     name: ASSOCIATION_NAME,
-    alternateName: [ASSOCIATION_NAME_BN, ASSOCIATION_SHORT_NAME_BN],
     url: origin,
     logo: `${origin}/icon-512.png`,
     foundingDate: "2015",

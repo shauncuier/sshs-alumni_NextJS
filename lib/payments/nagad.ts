@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Nagad Payment Gateway Integration
+ * প্রাক্তন সবুজিয়ান পরিষদ — Nagad Payment Gateway Integration
  * 
  * Nagad Merchant API Integration
  * Supports both sandbox and production environments.

@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Real-Time SSE Stream Endpoint
+ * প্রাক্তন সবুজিয়ান পরিষদ — Real-Time SSE Stream Endpoint
  * GET /api/realtime/stream
  * 
  * Client connects via EventSource to receive live updates.
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       const welcomePayload = `event: connected\ndata: ${JSON.stringify({
         userId,
         connectedAt: new Date().toISOString(),
-        message: "Praktan Sabujian Parishad real-time connection established",
+        message: "প্রাক্তন সবুজিয়ান পরিষদ real-time connection established",
       })}\n\n`;
       controller.enqueue(encoder.encode(welcomePayload));
 

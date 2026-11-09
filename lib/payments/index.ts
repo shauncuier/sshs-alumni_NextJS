@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Unified Payment Service
+ * প্রাক্তন সবুজিয়ান পরিষদ — Unified Payment Service
  * 
  * Orchestrates payment initiation across all supported gateways:
  * - bKash Tokenized Checkout

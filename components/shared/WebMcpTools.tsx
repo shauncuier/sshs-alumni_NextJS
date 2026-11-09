@@ -36,7 +36,7 @@ export default function WebMcpTools() {
       {
         name: "get_site_overview",
         description:
-          "Summary of Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School (Sitakunda, Bangladesh): contact details, upcoming events and the main pages, in Markdown.",
+          "Summary of প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School (Sitakunda, Bangladesh): contact details, upcoming events and the main pages, in Markdown.",
         inputSchema: { type: "object", properties: {} },
         annotations: { readOnlyHint: true },
         execute: async () => text(await (await fetch("/llms.txt")).text()),

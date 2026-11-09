@@ -32,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
     name: "About",
     links: [
       { name: "About the association", href: "/about", icon: Users, desc: "Who we are and what we do" },
-      { name: "Our school", href: "/school", icon: Building2, desc: "History of the school, EIIN 105070" },
+      { name: "Our school", href: "/school", icon: Building2, desc: "History of the school" },
       { name: "Our teachers", href: "/teachers", icon: GraduationCap, desc: "Head teachers, teachers and staff, then and now" },
       { name: "Constitution", href: "/constitution", icon: ScrollText, desc: "The association's rules, as PDF" },
       { name: "Past committees", href: "/committee/past", icon: History, desc: "Committees of earlier terms" },
@@ -159,14 +159,13 @@ export default function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-[72px] flex items-center gap-3 xl:gap-6">
-          {/* Logo and the association's name, as on the logo: Bangla, then English */}
-          <Link prefetch={false} href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 select-none" aria-label="Praktan Sabujian Parishad, home">
+          {/* Logo and the association's name (Bangla only) */}
+          <Link prefetch={false} href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 select-none" aria-label="প্রাক্তন সবুজিয়ান পরিষদ, home">
             <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white ring-2 ring-amber-400/60 shadow-md shadow-black/30 flex items-center justify-center overflow-hidden shrink-0">
               <NextImage src="/logo.png" alt="" width={48} height={48} className="w-full h-full object-contain" priority />
             </span>
             <span className="flex flex-col leading-tight">
               <span className="font-extrabold text-[15px] sm:text-lg text-white whitespace-nowrap">প্রাক্তন সবুজিয়ান পরিষদ</span>
-              <span className="hidden sm:block text-[11px] font-semibold text-amber-300/90 whitespace-nowrap">Praktan Sabujian Parishad</span>
             </span>
           </Link>
 

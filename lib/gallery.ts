@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
 import type { GalleryPhotoItem } from "@/lib/data";
 import { contentImageId, removeContentImage, thumbUrlFor } from "@/lib/media/content-images";
+import { personLabel, personLabels } from "@/lib/people-labels";
+import { ASSOCIATION_NAME } from "@/lib/seo";
 
 /**
  * Photo albums: created and published by admins in /admin/gallery, shown on
@@ -61,7 +63,7 @@ function toAdminAlbum(a: AlbumWithPhotos): AdminGalleryAlbum {
   };
 }
 
-function toPublicPhoto(p: GalleryPhoto, album: GalleryAlbum): GalleryPhotoItem {
+function toPublicPhoto(p: GalleryPhoto, album: GalleryAlbum, people: Map<string, string>): GalleryPhotoItem {
   return {
     id: p.id,
     albumCategory: (GALLERY_CATEGORIES as readonly string[]).includes(album.category) ? (album.category as GalleryCategory) : "Reunions",
@@ -70,7 +72,8 @@ function toPublicPhoto(p: GalleryPhoto, album: GalleryAlbum): GalleryPhotoItem {
     thumbUrl: thumbUrlFor(p.imageUrl) ?? p.imageUrl,
     year: p.batchYear ?? album.year ?? undefined,
     caption: p.caption ?? "",
-    submittedBy: p.uploadedBy ?? "Praktan Sabujian Parishad",
+    // The uploader is stored by email; visitors see the name and batch instead.
+    submittedBy: personLabel(people, p.uploadedBy) ?? ASSOCIATION_NAME,
   };
 }
 
@@ -83,7 +86,8 @@ export async function listPublishedPhotos(limit = 500): Promise<GalleryPhotoItem
     orderBy: [{ year: "desc" }, { createdAt: "desc" }],
     include: { photos: { orderBy: photoOrder } },
   });
-  return albums.flatMap((a) => a.photos.map((p) => toPublicPhoto(p, a))).slice(0, limit);
+  const people = await personLabels(albums.flatMap((a) => a.photos.map((p) => p.uploadedBy)));
+  return albums.flatMap((a) => a.photos.map((p) => toPublicPhoto(p, a, people))).slice(0, limit);
 }
 
 /** The newest photos from published albums, for the homepage. */
@@ -94,7 +98,8 @@ export async function latestPublishedPhotos(count: number): Promise<GalleryPhoto
     take: count,
     include: { album: true },
   });
-  return rows.map((p) => toPublicPhoto(p, p.album));
+  const people = await personLabels(rows.map((p) => p.uploadedBy));
+  return rows.map((p) => toPublicPhoto(p, p.album, people));
 }
 
 export async function listAlbumsForAdmin(): Promise<AdminGalleryAlbum[]> {

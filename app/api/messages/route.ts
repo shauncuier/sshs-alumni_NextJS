@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Messages API with Real-Time Push
+ * প্রাক্তন সবুজিয়ান পরিষদ — Messages API with Real-Time Push
  * 
  * GET  /api/messages                — Conversations of the signed-in member
  * GET  /api/messages?with=yyy        — Thread between the signed-in member and yyy

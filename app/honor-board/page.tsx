@@ -14,7 +14,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/honor-board",
   image: null,
   title: "Honor board",
-  description: "The honor board of Praktan Sabujian Parishad: the people who led and built the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
+  description: "The honor board of প্রাক্তন সবুজিয়ান পরিষদ: the people who led and built the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
 });
 
 export default async function HonorBoardPage() {

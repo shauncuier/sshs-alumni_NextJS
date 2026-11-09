@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — SSLCommerz IPN (Instant Payment Notification) Handler
+ * প্রাক্তন সবুজিয়ান পরিষদ — SSLCommerz IPN (Instant Payment Notification) Handler
  * POST /api/payments/sslcommerz/ipn
  * 
  * Server-to-server webhook from SSLCommerz confirming payment.

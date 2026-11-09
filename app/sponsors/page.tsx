@@ -16,7 +16,7 @@ export const metadata: Metadata = pageMetadata({
   image: null,
   title: "Our sponsors",
   description:
-    "The sponsors and supporters of Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
+    "The sponsors and supporters of প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
 });
 
 function Logo({ sponsor, size }: { sponsor: SponsorView; size: number }) {

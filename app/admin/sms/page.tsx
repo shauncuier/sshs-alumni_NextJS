@@ -52,7 +52,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Event registration open",
     category: "Reunion",
-    text: `Praktan Sabujian Parishad: Dear Alumnus, event registration is now open! Get your Digital ID pass & register at ${SITE}/events - Praktan Sabujian Parishad`,
+    text: `প্রাক্তন সবুজিয়ান পরিষদ: Dear Alumnus, event registration is now open! Get your Digital ID pass & register at ${SITE}/events - প্রাক্তন সবুজিয়ান পরিষদ`,
     isCostSaver: true,
   },
   {
@@ -60,7 +60,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Digital Smart ID Card Pass Ready",
     category: "ID Card",
-    text: `Dear Alumnus, your Digital Smart ID Card is ready. Login to download your gate pass: ${SITE}/card - Praktan Sabujian Parishad`,
+    text: `Dear Alumnus, your Digital Smart ID Card is ready. Login to download your gate pass: ${SITE}/card - প্রাক্তন সবুজিয়ান পরিষদ`,
     isCostSaver: true,
   },
   {
@@ -68,7 +68,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Alumni Profile Verified Welcome",
     category: "Verification",
-    text: `Congratulations! Your Praktan Sabujian Parishad profile has been verified. Connect with teachers & batchmates at ${SITE} - Praktan Sabujian Parishad`,
+    text: `Congratulations! Your প্রাক্তন সবুজিয়ান পরিষদ profile has been verified. Connect with teachers & batchmates at ${SITE} - প্রাক্তন সবুজিয়ান পরিষদ`,
     isCostSaver: true,
   },
   {
@@ -76,7 +76,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Batch Reps Coordination Call",
     category: "Batch Reps",
-    text: "Notice: Batch representatives meeting on [DAY] at [TIME], [PLACE]. Please join on time. - Sabujian Parishad",
+    text: "Notice: Batch representatives meeting on [DAY] at [TIME], [PLACE]. Please join on time. - প্রাক্তন সবুজিয়ান পরিষদ",
     isCostSaver: true,
   },
   {
@@ -84,7 +84,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Volunteers Gate Briefing",
     category: "Volunteers",
-    text: "Volunteers: event briefing on [DAY] at [TIME], [PLACE]. Please attend on time. - Sabujian Parishad",
+    text: "Volunteers: event briefing on [DAY] at [TIME], [PLACE]. Please attend on time. - প্রাক্তন সবুজিয়ান পরিষদ",
     isCostSaver: true,
   },
   {
@@ -92,7 +92,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "en",
     title: "Urgent Campus Notice",
     category: "Notice",
-    text: `Notice: Praktan Sabujian Parishad General Meeting announcement has been published. Read details at ${SITE} - Executive Committee`,
+    text: `Notice: প্রাক্তন সবুজিয়ান পরিষদ General Meeting announcement has been published. Read details at ${SITE} - Executive Committee`,
     isCostSaver: true,
   },
 
@@ -110,7 +110,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "banglish",
     title: "Digital ID Card Ready (Banglish)",
     category: "ID Card",
-    text: `Apnar Digital Smart ID Card prostut hoyeche. Digital gate pass download korte login korun: ${SITE}/card - Praktan Sabujian Parishad`,
+    text: `Apnar Digital Smart ID Card prostut hoyeche. Digital gate pass download korte login korun: ${SITE}/card - প্রাক্তন সবুজিয়ান পরিষদ`,
     isCostSaver: true,
   },
   {
@@ -118,7 +118,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "banglish",
     title: "Profile Verified (Banglish)",
     category: "Verification",
-    text: `Abhinandan! Praktan Sabujian Parishad-e apnar profile verified hoyeche. Shokol shikkhok o bondhuder shathe jukto thakun: ${SITE}`,
+    text: `Abhinandan! প্রাক্তন সবুজিয়ান পরিষদ-এ apnar profile verified hoyeche. Shokol shikkhok o bondhuder shathe jukto thakun: ${SITE}`,
     isCostSaver: true,
   },
   {
@@ -126,7 +126,7 @@ const PRESET_TEMPLATE_TEXTS: Omit<SmsTemplateItem, "tag">[] = [
     lang: "banglish",
     title: "Batch Reps Shobha (Banglish)",
     category: "Batch Reps",
-    text: "Joruri Notice: [DIN] [SHOMOY]-e [JAYGA]-y Batch Protinidhider shobha hobe. Shokolke thakar onurodh roilo. - Sabujian Parishad",
+    text: "Joruri Notice: [DIN] [SHOMOY]-e [JAYGA]-y Batch Protinidhider shobha hobe. Shokolke thakar onurodh roilo. - প্রাক্তন সবুজিয়ান পরিষদ",
     isCostSaver: true,
   },
 

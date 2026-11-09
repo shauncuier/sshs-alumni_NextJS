@@ -78,7 +78,7 @@ function LoginForm() {
           <div className="w-16 h-16 rounded-full p-1 shadow-xl flex items-center justify-center ring-2 ring-amber-400/60 bg-white overflow-hidden group-hover:scale-105 transition-transform">
             <NextImage
               src="/logo.png"
-              alt="Praktan Sabujian Parishad Official Crest"
+              alt="প্রাক্তন সবুজিয়ান পরিষদ Official Crest"
               width={64}
               height={64}
               className="w-full h-full object-contain rounded-full"
@@ -91,7 +91,7 @@ function LoginForm() {
           প্রাক্তন সবুজিয়ান পরিষদ
         </h2>
         <p className="text-xs text-emerald-300 mt-1">
-          Sabuj Shikshayatan Govt. High School • EIIN: 105070
+          Sabuj Shikshayatan Govt. High School
         </p>
       </div>
 
@@ -166,7 +166,7 @@ function LoginForm() {
               className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-emerald-50 text-emerald-800 hover:text-emerald-900 border border-slate-200 hover:border-emerald-300 font-bold text-xs transition-colors"
             >
               <UserCheck className="w-3.5 h-3.5" />
-              <span>Join Praktan Sabujian Parishad (Register)</span>
+              <span>Join প্রাক্তন সবুজিয়ান পরিষদ (Register)</span>
             </Link>
           </div>
         </div>

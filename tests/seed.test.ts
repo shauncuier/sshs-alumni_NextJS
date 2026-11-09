@@ -56,9 +56,20 @@ describe("production seed", () => {
     const again = await runProductionSeed({});
     expect(again.renamedRows).toBe(2);
     expect(await prisma.event.findMany({ select: { organizer: true, description: true } })).toEqual([
-      { organizer: "Praktan Sabujian Parishad", description: "You become a member of Praktan Sabujian Parishad: welcome." },
+      { organizer: "প্রাক্তন সবুজিয়ান পরিষদ", description: "You become a member of প্রাক্তন সবুজিয়ান পরিষদ: welcome." },
     ]);
     expect((await runProductionSeed({})).renamedRows).toBe(0);
+  });
+
+  it("replaces the retired English name with the Bangla one, without doubling it", async () => {
+    await runProductionSeed({});
+    await prisma.event.updateMany({
+      data: { organizer: "Praktan Sabujian Parishad", description: "Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ) welcomes you." },
+    });
+    expect((await runProductionSeed({})).renamedRows).toBe(2);
+    expect(await prisma.event.findMany({ select: { organizer: true, description: true } })).toEqual([
+      { organizer: "প্রাক্তন সবুজিয়ান পরিষদ", description: "প্রাক্তন সবুজিয়ান পরিষদ welcomes you." },
+    ]);
   });
 
   it("refuses to run without a super admin in the environment", async () => {

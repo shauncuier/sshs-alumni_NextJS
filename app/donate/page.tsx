@@ -170,7 +170,7 @@ export default function DonatePage() {
                 <p className="text-[11px] text-slate-500 leading-snug">
                   Scan with any bank or mobile banking app (bKash, Nagad, Rocket…), then choose a campaign below and enter the transaction ID.
                 </p>
-                <a href={payment.banglaQrImage} download="Praktan-Sabujian-Parishad-Bangla-QR" className="inline-block text-[11px] font-bold text-emerald-800 hover:underline">
+                <a href={payment.banglaQrImage} download="exsabujian-bangla-qr" className="inline-block text-[11px] font-bold text-emerald-800 hover:underline">
                   Save the QR image
                 </a>
               </div>
@@ -562,7 +562,7 @@ export default function DonatePage() {
 
                     <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 pt-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Audited by Praktan Sabujian Parishad Executive Council</span>
+                      <span>Audited by প্রাক্তন সবুজিয়ান পরিষদ Executive Council</span>
                     </div>
                   </form>
                 )}

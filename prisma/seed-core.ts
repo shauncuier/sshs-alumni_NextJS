@@ -211,14 +211,20 @@ export async function removeDemoContent(): Promise<Record<string, number>> {
   };
 }
 
-/** Old names of the association, longest first ("the X" reads as plain "Praktan Sabujian Parishad"). */
+/**
+ * Old names of the association, longest first ("the X" reads as plain "প্রাক্তন সবুজিয়ান পরিষদ").
+ * Since 2026-11-09 the English "Praktan Sabujian Parishad" is retired too: the name is Bangla only.
+ */
 const OLD_ASSOCIATION_NAMES = [
+  "Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ)",
+  "the Praktan Sabujian Parishad",
+  "Praktan Sabujian Parishad",
   "the SSGHS Alumni Association",
   "SSGHS Alumni Association",
   "the Sabuj Shikshayatan Alumni Association",
   "Sabuj Shikshayatan Alumni Association",
 ];
-const ASSOCIATION_NAME = "Praktan Sabujian Parishad";
+const ASSOCIATION_NAME = "প্রাক্তন সবুজিয়ান পরিষদ";
 
 /**
  * Rows written before the association took its new name (2026-10-22): seeded event text,
@@ -231,6 +237,7 @@ export async function renameAssociationInRows(): Promise<number> {
     ["Event", "description"],
     ["Event", "subtitle"],
     ["NewsArticle", "author"],
+    ["Announcement", "author"],
     ["GalleryPhoto", "uploadedBy"],
   ];
   let changed = 0;

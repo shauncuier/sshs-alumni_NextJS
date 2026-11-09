@@ -2,10 +2,10 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "প্রাক্তন সবুজিয়ান পরিষদ · Praktan Sabujian Parishad",
-    short_name: "সবুজিয়ান পরিষদ",
+    name: "প্রাক্তন সবুজিয়ান পরিষদ",
+    short_name: "প্রাক্তন সবুজিয়ান পরিষদ",
     description:
-      "Praktan Sabujian Parishad: official alumni portal, digital smart card, and alumni directory for Sabuj Shikshayatan Government High School, Chattogram (EIIN 105070).",
+      "প্রাক্তন সবুজিয়ান পরিষদ: official alumni portal, digital smart card, and alumni directory for Sabuj Shikshayatan Government High School, Chattogram.",
     start_url: "/",
     display: "standalone",
     background_color: "#06281e",

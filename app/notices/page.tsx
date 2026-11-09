@@ -14,7 +14,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/notices",
   image: null,
   title: "Notice board",
-  description: "Official notices from Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
+  description: "Official notices from প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
 });
 
 export default async function NoticesPage() {

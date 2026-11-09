@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { guestWho, storedGuests } from "./pricing";
 import { slipNumber } from "./tokens";
+import { personLabel, personLabels } from "@/lib/people-labels";
 import type { GuestLine, RegistrationStatusValue } from "./types";
 
 /**
@@ -86,7 +87,7 @@ const FORM_INCLUDE = {
 
 type FormReg = Prisma.EventRegistrationGetPayload<{ include: typeof FORM_INCLUDE }>;
 
-function toForm(reg: FormReg, paperSource: string): FilledRegistrationForm {
+function toForm(reg: FormReg, paperSource: string, people: Map<string, string>): FilledRegistrationForm {
   const guests: GuestLine[] = storedGuests(reg);
   const guestTotal = guests.reduce((n, g) => n + g.count * g.price, 0);
   const lines: FilledFormLine[] = [
@@ -101,7 +102,7 @@ function toForm(reg: FormReg, paperSource: string): FilledRegistrationForm {
     channel: reg.source === paperSource ? "paper" : "online",
     registeredOn: reg.createdAt.toISOString(),
     confirmedOn: reg.confirmedAt?.toISOString() ?? null,
-    confirmedBy: reg.confirmedBy,
+    confirmedBy: personLabel(people, reg.confirmedBy),
     eventTitle: reg.event.title,
     eventDate: reg.event.date.toISOString(),
     eventDateTentative: reg.event.dateTentative,
@@ -149,5 +150,6 @@ export async function registrationFormsForEvent(
     },
     include: FORM_INCLUDE,
   });
-  return regs.map((r) => toForm(r, opts.paperSource)).sort((a, b) => (a.batch ?? 0) - (b.batch ?? 0) || a.name.localeCompare(b.name));
+  const people = await personLabels(regs.map((r) => r.confirmedBy));
+  return regs.map((r) => toForm(r, opts.paperSource, people)).sort((a, b) => (a.batch ?? 0) - (b.batch ?? 0) || a.name.localeCompare(b.name));
 }

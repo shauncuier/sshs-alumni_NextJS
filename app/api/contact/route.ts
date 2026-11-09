@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(
       {
-        message: "Your message has been received by Praktan Sabujian Parishad executive office. We will get back to you shortly.",
+        message: "Your message has been received by প্রাক্তন সবুজিয়ান পরিষদ executive office. We will get back to you shortly.",
         ticketId,
       },
       { status: 200 }

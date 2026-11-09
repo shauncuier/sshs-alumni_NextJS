@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Payment Initiation API
+ * প্রাক্তন সবুজিয়ান পরিষদ — Payment Initiation API
  * POST /api/payments/initiate
  * 
  * Creates a donation record and initiates payment with the selected gateway.

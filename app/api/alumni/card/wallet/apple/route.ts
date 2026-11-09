@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Apple Wallet Pass API
+ * প্রাক্তন সবুজিয়ান পরিষদ — Apple Wallet Pass API
  * GET /api/alumni/card/wallet/apple?token=xxx
  * 
  * Generates an Apple Wallet pass definition for iOS Passbook / Wallet.

@@ -10,7 +10,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/terms",
   title: "Terms of use and privacy",
   description:
-    "The rules for using the Praktan Sabujian Parishad website, and how the association collects, shows and protects members' personal information.",
+    "The rules for using the প্রাক্তন সবুজিয়ান পরিষদ website, and how the association collects, shows and protects members' personal information.",
 });
 
 const UPDATED = "4 November 2026";
@@ -36,7 +36,7 @@ export default function TermsPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Terms of use and privacy</h1>
             <p className="text-emerald-100 text-sm leading-relaxed">
-              The website of Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ), the alumni association of {schoolInfo.name}. Last updated {UPDATED}.
+              The website of প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of {schoolInfo.name}. Last updated {UPDATED}.
             </p>
           </div>
         </section>

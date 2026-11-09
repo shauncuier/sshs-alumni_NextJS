@@ -1,5 +1,5 @@
 import { schoolInfo } from "@/lib/data";
-import { ASSOCIATION_NAME, ASSOCIATION_NAME_BN, siteOrigin } from "@/lib/seo";
+import { ASSOCIATION_NAME, siteOrigin } from "@/lib/seo";
 import { listPublicEvents } from "@/lib/events/service";
 import { getContactPhones } from "@/lib/contact-phones";
 import { DEFAULT_CONTACT_PHONES } from "@/lib/contact-phones-shared";
@@ -28,7 +28,7 @@ export async function siteMarkdown(): Promise<string> {
   const events = await upcomingEventLines(origin);
 
   return [
-    `# ${ASSOCIATION_NAME} (${ASSOCIATION_NAME_BN})`,
+    `# ${ASSOCIATION_NAME}`,
     "",
     `> The alumni association of ${schoolInfo.name} (${schoolInfo.bengaliName}), ${schoolInfo.location}. Founded in 2015, it connects former students, holds reunions and supports the school and its students.`,
     "",

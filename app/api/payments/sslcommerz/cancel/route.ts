@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — SSLCommerz Cancel Handler
+ * প্রাক্তন সবুজিয়ান পরিষদ — SSLCommerz Cancel Handler
  * POST /api/payments/sslcommerz/cancel
  */
 

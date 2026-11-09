@@ -75,7 +75,7 @@ export default function AdminEventsPage() {
     time: "09:00 AM - 05:00 PM",
     venue: "Main Campus Grounds, Sitakunda",
     locationCity: "Chattogram",
-    organizer: "Praktan Sabujian Parishad",
+    organizer: "প্রাক্তন সবুজিয়ান পরিষদ",
     registrationFee: 0,
     registrationDeadline: "",
     maxAttendees: 1000,
@@ -542,7 +542,7 @@ export default function AdminEventsPage() {
                     type="text"
                     value={formData.organizer}
                     onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
-                    placeholder="e.g. Golden Jubilee Steering Committee & Praktan Sabujian Parishad"
+                    placeholder="e.g. Golden Jubilee Steering Committee & প্রাক্তন সবুজিয়ান পরিষদ"
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                   />
                 </div>

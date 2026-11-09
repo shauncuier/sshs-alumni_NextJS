@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Nagad Payment Callback Handler
+ * প্রাক্তন সবুজিয়ান পরিষদ — Nagad Payment Callback Handler
  * GET /api/payments/nagad/callback
  * 
  * Nagad redirects user here after payment. Verifies and updates records.

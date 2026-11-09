@@ -103,7 +103,7 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[2rem] bg-white p-2 shadow-2xl shadow-black/40 ring-4 ring-amber-300/40">
               <Image
                 src="/logo-large.webp"
-                alt="প্রাক্তন সবুজিয়ান পরিষদ, Praktan Sabujian Parishad"
+                alt="প্রাক্তন সবুজিয়ান পরিষদ"
                 width={800}
                 height={800}
                 priority

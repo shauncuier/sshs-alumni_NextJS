@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — SSLCommerz Fail Handler
+ * প্রাক্তন সবুজিয়ান পরিষদ — SSLCommerz Fail Handler
  * POST /api/payments/sslcommerz/fail
  */
 

@@ -24,14 +24,16 @@ W, H = 1200, 630
 CX, CY = 945, 315        # the emblem (its ticks end 15 px inside the right edge)
 DISC, BARK = 104, 214
 GOLD, GOLD_LIGHT, CREAM, MINT = "#c9a24e", "#ecd391", "#f4eddb", "#a9d8c2"
+# The association's name, in Bangla only (since 2026-11-09), above every title.
+EYEBROW = "প্রাক্তন সবুজিয়ান পরিষদ"
 
 CARDS = [
     # key, English title, Bangla title, one line, icon
-    ("home", "Praktan Sabujian Parishad", "প্রাক্তন সবুজিয়ান পরিষদ", "Find your batchmates, join our events and give back to the school that taught us.", "users"),
+    ("home", "Alumni association", "প্রাক্তন শিক্ষার্থীদের সংগঠন", "Find your batchmates, join our events and give back to the school that taught us.", "users"),
     ("events", "Events & reunions", "অনুষ্ঠান ও পুনর্মিলনী", "Register online, pay by bKash or Nagad and get your ticket.", "calendar-days"),
     ("alumni", "Alumni directory", "প্রাক্তন শিক্ষার্থীদের তালিকা", "Find verified former students by name, SSC batch, profession or city.", "search"),
     ("batches", "SSC batches", "ব্যাচসমূহ", "Every batch since 1977: classmates, representatives and reunions.", "layers"),
-    ("school", "Our school since 1976", "আমাদের বিদ্যালয়", "Hafiz Jute Mills, South Sonaichhari, Sitakunda, Chattogram. EIIN 105070.", "school"),
+    ("school", "Our school since 1976", "আমাদের বিদ্যালয়", "Hafiz Jute Mills, South Sonaichhari, Sitakunda, Chattogram.", "school"),
     ("about", "About the association", "পরিষদ পরিচিতি", "Who we are, and what we do for our members and our school.", "info"),
     ("news", "News & notices", "খবর ও নোটিশ", "Updates from the alumni association and the school.", "newspaper"),
     ("stories", "Alumni stories", "স্মৃতিকথা", "Memories and life stories from former students, in their own words.", "book-open"),
@@ -107,7 +109,7 @@ svg.bg {{ position: absolute; inset: 0; }}
   background: linear-gradient(180deg, {GOLD_LIGHT}, {GOLD} 62%, #a7832f); -webkit-background-clip: text; background-clip: text; color: transparent; }}
 .sub {{ font-family: Jura; font-size: 11px; letter-spacing: 5px; color: {MINT}; margin-top: 8px; padding-left: 5px; }}
 .block {{ position: absolute; left: 72px; top: 0; width: 640px; height: {H}px; z-index: 2; display: flex; flex-direction: column; justify-content: center; }}
-.eyebrow {{ font-family: Jura; font-size: 14px; letter-spacing: 5px; color: {MINT}; margin-bottom: 26px; }}
+.eyebrow {{ font-family: 'Shonar Bangla', 'Nirmala UI', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: .5px; color: {MINT}; margin-bottom: 20px; }}
 .en {{ font-family: InstrumentSerif; font-style: italic; font-size: 70px; line-height: 1.02; color: {CREAM}; }}
 .bn {{ font-family: 'Shonar Bangla', 'Nirmala UI', sans-serif; font-weight: 700; font-size: 44px; line-height: 1.25; margin-top: 8px;
   background: linear-gradient(180deg, {GOLD_LIGHT} 10%, {GOLD} 70%, #a7832f); -webkit-background-clip: text; background-clip: text; color: transparent; }}
@@ -126,7 +128,7 @@ svg.bg {{ position: absolute; inset: 0; }}
 
 
 def block(en: str, bn: str, line: str) -> str:
-    return f"""<div class="block"><div class="eyebrow">PRAKTAN SABUJIAN PARISHAD</div>
+    return f"""<div class="block"><div class="eyebrow">{EYEBROW}</div>
 <div class="en">{en}</div><div class="bn">{bn}</div><div class="rule"></div><div class="line">{line}</div></div>"""
 
 
@@ -168,5 +170,5 @@ if __name__ == "__main__":
     if only and "batch-bg" not in only:
         raise SystemExit
     # The eyebrow sits where it does on the other cards; the generated title starts at y = 236.
-    render("batch-bg", page("", '<div class="block" style="justify-content:flex-start;padding-top:172px;box-sizing:border-box"><div class="eyebrow">PRAKTAN SABUJIAN PARISHAD</div></div>'),
+    render("batch-bg", page("", '<div class="block" style="justify-content:flex-start;padding-top:172px;box-sizing:border-box"><div class="eyebrow">' + EYEBROW + '</div></div>'),
            OUT / "batch-bg.png", jpg=False)

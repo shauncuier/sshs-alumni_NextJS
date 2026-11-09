@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — React Hook for Real-Time SSE Events
+ * প্রাক্তন সবুজিয়ান পরিষদ — React Hook for Real-Time SSE Events
  * 
  * Usage in any client component:
  * 

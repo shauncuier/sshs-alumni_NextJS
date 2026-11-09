@@ -65,10 +65,10 @@ export default function VerifyTokenPage() {
           </div>
           <div>
             <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-white">
-              Praktan Sabujian Parishad · Gate
+              প্রাক্তন সবুজিয়ান পরিষদ · Gate
             </h1>
             <p className="text-[11px] text-emerald-400 font-mono">
-              EIIN 105070 • Official Verification Portal
+              Official Verification Portal
             </p>
           </div>
         </div>
@@ -137,13 +137,6 @@ export default function VerifyTokenPage() {
                   </span>
                 </div>
               )}
-
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400">School Code:</span>
-                <span className="font-bold text-slate-300">
-                  EIIN {data.alumnus.eiin}
-                </span>
-              </div>
             </div>
 
             {/* This page only confirms the card; event check-in is recorded at /gate. */}
@@ -172,7 +165,7 @@ export default function VerifyTokenPage() {
 
       {/* Footer */}
       <div className="max-w-md w-full mx-auto text-center text-[10px] text-slate-500 border-t border-slate-800 pt-4">
-        <span>Praktan Sabujian Parishad · Sabuj Shikshayatan Government High School</span>
+        <span>প্রাক্তন সবুজিয়ান পরিষদ · Sabuj Shikshayatan Government High School</span>
         <div className="mt-1">
           <Link href="/card" className="text-emerald-400 hover:underline">
             View My Digital Card

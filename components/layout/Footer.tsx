@@ -50,7 +50,7 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-full p-0.5 shadow-md flex items-center justify-center ring-2 ring-amber-400/40 bg-white overflow-hidden shrink-0">
                 <NextImage
                   src="/logo.png"
-                  alt="Praktan Sabujian Parishad Crest"
+                  alt="প্রাক্তন সবুজিয়ান পরিষদ"
                   width={48}
                   height={48}
                   className="w-full h-full object-contain rounded-full"
@@ -60,14 +60,11 @@ export default function Footer() {
                 <span className="font-extrabold text-lg text-white block leading-tight">
                   প্রাক্তন সবুজিয়ান পরিষদ
                 </span>
-                <span className="text-xs text-emerald-400 block font-medium">
-                  Praktan Sabujian Parishad
-                </span>
               </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed pr-4">
-              The official digital ecosystem for Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). Connecting classmates, preserving historic school archives, organizing reunions, and empowering the next generation of secondary students.
+              The official digital ecosystem for প্রাক্তন সবুজিয়ান পরিষদ (Sabuj Shikshayatan Government High School). Connecting classmates, preserving historic school archives, organizing reunions, and empowering the next generation of secondary students.
             </p>
 
             <div className="space-y-2 pt-2 text-xs text-slate-300">
@@ -257,7 +254,6 @@ export default function Footer() {
             </ul>
 
             <div className="mt-6 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-[11px] text-emerald-300">
-              <span className="font-semibold text-white block mb-0.5">EIIN: {schoolInfo.eiin}</span>
               {schoolInfo.board}
             </div>
           </div>
@@ -271,7 +267,7 @@ export default function Footer() {
       <div className="bg-[#020e0a] border-t border-emerald-950 py-6 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-8 text-center md:text-left">
           <p>
-            © {new Date().getFullYear()} Praktan Sabujian Parishad (Sabuj Shikshayatan Government High School). All rights reserved.
+            © {new Date().getFullYear()} প্রাক্তন সবুজিয়ান পরিষদ (Sabuj Shikshayatan Government High School). All rights reserved.
             {" "}
             <Link prefetch={false} href="/terms" className="text-slate-400 hover:text-emerald-300 underline-offset-2 hover:underline whitespace-nowrap">
               Terms &amp; privacy

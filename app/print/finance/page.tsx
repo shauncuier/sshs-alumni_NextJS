@@ -5,6 +5,7 @@ import PrintButton from "@/components/print/PrintButton";
 import { logActivity } from "@/lib/activity-log";
 import { periodOf, todayYmd } from "@/lib/finance/dates";
 import { getEntry, type EntryView } from "@/lib/finance/entries";
+import { personLabel, personLabels } from "@/lib/people-labels";
 import { formatPoisha } from "@/lib/finance/money";
 import { accountBalances, cashBook, eventProfitLoss, incomeExpenditure, monthlySummary } from "@/lib/finance/reports";
 import { can } from "@/lib/permissions";
@@ -41,7 +42,9 @@ export default async function FinancePrintPage({ searchParams }: Props) {
     const entry = await getEntry(sp.get("id") ?? "");
     if (!entry) notFound();
     title = `${entry.kind === "INCOME" ? "Money receipt" : entry.kind === "EXPENSE" ? "Payment voucher" : "Transfer voucher"} ${entry.voucherNo}`;
-    body = <Voucher e={entry} />;
+    // The voucher shows who entered and approved it by name and batch, not by email.
+    const people = await personLabels([entry.createdBy, entry.approvedBy]);
+    body = <Voucher e={{ ...entry, createdBy: personLabel(people, entry.createdBy) ?? entry.createdBy, approvedBy: personLabel(people, entry.approvedBy) }} />;
   } else if (what === "cashbook") {
     const book = await cashBook(sp.get("accountId") || null, from, to);
     title = `Cash book · ${book.accountName} · ${from} to ${to}`;
@@ -164,7 +167,7 @@ export default async function FinancePrintPage({ searchParams }: Props) {
         <header className="flex items-center gap-3 border-b-2 border-[#06281e] pb-3 mb-4">
           <img src="/logo.png" alt="" className="w-14 h-14" />
           <div className="flex-1">
-            <p className="font-black text-lg text-[#06281e] leading-tight">প্রাক্তন সবুজিয়ান পরিষদ · Praktan Sabujian Parishad</p>
+            <p className="font-black text-lg text-[#06281e] leading-tight">প্রাক্তন সবুজিয়ান পরিষদ</p>
             <p className="text-[11px] text-slate-600">Sabuj Shikshayatan Government High School, Sitakunda, Chattogram</p>
           </div>
           <p className="text-[10px] text-slate-500 text-right">Printed {new Date().toLocaleString("en-GB", { timeZone: "Asia/Dhaka" })}<br />by {user.email}</p>

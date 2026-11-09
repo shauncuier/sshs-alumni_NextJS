@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Phase 4: Career Hub and Mentorship types
+ * প্রাক্তন সবুজিয়ান পরিষদ — Phase 4: Career Hub and Mentorship types
  */
 
 export interface JobListing {

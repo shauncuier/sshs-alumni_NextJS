@@ -15,7 +15,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/committee",
   image: null,
   title: "Executive Committee",
-  description: "The executive committee of Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ), the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
+  description: "The executive committee of প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School, Sitakunda.",
 });
 
 export default async function CommitteePage() {

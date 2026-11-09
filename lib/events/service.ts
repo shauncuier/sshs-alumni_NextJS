@@ -54,7 +54,7 @@ export function toPublicEvent(
     dateTentative: row.dateTentative,
     venue: row.venue,
     locationCity: row.locationCity,
-    organizer: row.organizer ?? "Praktan Sabujian Parishad",
+    organizer: row.organizer ?? "প্রাক্তন সবুজিয়ান পরিষদ",
     bannerImage: row.bannerImage ?? "/golden-jubilee-art.jpg",
     maxAttendees: row.maxAttendees,
     attendeesCount: heads.attending,

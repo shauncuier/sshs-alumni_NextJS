@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Notifications API with Real-Time SSE Push
+ * প্রাক্তন সবুজিয়ান পরিষদ — Notifications API with Real-Time SSE Push
  * 
  * GET   /api/notifications   — The signed-in member's notifications
  * POST  /api/notifications   — Create and push a notification for a member (admins only)

@@ -127,7 +127,7 @@ export default function AdminNoticesPage() {
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
           <Link href="/notices" target="_blank" className={ghost}><ExternalLink className="w-3.5 h-3.5" /> View</Link>
-          <button onClick={() => setEditing({ title: "", content: "", priority: "NORMAL", author: "Praktan Sabujian Parishad", attachmentUrl: null })} className={`${primary} flex-1 sm:flex-none`}>
+          <button onClick={() => setEditing({ title: "", content: "", priority: "NORMAL", author: "প্রাক্তন সবুজিয়ান পরিষদ", attachmentUrl: null })} className={`${primary} flex-1 sm:flex-none`}>
             <Plus className="w-4 h-4" /> New notice
           </button>
         </div>

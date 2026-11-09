@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Real-Time Event Emitter
+ * প্রাক্তন সবুজিয়ান পরিষদ — Real-Time Event Emitter
  * 
  * Lightweight server-side event system for real-time updates.
  * Uses Server-Sent Events (SSE) as the transport layer.

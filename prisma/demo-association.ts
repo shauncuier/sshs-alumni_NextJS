@@ -128,7 +128,7 @@ function samplePdf(title: string): Buffer {
   const text = (s: string) => s.replace(/[\\()]/g, "\\$&");
   const stream = [
     "BT /F1 20 Tf 72 720 Td (" + text(title) + ") Tj ET",
-    "BT /F1 12 Tf 72 690 Td (Praktan Sabujian Parishad - Sabuj Shikshayatan Govt. High School) Tj ET",
+    "BT /F1 12 Tf 72 690 Td (প্রাক্তন সবুজিয়ান পরিষদ - Sabuj Shikshayatan Govt. High School) Tj ET",
     "BT /F1 12 Tf 72 660 Td (Sample document for trying the website. Replace it with the real) Tj ET",
     "BT /F1 12 Tf 72 644 Td (constitution in Admin > Constitution.) Tj ET",
   ].join("\n");
@@ -189,7 +189,7 @@ export async function seedAssociationDemo(now = new Date()): Promise<Record<stri
       title: n.title,
       content: n.content,
       priority: n.priority,
-      author: "Praktan Sabujian Parishad",
+      author: "প্রাক্তন সবুজিয়ান পরিষদ",
       isActive: true,
       publishedAt: new Date(now.getTime() - n.daysAgo * 86_400_000),
     };
@@ -201,7 +201,7 @@ export async function seedAssociationDemo(now = new Date()): Promise<Record<stri
   if (!(await prisma.constitutionDocument.findUnique({ where: { id: docId } }))) {
     const { url } = await saveDocument(samplePdf("Constitution (sample)"));
     await prisma.constitutionDocument.create({
-      data: { id: docId, title: "Constitution of Praktan Sabujian Parishad (sample)", year: 2015, summary: "Sample document: replace it with the real constitution.", fileUrl: url },
+      data: { id: docId, title: "Constitution of প্রাক্তন সবুজিয়ান পরিষদ (sample)", year: 2015, summary: "Sample document: replace it with the real constitution.", fileUrl: url },
     });
   }
 

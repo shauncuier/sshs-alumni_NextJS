@@ -22,7 +22,7 @@ export default function GlobalError({
     <html lang="en">
       <body className="antialiased bg-[#f8fafc] min-h-screen flex items-center justify-center p-6">
         {/* metadata exports are not supported here; React's <title> is. */}
-        <title>Something went wrong | Praktan Sabujian Parishad</title>
+        <title>Something went wrong | প্রাক্তন সবুজিয়ান পরিষদ</title>
         <ErrorScreen
           code="500"
           tone="rose"

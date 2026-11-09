@@ -97,7 +97,7 @@ function validate(input: NoticeInput, partial: boolean) {
     if (!(NOTICE_PRIORITIES as readonly unknown[]).includes(priority)) throw f.bad("Please choose a priority.");
     data.priority = priority as string;
   }
-  if (!partial || input.author !== undefined) data.author = f.optText(input.author, "signed-by line", 120) ?? "Praktan Sabujian Parishad";
+  if (!partial || input.author !== undefined) data.author = f.optText(input.author, "signed-by line", 120) ?? "প্রাক্তন সবুজিয়ান পরিষদ";
   if (input.isActive !== undefined) data.isActive = input.isActive === true;
   if (input.attachmentUrl !== undefined) data.attachmentUrl = f.optDocument(input.attachmentUrl);
   return data;

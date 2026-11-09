@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Google Wallet Pass API
+ * প্রাক্তন সবুজিয়ান পরিষদ — Google Wallet Pass API
  * GET /api/alumni/card/wallet/google?token=xxx
  * 
  * Generates Google Wallet save pass payload.

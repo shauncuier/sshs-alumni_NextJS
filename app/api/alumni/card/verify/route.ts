@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Gate & Reunion QR Code Verification API
+ * প্রাক্তন সবুজিয়ান পরিষদ — Gate & Reunion QR Code Verification API
  * POST /api/alumni/card/verify
  * 
  * Verifies a digital smart card token scanned at school gate or reunion desk.

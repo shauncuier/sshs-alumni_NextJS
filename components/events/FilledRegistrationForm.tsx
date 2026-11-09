@@ -111,8 +111,8 @@ export default function FilledRegistrationForm({ form }: { form: Form }) {
         <img src="/logo.png" alt="" />
         <div>
           <div className="t1">প্রাক্তন সবুজিয়ান পরিষদ</div>
-          <div className="t2">Praktan Sabujian Parishad · alumni of Sabuj Shikshayatan Government High School</div>
-          <div className="t3">সীতাকুণ্ড, চট্টগ্রাম · EIIN 105070 · প্রতিষ্ঠা ১৯৭৬</div>
+          <div className="t2">সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের প্রাক্তন শিক্ষার্থীদের সংগঠন</div>
+          <div className="t3">সীতাকুণ্ড, চট্টগ্রাম · বিদ্যালয় প্রতিষ্ঠা ১৯৭৬</div>
         </div>
         <div className="formno">
           ফর্ম নং / Form no.

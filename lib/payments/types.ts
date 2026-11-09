@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Payment Gateway Type Definitions
+ * প্রাক্তন সবুজিয়ান পরিষদ — Payment Gateway Type Definitions
  * Shared types used across bKash, Nagad, SSLCommerz payment integrations.
  */
 

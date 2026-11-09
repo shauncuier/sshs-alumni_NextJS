@@ -13,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/constitution",
   image: null,
   title: "Constitution",
-  description: "The constitution of Praktan Sabujian Parishad (প্রাক্তন সবুজিয়ান পরিষদ) and its amendments, to download as PDF.",
+  description: "The constitution of প্রাক্তন সবুজিয়ান পরিষদ and its amendments, to download as PDF.",
 });
 
 export default async function ConstitutionPage() {

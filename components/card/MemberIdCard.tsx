@@ -165,7 +165,7 @@ export function IdCardFront({ card }: { card: IdCardData }) {
           letterSpacing: "0.04em",
         }}
       >
-        <span>Sitakunda, Chattogram · EIIN {schoolInfo.eiin}</span>
+        <span>Sitakunda, Chattogram</span>
         <span style={{ color: GOLD, fontWeight: 700 }}>EST. {schoolInfo.established}</span>
       </div>
     </div>
@@ -193,7 +193,7 @@ export function IdCardBack({ card, site }: { card: IdCardData; site: string }) {
         <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
           <div style={{ fontSize: "6.6pt", fontWeight: 800, color: GREEN }}>Membership card</div>
           <p style={{ fontSize: "5pt", color: "#334155", marginTop: "0.8mm" }}>
-            This card identifies a verified member of Praktan Sabujian Parishad, the alumni association of Sabuj Shikshayatan Government High School. It is personal and not transferable.
+            This card identifies a verified member of প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School. It is personal and not transferable.
           </p>
           <p style={{ fontSize: "5pt", color: "#334155", marginTop: "1.2mm" }}>
             <span style={{ fontWeight: 700 }}>If found, please return to</span>

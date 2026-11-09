@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Offline Directory Storage
+ * প্রাক্তন সবুজিয়ান পরিষদ — Offline Directory Storage
  * 
  * Stores batch directories and member cards in local storage / IndexedDB
  * for offline availability during campus visits and reunions.

@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — bKash Tokenized Checkout Integration
+ * প্রাক্তন সবুজিয়ান পরিষদ — bKash Tokenized Checkout Integration
  * 
  * bKash Tokenized Checkout API v1.2.0-beta
  * Documentation: https://developer.bka.sh/docs/checkout-process-overview

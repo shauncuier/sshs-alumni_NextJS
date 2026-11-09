@@ -7,7 +7,7 @@ import MessagesClient from "@/components/messages/MessagesClient";
 import { getSessionUser } from "@/lib/session-user";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Messages | Praktan Sabujian Parishad" };
+export const metadata = { title: "Messages | প্রাক্তন সবুজিয়ান পরিষদ" };
 
 type Props = { searchParams: Promise<{ to?: string }> };
 

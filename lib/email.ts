@@ -1,5 +1,5 @@
 /**
- * Praktan Sabujian Parishad — Transactional Email Service
+ * প্রাক্তন সবুজিয়ান পরিষদ — Transactional Email Service
  * 
  * Supports:
  * - Nodemailer (SMTP) for self-hosted or Gmail SMTP
@@ -93,7 +93,7 @@ async function sendViaResend(payload: EmailPayload) {
       body: JSON.stringify({
         // Resend sends only from a domain verified in the Resend account; until
         // one is, its test sender delivers to the account owner's own address only.
-        from: process.env.RESEND_FROM_EMAIL || "Praktan Sabujian Parishad <onboarding@resend.dev>",
+        from: process.env.RESEND_FROM_EMAIL || "প্রাক্তন সবুজিয়ান পরিষদ <onboarding@resend.dev>",
         to: payload.to,
         subject: payload.subject,
         html: payload.html,
@@ -145,7 +145,7 @@ async function sendViaSMTP(payload: EmailPayload) {
     const crest = inlineLogo(payload.html);
     const info = await transporter.sendMail({
       from:
-        process.env.SMTP_FROM || `"Praktan Sabujian Parishad" <${replyToAddress()}>`,
+        process.env.SMTP_FROM || `"প্রাক্তন সবুজিয়ান পরিষদ" <${replyToAddress()}>`,
       to: payload.to,
       subject: payload.subject,
       html: payload.html,

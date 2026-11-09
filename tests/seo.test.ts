@@ -93,8 +93,11 @@ describe("structured data", () => {
 });
 
 describe("more structured data", () => {
-  it("names the website in both languages", () => {
-    expect(websiteJsonLd().alternateName).toContain("প্রাক্তন সবুজিয়ান পরিষদ");
+  it("names the website and the association only in Bangla", () => {
+    expect(websiteJsonLd()).toMatchObject({ name: "প্রাক্তন সবুজিয়ান পরিষদ" });
+    expect(websiteJsonLd()).not.toHaveProperty("alternateName");
+    expect(organizationJsonLd()).toMatchObject({ name: "প্রাক্তন সবুজিয়ান পরিষদ" });
+    expect(organizationJsonLd()).not.toHaveProperty("alternateName");
   });
 
   it("builds breadcrumbs from Home with absolute links", () => {
