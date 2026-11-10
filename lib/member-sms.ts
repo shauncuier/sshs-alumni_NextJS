@@ -4,6 +4,7 @@ import { isValidBdMobile, normalizeBdPhoneNumber, sendBulkSms } from "@/lib/bulk
 import { siteUrl } from "@/lib/email-templates";
 import { paymentNoticesOn } from "@/lib/payment-notices";
 import { smsTestModeOn } from "@/lib/sms-test-mode";
+import { DEFAULT_REGISTRATION_SMS, fillRegistrationSms, registrationSmsTemplate } from "@/lib/sms-text";
 
 /**
  * Text messages to members when the committee confirms their payment (a registration
@@ -13,10 +14,12 @@ import { smsTestModeOn } from "@/lib/sms-test-mode";
  * or while SMS test mode is on (Admin → Bulk SMS); the activity log says why.
  */
 
-/** "Your registration is confirmed" with the dashboard link, in English so it fits one SMS (160 characters). */
-export function registrationConfirmedSms(eventTitle: string): string {
-  const what = /jubilee/i.test(eventTitle) ? "Golden Jubilee registration" : "event registration";
-  return `প্রাক্তন সবুজিয়ান পরিষদ: your ${what} is confirmed. Ticket & payment slip: ${siteUrl("/dashboard")}`;
+/**
+ * "Your registration is confirmed" with the dashboard link, in English so it fits one SMS
+ * (160 characters). The wording is the admin's (lib/sms-text.ts), or the default.
+ */
+export function registrationConfirmedSms(eventTitle: string, template = DEFAULT_REGISTRATION_SMS): string {
+  return fillRegistrationSms(template, eventTitle, siteUrl("/dashboard"));
 }
 
 /** "We received your donation", with the receipt number, in one SMS. */
@@ -59,7 +62,7 @@ export async function smsRegistrationConfirmed(registrationId: string): Promise<
     });
     if (!reg) return "failed";
     const base: LogBase = { category: "SMS", targetType: "EventRegistration", targetId: reg.id, actor: { id: reg.userId, email: reg.user.email } };
-    return await textMember(reg.user.profile?.phone, registrationConfirmedSms(reg.event.title), base, reg.user.email);
+    return await textMember(reg.user.profile?.phone, registrationConfirmedSms(reg.event.title, await registrationSmsTemplate()), base, reg.user.email);
   } catch (err) {
     console.warn(`[member-sms] Could not send the confirmation SMS (${(err as Error)?.name ?? "error"}).`);
     return "failed";

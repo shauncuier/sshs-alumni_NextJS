@@ -6,6 +6,7 @@ import BanglaQrTrxSwitch from "@/components/admin/BanglaQrTrxSwitch";
 import ContactPhonesForm from "@/components/admin/ContactPhonesForm";
 import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
 import PaymentNoticeSwitches from "@/components/admin/PaymentNoticeSwitches";
+import ConfirmationSmsText from "@/components/admin/ConfirmationSmsText";
 import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
 import RegistrationAlertsForm from "@/components/admin/RegistrationAlertsForm";
 import SmsTestModeSwitch from "@/components/admin/SmsTestModeSwitch";
@@ -69,6 +70,7 @@ export default async function SettingsPage() {
         <section id="payments" className="scroll-mt-28 space-y-4">
           <SectionTitle icon={CreditCard} title="Payments" text="bKash, Nagad, Bangla QR, bank and cash: switch each on or off and give its details. Members pay manually and the committee checks every payment." />
           <PaymentNoticeSwitches />
+          <ConfirmationSmsText />
           <BanglaQrTrxSwitch readOnly={me.role !== "SUPER_ADMIN"} />
           <PaymentSettingsForm readOnly={me.role !== "SUPER_ADMIN"} />
         </section>
