@@ -127,6 +127,8 @@ export default async function HomePage() {
 
   // The hero shows the membership event (joining the association) or, failing that, the next big event.
   const heroEvent = membershipEvent ?? events.find((e) => e.isMegaEvent && e.date >= today) ?? null;
+  // Its own banner photo, or (none, or the old jubilee art) the Golden Jubilee emblem.
+  const heroBanner = heroEvent?.bannerImage && !heroEvent.bannerImage.startsWith("/golden-jubilee") ? heroEvent.bannerImage : null;
   const upcomingEvents = events.filter((e) => e.date >= today && e.id !== heroEvent?.id).slice(0, 3);
   const featuredCampaign = campaigns[0] ?? null;
   const latestJobs = jobs.slice(0, 3);
@@ -193,27 +195,35 @@ export default async function HomePage() {
               </div>
 
               {/* Membership / next big event, from the events table. Its picture loads after the
-                  hero photo: on phones it sits below the fold and would only slow that down. */}
+                  hero photo: on phones it sits below the fold and would only slow that down.
+                  Without a banner of its own the event shows the Golden Jubilee emblem, whole on
+                  white, with the event box below it so the emblem's words stay readable. */}
               <div className="lg:col-span-5">
                 <div className="relative mx-auto max-w-md lg:max-w-none rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-[#041a13]">
-                  {heroEvent?.bannerImage && !heroEvent.bannerImage.startsWith("/golden-jubilee") ? (
-                    <Picture src={heroEvent.bannerImage} alt="" sizes="(max-width: 1024px) 100vw, 40vw" className="w-full h-[360px] sm:h-[400px] object-cover" />
+                  {heroBanner ? (
+                    <>
+                      <Picture src={heroBanner} alt="" sizes="(max-width: 1024px) 100vw, 40vw" className="w-full h-[360px] sm:h-[400px] object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/30 to-transparent" />
+                      <div className="absolute -top-0 right-4 mt-4 bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow-xl flex items-center gap-1.5 text-xs">
+                        <Sparkles className="w-4 h-4" />
+                        <span>{yearsSinceFounding} years · {schoolInfo.established}–{new Date().getFullYear()}</span>
+                      </div>
+                    </>
                   ) : (
-                    <Image
-                      src="/golden-jubilee-art.jpg"
-                      alt={`${schoolInfo.name}, ${yearsSinceFounding} years`}
-                      width={1376}
-                      height={768}
-                      sizes="(max-width: 1024px) 100vw, 40vw"
-                      className="w-full h-[360px] sm:h-[400px] object-cover"
-                    />
+                    <Link href="/jubilee" className="block bg-white p-4 sm:p-6">
+                      <Image
+                        src="/jubilee-logo.webp"
+                        alt="সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়, গৌরবের পথচলা ৫০ বছর (১৯৭৬–২০২৬), প্রাক্তন সবুজিয়ান পরিষদ"
+                        width={800}
+                        height={800}
+                        sizes="(max-width: 1024px) 340px, 400px"
+                        className="w-full max-w-[340px] lg:max-w-[400px] mx-auto aspect-square object-contain"
+                      />
+                    </Link>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#06281e] via-[#06281e]/30 to-transparent" />
-                  <div className="absolute -top-0 right-4 mt-4 bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow-xl flex items-center gap-1.5 text-xs">
-                    <Sparkles className="w-4 h-4" />
-                    <span>{yearsSinceFounding} years · {schoolInfo.established}–{new Date().getFullYear()}</span>
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-[#06281e]/95 border border-amber-400/50 shadow-2xl flex items-center justify-between gap-3">
+                  <div
+                    className={`${heroBanner ? "absolute bottom-4 left-4 right-4 rounded-2xl bg-[#06281e]/95 border border-amber-400/50 shadow-2xl" : "border-t-2 border-amber-400/60 bg-[#06281e]"} p-4 flex items-center justify-between gap-3`}
+                  >
                     {heroEvent ? (
                       <>
                         <div className="min-w-0">
