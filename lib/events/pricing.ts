@@ -141,7 +141,7 @@ export function memberFee(event: FeeEvent, sscBatch?: number | string | null): n
   return range ? range.price : event.registrationFee;
 }
 
-/** Lowest and highest member fee (no package), for "৳1,250–৳1,500" style labels. */
+/** Lowest and highest member fee (no package), for "৳1,000–৳1,500" style labels. */
 export function memberFeeRange(event: FeeEvent): { min: number; max: number } {
   const prices = [event.registrationFee, ...(event.batchFees ?? []).map((r) => r.price)];
   return { min: Math.min(...prices), max: Math.max(...prices) };
@@ -160,7 +160,7 @@ export function memberFeeLines(event: FeeEvent): { label: string; price: number 
   return lines;
 }
 
-/** "৳1,500" or, with batch ranges, "৳1,250–৳1,500". */
+/** "৳1,500" or, with batch ranges, "৳1,000–৳1,500". */
 export function memberFeeLabel(event: FeeEvent): string {
   const { min, max } = memberFeeRange(event);
   return min === max ? formatTaka(min) : `${formatTaka(min)}–${formatTaka(max)}`;

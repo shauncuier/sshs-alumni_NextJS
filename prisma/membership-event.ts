@@ -68,6 +68,13 @@ export const membershipEvent: EventItem = {
 /** The member's own fee by SSC batch; other batches pay registrationFee above. */
 export const membershipBatchFees: BatchFeeDef[] = [
   { fromBatch: 1989, toBatch: 2014, price: 1500 },
+  { fromBatch: 2015, toBatch: 2020, price: 1250 },
+  { fromBatch: 2021, toBatch: 2026, price: 1000 },
+];
+
+/** The fees before the committee added the 2021–2026 tier (November 2026). */
+export const previousMembershipBatchFees: BatchFeeDef[] = [
+  { fromBatch: 1989, toBatch: 2014, price: 1500 },
   { fromBatch: 2015, toBatch: 2026, price: 1250 },
 ];
 

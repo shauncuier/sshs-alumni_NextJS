@@ -92,7 +92,8 @@ def registration_open(story: bool) -> str:
 <div class="facts">{DATE} · {VENUE}</div>
 <div class="card">
   <div class="row"><span>এসএসসি ব্যাচ ১৯৮৯–২০১৪</span><b>৳১,৫০০</b></div>
-  <div class="row"><span>এসএসসি ব্যাচ ২০১৫–২০২৬</span><b>৳১,২৫০</b></div>
+  <div class="row"><span>এসএসসি ব্যাচ ২০১৫–২০২০</span><b>৳১,২৫০</b></div>
+  <div class="row"><span>এসএসসি ব্যাচ ২০২১–২০২৬</span><b>৳১,০০০</b></div>
   <div class="row"><span>স্বামী / স্ত্রী</span><b>৳৬০০</b></div>
   <div class="row"><span>সন্তান (৫ বছর বা তদূর্ধ্ব)</span><b>৳৬০০</b></div>
   <div class="small">৫ বছরের কম বয়সী শিশু ফ্রি · পেমেন্ট: বাংলা QR অথবা নগদ টাকা</div>
@@ -141,7 +142,8 @@ def deadline(story: bool) -> str:
 <div class="facts" style="margin-top:24px">সুবর্ণ জয়ন্তী ২০২৬ · {DATE}<br>{VENUE}</div>
 <div class="card" style="margin-top:28px">
   <div class="row"><span>ব্যাচ ১৯৮৯–২০১৪</span><b>৳১,৫০০</b></div>
-  <div class="row"><span>ব্যাচ ২০১৫–২০২৬</span><b>৳১,২৫০</b></div>
+  <div class="row"><span>ব্যাচ ২০১৫–২০২০</span><b>৳১,২৫০</b></div>
+  <div class="row"><span>ব্যাচ ২০২১–২০২৬</span><b>৳১,০০০</b></div>
 </div>
 <div class="cta">আজই রেজিস্ট্রেশন করুন</div>
 <div class="foot">{LINK_LINE}</div>"""

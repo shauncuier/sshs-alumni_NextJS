@@ -7,7 +7,7 @@ import { formatTaka } from "@/lib/events/pricing";
 const field = "w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none";
 const year = (v: string) => Math.floor(Number(v)) || 0;
 
-/** The member's own fee by SSC batch (e.g. 1989–2014 ৳1,500, 2015–2026 ৳1,250). */
+/** The member's own fee by SSC batch (e.g. 1989–2014 ৳1,500, 2015–2020 ৳1,250, 2021–2026 ৳1,000). */
 export default function BatchFeesEditor({
   value,
   mainFee,

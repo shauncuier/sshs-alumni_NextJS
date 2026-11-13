@@ -178,7 +178,7 @@ export default function GuidePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 pt-2 border-t border-slate-100">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
                 <p className="font-bold text-slate-800">নাম ও এসএসসি ব্যাচ</p>
-                <p>সার্টিফিকেট অনুযায়ী আপনার পূর্ণ নাম ইংরেজিতে লিখুন এবং তালিকা থেকে আপনার এসএসসি পাশের বছর বাছাই করুন। ফি আপনার ব্যাচ অনুযায়ী: ১৯৮৯–২০১৪ ব্যাচ ৳১,৫০০, ২০১৫–২০২৬ ব্যাচ ৳১,২৫০।</p>
+                <p>সার্টিফিকেট অনুযায়ী আপনার পূর্ণ নাম ইংরেজিতে লিখুন এবং তালিকা থেকে আপনার এসএসসি পাশের বছর বাছাই করুন। ফি আপনার ব্যাচ অনুযায়ী: ১৯৮৯–২০১৪ ব্যাচ ৳১,৫০০, ২০১৫–২০২০ ব্যাচ ৳১,২৫০, ২০২১–২০২৬ ব্যাচ ৳১,০০০।</p>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
                 <p className="font-bold text-slate-800">ইমেইল, পাসওয়ার্ড ও মোবাইল নম্বর</p>

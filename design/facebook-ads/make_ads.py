@@ -58,7 +58,7 @@ svg {{ position: absolute; inset: 0; }}
   <div class="title">সুবর্ণ জয়ন্তী ২০২৬</div>
   <div class="en">Golden Jubilee · 50 years</div>
   <div class="facts">আনুমানিক ২৬ ডিসেম্বর ২০২৬ (তারিখ চূড়ান্ত হয়নি)<br>বিদ্যালয় প্রাঙ্গণ, সীতাকুণ্ড</div>
-  <div class="fee">রেজিস্ট্রেশন ফি ৳১,২৫০–১,৫০০</div><br>
+  <div class="fee">রেজিস্ট্রেশন ফি ৳১,০০০–১,৫০০</div><br>
   <div class="cta">এখনই রেজিস্ট্রেশন করুন</div>
 </div>
 </body></html>"""

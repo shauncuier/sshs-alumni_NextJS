@@ -21,7 +21,8 @@ OUT = HERE / "golden-jubilee-offline-registration-form.pdf"
 # ---- Event facts (keep in step with Admin -> Events and Admin -> Payment settings)
 FEES = [
     ("এসএসসি ব্যাচ ১৯৮৯–২০১৪", "SSC batch 1989–2014", "১,৫০০"),
-    ("এসএসসি ব্যাচ ২০১৫–২০২৬", "SSC batch 2015–2026", "১,২৫০"),
+    ("এসএসসি ব্যাচ ২০১৫–২০২০", "SSC batch 2015–2020", "১,২৫০"),
+    ("এসএসসি ব্যাচ ২০২১–২০২৬", "SSC batch 2021–2026", "১,০০০"),
 ]
 SPOUSE_FEE = "৬০০"
 CHILD_FEE = "৬০০"
@@ -86,7 +87,7 @@ fee_rows = "".join(
 
 HTML = f"""<!doctype html><html lang="bn"><head><meta charset="utf-8">
 <style>
-@page {{ size: legal; margin: 9mm 11mm; }}
+@page {{ size: legal; margin: 7mm 11mm; }}
 * {{ box-sizing: border-box; }}
 body {{ margin: 0; font-family: 'Nirmala UI', 'Shonar Bangla', 'Segoe UI', sans-serif; color: #1c2b25; font-size: 9.6pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
 .bn {{ font-family: 'Nirmala UI', 'Shonar Bangla', sans-serif; }}
@@ -130,7 +131,7 @@ h2 .en {{ font-weight: 400; }}
 
 table.fee {{ width: 100%; border-collapse: collapse; font-size: 8.8pt; }}
 table.fee th {{ background: #e8f1ed; color: {GREEN}; font-weight: 700; text-align: left; padding: 1.2mm 2mm; border: 0.3mm solid #b9c9c2; }}
-table.fee td {{ padding: 0.7mm 2mm; border: 0.3mm solid #b9c9c2; vertical-align: middle; }}
+table.fee td {{ padding: 0.5mm 2mm; border: 0.3mm solid #b9c9c2; vertical-align: middle; }}
 table.fee .c {{ text-align: center; width: 18mm; }}
 table.fee .r {{ text-align: right; width: 22mm; }}
 table.fee .amt {{ width: 28mm; }}
@@ -174,8 +175,8 @@ table.fee .total td {{ font-weight: 700; background: #f6f2e4; }}
     <img src="{LOGO}" alt="">
     <div>
       <div class="t1">প্রাক্তন সবুজিয়ান পরিষদ</div>
-      <div class="t2">Praktan Sabujian Parishad · alumni of Sabuj Shikshayatan Government High School</div>
-      <div class="t3">সীতাকুণ্ড, চট্টগ্রাম · EIIN 105070 · প্রতিষ্ঠা ১৯৭৬</div>
+      <div class="t2">সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়ের প্রাক্তন শিক্ষার্থীদের সংগঠন</div>
+      <div class="t3">সীতাকুণ্ড, চট্টগ্রাম · প্রতিষ্ঠা ১৯৭৬</div>
     </div>
     <div class="formno">ফর্ম নং / Form no. (অফিস)<br><span class="b"></span></div>
   </div>

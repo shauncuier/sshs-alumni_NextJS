@@ -4,11 +4,11 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import type { EventItem } from "../lib/data";
 import { FIRST_BATCH } from "../lib/batches";
-import { normalizePackages, parseTaka } from "../lib/events/pricing";
+import { normalizeBatchFees, normalizePackages, parseTaka } from "../lib/events/pricing";
 import { ensureSuperAdmin, envSuperAdminEmail, type EnsureResult } from "../lib/admin/super-admin";
 import { backfillEventJsonColumns } from "./backfill-events";
 import { ensureProfileSlugs } from "../lib/members/slug";
-import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGuestTypes } from "./membership-event";
+import { MEMBERSHIP_EVENT_ID, membershipBatchFees, membershipEvent, membershipGuestTypes, previousMembershipBatchFees } from "./membership-event";
 import { demoEvents } from "./demo-events";
 import { countAssociationDemo, removeAssociationDemo } from "./demo-association";
 import { seedLaunchSponsors } from "../lib/sponsors";
@@ -106,6 +106,21 @@ export async function seedEvent(e: EventItem, opts: { membership?: boolean } = {
       paymentInstructions: null,
     },
   });
+  return true;
+}
+
+/**
+ * Moves the membership event from the old two batch fees (2015–2026 ৳1,250) to the
+ * committee's three (2015–2020 ৳1,250, 2021–2026 ৳1,000). Only when the event still has
+ * exactly the old fees: fees an admin set in /admin/events are left alone. Existing
+ * registrations keep the price they were given.
+ */
+export async function updateMembershipBatchFees(): Promise<boolean> {
+  const event = await prisma.event.findFirst({ where: { isMembershipEvent: true }, select: { id: true, batchFees: true } });
+  if (!event) return false;
+  const key = (fees: unknown) => JSON.stringify(normalizeBatchFees(fees).map(({ fromBatch, toBatch, price }) => [fromBatch, toBatch, price]));
+  if (key(event.batchFees) !== key(previousMembershipBatchFees)) return false;
+  await prisma.event.update({ where: { id: event.id }, data: { batchFees: membershipBatchFees as unknown as Prisma.InputJsonValue } });
   return true;
 }
 
@@ -258,6 +273,8 @@ export interface ProductionSeedResult {
   superAdmin: EnsureResult;
   batchesCreated: number;
   membershipEventCreated: boolean;
+  /** The membership event moved to the three batch fees (updateMembershipBatchFees). */
+  batchFeesUpdated: boolean;
   sponsorsAdded: string[];
   /** Teachers imported from the 2015 souvenir list (only on the first run). */
   teachersAdded: number;
@@ -280,6 +297,7 @@ export async function runProductionSeed(env: Env = process.env): Promise<Product
   const batchesCreated = await seedBatches();
   const repaired = await repairLegacyRows();
   const membershipEventCreated = await seedMembershipEvent();
+  const batchFeesUpdated = await updateMembershipBatchFees();
   const sponsorsAdded = await seedLaunchSponsors();
   const teachersAdded = await seedSchoolPeople();
   const teachersFixed = await fixSchoolPeopleNames();
@@ -287,5 +305,5 @@ export async function runProductionSeed(env: Env = process.env): Promise<Product
   const lockedLegacyAccounts = await lockLegacyAccounts();
   const profileSlugs = await ensureProfileSlugs();
   const warnings = await findDemoLeftovers(env);
-  return { superAdmin, batchesCreated, membershipEventCreated, sponsorsAdded, teachersAdded, teachersFixed, renamedRows, repaired, lockedLegacyAccounts, profileSlugs, warnings };
+  return { superAdmin, batchesCreated, membershipEventCreated, batchFeesUpdated, sponsorsAdded, teachersAdded, teachersFixed, renamedRows, repaired, lockedLegacyAccounts, profileSlugs, warnings };
 }

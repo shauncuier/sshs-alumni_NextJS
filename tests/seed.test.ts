@@ -5,6 +5,8 @@ import { FIRST_BATCH, listBatches } from "@/lib/batches";
 import { makeMember, resetDatabase } from "./helpers/db";
 import { assertDemoSeedAllowed, eventSlug, lockLegacyAccounts, removeDemoContent, runProductionSeed, seedBatches, seedEvent } from "../prisma/seed-core";
 import { demoEvents } from "../prisma/demo-events";
+import { membershipBatchFees, previousMembershipBatchFees } from "../prisma/membership-event";
+import { computeFee, normalizeBatchFees } from "@/lib/events/pricing";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -70,6 +72,32 @@ describe("production seed", () => {
     expect(await prisma.event.findMany({ select: { organizer: true, description: true } })).toEqual([
       { organizer: "প্রাক্তন সবুজিয়ান পরিষদ", description: "প্রাক্তন সবুজিয়ান পরিষদ welcomes you." },
     ]);
+  });
+
+  it("moves the jubilee from the old two batch fees to the three, once, and leaves an admin's own fees alone", async () => {
+    const fees = async () => normalizeBatchFees((await prisma.event.findFirstOrThrow({ where: { isMembershipEvent: true } })).batchFees);
+    expect((await runProductionSeed({})).batchFeesUpdated).toBe(false); // a new event already has the three
+    expect(await fees()).toEqual(membershipBatchFees);
+
+    await prisma.event.updateMany({ data: { batchFees: previousMembershipBatchFees as never } });
+    expect((await runProductionSeed({})).batchFeesUpdated).toBe(true);
+    expect(await fees()).toEqual([
+      { fromBatch: 1989, toBatch: 2014, price: 1500 },
+      { fromBatch: 2015, toBatch: 2020, price: 1250 },
+      { fromBatch: 2021, toBatch: 2026, price: 1000 },
+    ]);
+    expect((await runProductionSeed({})).batchFeesUpdated).toBe(false);
+
+    const own = [{ fromBatch: 1989, toBatch: 2026, price: 1400 }];
+    await prisma.event.updateMany({ data: { batchFees: own as never } });
+    expect((await runProductionSeed({})).batchFeesUpdated).toBe(false);
+    expect(await fees()).toEqual(own);
+  });
+
+  it("prices each batch by the jubilee's three tiers", () => {
+    const event = { registrationFee: 1500, extraAdultFee: 0, childFee: 0, packages: [], guestTypes: [], batchFees: membershipBatchFees };
+    const fee = (sscBatch: number) => computeFee(event, {}, { sscBatch }).fee;
+    expect([fee(1995), fee(2014), fee(2015), fee(2020), fee(2021), fee(2026)]).toEqual([1500, 1500, 1250, 1250, 1000, 1000]);
   });
 
   it("refuses to run without a super admin in the environment", async () => {
