@@ -98,16 +98,16 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
             </Link>
           </header>
 
-          {/* The association's logo */}
+          {/* The Golden Jubilee emblem: 50 years, 1976–2026 */}
           <div className="relative max-w-3xl mx-auto px-4 pt-4 flex justify-center">
-            <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-[2rem] bg-white p-2 shadow-2xl shadow-black/40 ring-4 ring-amber-300/40">
+            <div className="w-60 h-60 sm:w-72 sm:h-72 rounded-[2rem] bg-white p-2 shadow-2xl shadow-black/40 ring-4 ring-amber-300/40">
               <Image
-                src="/logo-large.webp"
-                alt="প্রাক্তন সবুজিয়ান পরিষদ"
+                src="/jubilee-logo.webp"
+                alt="সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়, গৌরবের পথচলা ৫০ বছর (১৯৭৬–২০২৬), প্রাক্তন সবুজিয়ান পরিষদ"
                 width={800}
                 height={800}
                 priority
-                sizes="(max-width: 640px) 208px, 256px"
+                sizes="(max-width: 640px) 240px, 288px"
                 className="w-full h-full object-contain"
               />
             </div>
