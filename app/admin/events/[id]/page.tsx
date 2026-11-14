@@ -962,6 +962,14 @@ function AdminEventStudioContent({ params }: AdminEventStudioProps) {
               >
                 <Download className="w-4 h-4" /> Export Roster (CSV)
               </button>
+              <a
+                href={`/api/admin/events/${event.id}/souvenir-list`}
+                download
+                title="Paid members as Excel (batch, name, profession/designation, mobile, blood group) with their photos"
+                className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-emerald-200"
+              >
+                <Download className="w-4 h-4" /> Souvenir list + photos (ZIP)
+              </a>
               {event.isMembershipEvent && (
                 <Link
                   href={`/admin/events/${event.id}/offline`}

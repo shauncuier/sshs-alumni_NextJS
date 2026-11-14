@@ -394,6 +394,16 @@ export default function AdminEventsPage() {
                   <span>Export RSVPs</span>
                 </button>
 
+                <a
+                  href={`/api/admin/events/${e.id}/souvenir-list`}
+                  download
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold rounded-xl transition-colors border border-emerald-200 flex items-center gap-1.5"
+                  title="Paid members as Excel with their photos, for the souvenir"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Souvenir list</span>
+                </a>
+
                 <button
                   onClick={() => handleEditClick(e)}
                   className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl transition-colors border border-emerald-200 hover:border-emerald-300 flex items-center gap-1.5 cursor-pointer shadow-xs"
