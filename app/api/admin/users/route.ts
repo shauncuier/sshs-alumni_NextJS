@@ -12,12 +12,12 @@ async function requireAdmin() {
   return me;
 }
 
-// GET /api/admin/users?q=&role=&status=&page= — search and page through accounts.
+// GET /api/admin/users?q=&role=&status=&gender=MISSING&page= — search and page through accounts.
 export async function GET(req: Request) {
   try {
     const me = await requireAdmin();
     const params = new URL(req.url).searchParams;
-    const result = await listUsers({ q: params.get("q"), role: params.get("role"), status: params.get("status"), page: Number(params.get("page")) || 1 });
+    const result = await listUsers({ q: params.get("q"), role: params.get("role"), status: params.get("status"), gender: params.get("gender"), page: Number(params.get("page")) || 1 });
     // The page uses the viewer to show only the actions the server will allow.
     return NextResponse.json({ ...result, viewer: { id: me.id, role: me.role } });
   } catch (err) {

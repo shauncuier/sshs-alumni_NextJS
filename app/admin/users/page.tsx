@@ -42,6 +42,8 @@ interface AdminUserStats {
   moderators: number;
   alumni: number;
   disabled: number;
+  /** Members whose gender is not set: a woman's photo stays shown until it is. */
+  genderMissing: number;
 }
 
 interface Viewer {
@@ -133,7 +135,7 @@ function PasswordInput({ id, value, onChange }: { id: string; value: string; onC
 }
 
 function AddUserDialog({ viewer, onClose, onCreated }: { viewer: Viewer | null; onClose: () => void; onCreated: () => void }) {
-  const [form, setForm] = useState({ fullName: "", email: "", phone: "", sscBatch: String(new Date().getFullYear() - 20), role: "ALUMNI", password: generatePassword() });
+  const [form, setForm] = useState({ fullName: "", email: "", phone: "", sscBatch: String(new Date().getFullYear() - 20), gender: "", role: "ALUMNI", password: generatePassword() });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [key]: e.target.value });
@@ -176,6 +178,14 @@ function AddUserDialog({ viewer, onClose, onCreated }: { viewer: Viewer | null; 
               {assignableRoles(viewer).map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
             </select>
           </div>
+        </div>
+        <div>
+          <label htmlFor="nu-gender" className={label}>Gender * <span className="font-normal text-slate-400">(women&apos;s photos are hidden by default)</span></label>
+          <select id="nu-gender" required className={input} value={form.gender} onChange={set("gender")}>
+            <option value="" disabled>Choose</option>
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+          </select>
         </div>
         <div>
           <label htmlFor="nu-phone" className={label}>Phone</label>
@@ -299,6 +309,7 @@ export default function AdminUsersPage() {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [genderMissing, setGenderMissing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [resetting, setResetting] = useState<AdminUserRecord | null>(null);
@@ -321,6 +332,7 @@ export default function AdminUsersPage() {
       if (query) params.set("q", query);
       if (roleFilter) params.set("role", roleFilter);
       if (statusFilter) params.set("status", statusFilter);
+      if (genderMissing) params.set("gender", "MISSING");
       const res = await fetch(`/api/admin/users?${params}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Failed to load users (${res.status})`);
@@ -334,7 +346,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, query, roleFilter, statusFilter]);
+  }, [page, query, roleFilter, statusFilter, genderMissing]);
 
   useEffect(() => {
     void loadUsers(); // eslint-disable-line react-hooks/set-state-in-effect
@@ -433,6 +445,15 @@ export default function AdminUsersPage() {
             <option value="REJECTED">Rejected</option>
             <option value="DISABLED">Disabled</option>
           </select>
+          <button
+            type="button"
+            aria-pressed={genderMissing}
+            onClick={() => { setGenderMissing((v) => !v); setPage(1); }}
+            title="Members with no gender: a woman's photo is only hidden once her gender is set"
+            className={`${input} col-span-2 sm:w-auto whitespace-nowrap font-bold cursor-pointer ${genderMissing ? "bg-amber-100 border-amber-400 text-amber-900" : "bg-white text-slate-700"}`}
+          >
+            Gender missing{stats ? ` (${stats.genderMissing})` : ""}
+          </button>
         </div>
       </div>
 
@@ -493,7 +514,7 @@ export default function AdminUsersPage() {
                       value={u.gender ?? ""}
                       onChange={(e) => void update(u, { action: "gender", gender: e.target.value || null }, `Gender saved for ${u.name}.`)}
                     >
-                      <option value="">Gender?</option>
+                      {!u.gender && <option value="" disabled>Gender?</option>}
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>
                     </select>

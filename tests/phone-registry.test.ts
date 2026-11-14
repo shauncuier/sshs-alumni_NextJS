@@ -92,9 +92,9 @@ describe("one mobile number, one account", () => {
     await withPhone("01711000111");
     const admin = { id: "a", email: "admin@example.test", role: "ADMIN" };
     await expect(
-      createUser(admin, { fullName: "X", email: "x@example.test", password: "Member-Pw-2026", role: "ALUMNI", sscBatch: 2001, phone: "+8801711000111" })
+      createUser(admin, { fullName: "X", email: "x@example.test", password: "Member-Pw-2026", role: "ALUMNI", sscBatch: 2001, phone: "+8801711000111", gender: "MALE" })
     ).rejects.toMatchObject({ status: 409, code: "PHONE_TAKEN" });
-    const row = await createUser(admin, { fullName: "Y", email: "y@example.test", password: "Member-Pw-2026", role: "ALUMNI", sscBatch: 2001, phone: "+880 1711 000222" });
+    const row = await createUser(admin, { fullName: "Y", email: "y@example.test", password: "Member-Pw-2026", role: "ALUMNI", sscBatch: 2001, phone: "+880 1711 000222", gender: "MALE" });
     expect(row.phone).toBe("01711000222");
   });
 });

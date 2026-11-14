@@ -6,6 +6,7 @@ import { createMemberAccount, hashMemberPassword } from "@/lib/members/create-me
 import { processAvatar, removeAvatarDir, saveAvatar } from "@/lib/media/avatars";
 import { isProofType, proofTypeLabel } from "@/lib/members/proof-types";
 import { normalizeBanglaName } from "@/lib/members/bangla-name";
+import { normalizeGender } from "@/lib/members/gender";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { emailMembershipDecision, emailRegistration } from "@/lib/member-emails";
 import { smsRegistrationConfirmed } from "@/lib/member-sms";
@@ -47,7 +48,7 @@ export interface OfflineEntryInput {
     sscBatch: number | string;
     rollNumber?: string | null;
     section?: string | null;
-    /** "MALE" or "FEMALE" when the form says (lib/members/gender.ts). */
+    /** "MALE" or "FEMALE" (lib/members/gender.ts); required. */
     gender?: string | null;
     bloodGroup?: string | null;
     profession?: string | null;
@@ -76,6 +77,8 @@ export async function enterOfflineRegistration(input: OfflineEntryInput): Promis
   const fullName = text(m.fullName, 120);
   if (!fullName) throw new AppError("INVALID_ACCOUNT", 400, "Please type the member's name.");
   normalizeBanglaName(m.fullNameBn); // a wrong one fails here, before the photo is saved
+  // Required: a woman's photo is hidden by default, and only her gender says so.
+  if (!normalizeGender(m.gender)) throw new AppError("INVALID_GENDER", 400, "Please choose Male or Female.");
   const phone = canonicalPhone(m.phone);
   const typedEmail = text(m.email, 191).toLowerCase();
   if (typedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(typedEmail)) {

@@ -64,6 +64,8 @@ export async function POST(req: Request) {
         avatarOriginalUrl: true,
       },
     });
+    // The old photo stays on disk; no profile owns it now, so only admins can open it
+    // (app/api/media/avatars/[id]/[file]/route.ts).
 
     await logActivity({ category: "ACCOUNT", action: "photo.updated", summary: `${session.user.email} changed their profile photo`, actor: { id: session.user.id, email: session.user.email, role: session.user.role }, req });
     return NextResponse.json({

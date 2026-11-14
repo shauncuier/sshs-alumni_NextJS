@@ -63,7 +63,7 @@ const jubilee = () =>
     registrationDeadline: new Date("2020-01-01"),
     maxAttendees: 10,
   });
-const member = { fullName: "Paper Member", phone: "01711000222", sscBatch: 1995, profession: "Teacher", address: "Sitakunda" };
+const member = { fullName: "Paper Member", phone: "01711000222", sscBatch: 1995, gender: "MALE", profession: "Teacher", address: "Sitakunda" };
 const staff = { email: "committee@example.test" };
 
 describe("paper forms entered by the committee", () => {
@@ -115,6 +115,8 @@ describe("paper forms entered by the committee", () => {
     const event = await jubilee();
     const base = { eventId: event.id, staff, member, proofType: "SSC_MARKSHEET", paymentMethod: "Cash" };
     await expect(enterOfflineRegistration({ ...base, proofType: "" })).rejects.toMatchObject({ code: "INVALID_PROOF" });
+    // Gender is required: a woman's photo is hidden by default only when it is known.
+    await expect(enterOfflineRegistration({ ...base, member: { ...member, gender: "" } })).rejects.toMatchObject({ code: "INVALID_GENDER" });
     await expect(enterOfflineRegistration({ ...base, proofType: "OTHER" })).rejects.toMatchObject({ code: "INVALID_PROOF" });
     await expect(enterOfflineRegistration({ ...base, paymentMethod: "bKash" })).rejects.toMatchObject({ code: "PAYMENT_REQUIRED" });
     await expect(enterOfflineRegistration({ ...base, paymentMethod: "Bangla QR" })).rejects.toMatchObject({ code: "PAYMENT_REQUIRED" });

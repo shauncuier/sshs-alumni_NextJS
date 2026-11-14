@@ -96,7 +96,7 @@ describe("paper forms", () => {
     await enterOfflineRegistration({
       eventId: event.id,
       staff: { email: "staff@example.test" },
-      member: { fullName: "Paper Member", phone: "01711000444", sscBatch: 1995 },
+      member: { fullName: "Paper Member", phone: "01711000444", sscBatch: 1995, gender: "MALE" },
       proofType: "SCHOOL_TESTIMONIAL",
       paymentMethod: "Cash",
     });

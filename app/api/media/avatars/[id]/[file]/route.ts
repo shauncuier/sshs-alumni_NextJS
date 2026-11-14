@@ -12,8 +12,9 @@ const notFound = () => NextResponse.json({ error: "Not found." }, { status: 404 
 /**
  * Member photos live on the server disk. The 400x400 web avatar is public (the
  * id is an unguessable random value) unless its member hides it (lib/members/photo-privacy.ts):
- * then only she and admins get it, so an address copied earlier stops working. The print
- * master is for admins only.
+ * then only she and admins get it, so an address copied earlier stops working. A folder no
+ * profile uses any more (a replaced photo, or one moved when it was hidden) is for admins
+ * only. The print master is for admins only.
  */
 // Smaller copies for lists and headers (lib/avatar.ts avatarAt); made on first request.
 const SIZES = new Set([96, 192]);
@@ -49,7 +50,11 @@ export async function GET(req: Request, { params }: Params) {
       where: { avatarUrl: { startsWith: `/api/media/avatars/${id}/` } },
       select: PHOTO_PRIVACY_SELECT,
     });
-    if (owner && !canSeePhoto(owner)) {
+    if (!owner) {
+      const me = await getSessionUser();
+      if (!me || !isAdminRole(me.role)) return notFound();
+      headers["Cache-Control"] = "private, no-store";
+    } else if (!canSeePhoto(owner)) {
       if (!canSeePhoto(owner, await getSessionUser())) return notFound();
       headers["Cache-Control"] = "private, no-store";
     } else {

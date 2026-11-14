@@ -27,7 +27,7 @@ const actorFor = async (role: "ADMIN" | "SUPER_ADMIN"): Promise<Actor> => {
   const admin = await makeMember({ role: "ADMIN" });
   return { ...admin, role: "ADMIN" };
 };
-const newUser = { fullName: "Committee Member", email: "Committee@Example.test", password: "Committee-Pw-1", sscBatch: 2004, phone: "01711000222" };
+const newUser = { fullName: "Committee Member", email: "Committee@Example.test", password: "Committee-Pw-1", sscBatch: 2004, phone: "01711000222", gender: "MALE" };
 
 describe("ensureSuperAdmin", () => {
   it("creates the env super admin, who can sign in", async () => {
@@ -66,7 +66,7 @@ describe("createUser", () => {
   it("adds a verified account with a profile", async () => {
     const admin = await actorFor("ADMIN");
     const row = await createUser(admin, { ...newUser, role: "MODERATOR" });
-    expect(row).toMatchObject({ email: "committee@example.test", role: "MODERATOR", status: "VERIFIED", batch: 2004, disabled: false });
+    expect(row).toMatchObject({ email: "committee@example.test", role: "MODERATOR", status: "VERIFIED", batch: 2004, disabled: false, gender: "MALE" });
     await expect(authorizeCredentials({ email: "committee@example.test", password: newUser.password })).resolves.toMatchObject({ role: "MODERATOR" });
   });
 
@@ -85,6 +85,8 @@ describe("createUser", () => {
     await expect(createUser(admin, { ...newUser, email: ENV_EMAIL, role: "ALUMNI" })).rejects.toMatchObject({ status: 409 });
     await expect(createUser(admin, { ...newUser, email: "x@example.test", password: "short", role: "ALUMNI" })).rejects.toMatchObject({ status: 400 });
     await expect(createUser(admin, { ...newUser, email: "y@example.test", sscBatch: 1900, role: "ALUMNI" })).rejects.toMatchObject({ status: 400 });
+    // Gender is required: a woman's photo is hidden by default only when it is known.
+    await expect(createUser(admin, { ...newUser, email: "z@example.test", phone: "", gender: "", role: "ALUMNI" })).rejects.toMatchObject({ code: "INVALID_GENDER" });
   });
 });
 
@@ -146,5 +148,11 @@ describe("listUsers", () => {
     expect((await listUsers({ q: "alpha" })).users.map((u) => u.email)).toEqual(["alpha@example.test"]);
     expect((await listUsers({ status: "DISABLED" })).users.map((u) => u.email)).toEqual(["beta@example.test"]);
     expect((await listUsers({ role: "SUPER_ADMIN" })).total).toBe(1);
+
+    // Members with no gender yet, for the "Gender missing" filter.
+    await prisma.alumniProfile.update({ where: { userId: disabled.id }, data: { gender: "FEMALE" } });
+    const missing = await listUsers({ gender: "MISSING" });
+    expect(missing.users.map((u) => u.email)).toEqual(["alpha@example.test", ENV_EMAIL]);
+    expect(missing.stats.genderMissing).toBe(2);
   });
 });

@@ -703,7 +703,7 @@ export default function ProfilePage() {
                           onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                         >
-                          <option value="">Not given</option>
+                          <option value="" disabled>Choose</option>
                           {GENDERS.map((g) => <option key={g} value={g}>{GENDER_LABELS[g]}</option>)}
                         </select>
                       </div>

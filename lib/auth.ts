@@ -151,7 +151,7 @@ export const authOptions: NextAuthOptions = {
         let current;
         try {
           current = id
-            ? await prisma.user.findUnique({ where: { id }, select: { role: true, status: true, sessionVersion: true, disabledAt: true } })
+            ? await prisma.user.findUnique({ where: { id }, select: { role: true, status: true, sessionVersion: true, disabledAt: true, profile: { select: { avatarUrl: true } } } })
             : null;
         } catch {
           // Database briefly unreachable: keep the session rather than sign everyone out.
@@ -162,6 +162,8 @@ export const authOptions: NextAuthOptions = {
         }
         token.role = current.role;
         token.status = current.status;
+        // The header photo follows the profile: a new or moved photo shows without signing in again.
+        token.picture = current.profile?.avatarUrl || "/logo.png";
       }
       return token;
     },

@@ -9,6 +9,7 @@ import { otpRequired } from "@/lib/otp-setting";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import { normalizeGender } from "@/lib/members/gender";
+import { moveAvatarIfNowHidden } from "@/lib/members/photo-files";
 import { normalizeBanglaName } from "@/lib/members/bangla-name";
 import { parseDateOfBirth } from "@/lib/members/date-of-birth";
 import type { Prisma } from "@prisma/client";
@@ -125,7 +126,7 @@ export async function PUT(req: Request) {
 
       // A new mobile number must be proved by SMS code and belong to nobody else.
       // An unchanged number (in any format) and an empty field leave it as it is.
-      const current = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { phone: true } });
+      const current = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { phone: true, gender: true, isPhotoPublic: true } });
       let newPhone: string | undefined;
       let newPhoneVerifiedAt: Date | null | undefined;
       if (typeof phone === "string" && phone.trim()) {
@@ -156,9 +157,12 @@ export async function PUT(req: Request) {
       if (bloodGroup !== undefined && blood === undefined) {
         throw new AppError("INVALID_BLOOD_GROUP", 400, "Please choose a blood group from the list, or leave it empty.");
       }
-      // Gender: undefined leaves it, empty clears it. Photo: true shows it, false hides it,
+      // Gender: undefined leaves it, empty is refused once it is set. Photo: true shows it, false hides it,
       // null goes back to the default (hidden for women, lib/members/gender.ts).
       const genderValue = gender === undefined ? undefined : normalizeGender(gender);
+      // Once set it can be changed, not cleared: a woman's photo is hidden by default only
+      // while her gender says so.
+      if (genderValue === null && current?.gender) throw new AppError("INVALID_GENDER", 400, "Please choose Male or Female.");
       // Bangla name: undefined leaves it, empty clears it.
       const banglaName = fullNameBn === undefined ? undefined : normalizeBanglaName(fullNameBn);
       if (isPhotoPublic !== undefined && isPhotoPublic !== null && typeof isPhotoPublic !== "boolean") {
@@ -246,6 +250,10 @@ export async function PUT(req: Request) {
           isEmailPublic: typeof isEmailPublic === "boolean" ? isEmailPublic : false,
         },
       });
+
+      // Newly hidden: the photo moves to a new address, so a copy cached while it was shown stops working.
+      const moved = current ? await moveAvatarIfNowHidden(user.id, current) : null;
+      if (moved) Object.assign(updated, moved);
 
       await logActivity({
         category: "ACCOUNT",

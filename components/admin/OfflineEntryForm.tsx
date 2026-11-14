@@ -190,8 +190,8 @@ export default function OfflineEntryForm({ event }: { event: PublicEvent }) {
           </div>
           <div>
             <label htmlFor="off-gender" className={label}>Gender (লিঙ্গ)</label>
-            <select id="off-gender" className={input} value={member.gender} onChange={(e) => set({ gender: e.target.value })}>
-              <option value="">Not given</option>
+            <select id="off-gender" required className={input} value={member.gender} onChange={(e) => set({ gender: e.target.value })}>
+              <option value="" disabled>Choose (বেছে নিন)</option>
               {GENDERS.map((g) => <option key={g} value={g}>{GENDER_LABELS[g]}</option>)}
             </select>
           </div>

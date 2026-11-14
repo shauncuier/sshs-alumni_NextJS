@@ -8,6 +8,7 @@ import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } f
 import path from "node:path";
 import { removeAvatarDir, uploadsRoot } from "@/lib/media/avatars";
 import { normalizeGender } from "@/lib/members/gender";
+import { moveAvatarIfNowHidden } from "@/lib/members/photo-files";
 
 /**
  * User management for the admin console. Who may do what:
@@ -93,7 +94,7 @@ export function roleGrantBlock(actor: Actor, role: unknown): string | null {
   return null;
 }
 
-export async function listUsers(args: { q?: string | null; role?: string | null; status?: string | null; page?: number }) {
+export async function listUsers(args: { q?: string | null; role?: string | null; status?: string | null; gender?: string | null; page?: number }) {
   const q = args.q?.trim() ?? "";
   const where: Prisma.UserWhereInput = {};
   if (args.role && ["SUPER_ADMIN", "ADMIN", "MODERATOR", "TREASURER", "GATE", "ALUMNI"].includes(args.role)) where.role = args.role as Role;
@@ -102,6 +103,8 @@ export async function listUsers(args: { q?: string | null; role?: string | null;
     where.status = args.status as VerificationStatus;
     where.disabledAt = null;
   }
+  // Members without a gender: their photo is shown even if they are women, until it is set.
+  if (args.gender === "MISSING") where.profile = { is: { gender: null } };
   if (q) {
     const batch = /^\d{4}$/.test(q) ? Number(q) : null;
     where.OR = [
@@ -113,11 +116,12 @@ export async function listUsers(args: { q?: string | null; role?: string | null;
   }
 
   const page = Math.max(1, Math.floor(args.page ?? 1));
-  const [users, total, roleCounts, disabled] = await Promise.all([
+  const [users, total, roleCounts, disabled, genderMissing] = await Promise.all([
     prisma.user.findMany({ where, select: rowSelect, orderBy: { createdAt: "desc" }, skip: (page - 1) * USER_PAGE_SIZE, take: USER_PAGE_SIZE }),
     prisma.user.count({ where }),
     prisma.user.groupBy({ by: ["role"], _count: { id: true } }),
     prisma.user.count({ where: { disabledAt: { not: null } } }),
+    prisma.alumniProfile.count({ where: { gender: null } }),
   ]);
   const byRole = Object.fromEntries(roleCounts.map((r) => [r.role, r._count.id])) as Partial<Record<Role, number>>;
   return {
@@ -132,6 +136,7 @@ export async function listUsers(args: { q?: string | null; role?: string | null;
       moderators: byRole.MODERATOR ?? 0,
       alumni: byRole.ALUMNI ?? 0,
       disabled,
+      genderMissing,
     },
   };
 }
@@ -143,6 +148,8 @@ export interface CreateUserInput {
   role?: unknown;
   sscBatch?: unknown;
   phone?: unknown;
+  /** "MALE" or "FEMALE"; required, because a woman's photo is hidden by default. */
+  gender?: unknown;
 }
 
 /** Creates a verified account (committee member, moderator, or an alumnus added by hand). */
@@ -157,6 +164,8 @@ export async function createUser(actor: Actor, input: CreateUserInput): Promise<
   if (!Number.isInteger(batch) || batch < FIRST_SSC_BATCH || batch > new Date().getFullYear()) {
     throw new AppError("INVALID_USER", 400, "Please choose the SSC batch year.");
   }
+  const gender = normalizeGender(input.gender);
+  if (!gender) throw new AppError("INVALID_GENDER", 400, "Please choose Male or Female.");
   const blocked = roleGrantBlock(actor, input.role);
   if (blocked) throw new AppError("FORBIDDEN_ROLE", 403, blocked);
   if (isEnvSuperAdmin(email)) throw new AppError("EMAIL_EXISTS", 409, "That address belongs to the super admin.");
@@ -181,6 +190,7 @@ export async function createUser(actor: Actor, input: CreateUserInput): Promise<
             locationCity: "Chattogram",
             locationCountry: "Bangladesh",
             phone: phone || null,
+            gender,
             avatarUrl: "/logo.png",
             verificationStatus: "VERIFIED",
           },
@@ -216,9 +226,11 @@ export async function updateUser(actor: Actor, targetId: string, change: UserCha
   // no reason to sign the member out.
   if (change.action === "gender") {
     const gender = normalizeGender(change.gender);
-    const profile = await prisma.alumniProfile.findUnique({ where: { userId: target.id }, select: { id: true } });
+    if (!gender) throw new AppError("INVALID_GENDER", 400, "Please choose Male or Female.");
+    const profile = await prisma.alumniProfile.findUnique({ where: { userId: target.id }, select: { id: true, gender: true, isPhotoPublic: true } });
     if (!profile) throw new AppError("NO_PROFILE", 400, "This account has no member profile.");
     await prisma.alumniProfile.update({ where: { userId: target.id }, data: { gender } });
+    await moveAvatarIfNowHidden(target.id, profile);
     return toRow(await prisma.user.findUniqueOrThrow({ where: { id: target.id }, select: rowSelect }));
   }
 

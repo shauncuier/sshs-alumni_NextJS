@@ -65,15 +65,22 @@ const acceptedCount = { _count: { select: { requests: { where: { status: "ACCEPT
 
 export async function listApprovedMentors(): Promise<MentorProfile[]> {
   const rows = await prisma.mentor.findMany({ where: { status: "APPROVED" }, orderBy: { createdAt: "asc" }, include: acceptedCount });
-  // The mentor's photo is a copy taken when they applied; a photo hidden since then
-  // (lib/members/photo-privacy.ts) shows as the silhouette.
-  const privacy = new Map(
-    (await prisma.alumniProfile.findMany({ where: { userId: { in: rows.map((r) => r.userId) } }, select: PHOTO_PRIVACY_SELECT })).map((p) => [p.userId, p])
+  // The photo comes from the member's profile as it is now (the copy taken when they
+  // applied may be an old one); a hidden one (lib/members/photo-privacy.ts) shows as the
+  // silhouette. No profile: initials, never the old copy.
+  const profiles = new Map(
+    (
+      await prisma.alumniProfile.findMany({
+        where: { userId: { in: rows.map((r) => r.userId) } },
+        select: { ...PHOTO_PRIVACY_SELECT, avatarUrl: true },
+      })
+    ).map((p) => [p.userId, p])
   );
   return rows.map((r) => {
     const profile = toMentorProfile(r);
-    const p = privacy.get(r.userId);
-    return r.avatarUrl && p ? { ...profile, avatarUrl: shownAvatar(r.avatarUrl, p) } : profile;
+    const p = profiles.get(r.userId);
+    const photo = p?.avatarUrl && p.avatarUrl !== "/logo.png" ? shownAvatar(p.avatarUrl, p) : null;
+    return { ...profile, avatarUrl: photo || initialsAvatar(r.name) };
   });
 }
 

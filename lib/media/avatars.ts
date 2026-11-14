@@ -94,6 +94,34 @@ export async function removeAvatarDir(dir: string): Promise<void> {
   });
 }
 
+/** The folder id in a "/api/media/avatars/<id>/<file>" address, or null for anything else. */
+export function avatarIdOf(url: string | null | undefined): string | null {
+  const m = /^\/api\/media\/avatars\/([a-f0-9]{32})\//.exec(url ?? "");
+  return m ? m[1] : null;
+}
+
+/** The folder on disk behind a photo address, or null when it is not one we wrote. */
+export function avatarDirOf(url: string | null | undefined): string | null {
+  const id = avatarIdOf(url);
+  return id ? path.join(uploadsRoot(), "avatars", id) : null;
+}
+
+/**
+ * Copies a photo folder to a fresh random id and returns the new id. Used when a photo
+ * becomes hidden: the member's profile moves to the copy, so the old (public, cached)
+ * address no longer belongs to anyone. The old folder is kept, never deleted.
+ */
+export async function copyAvatarDir(id: string): Promise<string> {
+  if (!ID_PATTERN.test(id)) throw new Error("Not an avatar folder id.");
+  const next = crypto.randomBytes(16).toString("hex");
+  await fs.cp(path.join(uploadsRoot(), "avatars", id), path.join(uploadsRoot(), "avatars", next), {
+    recursive: true,
+    errorOnExist: true,
+    force: false,
+  });
+  return next;
+}
+
 /** The file's path, or null when the id or file name is not one we wrote. */
 export function avatarFilePath(id: string, file: AvatarFile): string | null {
   if (!ID_PATTERN.test(id) || !AVATAR_FILES.includes(file)) return null;
