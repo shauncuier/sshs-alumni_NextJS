@@ -111,6 +111,14 @@ describe("Bangla QR membership payments", () => {
     expect(await prisma.eventRegistration.findUniqueOrThrow({ where: { id: reg.id } })).toMatchObject({ status: "CONFIRMED", merchantTrxId: "72610280154891" });
   });
 
+  it("lists a donation made while registering, paid with the fee", async () => {
+    await pendingMember();
+    const reg = await qrRegistration("queue@example.test");
+    await prisma.eventRegistration.update({ where: { id: reg.id }, data: { donationAmount: 500 } });
+    const listed = (await (await GET(new Request("http://x/api/admin/verifications?status=PENDING"))).json()).requests[0];
+    expect(listed).toMatchObject({ totalFee: 1250, donationAmount: 500 });
+  });
+
   it("refuses an SMS TrxID already used for a donation", async () => {
     const { request } = await pendingMember();
     await qrRegistration("queue@example.test");

@@ -226,7 +226,11 @@ export default function AdminAlumniPage() {
                           </span>
                           {r.totalFee !== null && r.totalFee !== undefined && (
                             <span className="font-bold text-slate-900 text-xs">
-                              {formatCurrencyBDT(r.totalFee)}
+                              {formatCurrencyBDT(r.totalFee + (r.donationAmount ?? 0))}
+                              {/* A donation made while registering is paid with the fee. */}
+                              {!!r.donationAmount && (
+                                <span className="font-normal text-slate-500"> (incl. {formatCurrencyBDT(r.donationAmount)} donation)</span>
+                              )}
                             </span>
                           )}
                         </div>

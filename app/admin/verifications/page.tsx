@@ -31,6 +31,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
+/** What the member paid: the fee plus any donation made while registering. */
+const amountPaid = (a: VerificationRequestItem) => (a.totalFee ?? 0) + (a.donationAmount ?? 0);
+
 function VerificationReviewContent() {
   const searchParams = useSearchParams();
   const qId = searchParams.get("id");
@@ -188,8 +191,8 @@ function VerificationReviewContent() {
     const pendingTotal = requests.filter((r) => r.status === "PENDING").length;
     const awaitingPaymentTotal = requests.filter((r) => r.awaitingPayment).length;
     const pendingRevenue = requests
-      .filter((r) => r.awaitingPayment && r.totalFee)
-      .reduce((acc, curr) => acc + (curr.totalFee || 0), 0);
+      .filter((r) => r.awaitingPayment)
+      .reduce((acc, curr) => acc + amountPaid(curr), 0);
     const missingPhotoTotal = requests.filter(
       (r) => !r.hasValidPhoto && r.status === "PENDING"
     ).length;
@@ -275,7 +278,10 @@ function VerificationReviewContent() {
 
   const handleConfirmPayment = async (a: VerificationRequestItem) => {
     if (!a.membershipEventId || !a.registrationId) return;
-    const paid = a.totalFee ? ` of ${formatCurrencyBDT(a.totalFee)}` : "";
+    const total = amountPaid(a);
+    const paid = total
+      ? ` of ${formatCurrencyBDT(total)}${a.donationAmount ? ` (incl. ${formatCurrencyBDT(a.donationAmount)} donation)` : ""}`
+      : "";
     if (!window.confirm(`Confirm the payment${paid} from ${a.fullName}? Check it arrived in the account first.`)) return;
     setBusyId(a.id);
     setError(null);
@@ -358,7 +364,7 @@ function VerificationReviewContent() {
           registrationId={editingReg.registrationId}
           onClose={() => setEditingReg(null)}
           onSaved={(reg) => {
-            setRequests((prev) => prev.map((r) => (r.id === editingReg.requestId ? { ...r, totalFee: reg.totalFee } : r)));
+            setRequests((prev) => prev.map((r) => (r.id === editingReg.requestId ? { ...r, totalFee: reg.totalFee, donationAmount: reg.donationAmount } : r)));
             setEditingReg(null);
           }}
         />
@@ -640,7 +646,7 @@ function VerificationReviewContent() {
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
                             <CreditCard className="w-2.5 h-2.5" />
                             <span>
-                              {r.paymentMethod || "Payment"} {r.totalFee ? formatCurrencyBDT(r.totalFee) : ""}
+                              {r.paymentMethod || "Payment"} {amountPaid(r) ? formatCurrencyBDT(amountPaid(r)) : ""}
                             </span>
                           </span>
                         ) : r.paymentStatus === "CONFIRMED" ? (
@@ -1111,13 +1117,19 @@ function VerificationReviewContent() {
                         {/* Total Amount */}
                         <div className="p-3.5 bg-white rounded-xl border border-slate-200">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">
-                            Total Fee Paid
+                            Total Paid
                           </div>
                           <div className="text-sm font-black text-emerald-800 mt-1">
                             {activeApplicant.totalFee !== null && activeApplicant.totalFee !== undefined
-                              ? `${formatCurrencyBDT(activeApplicant.totalFee)}`
+                              ? `${formatCurrencyBDT(amountPaid(activeApplicant))}`
                               : "—"}
                           </div>
+                          {/* A donation made while registering is paid with the fee, so the member's payment is the sum. */}
+                          {!!activeApplicant.donationAmount && (
+                            <div className="text-[11px] text-slate-600 mt-0.5">
+                              Fee {formatCurrencyBDT(activeApplicant.totalFee ?? 0)} + donation {formatCurrencyBDT(activeApplicant.donationAmount)}
+                            </div>
+                          )}
                           {isSuperAdmin && activeApplicant.registrationId && activeApplicant.membershipEventId && activeApplicant.paymentStatus !== "CANCELLED" && (
                             <button
                               type="button"
@@ -1172,7 +1184,7 @@ function VerificationReviewContent() {
                           </p>
                           {activeApplicant.awaitingPayment && (
                             <BanglaQrMatch
-                              amount={activeApplicant.totalFee ?? 0}
+                              amount={amountPaid(activeApplicant)}
                               last4={activeApplicant.payerAccountLast4 ?? null}
                               paidAt={activeApplicant.payerPaidAt ?? null}
                               memberTrxId={activeApplicant.transactionId ?? null}
