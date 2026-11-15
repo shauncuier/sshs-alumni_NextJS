@@ -28,6 +28,7 @@ interface VerificationRequestRow {
   paymentMethod?: string | null;
   transactionId?: string | null;
   totalFee?: number | null;
+  donationAmount?: number | null;
   payerAccountLast4?: string | null;
   payerPaidAt?: string | null;
   merchantTrxId?: string | null;
@@ -100,6 +101,7 @@ function toItem(row: VerificationRequestRow): VerificationRequestItem {
     paymentMethod: row.paymentMethod ?? null,
     transactionId: row.transactionId ?? null,
     totalFee: row.totalFee ?? null,
+    donationAmount: row.donationAmount ?? 0,
     payerAccountLast4: row.payerAccountLast4 ?? null,
     payerPaidAt: row.payerPaidAt ?? null,
     merchantTrxId: row.merchantTrxId ?? null,

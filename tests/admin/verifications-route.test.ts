@@ -117,6 +117,15 @@ describe("Bangla QR membership payments", () => {
     await prisma.eventRegistration.update({ where: { id: reg.id }, data: { donationAmount: 500 } });
     const listed = (await (await GET(new Request("http://x/api/admin/verifications?status=PENDING"))).json()).requests[0];
     expect(listed).toMatchObject({ totalFee: 1250, donationAmount: 500 });
+
+    // The admin page reads the queue through this helper, which must keep the donation.
+    vi.stubGlobal("fetch", async (url: string) => GET(new Request(`http://x${url}`)));
+    try {
+      const { fetchVerificationRequests } = await import("@/lib/admin-verifications");
+      expect((await fetchVerificationRequests("PENDING"))[0]).toMatchObject({ totalFee: 1250, donationAmount: 500 });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("refuses an SMS TrxID already used for a donation", async () => {
