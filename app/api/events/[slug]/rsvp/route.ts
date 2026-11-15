@@ -8,10 +8,11 @@ import { AVATAR_LIMITS } from "@/lib/media/avatars";
 import { PROOF_LIMITS } from "@/lib/media/proofs";
 import { RECEIPT_MAX_BYTES } from "@/lib/media/receipts";
 import { getSessionUser } from "@/lib/session-user";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { clientAddress, readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { requireTurnstile } from "@/lib/turnstile";
 
 type Params = { params: Promise<{ slug: string }> };
-type Payload = { account?: AccountInput; rsvp?: RsvpInput; proof?: { type?: unknown; note?: unknown } | null };
+type Payload = { account?: AccountInput; rsvp?: RsvpInput; proof?: { type?: unknown; note?: unknown } | null; turnstileToken?: unknown };
 
 // The photo may be 5 MB, the proof document and the payment screenshot 10 MB each;
 // the rest of the multipart body (JSON details, boundaries) is small.
@@ -104,6 +105,8 @@ export async function POST(req: Request, { params }: Params) {
     } else {
       body = (await readJsonBody(req)) as Payload;
     }
+    // Joining while signed out: robot check before any account or upload is saved.
+    if (!me) await requireTurnstile(body.turnstileToken, "register", clientAddress(req));
     const slug = (await params).slug;
     const result = await registerForEvent({
       slug,

@@ -98,6 +98,9 @@ const nextConfig = {
       connect: "https://*.clarity.ms https://c.bing.com",
       img: "https://*.clarity.ms https://c.bing.com",
     };
+    // Cloudflare Turnstile robot check on the public forms (components/shared/useTurnstile.tsx):
+    // its script and the challenge frame.
+    const turnstile = "https://challenges.cloudflare.com";
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
@@ -106,15 +109,15 @@ const nextConfig = {
       "frame-ancestors 'self'",
       "form-action 'self'",
       // Next.js inlines its bootstrap scripts; without nonces 'unsafe-inline' is required.
-      `script-src 'self' 'unsafe-inline' ${ga.script} ${clarity.script}` + (dev ? " 'unsafe-eval'" : ""),
+      `script-src 'self' 'unsafe-inline' ${ga.script} ${clarity.script} ${turnstile}` + (dev ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
       // Initials avatars are inline data: SVGs (lib/avatar.ts).
       // The YouTube promo on /jubilee (components/shared/YouTubeEmbed.tsx): its thumbnail, then the player.
       `img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://i.ytimg.com ${ga.img} ${clarity.img}`,
-      "frame-src 'self' https://www.youtube-nocookie.com",
+      `frame-src 'self' https://www.youtube-nocookie.com ${turnstile}`,
       "font-src 'self' data:",
       // Live updates use same-origin Server-Sent Events; the dev server also needs its HMR socket.
-      `connect-src 'self' ${ga.connect} ${clarity.connect}` + (dev ? " ws: wss:" : ""),
+      `connect-src 'self' ${ga.connect} ${clarity.connect} ${turnstile}` + (dev ? " ws: wss:" : ""),
       "worker-src 'self' blob:",
       "manifest-src 'self'",
       ...(dev ? [] : ["upgrade-insecure-requests"]),

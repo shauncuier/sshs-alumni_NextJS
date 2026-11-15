@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { requestPhoneOtp } from "@/lib/phone-otp";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { clientAddress, readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { requireTurnstile } from "@/lib/turnstile";
 import { getSessionUser } from "@/lib/session-user";
 
 // Texts a one-time code to the phone a new member is registering with.
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
     const body = await readJsonBody(req);
     // Signed in (changing the number on the profile): their own number is not "taken".
     const me = await getSessionUser().catch(() => null);
+    // Signed out (joining): prove a person asked before an SMS is paid for.
+    if (!me) await requireTurnstile(body.turnstileToken, "sms_code", clientAddress(req));
     const result = await requestPhoneOtp(body.phone, Date.now(), { exceptUserId: me?.id });
     await logActivity({
       category: "VERIFY",

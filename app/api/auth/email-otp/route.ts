@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { requestEmailOtp } from "@/lib/email-otp";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { clientAddress, readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { requireTurnstile } from "@/lib/turnstile";
 
 // Emails a one-time code: the fallback when the SMS code fails or never arrives.
 export async function POST(req: Request) {
@@ -10,6 +11,7 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     requireRateLimit(req, "email-otp-send", { limit: 10, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
+    await requireTurnstile(body.turnstileToken, "email_code", clientAddress(req));
     const result = await requestEmailOtp(body.email);
     await logActivity({ category: "VERIFY", action: "email_code.sent", summary: `Email code sent to ${result.email}`, actor: { email: result.email }, targetType: "email", targetId: result.email, req });
     return NextResponse.json(result);

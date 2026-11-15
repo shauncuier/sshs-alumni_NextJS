@@ -8,6 +8,7 @@ import { schoolInfo } from "@/lib/data";
 import { MapPin, Phone, Mail, Send, CheckCircle2, Globe } from "lucide-react";
 import FacebookIcon from "@/components/shared/FacebookIcon";
 import YouTubeIcon from "@/components/shared/YouTubeIcon";
+import { useTurnstile } from "@/components/shared/useTurnstile";
 
 const SUBJECTS = [
   "General question",
@@ -24,6 +25,7 @@ export default function ContactPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
+  const bot = useTurnstile("contact");
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -37,7 +39,7 @@ export default function ContactPage() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name, email: form.email, subject: form.subject, message: details ? `${details}\n\n${form.message}` : form.message }),
+        body: JSON.stringify({ name: form.name, email: form.email, subject: form.subject, message: details ? `${details}\n\n${form.message}` : form.message, turnstileToken: bot.token ?? undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Your message could not be sent. Please try again.");
@@ -46,6 +48,7 @@ export default function ContactPage() {
       setError(err instanceof Error ? err.message : "Your message could not be sent. Please try again.");
     } finally {
       setSending(false);
+      bot.reset();
     }
   };
 
@@ -207,10 +210,11 @@ export default function ContactPage() {
                     <label htmlFor="ct-message" className={label}>Message *</label>
                     <textarea id="ct-message" rows={5} required maxLength={5000} value={form.message} onChange={set("message")} className={`${field} resize-none`} />
                   </div>
+                  {bot.widget}
                   {error && <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p>}
                   <button
                     type="submit"
-                    disabled={sending}
+                    disabled={sending || !bot.ready}
                     className="px-6 py-3 min-h-[48px] bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold rounded-xl shadow-md transition-colors flex items-center gap-2 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />

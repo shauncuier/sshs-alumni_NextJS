@@ -10,6 +10,7 @@ import { schoolInfo } from "@/lib/data";
 import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/account-access";
 import { ArrowRight, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 import PasswordInput from "@/components/shared/PasswordInput";
+import { useTurnstile } from "@/components/shared/useTurnstile";
 
 function LoginForm() {
   const router = useRouter();
@@ -21,6 +22,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const bot = useTurnstile("login");
   const blocked = searchParams.get("blocked");
   const [errorMessage, setErrorMessage] = useState(
     blocked === "pending" ? PENDING_BANNER_MESSAGE : blocked === "rejected" ? MEMBERSHIP_REJECTED_MESSAGE : ""
@@ -41,6 +43,7 @@ function LoginForm() {
         redirect: false,
         email,
         password,
+        turnstileToken: bot.token ?? "",
       });
 
       if (res?.error) {
@@ -52,6 +55,7 @@ function LoginForm() {
             : res.error
         );
         setLoading(false);
+        bot.reset();
       } else {
         // Back to the page that asked for sign-in; otherwise staff to their admin
         // section and members to their dashboard.
@@ -62,6 +66,7 @@ function LoginForm() {
     } catch {
       setErrorMessage("An unexpected authentication error occurred. Please try again.");
       setLoading(false);
+      bot.reset();
     }
   };
 
@@ -149,9 +154,11 @@ function LoginForm() {
               </a>
             </p>
 
+            {bot.widget}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !bot.ready}
               className="w-full py-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <span>{loading ? "Signing In..." : "Sign In to Portal"}</span>

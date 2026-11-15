@@ -12,6 +12,7 @@ import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 import ContactVerifyField, { type ContactVerification, useCodeRequired } from "./ContactVerifyField";
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import PasswordInput from "@/components/shared/PasswordInput";
+import { useTurnstile } from "@/components/shared/useTurnstile";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
 import { GENDER_LABELS, GENDERS } from "@/lib/members/gender";
 
@@ -81,6 +82,8 @@ export default function RegistrationForm({
   const payment = usePaymentDetails();
   const isAuthed = sessionStatus === "authenticated" && Boolean(session?.user);
   const needsAccount = !isAuthed && Boolean(event.isMembershipEvent);
+  // Robot check on joining (signed out); members are already known.
+  const joinBot = useTurnstile("register", { enabled: needsAccount });
   // Step 1 (account details) only exists for signed-out visitors joining.
   const [step, setStepState] = useState<1 | 2>(1);
   const formRef = useRef<HTMLFormElement>(null);
@@ -326,7 +329,10 @@ export default function RegistrationForm({
         ? `[Volunteer: ${SUBCOMMITTEES.find((s) => s.id === volunteerSubcommittee)?.name || volunteerSubcommittee}]${volunteerNotes.trim() ? ` ${volunteerNotes.trim()}` : ""}`
         : null;
 
+      const turnstileToken = needsAccount ? joinBot.token ?? undefined : undefined;
+      if (needsAccount) joinBot.reset();
       const payload = JSON.stringify({
+          turnstileToken,
           account: needsAccount
             ? {
                 ...account,
@@ -1020,6 +1026,8 @@ export default function RegistrationForm({
             </p>
           )}
 
+          {needsAccount && joinBot.widget}
+
           <div className="flex gap-2.5 pt-2">
             {needsAccount && (
               <button
@@ -1032,7 +1040,7 @@ export default function RegistrationForm({
             )}
             <button
               type="submit"
-              disabled={submitting || !total}
+              disabled={submitting || !total || !joinBot.ready}
               className="flex-1 py-3 px-5 min-h-[48px] rounded-xl bg-emerald-800 hover:bg-emerald-700 active:scale-[0.99] text-white text-sm font-bold shadow-md disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               {submitting ? (

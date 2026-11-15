@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { CheckCircle2, Phone, Send } from "lucide-react";
 import { MAGAZINE_CALL as CALL } from "@/lib/magazine-call";
+import { useTurnstile } from "@/components/shared/useTurnstile";
 
 const field = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600";
 const label = "block text-xs font-semibold text-slate-700 mb-1";
@@ -14,6 +15,7 @@ export default function MagazineForm() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const bot = useTurnstile("magazine");
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,7 +23,7 @@ export default function MagazineForm() {
     setSending(true);
     setError(null);
     try {
-      const res = await fetch("/api/magazine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const res = await fetch("/api/magazine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, turnstileToken: bot.token ?? undefined }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "লেখাটি পাঠানো যায়নি। আবার চেষ্টা করুন।");
       setSent(true);
@@ -29,6 +31,7 @@ export default function MagazineForm() {
       setError(err instanceof Error ? err.message : "লেখাটি পাঠানো যায়নি। আবার চেষ্টা করুন।");
     } finally {
       setSending(false);
+      bot.reset();
     }
   };
 
@@ -101,7 +104,8 @@ export default function MagazineForm() {
               <label htmlFor="mg-website">Website</label>
               <input id="mg-website" name="website" value={form.website} onChange={set("website")} tabIndex={-1} autoComplete="off" />
             </div>
-            <button type="submit" disabled={sending} className="w-full sm:w-auto px-6 py-3 min-h-[44px] bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+            {bot.widget}
+            <button type="submit" disabled={sending || !bot.ready} className="w-full sm:w-auto px-6 py-3 min-h-[44px] bg-emerald-800 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm">
               <Send className="w-4 h-4" />
               {sending ? "পাঠানো হচ্ছে…" : "লেখা পাঠান"}
             </button>

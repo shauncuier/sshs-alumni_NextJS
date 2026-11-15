@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 import { sendEmail } from "@/lib/email";
-import { requireRateLimit, readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { clientAddress, requireRateLimit, readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { requireTurnstile } from "@/lib/turnstile";
 
 const LIMITS = { name: 120, email: 254, subject: 200, message: 5000 };
 
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
     requireSameOrigin(req);
     requireRateLimit(req, "contact", { limit: 5, windowMs: 60 * 60_000 });
     const body = await readJsonBody(req);
+    await requireTurnstile(body.turnstileToken, "contact", clientAddress(req));
     const name = field(body.name, LIMITS.name);
     const email = field(body.email, LIMITS.email).toLowerCase();
     const subject = field(body.subject, LIMITS.subject) || "(no subject)";

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api-response";
 import { logActivity } from "@/lib/activity-log";
 import { createMagazineSubmission } from "@/lib/magazine";
-import { readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { clientAddress, readJsonBody, requireRateLimit, requireSameOrigin } from "@/lib/request-security";
+import { requireTurnstile } from "@/lib/turnstile";
 
 // POST /api/magazine — a writing for the souvenir book from the public /magazine
 // form (no sign-in). Stored for the committee, who copy it from /admin/feed.
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
     const body = await readJsonBody(req);
     // "website" is a hidden field people never see; only bots fill it in. Pretend it worked.
     if (typeof body.website === "string" && body.website.trim()) return NextResponse.json({ received: true }, { status: 201 });
+    await requireTurnstile(body.turnstileToken, "magazine", clientAddress(req));
     const row = await createMagazineSubmission(body);
     await logActivity({
       category: "CONTENT",

@@ -6,6 +6,7 @@ import { accountAccessBlock, LEGACY_PENDING_MESSAGE } from "@/lib/account-access
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { consumeRateLimit, resetRateLimit } from "@/lib/request-security";
 import { logActivity } from "@/lib/activity-log";
+import { requireTurnstile } from "@/lib/turnstile";
 
 type AuthorizeRequest = { headers?: Record<string, string | string[] | undefined> } | undefined;
 const header = (req: AuthorizeRequest, name: string) => {
@@ -14,13 +15,15 @@ const header = (req: AuthorizeRequest, name: string) => {
 };
 
 /** Signs a member in and records the attempt, successful or not, in the activity log. */
-export async function authorizeCredentials(credentials: Record<"email" | "password", string> | undefined, req?: AuthorizeRequest) {
+export async function authorizeCredentials(credentials: (Record<"email" | "password", string> & { turnstileToken?: string }) | undefined, req?: AuthorizeRequest) {
   const email = credentials?.email?.trim().toLowerCase() || null;
   const context = {
     ip: header(req, "x-real-ip") ?? header(req, "x-forwarded-for")?.split(",")[0]?.trim() ?? null,
     userAgent: header(req, "user-agent"),
   };
   try {
+    // Robot check first: a bot gets no password guesses at all.
+    await requireTurnstile(credentials?.turnstileToken, "login", context.ip);
     const user = await checkCredentials(credentials);
     await logActivity({ category: "AUTH", action: "auth.sign_in", summary: `${user.email} signed in`, actor: user, targetType: "User", targetId: user.id, ...context });
     return user;
@@ -113,6 +116,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email", placeholder: "alumnus@example.com" },
         password: { label: "Password", type: "password" },
+        turnstileToken: { label: "Robot check", type: "text" },
       },
       authorize: authorizeCredentials,
     }),

@@ -644,6 +644,7 @@ export default function ProfilePage() {
                         currentPhone={profile.phone}
                         currentVerified={Boolean(profile.phoneVerifiedAt)}
                         codeRequired={codeRequired}
+                        robotCheck={false}
                       />
                       <div className="flex flex-col justify-center gap-2 pt-2 sm:pt-4">
                         <label className="flex items-center gap-2 cursor-pointer select-none text-slate-700 font-semibold">

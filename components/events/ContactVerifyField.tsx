@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { OTP_LENGTH } from "@/lib/phone-otp-format";
+import { useTurnstile } from "@/components/shared/useTurnstile";
 
 const input = "w-full px-3.5 py-3 sm:py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-xs min-h-[46px] focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-colors";
 const label = "block text-xs font-semibold text-slate-700 mb-1.5";
@@ -65,6 +66,7 @@ export default function ContactVerifyField({
   currentVerified = true,
   id = "reg-phone",
   codeRequired = true,
+  robotCheck = true,
 }: {
   phone: string;
   onPhoneChange: (phone: string) => void;
@@ -82,6 +84,8 @@ export default function ContactVerifyField({
   id?: string;
   /** False while an admin has switched verification codes off (see useCodeRequired). */
   codeRequired?: boolean;
+  /** False for a signed-in member (profile page): the server skips the robot check for them. */
+  robotCheck?: boolean;
 }) {
   const [channel, setChannel] = useState<Channel>("phone");
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -93,6 +97,9 @@ export default function ContactVerifyField({
   const [resendIn, setResendIn] = useState(0);
   // SMS test mode (Admin → Bulk SMS): the server sends the code back instead of texting it.
   const [testCode, setTestCode] = useState<string | null>(null);
+  // Robot check before each code is sent (a token works once, so it is renewed after every send).
+  const phoneBot = useTurnstile("sms_code", { enabled: robotCheck && codeRequired });
+  const emailBot = useTurnstile("email_code", { enabled: robotCheck && codeRequired && allowEmail && smsFailed });
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -118,7 +125,10 @@ export default function ContactVerifyField({
     setError(null);
     setBusy(via);
     try {
-      const data = await post(ENDPOINTS[via], via === "phone" ? { phone } : { email });
+      const bot = via === "phone" ? phoneBot : emailBot;
+      const turnstileToken = bot.token ?? undefined;
+      bot.reset();
+      const data = await post(ENDPOINTS[via], via === "phone" ? { phone, turnstileToken } : { email, turnstileToken });
       setChannel(via);
       setChallenge(data.challenge);
       setSentTo(via === "phone" ? data.phone : data.email);
@@ -211,7 +221,7 @@ export default function ContactVerifyField({
           </button>
         ) : (
           !(challenge && channel === "phone") && (
-            <button type="button" onClick={() => void sendCode("phone")} disabled={busy !== null || !phone.trim()} className={smallButton}>
+            <button type="button" onClick={() => void sendCode("phone")} disabled={busy !== null || !phone.trim() || !phoneBot.ready} className={smallButton}>
               {busy === "phone" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Send code
             </button>
@@ -235,6 +245,8 @@ export default function ContactVerifyField({
           A Bangladeshi mobile number. We text you a {OTP_LENGTH}-digit code to confirm it.
         </p>
       )}
+
+      {!verified && !(challenge && channel === "email") && phoneBot.widget}
 
       {challenge && !verified && (
         <div className="space-y-1.5">
@@ -273,7 +285,7 @@ export default function ContactVerifyField({
           <button
             type="button"
             onClick={() => void sendCode(channel)}
-            disabled={busy !== null || resendIn > 0}
+            disabled={busy !== null || resendIn > 0 || !(channel === "phone" ? phoneBot : emailBot).ready}
             className="text-[11px] font-bold text-emerald-800 disabled:text-slate-400 cursor-pointer disabled:cursor-not-allowed"
           >
             {resendIn > 0 ? `Resend code in ${mmss(resendIn)}` : "Resend code"}
@@ -287,7 +299,7 @@ export default function ContactVerifyField({
           <button
             type="button"
             onClick={() => void sendCode("email")}
-            disabled={busy !== null || !email.trim()}
+            disabled={busy !== null || !email.trim() || !emailBot.ready}
             className="shrink-0 px-3 py-2 rounded-lg border border-emerald-700 text-emerald-800 font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {busy === "email" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
@@ -295,6 +307,7 @@ export default function ContactVerifyField({
           </button>
         </div>
       )}
+      {offerEmail && emailBot.widget}
 
       {message && <p role="alert" className="text-[11px] font-bold text-rose-700">{message}</p>}
     </div>

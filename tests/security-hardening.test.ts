@@ -25,8 +25,10 @@ describe("security headers", () => {
 
   it("production sends a strict policy, HSTS and no legacy XSS auditor", async () => {
     const h = await load("production");
-    expect(h["Content-Security-Policy"]).toContain("connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.clarity.ms https://c.bing.com;");
-    expect(h["Content-Security-Policy"]).toContain("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms https://*.clarity.ms;");
+    expect(h["Content-Security-Policy"]).toContain("connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.clarity.ms https://c.bing.com https://challenges.cloudflare.com;");
+    expect(h["Content-Security-Policy"]).toContain("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms https://*.clarity.ms https://challenges.cloudflare.com;");
+    // Cloudflare Turnstile's challenge frame on the public forms.
+    expect(h["Content-Security-Policy"]).toContain("frame-src 'self' https://www.youtube-nocookie.com https://challenges.cloudflare.com;");
     expect(h["Content-Security-Policy"]).toContain("object-src 'none'");
     expect(h["Content-Security-Policy"]).toContain("upgrade-insecure-requests");
     expect(h["Content-Security-Policy"]).not.toContain("unsafe-eval");
