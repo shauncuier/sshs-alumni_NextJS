@@ -62,6 +62,7 @@ export default function ContactVerifyField({
   showRequired,
   allowEmail = true,
   currentPhone,
+  currentVerified = true,
   id = "reg-phone",
   codeRequired = true,
 }: {
@@ -76,6 +77,8 @@ export default function ContactVerifyField({
   /** False where only the phone counts (changing the number on the profile). */
   allowEmail?: boolean;
   currentPhone?: string | null;
+  /** False when the number on file was never verified: it then needs a code like a new one. */
+  currentVerified?: boolean;
   id?: string;
   /** False while an admin has switched verification codes off (see useCodeRequired). */
   codeRequired?: boolean;
@@ -169,7 +172,9 @@ export default function ContactVerifyField({
   }
 
   const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
-  const unchanged = Boolean(currentPhone) && digits(phone) === digits(currentPhone);
+  const sameNumber = Boolean(currentPhone) && digits(phone) === digits(currentPhone);
+  // The number on file, already verified: nothing to do.
+  const unchanged = sameNumber && currentVerified;
   const verified = Boolean(verification) || unchanged;
   const phoneLocked = verification?.via === "phone";
   // Email only as a backup for an SMS service that is down.
@@ -220,6 +225,10 @@ export default function ContactVerifyField({
         <p className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
           {verification.via === "phone" ? "Number verified by SMS" : `Verified by email (${verification.target})`}
+        </p>
+      ) : sameNumber ? (
+        <p id={`${id}-help`} className="text-[11px] font-semibold text-amber-800">
+          Your number is not verified yet. Verify it with an SMS code to save your profile.
         </p>
       ) : (
         <p id={`${id}-help`} className="text-[11px] text-slate-500">

@@ -47,9 +47,9 @@ beforeEach(async () => {
   await resetDatabase();
 });
 
-const withPhone = async (phone: string) => {
+const withPhone = async (phone: string, verified = false) => {
   const m = await makeMember();
-  await prisma.alumniProfile.update({ where: { userId: m.id }, data: { phone } });
+  await prisma.alumniProfile.update({ where: { userId: m.id }, data: { phone, phoneVerifiedAt: verified ? new Date() : null } });
   return m;
 };
 
@@ -123,13 +123,13 @@ describe("the number must be verified", () => {
   });
 
   it("changing the number on the profile needs the SMS code, and the number must be free", async () => {
-    const me = await withPhone("01711000111");
+    const me = await withPhone("01711000111", true);
     await withPhone("01711000222");
     session.user = { id: me.id, email: me.email, role: "ALUMNI", status: "VERIFIED" };
     const put = (body: unknown) =>
       updateProfile(new Request("http://x/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
 
-    // Same number in another format: nothing to verify.
+    // Same verified number in another format: nothing to verify.
     expect((await put({ phone: "+880 1711-000111", bio: "hi" })).status).toBe(200);
     expect((await put({ phone: "01711000999" })).status).toBe(400);
     expect((await put({ phone: "01711000999", phoneVerificationToken: verifiedPhoneToken("8801711000888") })).status).toBe(400);
@@ -145,6 +145,39 @@ describe("the number must be verified", () => {
     const typed = await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } });
     expect(typed.phone).toBe("01711000777");
     expect(typed.phoneVerifiedAt).toBeNull();
+  });
+
+  it("a number on file that was never verified needs the SMS code once to save the profile", async () => {
+    const me = await withPhone("01711000111");
+    session.user = { id: me.id, email: me.email, role: "ALUMNI", status: "VERIFIED" };
+    const put = (body: unknown) =>
+      updateProfile(new Request("http://x/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
+    const saved = () => prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } });
+
+    const refused = await put({ phone: "01711000111", bio: "first" });
+    expect(refused.status).toBe(400);
+    expect((await refused.json()).code).toBe("PHONE_NOT_VERIFIED");
+    expect(await saved()).toMatchObject({ bio: null, phoneVerifiedAt: null });
+    // A code for another number does not count.
+    expect((await put({ phone: "01711000111", phoneVerificationToken: verifiedPhoneToken("8801711000999") })).status).toBe(400);
+    // Edits that leave the number out (the photo switch) are not held up.
+    expect((await put({ isPhotoPublic: true })).status).toBe(200);
+
+    expect((await put({ phone: "01711000111", bio: "first", phoneVerificationToken: verifiedPhoneToken("8801711000111") })).status).toBe(200);
+    expect(await saved()).toMatchObject({ phone: "01711000111", bio: "first", phoneVerifiedAt: expect.any(Date) });
+    // Verified now: later edits save with no code.
+    expect((await put({ phone: "01711000111", bio: "second" })).status).toBe(200);
+    expect((await saved()).bio).toBe("second");
+  });
+
+  it("with codes switched off, an unverified number on file does not block saving", async () => {
+    const me = await withPhone("01711000111");
+    session.user = { id: me.id, email: me.email, role: "ALUMNI", status: "VERIFIED" };
+    await setOtpRequired(false, "admin@example.test");
+    const body = JSON.stringify({ phone: "01711000111", bio: "hi" });
+    const res = await updateProfile(new Request("http://x/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body }));
+    expect(res.status).toBe(200);
+    expect((await prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } })).phoneVerifiedAt).toBeNull();
   });
 
   it("the database itself refuses two accounts with one number", async () => {

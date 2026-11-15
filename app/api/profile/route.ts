@@ -126,7 +126,7 @@ export async function PUT(req: Request) {
 
       // A new mobile number must be proved by SMS code and belong to nobody else.
       // An unchanged number (in any format) and an empty field leave it as it is.
-      const current = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { phone: true, gender: true, isPhotoPublic: true } });
+      const current = await prisma.alumniProfile.findUnique({ where: { userId: user.id }, select: { phone: true, phoneVerifiedAt: true, gender: true, isPhotoPublic: true } });
       let newPhone: string | undefined;
       let newPhoneVerifiedAt: Date | null | undefined;
       if (typeof phone === "string" && phone.trim()) {
@@ -147,6 +147,13 @@ export async function PUT(req: Request) {
             // An expired or wrong code while codes are off: saved, not verified.
           }
           newPhoneVerifiedAt = proved ? new Date() : null;
+        } else if (!current?.phoneVerifiedAt && (await otpRequired())) {
+          // The number on file was never verified (paper entry, joined while codes were off):
+          // saving the profile proves it once with an SMS code; after that edits save as usual.
+          if (!phoneVerificationToken || readVerifiedPhone(phoneVerificationToken) !== wanted) {
+            throw new AppError("PHONE_NOT_VERIFIED", 400, "Please verify your mobile number with the SMS code to save your profile.");
+          }
+          newPhoneVerifiedAt = new Date();
         }
       }
 

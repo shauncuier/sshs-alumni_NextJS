@@ -54,6 +54,7 @@ interface ProfileRecord {
   locationCountry: string;
   bio: string | null;
   phone: string | null;
+  phoneVerifiedAt?: string | null;
   isPhonePublic: boolean;
   isEmailPublic: boolean;
   avatarUrl: string | null;
@@ -284,11 +285,17 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileData) return;
-    // A new number must be verified by SMS before it is saved (unless codes are switched off).
+    // A new number, or one on file that was never verified, must be verified by SMS before
+    // the profile is saved (unless codes are switched off).
     const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
-    if (codeRequired && profileData.phone.trim() && digits(profileData.phone) !== digits(profile?.phone) && !phoneVerification) {
+    const changed = digits(profileData.phone) !== digits(profile?.phone);
+    if (codeRequired && profileData.phone.trim() && (changed || !profile?.phoneVerifiedAt) && !phoneVerification) {
       setPhoneNeedsCode(true);
-      setSaveError("Please verify your new mobile number with the SMS code first.");
+      setSaveError(
+        changed
+          ? "Please verify your new mobile number with the SMS code first."
+          : "Please verify your mobile number with the SMS code to save your profile."
+      );
       return;
     }
     setSaving(true);
@@ -635,6 +642,7 @@ export default function ProfilePage() {
                         showRequired={phoneNeedsCode}
                         allowEmail={false}
                         currentPhone={profile.phone}
+                        currentVerified={Boolean(profile.phoneVerifiedAt)}
                         codeRequired={codeRequired}
                       />
                       <div className="flex flex-col justify-center gap-2 pt-2 sm:pt-4">
