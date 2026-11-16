@@ -31,6 +31,7 @@ It prints variable names only, never values, and exits with an error when the si
 | `BULKSMSBD_API_KEY`, `BULKSMSBD_SENDER_ID`, `OTP_BRAND_NAME` | SMS codes and broadcasts | 18 |
 | — | bKash / Nagad numbers, bank account and the Bangla QR image are **not** env variables any more: an admin sets them in **Admin → Payment settings** (each method switched on or off) (the old `NEXT_PUBLIC_BANGLA_QR_*` and `NEXT_PUBLIC_DONATION_INSTRUCTIONS` are only a fallback until then) | 19 |
 | `CONTACT_INBOX_EMAIL` | Contact-form messages by email | 17 |
+| `TURNSTILE_SECRET` (+ optional `TURNSTILE_SITE_KEY`, `TURNSTILE_HOSTNAMES`) | Cloudflare Turnstile robot check on sign-in, code sending, joining, contact and magazine forms. Secret key of the dashboard widget (site key `0x4AAAAAAGCTTELzTXn4bBMG` is the default). Off while empty; remove it to switch the check off | — |
 | `UPLOADS_DIR` | Absolute path outside the app folder (e.g. `/var/lib/ssghs/uploads`), included in backups | 28, 30 |
 | `LOG_RETENTION_DAYS` | Activity log retention, default 365 | — |
 | `PRIVACY_REJECTED_DAYS` | Days before rejected applicants' photos and payment screenshots are deleted, default 30 ([DATA_RETENTION.md](DATA_RETENTION.md)) | 15 |

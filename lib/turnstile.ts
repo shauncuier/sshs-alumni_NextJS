@@ -58,7 +58,7 @@ export async function requireTurnstile(token: unknown, action: TurnstileAction, 
     throw failed();
   }
 
-  let result: { success?: boolean; action?: string; hostname?: string; "error-codes"?: string[] };
+  let result: { success?: boolean; action?: string; hostname?: string; "error-codes"?: string[]; metadata?: { result_with_testing_key?: boolean } };
   try {
     const params = new URLSearchParams({ secret, response: token });
     if (remoteIp && remoteIp !== "unknown") params.set("remoteip", remoteIp);
@@ -75,7 +75,10 @@ export async function requireTurnstile(token: unknown, action: TurnstileAction, 
     throw failed();
   }
 
-  if (!result.success || result.action !== action || !hostnames.has(String(result.hostname ?? "").toLowerCase())) {
+  // Cloudflare's test keys report no action; accept that only outside production.
+  const testKey = result.metadata?.result_with_testing_key === true && process.env.NODE_ENV !== "production";
+  const actionOk = result.action === action || (testKey && !result.action);
+  if (!result.success || !actionOk || !hostnames.has(String(result.hostname ?? "").toLowerCase())) {
     console.warn("[turnstile] rejected", { action, got: result.action, hostname: result.hostname, errors: result["error-codes"] });
     throw failed();
   }

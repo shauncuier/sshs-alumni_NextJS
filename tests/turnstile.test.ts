@@ -4,7 +4,7 @@ import { POST as contact } from "@/app/api/contact/route";
 import { POST as emailCode } from "@/app/api/auth/email-otp/route";
 import { resetDatabase } from "./helpers/db";
 
-type Verdict = { success: boolean; action?: string; hostname?: string; "error-codes"?: string[] };
+type Verdict = { success: boolean; action?: string; hostname?: string; "error-codes"?: string[]; metadata?: { result_with_testing_key?: boolean } };
 const calls: URLSearchParams[] = [];
 let verdict: Verdict | Error = { success: true, action: "contact", hostname: "www.exsabujian.org" };
 
@@ -73,6 +73,14 @@ describe("Turnstile robot check", () => {
     await expect(requireTurnstile("tok", "contact")).rejects.toMatchObject({ code: "TURNSTILE_FAILED" });
     verdict = { success: true, action: "contact", hostname: "staging.example.test" };
     await expect(requireTurnstile("tok", "contact")).resolves.toBeUndefined();
+  });
+
+  it("Cloudflare's test keys (no action reported) work locally, never in production", async () => {
+    vi.stubEnv("TURNSTILE_HOSTNAMES", "example.com");
+    verdict = { success: true, hostname: "example.com", metadata: { result_with_testing_key: true } };
+    await expect(requireTurnstile("tok", "contact")).resolves.toBeUndefined();
+    vi.stubEnv("NODE_ENV", "production");
+    await expect(requireTurnstile("tok", "contact")).rejects.toMatchObject({ code: "TURNSTILE_FAILED" });
   });
 
   it("the contact form and the email code are refused without a passing token", async () => {
