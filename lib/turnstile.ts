@@ -27,20 +27,31 @@ export function turnstileSiteKey(): string | null {
   return process.env.TURNSTILE_SITE_KEY?.trim() || DEFAULT_SITE_KEY;
 }
 
-function expectedHostnames(): Set<string> {
-  const listed = (process.env.TURNSTILE_HOSTNAMES ?? "")
-    .split(",")
-    .map((h) => h.trim().toLowerCase())
-    .filter(Boolean);
-  if (listed.length) return new Set(listed);
+/** "https://www.example.org/x", "example.org:443" → "www.example.org", "example.org". */
+function hostOf(entry: string): string {
+  const raw = entry.trim().toLowerCase();
+  if (!raw) return "";
   try {
-    const host = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "").hostname.toLowerCase();
-    if (!host) return new Set();
-    const bare = host.replace(/^www\./, "");
-    return new Set([host, bare, `www.${bare}`]);
+    return new URL(raw.includes("://") ? raw : `https://${raw}`).hostname;
   } catch {
-    return new Set();
+    return "";
   }
+}
+
+function expectedHostnames(): Set<string> {
+  const listed = (process.env.TURNSTILE_HOSTNAMES ?? "").split(",").map(hostOf).filter(Boolean);
+  const hosts = listed.length ? listed : [hostOf(process.env.NEXT_PUBLIC_APP_URL ?? "")].filter(Boolean);
+  // A site and its www. twin are one site: either may be listed, both are accepted.
+  const out = new Set<string>();
+  for (const host of hosts) {
+    const bare = host.replace(/^www\./, "");
+    out.add(host);
+    if (bare.includes(".") && !/^\d+(\.\d+){3}$/.test(bare) && bare !== "localhost") {
+      out.add(bare);
+      out.add(`www.${bare}`);
+    }
+  }
+  return out;
 }
 
 const failed = () => new AppError("TURNSTILE_FAILED", 403, "The robot check failed or expired. Please try again.");
@@ -79,7 +90,14 @@ export async function requireTurnstile(token: unknown, action: TurnstileAction, 
   const testKey = result.metadata?.result_with_testing_key === true && process.env.NODE_ENV !== "production";
   const actionOk = result.action === action || (testKey && !result.action);
   if (!result.success || !actionOk || !hostnames.has(String(result.hostname ?? "").toLowerCase())) {
-    console.warn("[turnstile] rejected", { action, got: result.action, hostname: result.hostname, errors: result["error-codes"] });
+    console.warn("[turnstile] rejected", {
+      action,
+      got: result.action,
+      success: result.success,
+      hostname: result.hostname,
+      allowed: [...hostnames],
+      errors: result["error-codes"],
+    });
     throw failed();
   }
 }

@@ -75,6 +75,18 @@ describe("Turnstile robot check", () => {
     await expect(requireTurnstile("tok", "contact")).resolves.toBeUndefined();
   });
 
+  it("a listed site also covers its www twin, written as a host or a full address", async () => {
+    for (const listed of ["exsabujian.org", "https://exsabujian.org/", "https://www.exsabujian.org", " WWW.exsabujian.org "]) {
+      vi.stubEnv("TURNSTILE_HOSTNAMES", listed);
+      for (const hostname of ["www.exsabujian.org", "exsabujian.org"]) {
+        verdict = { success: true, action: "contact", hostname };
+        await expect(requireTurnstile("tok", "contact"), `${listed} → ${hostname}`).resolves.toBeUndefined();
+      }
+    }
+    verdict = { success: true, action: "contact", hostname: "evil-exsabujian.org" };
+    await expect(requireTurnstile("tok", "contact")).rejects.toMatchObject({ code: "TURNSTILE_FAILED" });
+  });
+
   it("Cloudflare's test keys (no action reported) work locally, never in production", async () => {
     vi.stubEnv("TURNSTILE_HOSTNAMES", "example.com");
     verdict = { success: true, hostname: "example.com", metadata: { result_with_testing_key: true } };

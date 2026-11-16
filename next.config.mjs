@@ -31,6 +31,9 @@ const nextConfig = {
   // (lib/email.ts). The assets folder is small (~400 KB).
   outputFileTracingIncludes: {
     "/*": ["./assets/**/*"],
+    // The receipt reader (lib/media/ocr.ts) loads tesseract's .wasm by path; without it
+    // the worker aborts with an uncaughtException on the server.
+    "/api/media/ocr": ["./node_modules/tesseract.js-core/**/*", "./node_modules/tesseract.js/src/**/*"],
   },
   allowedDevOrigins: [
     "*.ngrok-free.dev",
