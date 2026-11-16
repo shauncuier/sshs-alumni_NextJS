@@ -1,5 +1,9 @@
 // Plain JavaScript, not TypeScript: a .ts config needs the native SWC compiler, which
 // does not load on Hostinger servers with an older glibc (< 2.29).
+import { readFileSync } from "node:fs";
+
+// The release number (docs/RELEASING.md), shown in the admin panel footer.
+const { version: appVersion } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 // The site's address (NEXT_PUBLIC_APP_URL) is https://www.<domain>. The bare domain
 // sends visitors there, so sign-in cookies and the same-origin checks see one origin.
 function bareDomainRedirect() {
@@ -23,6 +27,7 @@ function bareDomainRedirect() {
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  env: { NEXT_PUBLIC_APP_VERSION: appVersion },
   poweredByHeader: false,
   serverExternalPackages: ["sharp", "tesseract.js", "@prisma/client", "mariadb", "bcryptjs", "nodemailer"],
   // The standalone server on Hostinger gets only the files the build can trace. Files

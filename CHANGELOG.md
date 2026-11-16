@@ -8,6 +8,9 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- The admin panel footer shows the running version, linked to its release notes on GitHub.
+
 ## [1.0.0] - 2026-11-16
 
 The site as it runs in production at https://www.exsabujian.org (live since 2026-10-28).

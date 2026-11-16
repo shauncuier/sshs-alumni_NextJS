@@ -83,6 +83,9 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 
 const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 const COLLAPSED_KEY = "admin-nav-collapsed";
+// The running release (package.json, set in next.config.mjs) and its notes on GitHub.
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "";
+const RELEASES_URL = "https://github.com/shauncuier/sshs-alumni_NextJS/releases";
 
 /** The menu item a path belongs to: the longest matching link, so /admin/events/[id] is "Events". */
 function activeFor(items: NavItem[], pathname: string): NavItem | undefined {
@@ -204,6 +207,17 @@ export default function AdminShell({ children, user }: AdminShellProps) {
         <span className="font-semibold text-slate-200">{roleLabel}</span>
         {userEmail && <span className="block text-[10px] truncate">{userEmail}</span>}
       </div>
+      {APP_VERSION && (
+        <a
+          href={`${RELEASES_URL}/tag/v${APP_VERSION}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="What changed in this version"
+          className="block px-3 pt-2 text-[10px] text-slate-500 hover:text-emerald-300"
+        >
+          Version {APP_VERSION}
+        </a>
+      )}
     </div>
   );
 
