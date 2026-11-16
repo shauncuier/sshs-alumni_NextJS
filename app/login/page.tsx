@@ -6,7 +6,6 @@ import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn, signOut } from "next-auth/react";
 import { canUseAdminPanel, homeForRole } from "@/lib/permissions";
-import { schoolInfo } from "@/lib/data";
 import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/account-access";
 import { ArrowRight, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 import PasswordInput from "@/components/shared/PasswordInput";
@@ -151,9 +150,9 @@ function LoginForm() {
 
             <p className="text-xs text-slate-600 pt-1">
               Forgot your password?{" "}
-              <a href={`mailto:${schoolInfo.associationEmail}?subject=${encodeURIComponent("Password reset")}`} className="font-semibold text-emerald-700 hover:text-emerald-800 underline">
-                Ask the committee to reset it
-              </a>
+              <Link href="/forgot-password" className="font-semibold text-emerald-700 hover:text-emerald-800 underline">
+                Reset it with your mobile number
+              </Link>
             </p>
 
             {bot.widget}

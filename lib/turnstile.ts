@@ -11,7 +11,7 @@ import { AppError } from "@/lib/app-error";
  * site address in NEXT_PUBLIC_APP_URL, with and without www).
  */
 
-export type TurnstileAction = "login" | "sms_code" | "email_code" | "register" | "contact" | "magazine";
+export type TurnstileAction = "login" | "sms_code" | "email_code" | "register" | "contact" | "magazine" | "password_reset";
 
 const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const DEFAULT_SITE_KEY = "0x4AAAAAAGCTTELzTXn4bBMG";

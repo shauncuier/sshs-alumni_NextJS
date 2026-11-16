@@ -66,14 +66,20 @@ export function localBdPhone(normalized: string): string {
 export async function requestPhoneOtp(
   rawPhone: unknown,
   now = Date.now(),
-  opts: { exceptUserId?: string | null } = {}
+  opts: { exceptUserId?: string | null; purpose?: "verify" | "reset" } = {}
 ): Promise<{ challenge: string; phone: string; expiresAt: number; testCode?: string }> {
   const phone = requireBdMobile(rawPhone);
-  // One number, one account: say so before spending an SMS.
-  await requirePhoneFree(phone, { exceptUserId: opts.exceptUserId });
+  // A password reset goes to the number already on the account (checked by the caller);
+  // everything else: one number, one account, said before spending an SMS.
+  if (opts.purpose !== "reset") await requirePhoneFree(phone, { exceptUserId: opts.exceptUserId });
 
   // Test mode (Admin → Bulk SMS): no SMS, the code goes back to the form instead.
   if (await smsTestModeOn(now)) {
+    // Showing a reset code on screen would let anyone take over any account. Only a
+    // local or test server shows it (so the reset can be tried without real SMS).
+    if (opts.purpose === "reset" && process.env.NODE_ENV === "production") {
+      throw new AppError("RESET_UNAVAILABLE", 503, "Password reset by SMS is paused right now. Please ask the committee to reset your password.");
+    }
     if (!consumeRateLimit(`phone-otp-cooldown:${phone}`, { limit: 1, windowMs: SMS_OTP_RESEND_MS })) {
       throw new AppError("OTP_TOO_SOON", 429, "Please wait 2 minutes before asking for another code.");
     }

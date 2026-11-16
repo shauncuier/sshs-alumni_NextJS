@@ -57,7 +57,7 @@ function loadScript(): Promise<TurnstileApi> {
   return scriptPromise;
 }
 
-export type TurnstileAction = "login" | "sms_code" | "email_code" | "register" | "contact" | "magazine";
+export type TurnstileAction = "login" | "sms_code" | "email_code" | "register" | "contact" | "magazine" | "password_reset";
 
 export function useTurnstile(action: TurnstileAction, { enabled = true }: { enabled?: boolean } = {}) {
   const [siteKey, setSiteKey] = useState<string | null | undefined>(undefined);
