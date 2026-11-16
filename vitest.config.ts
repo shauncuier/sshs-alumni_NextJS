@@ -52,6 +52,11 @@ export default defineConfig({
       RESEND_API_KEY: "",
       SMTP_HOST: "",
       EMAIL_PROVIDER: "",
+      // Nor call Cloudflare: the robot check is off in tests (tests/turnstile.test.ts
+      // switches it on with a mocked siteverify).
+      TURNSTILE_SECRET: "",
+      TURNSTILE_SITE_KEY: "",
+      TURNSTILE_HOSTNAMES: "",
     },
   },
 });
