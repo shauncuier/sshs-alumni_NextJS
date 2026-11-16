@@ -7,8 +7,6 @@ import "./globals.css";
 import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin, websiteJsonLd } from "@/lib/seo";
 import JsonLd from "@/components/shared/JsonLd";
 import WebMcpTools from "@/components/shared/WebMcpTools";
-import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
-import GoogleTagManager from "@/components/shared/GoogleTagManager";
 import ClarityAnalytics from "@/components/shared/ClarityAnalytics";
 
 // No web fonts: the site uses the phone's own fonts (globals.css), so nothing extra
@@ -58,8 +56,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
-        <GoogleAnalytics />
-        <GoogleTagManager />
+        {/* Google Analytics has no script here: Cloudflare Zaraz reports visits from Cloudflare's servers (lib/track.ts). */}
         <ClarityAnalytics />
         <WebMcpTools />
         {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}

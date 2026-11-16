@@ -91,8 +91,9 @@ export default function TermsPage() {
               messages about your account, events and notices, and keep the association&apos;s membership and accounts records.
             </p>
             <p>
-              <strong className="text-slate-900">Cookies and analytics.</strong> A cookie keeps you signed in. We use Google Analytics and Microsoft
-              Clarity to see which pages are used and where the site is hard to use. They record clicks and scrolling, not the passwords you type.
+              <strong className="text-slate-900">Cookies and analytics.</strong> A cookie keeps you signed in. We use Google Analytics (sent through
+              Cloudflare) and Microsoft Clarity to see which pages are used and where the site is hard to use. They record clicks and scrolling, not the
+              passwords you type.
             </p>
             <p>
               <strong className="text-slate-900">Keeping it safe.</strong> Passwords are stored only as a one-way hash, the site is served only over HTTPS, and

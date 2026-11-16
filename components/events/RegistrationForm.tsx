@@ -13,6 +13,7 @@ import ContactVerifyField, { type ContactVerification, useCodeRequired } from ".
 import { FIRST_SSC_BATCH } from "@/lib/data";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { useTurnstile } from "@/components/shared/useTurnstile";
+import { track } from "@/lib/track";
 import { BLOOD_GROUPS } from "@/lib/members/blood-groups";
 import { GENDER_LABELS, GENDERS } from "@/lib/members/gender";
 
@@ -399,7 +400,11 @@ export default function RegistrationForm({
         throw new Error(body.error || "Registration failed. Please try again.");
       }
       // A new member is not signed in: the committee must approve the membership first.
-      if (body.createdAccount) setJoined(true);
+      if (body.createdAccount) {
+        setJoined(true);
+        track("sign_up", { method: "event_registration" });
+      }
+      track("event_registration", { event: event.slug, new_member: Boolean(body.createdAccount), volunteer: isVolunteer });
       if (isVolunteer) {
         fetch("/api/volunteers", {
           method: "POST",

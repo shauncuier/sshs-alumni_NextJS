@@ -10,6 +10,7 @@ import type { DonationCampaignItem } from "@/lib/data";
 import { useSession } from "next-auth/react";
 import { Heart, ShieldCheck, CheckCircle2 } from "lucide-react";
 import Picture from "@/components/shared/Picture";
+import { track } from "@/lib/track";
 
 const DONATION_METHODS = ["bKash", "Nagad", "Bangla QR", "Bank", "Cash"] as const;
 // Where to send money (numbers, bank account), one line each, separated by "|"; set by the committee.
@@ -128,6 +129,7 @@ export default function DonatePage() {
         campaignTitle: data.donation.campaignTitle,
       });
       setSubmitted(true);
+      track("donation", { value: Number(data.donation.amount) || 0, currency: "BDT", payment_method: String(data.donation.paymentMethod ?? "") });
       setTransactionId("");
       setScreenshot(null);
     } catch (err) {

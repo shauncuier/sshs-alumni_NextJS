@@ -91,14 +91,8 @@ const nextConfig = {
   },
   async headers() {
     const dev = process.env.NODE_ENV === "development";
-    // Google Analytics (components/shared/GoogleAnalytics.tsx): the gtag script and the
-    // hosts it sends visits to. The Tag Manager container (GoogleTagManager.tsx) loads
-    // from the same script host.
-    const ga = {
-      script: "https://www.googletagmanager.com",
-      connect: "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
-      img: "https://*.google-analytics.com https://*.googletagmanager.com",
-    };
+    // Google Analytics needs no host here: Cloudflare Zaraz serves its script from this
+    // site's own address (/cdn-cgi/zaraz/) and sends visits to Google from Cloudflare.
     // Microsoft Clarity (components/shared/ClarityAnalytics.tsx): its tag script, the
     // recording uploads and Bing's pixel.
     const clarity = {
@@ -117,15 +111,15 @@ const nextConfig = {
       "frame-ancestors 'self'",
       "form-action 'self'",
       // Next.js inlines its bootstrap scripts; without nonces 'unsafe-inline' is required.
-      `script-src 'self' 'unsafe-inline' ${ga.script} ${clarity.script} ${turnstile}` + (dev ? " 'unsafe-eval'" : ""),
+      `script-src 'self' 'unsafe-inline' ${clarity.script} ${turnstile}` + (dev ? " 'unsafe-eval'" : ""),
       "style-src 'self' 'unsafe-inline'",
       // Initials avatars are inline data: SVGs (lib/avatar.ts).
       // The YouTube promo on /jubilee (components/shared/YouTubeEmbed.tsx): its thumbnail, then the player.
-      `img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://i.ytimg.com ${ga.img} ${clarity.img}`,
+      `img-src 'self' blob: data: https://images.unsplash.com https://upload.wikimedia.org https://i.ytimg.com ${clarity.img}`,
       `frame-src 'self' https://www.youtube-nocookie.com ${turnstile}`,
       "font-src 'self' data:",
       // Live updates use same-origin Server-Sent Events; the dev server also needs its HMR socket.
-      `connect-src 'self' ${ga.connect} ${clarity.connect} ${turnstile}` + (dev ? " ws: wss:" : ""),
+      `connect-src 'self' ${clarity.connect} ${turnstile}` + (dev ? " ws: wss:" : ""),
       "worker-src 'self' blob:",
       "manifest-src 'self'",
       ...(dev ? [] : ["upgrade-insecure-requests"]),

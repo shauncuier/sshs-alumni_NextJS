@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { CheckCircle2, Phone, Send } from "lucide-react";
 import { MAGAZINE_CALL as CALL } from "@/lib/magazine-call";
 import { useTurnstile } from "@/components/shared/useTurnstile";
+import { track } from "@/lib/track";
 
 const field = "w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600";
 const label = "block text-xs font-semibold text-slate-700 mb-1";
@@ -27,6 +28,7 @@ export default function MagazineForm() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "লেখাটি পাঠানো যায়নি। আবার চেষ্টা করুন।");
       setSent(true);
+      track("magazine_submission");
     } catch (err) {
       setError(err instanceof Error ? err.message : "লেখাটি পাঠানো যায়নি। আবার চেষ্টা করুন।");
     } finally {

@@ -11,6 +11,7 @@ import { MEMBERSHIP_REJECTED_MESSAGE, PENDING_BANNER_MESSAGE } from "@/lib/accou
 import { ArrowRight, UserCheck, Lock, Mail, AlertCircle } from "lucide-react";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { useTurnstile } from "@/components/shared/useTurnstile";
+import { track } from "@/lib/track";
 
 function LoginForm() {
   const router = useRouter();
@@ -59,6 +60,7 @@ function LoginForm() {
       } else {
         // Back to the page that asked for sign-in; otherwise staff to their admin
         // section and members to their dashboard.
+        track("login", { method: "password" });
         const role = (await getSession())?.user?.role;
         router.push(callbackUrl ?? (canUseAdminPanel(role) ? homeForRole(role) : "/dashboard"));
         router.refresh();

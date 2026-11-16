@@ -9,6 +9,7 @@ import { MapPin, Phone, Mail, Send, CheckCircle2, Globe } from "lucide-react";
 import FacebookIcon from "@/components/shared/FacebookIcon";
 import YouTubeIcon from "@/components/shared/YouTubeIcon";
 import { useTurnstile } from "@/components/shared/useTurnstile";
+import { track } from "@/lib/track";
 
 const SUBJECTS = [
   "General question",
@@ -44,6 +45,7 @@ export default function ContactPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Your message could not be sent. Please try again.");
       setReference(data.ticketId ?? data.reference ?? "");
+      track("contact_message");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Your message could not be sent. Please try again.");
     } finally {

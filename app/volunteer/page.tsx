@@ -20,6 +20,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { SUBCOMMITTEES } from "@/lib/volunteers-types";
 import { FIRST_SSC_BATCH } from "@/lib/data";
+import { track } from "@/lib/track";
 
 const ICONS_MAP: Record<string, React.ElementType> = {
   Sparkles,
@@ -76,6 +77,7 @@ export default function VolunteerPage() {
       }
 
       setSuccess(true);
+      track("volunteer_application", { subcommittee: String(formData.subcommittee ?? "") });
     } catch (err) {
       setError((err as Error).message);
     } finally {
