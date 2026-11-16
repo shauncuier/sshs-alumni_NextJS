@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "author": "3s-Soft (https://3s-soft.com)",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "dev:https": "next dev --experimental-https -H 0.0.0.0 -p 3443",

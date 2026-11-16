@@ -37,7 +37,7 @@ What changed in each version: [CHANGELOG.md](./CHANGELOG.md) and
 - [Releases and versions](#releases-and-versions)
 - [Security](#security)
 - [Documentation](#documentation)
-- [Credits](#credits)
+- [Credits and license](#credits-and-license)
 
 ## Features
 
@@ -286,9 +286,11 @@ opening a public issue.
 | [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md) | How to contribute |
 | [docs/constitution/](./docs/constitution/) | The association's constitution |
 
-## Credits
+## Credits and license
 
 Built for **প্রাক্তন সবুজিয়ান পরিষদ (Praktan Sabujian Parishad)** by
 **[3s-Soft](https://3s-soft.com)**. School website: https://sabujsghs.edu.bd/.
 
-© 2026 Praktan Sabujian Parishad. All rights reserved.
+© 2026 3s-Soft. All rights reserved. This code is public to view but is **not open
+source**: copying, reusing or deploying it needs written permission from 3s-Soft. See
+[LICENSE](./LICENSE).
