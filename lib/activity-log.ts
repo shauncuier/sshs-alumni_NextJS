@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/app-error";
+import { clientIp } from "@/lib/client-ip";
 
 /**
  * The audit trail behind /admin/logs. Every meaningful action (sign-ins, joins,
@@ -65,7 +66,7 @@ export function scrubMetadata(value: unknown, depth = 0): unknown {
 
 function requestContext(req?: Request | null): { ip: string | null; userAgent: string | null } {
   if (!req) return { ip: null, userAgent: null };
-  const ip = req.headers.get("x-real-ip") || req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const ip = clientIp((name) => req.headers.get(name));
   const userAgent = req.headers.get("user-agent");
   return { ip: ip?.slice(0, 64) ?? null, userAgent: userAgent?.slice(0, 255) ?? null };
 }

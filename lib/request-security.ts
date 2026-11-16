@@ -1,5 +1,6 @@
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
+import { clientIp } from "@/lib/client-ip";
 
 type RateLimitOptions = {
   limit: number;
@@ -14,7 +15,7 @@ type RateLimitEntry = {
 const rateLimits = new Map<string, RateLimitEntry>();
 
 export function clientAddress(req: Request): string {
-  return req.headers.get("x-real-ip") || req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  return clientIp((name) => req.headers.get(name)) || "unknown";
 }
 
 export function consumeRateLimit(key: string, { limit, windowMs }: RateLimitOptions): boolean {

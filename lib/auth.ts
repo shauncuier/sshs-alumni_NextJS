@@ -6,6 +6,7 @@ import { accountAccessBlock, LEGACY_PENDING_MESSAGE } from "@/lib/account-access
 import { hasPendingMembershipPayment } from "@/lib/events/membership";
 import { consumeRateLimit, resetRateLimit } from "@/lib/request-security";
 import { logActivity } from "@/lib/activity-log";
+import { clientIp } from "@/lib/client-ip";
 import { requireTurnstile } from "@/lib/turnstile";
 
 type AuthorizeRequest = { headers?: Record<string, string | string[] | undefined> } | undefined;
@@ -18,7 +19,7 @@ const header = (req: AuthorizeRequest, name: string) => {
 export async function authorizeCredentials(credentials: (Record<"email" | "password", string> & { turnstileToken?: string }) | undefined, req?: AuthorizeRequest) {
   const email = credentials?.email?.trim().toLowerCase() || null;
   const context = {
-    ip: header(req, "x-real-ip") ?? header(req, "x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    ip: clientIp((name) => header(req, name)),
     userAgent: header(req, "user-agent"),
   };
   try {
