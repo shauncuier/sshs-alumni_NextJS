@@ -25,6 +25,13 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["sharp", "tesseract.js", "@prisma/client", "mariadb", "bcryptjs", "nodemailer"],
+  // The standalone server on Hostinger gets only the files the build can trace. Files
+  // read by path at runtime must be listed: the batch share-card fonts
+  // (app/batches/[year]/opengraph-image.tsx, a 500 without them) and the email crest
+  // (lib/email.ts). The assets folder is small (~400 KB).
+  outputFileTracingIncludes: {
+    "/*": ["./assets/**/*"],
+  },
   allowedDevOrigins: [
     "*.ngrok-free.dev",
     "*.ngrok.app",
