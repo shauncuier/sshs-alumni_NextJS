@@ -8,6 +8,7 @@ import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, s
 import JsonLd from "@/components/shared/JsonLd";
 import WebMcpTools from "@/components/shared/WebMcpTools";
 import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
+import GoogleTagManager from "@/components/shared/GoogleTagManager";
 import ClarityAnalytics from "@/components/shared/ClarityAnalytics";
 
 // No web fonts: the site uses the phone's own fonts (globals.css), so nothing extra
@@ -58,6 +59,7 @@ export default function RootLayout({
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
         <GoogleAnalytics />
+        <GoogleTagManager />
         <ClarityAnalytics />
         <WebMcpTools />
         {/* Shows a thin bar while the next page loads; pages stay on screen meanwhile. */}

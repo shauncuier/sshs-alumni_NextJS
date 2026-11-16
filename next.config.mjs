@@ -92,7 +92,8 @@ const nextConfig = {
   async headers() {
     const dev = process.env.NODE_ENV === "development";
     // Google Analytics (components/shared/GoogleAnalytics.tsx): the gtag script and the
-    // hosts it sends visits to.
+    // hosts it sends visits to. The Tag Manager container (GoogleTagManager.tsx) loads
+    // from the same script host.
     const ga = {
       script: "https://www.googletagmanager.com",
       connect: "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
