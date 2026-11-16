@@ -41,6 +41,7 @@ export default function ForgotPasswordPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const [testCode, setTestCode] = useState<string | null>(null);
   // Each code sent needs a fresh robot check (a token works once).
   const bot = useTurnstile("password_reset", { enabled: step === "phone" || step === "code" });
 
@@ -59,7 +60,9 @@ export default function ForgotPasswordPage() {
       const data = await post("/api/auth/password-reset/request", { phone, turnstileToken });
       setChallenge(data.challenge);
       setSentTo(data.phone);
-      setCode("");
+      // SMS test mode on a local server (never on the live site): the code comes back here.
+      setTestCode(typeof data.testCode === "string" ? data.testCode : null);
+      setCode(typeof data.testCode === "string" ? data.testCode : "");
       setResendIn(RESEND_SECONDS);
       setStep("code");
     } catch (err) {
@@ -159,6 +162,11 @@ export default function ForgotPasswordPage() {
 
           {step === "code" && (
             <form onSubmit={verifyCode} className="space-y-4">
+              {testCode && (
+                <p role="status" className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-[11px] font-bold text-amber-900">
+                  TEST MODE: no SMS was sent. Your code is {testCode} (filled in below).
+                </p>
+              )}
               <div>
                 <label htmlFor="fp-code" className="block font-semibold text-slate-700 mb-1">Code sent to {sentTo}</label>
                 <input

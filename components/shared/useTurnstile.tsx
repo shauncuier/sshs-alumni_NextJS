@@ -62,7 +62,8 @@ export type TurnstileAction = "login" | "sms_code" | "email_code" | "register" |
 export function useTurnstile(action: TurnstileAction, { enabled = true }: { enabled?: boolean } = {}) {
   const [siteKey, setSiteKey] = useState<string | null | undefined>(undefined);
   const [token, setToken] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  // Cloudflare's error code when the check failed ("" when the script itself did not load).
+  const [failed, setFailed] = useState<string | null>(null);
   const [el, setEl] = useState<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
 
@@ -89,18 +90,19 @@ export function useTurnstile(action: TurnstileAction, { enabled = true }: { enab
           theme: "light",
           callback: (t: string) => {
             setToken(t);
-            setFailed(false);
+            setFailed(null);
           },
           "expired-callback": () => setToken(null),
           "timeout-callback": () => setToken(null),
-          "error-callback": () => {
+          "error-callback": (code: string) => {
             setToken(null);
-            setFailed(true);
+            setFailed(String(code ?? ""));
+            console.warn("[turnstile] widget error", code);
             return true;
           },
         });
       })
-      .catch(() => live && setFailed(true));
+      .catch(() => live && setFailed(""));
     return () => {
       live = false;
       if (widgetId.current && window.turnstile) window.turnstile.remove(widgetId.current);
@@ -111,6 +113,7 @@ export function useTurnstile(action: TurnstileAction, { enabled = true }: { enab
 
   const reset = useCallback(() => {
     setToken(null);
+    setFailed(null);
     if (widgetId.current && window.turnstile) window.turnstile.reset(widgetId.current);
   }, []);
 
@@ -121,9 +124,16 @@ export function useTurnstile(action: TurnstileAction, { enabled = true }: { enab
   const widget = required ? (
     <div className="space-y-1">
       <div ref={setEl} />
-      {failed ? (
+      {failed !== null ? (
         <p role="alert" className="text-[11px] font-bold text-rose-700">
-          The robot check could not load. Check your connection and refresh the page.
+          The robot check did not pass{failed ? ` (Cloudflare error ${failed})` : ""}.{" "}
+          {failed ? (
+            <button type="button" onClick={reset} className="underline cursor-pointer">
+              Try again
+            </button>
+          ) : (
+            "Check your connection and refresh the page."
+          )}
         </p>
       ) : (
         !token && <p className="text-[11px] text-slate-500">Checking your browser…</p>
