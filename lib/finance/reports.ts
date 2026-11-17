@@ -169,6 +169,125 @@ export async function monthlySummary(year: number): Promise<MonthTotal[]> {
   return months;
 }
 
+/** One calendar month of a date range: income, expense and surplus. */
+export interface RangeMonth {
+  /** YYYY-MM */
+  month: string;
+  income: number;
+  expense: number;
+  surplus: number;
+}
+
+/** The charts show at most this many months (five years). */
+export const MAX_CHART_MONTHS = 60;
+/** Ranges up to this many days get a point per day on the balance line; longer ones a point per month. */
+export const DAILY_TREND_MAX_DAYS = 62;
+const DAY_MS = 86_400_000;
+
+function checkRange(from: string, to: string): void {
+  if (from > to) throw new AppError("INVALID_DATE", 400, "The start date is after the end date.");
+}
+
+/** Every YYYY-MM the range touches, in order. */
+function monthsBetween(from: string, to: string): string[] {
+  const out: string[] = [];
+  let y = Number(from.slice(0, 4));
+  let m = Number(from.slice(5, 7));
+  const endY = Number(to.slice(0, 4));
+  const endM = Number(to.slice(5, 7));
+  while (y < endY || (y === endY && m <= endM)) {
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+    if (++m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+  return out;
+}
+
+/** Income, expense and surplus for each calendar month a date range touches (charts). */
+export async function monthlyTotals(from: string, to: string): Promise<RangeMonth[]> {
+  checkRange(from, to);
+  const keys = monthsBetween(from, to);
+  if (keys.length > MAX_CHART_MONTHS) throw new AppError("RANGE_TOO_LONG", 400, "Pick five years or less for the charts.");
+  const rows = await prisma.financeEntry.findMany({
+    where: { ...approved, kind: { in: ["INCOME", "EXPENSE"] }, date: { gte: ymdToDate(from), lte: ymdToDate(to) } },
+    select: { date: true, kind: true, amount: true },
+  });
+  const months = new Map(keys.map((k) => [k, { month: k, income: 0, expense: 0, surplus: 0 }]));
+  for (const r of rows) {
+    const m = months.get(dateToYmd(r.date).slice(0, 7));
+    if (!m) continue;
+    if (r.kind === "INCOME") m.income += r.amount;
+    else m.expense += r.amount;
+  }
+  const list = [...months.values()];
+  for (const m of list) m.surplus = m.income - m.expense;
+  return list;
+}
+
+export interface TrendPoint {
+  /** YYYY-MM-DD: the balance at the end of this day. */
+  date: string;
+  balance: number;
+}
+
+/**
+ * The money held in all accounts together over a date range: a point per day for short
+ * ranges, else the end of each month, and always the last day. Transfers between
+ * accounts do not change the total, so only income and expense move the line; an
+ * account opened inside the range adds its opening balance on its opening day.
+ */
+export async function balanceTrend(from: string, to: string): Promise<TrendPoint[]> {
+  checkRange(from, to);
+  const start = ymdToDate(from);
+  const end = ymdToDate(to);
+  const days = Math.round((end.getTime() - start.getTime()) / DAY_MS) + 1;
+  if (monthsBetween(from, to).length > MAX_CHART_MONTHS) throw new AppError("RANGE_TOO_LONG", 400, "Pick five years or less for the charts.");
+
+  const [before, lateAccounts, rows] = await Promise.all([
+    accountBalances(dateToYmd(new Date(start.getTime() - DAY_MS))),
+    prisma.financeAccount.findMany({ where: { openingDate: { gte: start, lte: end } }, select: { openingDate: true, openingBalance: true } }),
+    prisma.financeEntry.findMany({
+      where: { ...approved, kind: { in: ["INCOME", "EXPENSE"] }, date: { gte: start, lte: end } },
+      select: { date: true, kind: true, amount: true },
+    }),
+  ]);
+  // The change on each day of the range.
+  const change = new Map<string, number>();
+  const add = (ymd: string, amount: number) => change.set(ymd, (change.get(ymd) ?? 0) + amount);
+  for (const a of lateAccounts) add(dateToYmd(a.openingDate), a.openingBalance);
+  for (const r of rows) add(dateToYmd(r.date), r.kind === "INCOME" ? r.amount : -r.amount);
+
+  const daily = days <= DAILY_TREND_MAX_DAYS;
+  const points: TrendPoint[] = [];
+  let balance = before.reduce((n, a) => n + a.balance, 0);
+  for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
+    const day = new Date(t);
+    const ymd = dateToYmd(day);
+    balance += change.get(ymd) ?? 0;
+    const monthEnd = new Date(t + DAY_MS).getUTCDate() === 1;
+    if (daily || monthEnd || ymd === to) points.push({ date: ymd, balance });
+  }
+  return points;
+}
+
+export interface ChartsData {
+  from: string;
+  to: string;
+  months: RangeMonth[];
+  summary: IncomeExpenditure;
+  balances: AccountBalance[];
+  trend: TrendPoint[];
+}
+
+/** Everything the Charts tab and its printout show, for one date range. */
+export async function chartsReport(from: string, to: string): Promise<ChartsData> {
+  checkRange(from, to);
+  const [months, summary, balances, trend] = await Promise.all([monthlyTotals(from, to), incomeExpenditure(from, to), accountBalances(to), balanceTrend(from, to)]);
+  return { from, to, months, summary, balances, trend };
+}
+
 export interface Overview {
   balances: AccountBalance[];
   totalBalance: number;

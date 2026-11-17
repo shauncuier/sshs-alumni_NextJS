@@ -8,6 +8,15 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- Accounts → Reports has a **Charts** tab: income and expense by month, total money held
+  over time, where the money came from and went (by category), and the money in each
+  account, for any dates up to five years. The charts print too.
+
+### Fixed
+- Opening Reports from a link to a tab (for example an account's cash book from the
+  overview) could keep showing "Working it out…": an earlier answer replaced the newer one.
+
 ## [1.2.0] - 2026-11-17
 
 ### Added

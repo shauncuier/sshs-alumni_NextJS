@@ -7,7 +7,8 @@ import { periodOf, todayYmd } from "@/lib/finance/dates";
 import { getEntry, type EntryView } from "@/lib/finance/entries";
 import { personLabel, personLabels } from "@/lib/people-labels";
 import { formatPoisha } from "@/lib/finance/money";
-import { accountBalances, cashBook, eventProfitLoss, incomeExpenditure, monthlySummary } from "@/lib/finance/reports";
+import { accountBalances, cashBook, chartsReport, eventProfitLoss, incomeExpenditure, monthlySummary } from "@/lib/finance/reports";
+import { ChartsReport } from "@/components/admin/finance-charts";
 import { can } from "@/lib/permissions";
 import { getSessionUser } from "@/lib/session-user";
 
@@ -22,7 +23,7 @@ const td = "border border-slate-300 px-2 py-1 align-top";
 const num = `${td} text-right tabular-nums whitespace-nowrap`;
 
 /**
- * Printable accounts, outside the admin shell: ?what=cashbook|balances|summary|monthly|event|voucher
+ * Printable accounts, outside the admin shell: ?what=cashbook|balances|summary|monthly|charts|event|voucher
  * with the same filters as the reports page. A4 with signature lines for the treasurer,
  * the checker and the President. Every print is logged.
  */
@@ -123,6 +124,9 @@ export default async function FinancePrintPage({ searchParams }: Props) {
         </tbody>
       </table>
     );
+  } else if (what === "charts") {
+    title = `Charts · ${from} to ${to}`;
+    body = <ChartsReport data={await chartsReport(from, to)} />;
   } else if (what === "event") {
     const pl = await eventProfitLoss(sp.get("eventId") ?? "");
     title = `Budget and accounts · ${pl.eventTitle}`;
@@ -157,7 +161,7 @@ export default async function FinancePrintPage({ searchParams }: Props) {
     <div className="min-h-screen bg-slate-100 print:bg-white">
       <style>{`
         @page { size: A4 ${what === "cashbook" ? "landscape" : "portrait"}; margin: 12mm; }
-        @media print { .no-print { display: none !important; } .sheet { box-shadow: none !important; margin: 0 !important; padding: 0 !important; } }
+        @media print { .no-print { display: none !important; } .sheet { box-shadow: none !important; margin: 0 !important; padding: 0 !important; } .chart-card { break-inside: avoid; } }
       `}</style>
       <div className="no-print sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
         <Link href="/admin/accounts" className="text-xs font-semibold text-emerald-800 hover:underline">← Back to the accounts</Link>

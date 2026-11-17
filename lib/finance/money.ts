@@ -21,6 +21,17 @@ export function formatPoisha(poisha: number): string {
   return `${sign}৳${taka.toLocaleString("en-IN")}${rest ? `.${String(rest).padStart(2, "0")}` : ""}`;
 }
 
+/** Short taka for chart axes, in Bangladeshi units: ৳950, ৳12K, ৳1.2L (lakh), ৳1.5Cr (crore). */
+export function compactPoisha(poisha: number): string {
+  const sign = poisha < 0 ? "−" : "";
+  const taka = Math.abs(poisha) / 100;
+  const short = (n: number, unit: string) => `${sign}৳${Number(n.toFixed(n < 10 ? 1 : 0))}${unit}`;
+  if (taka >= 10_000_000) return short(taka / 10_000_000, "Cr");
+  if (taka >= 100_000) return short(taka / 100_000, "L");
+  if (taka >= 1_000) return short(taka / 1_000, "K");
+  return `${sign}৳${Math.round(taka)}`;
+}
+
 /** Same as formatPoisha without the ৳ sign, for CSV cells and tables with a currency header. */
 export function plainPoisha(poisha: number): string {
   const sign = poisha < 0 ? "-" : "";

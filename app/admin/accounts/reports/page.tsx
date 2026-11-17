@@ -1,16 +1,19 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Download, Loader2, Printer } from "lucide-react";
 import { api, Banners, ghost, input, label } from "@/components/admin/content-kit";
 import { AccountsHeader, taka, today, useFinanceMeta, type Entry } from "@/components/admin/finance-kit";
+import { ChartsReport } from "@/components/admin/finance-charts";
+import type { ChartsData } from "@/lib/finance/reports";
 
-type Tab = "cashbook" | "balances" | "summary" | "monthly";
+type Tab = "cashbook" | "balances" | "summary" | "monthly" | "charts";
 const TABS: { key: Tab; name: string }[] = [
   { key: "cashbook", name: "Cash book" },
   { key: "balances", name: "Balances" },
   { key: "summary", name: "Income & expenditure" },
   { key: "monthly", name: "Month by month" },
+  { key: "charts", name: "Charts" },
 ];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -52,18 +55,23 @@ export default function AccountsReportsPage() {
 
   const params = new URLSearchParams({ report: tab, from, to, year: String(year), ...(accountId ? { accountId } : {}) }).toString();
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      setResult({ query: params, data: await api(`/api/admin/accounts/reports?${params}`, "GET") });
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }, [params]);
   const data = result && result.query === params ? result.data : null;
   useEffect(() => {
-    void load(); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [load]);
+    // An answer to an older query (another tab, or the tab before a ?tab= link applied)
+    // can arrive after the current one; it is dropped instead of replacing it.
+    let current = true;
+    setError(null); // eslint-disable-line react-hooks/set-state-in-effect
+    api(`/api/admin/accounts/reports?${params}`, "GET")
+      .then((d) => {
+        if (current) setResult({ query: params, data: d });
+      })
+      .catch((err) => {
+        if (current) setError((err as Error).message);
+      });
+    return () => {
+      current = false;
+    };
+  }, [params]);
 
   const printWhat = tab === "monthly" ? "monthly" : tab;
 
@@ -75,7 +83,8 @@ export default function AccountsReportsPage() {
         actions={
           <>
             <a href={`/print/finance?what=${printWhat}&${params}`} target="_blank" rel="noreferrer" className={ghost}><Printer className="w-4 h-4" /> Print</a>
-            <a href={`/api/admin/accounts/export?${params}`} className={ghost}><Download className="w-4 h-4" /> Excel (CSV)</a>
+            {/* The charts' figures are in the other tabs' exports. */}
+            {tab !== "charts" && <a href={`/api/admin/accounts/export?${params}`} className={ghost}><Download className="w-4 h-4" /> Excel (CSV)</a>}
           </>
         }
       />
@@ -122,6 +131,8 @@ export default function AccountsReportsPage() {
 
       {!data ? (
         !error && <p className="text-sm text-slate-500 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Working it out…</p>
+      ) : tab === "charts" ? (
+        <ChartsReport data={data as ChartsData} />
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200 overflow-x-auto">
           {tab === "cashbook" && <CashBookTable book={data as CashBook} from={from} to={to} />}

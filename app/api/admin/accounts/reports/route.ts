@@ -3,9 +3,9 @@ import { errorResponse } from "@/lib/api-response";
 import { AppError } from "@/lib/app-error";
 import { requireFinance } from "@/lib/finance/guard";
 import { periodOf, todayYmd } from "@/lib/finance/dates";
-import { accountBalances, cashBook, incomeExpenditure, monthlySummary } from "@/lib/finance/reports";
+import { accountBalances, cashBook, chartsReport, incomeExpenditure, monthlySummary } from "@/lib/finance/reports";
 
-// GET /api/admin/accounts/reports?report=balances|cashbook|summary|monthly&from&to&accountId&year
+// GET /api/admin/accounts/reports?report=balances|cashbook|summary|monthly|charts&from&to&accountId&year
 export async function GET(req: Request) {
   try {
     await requireFinance();
@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     if (report === "balances") return NextResponse.json({ asOf: to, balances: await accountBalances(to) });
     if (report === "cashbook") return NextResponse.json(await cashBook(sp.get("accountId") || null, from, to));
     if (report === "summary") return NextResponse.json(await incomeExpenditure(from, to));
+    if (report === "charts") return NextResponse.json(await chartsReport(from, to));
     if (report === "monthly") {
       const year = Number(sp.get("year")) || Number(todayYmd().slice(0, 4));
       if (year < 2000 || year > 2100) throw new AppError("INVALID_YEAR", 400, "Choose a year.");
