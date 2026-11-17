@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-17
+
 ### Added
 - /.well-known/security.txt (RFC 9116) says where to report a security problem: the
   association's email, renewed daily so it never expires. /security.txt points there.
@@ -69,6 +71,7 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/shauncuier/sshs-alumni_NextJS/releases/tag/v1.0.0
