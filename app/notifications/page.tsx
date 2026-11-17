@@ -7,7 +7,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
 import { useNotifications, type MemberNotification } from "@/components/notifications/useNotifications";
 import { relativeTime } from "@/lib/utils";
-import { Bell, Calendar, Heart, Layers, MessageSquare, ShieldCheck } from "lucide-react";
+import { Bell, Calendar, Heart, Layers, MessageSquare, ShieldCheck, Smartphone } from "lucide-react";
 
 const ICONS: Record<string, typeof Bell> = {
   CONNECTION: MessageSquare,
@@ -15,6 +15,7 @@ const ICONS: Record<string, typeof Bell> = {
   EVENT: Calendar,
   BATCH: Layers,
   ADMIN: ShieldCheck,
+  PHONE_VERIFY: Smartphone,
 };
 
 export default function NotificationsPage() {

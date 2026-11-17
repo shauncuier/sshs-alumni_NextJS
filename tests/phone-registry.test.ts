@@ -147,27 +147,23 @@ describe("the number must be verified", () => {
     expect(typed.phoneVerifiedAt).toBeNull();
   });
 
-  it("a number on file that was never verified needs the SMS code once to save the profile", async () => {
+  it("a number on file that was never verified saves without a code; a code for it verifies it", async () => {
     const me = await withPhone("01711000111");
     session.user = { id: me.id, email: me.email, role: "ALUMNI", status: "VERIFIED" };
     const put = (body: unknown) =>
       updateProfile(new Request("http://x/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
     const saved = () => prisma.alumniProfile.findUniqueOrThrow({ where: { userId: me.id } });
 
-    const refused = await put({ phone: "01711000111", bio: "first" });
-    expect(refused.status).toBe(400);
-    expect((await refused.json()).code).toBe("PHONE_NOT_VERIFIED");
-    expect(await saved()).toMatchObject({ bio: null, phoneVerifiedAt: null });
-    // A code for another number does not count.
-    expect((await put({ phone: "01711000111", phoneVerificationToken: verifiedPhoneToken("8801711000999") })).status).toBe(400);
-    // Edits that leave the number out (the photo switch) are not held up.
-    expect((await put({ isPhotoPublic: true })).status).toBe(200);
+    // Verifying is optional: the profile saves, the number stays not verified.
+    expect((await put({ phone: "01711000111", bio: "first" })).status).toBe(200);
+    expect(await saved()).toMatchObject({ bio: "first", phoneVerifiedAt: null });
+    // A code for another number does not verify it (and does not block the save).
+    expect((await put({ phone: "01711000111", bio: "second", phoneVerificationToken: verifiedPhoneToken("8801711000999") })).status).toBe(200);
+    expect(await saved()).toMatchObject({ bio: "second", phoneVerifiedAt: null });
 
-    expect((await put({ phone: "01711000111", bio: "first", phoneVerificationToken: verifiedPhoneToken("8801711000111") })).status).toBe(200);
-    expect(await saved()).toMatchObject({ phone: "01711000111", bio: "first", phoneVerifiedAt: expect.any(Date) });
-    // Verified now: later edits save with no code.
-    expect((await put({ phone: "01711000111", bio: "second" })).status).toBe(200);
-    expect((await saved()).bio).toBe("second");
+    // A code for this number, sent with the save, verifies it.
+    expect((await put({ phone: "01711000111", bio: "third", phoneVerificationToken: verifiedPhoneToken("8801711000111") })).status).toBe(200);
+    expect(await saved()).toMatchObject({ phone: "01711000111", bio: "third", phoneVerifiedAt: expect.any(Date) });
   });
 
   it("with codes switched off, an unverified number on file does not block saving", async () => {

@@ -31,6 +31,7 @@ import ExperienceSection from "@/components/profile/ExperienceSection";
 import { readExperience } from "@/lib/members/experience";
 import { dateOfBirthInput } from "@/lib/members/date-of-birth";
 import { alumniPath } from "@/lib/members/profile-path";
+import VerifyPhonePrompt from "@/components/profile/VerifyPhonePrompt";
 
 interface ProfileRecord {
   id: string;
@@ -179,6 +180,7 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [phoneVerification, setPhoneVerification] = useState<ContactVerification | null>(null);
   const [phoneNeedsCode, setPhoneNeedsCode] = useState(false);
+  const [phoneJustVerified, setPhoneJustVerified] = useState(false);
   const codeRequired = useCodeRequired();
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -196,6 +198,11 @@ export default function ProfilePage() {
         setProfile(body.profile);
         setAccount(body.user);
         setProfileData(toForm(body.profile));
+        // Links from the bell and the dashboard (/profile#verify-phone) land on the reminder,
+        // which only exists once the profile has loaded.
+        if (window.location.hash === "#verify-phone") {
+          setTimeout(() => document.getElementById("verify-phone")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+        }
       })
       .catch((err: Error) => setLoadError(err.message));
   }, []);
@@ -285,17 +292,13 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileData) return;
-    // A new number, or one on file that was never verified, must be verified by SMS before
-    // the profile is saved (unless codes are switched off).
+    // A new number must be verified by SMS before the profile is saved (unless codes are
+    // switched off). The number already on file saves as it is; verifying it is optional.
     const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "").slice(-10);
     const changed = digits(profileData.phone) !== digits(profile?.phone);
-    if (codeRequired && profileData.phone.trim() && (changed || !profile?.phoneVerifiedAt) && !phoneVerification) {
+    if (codeRequired && profileData.phone.trim() && changed && !phoneVerification) {
       setPhoneNeedsCode(true);
-      setSaveError(
-        changed
-          ? "Please verify your new mobile number with the SMS code first."
-          : "Please verify your mobile number with the SMS code to save your profile."
-      );
+      setSaveError("Please verify your new mobile number with the SMS code first.");
       return;
     }
     setSaving(true);
@@ -362,6 +365,17 @@ export default function ProfilePage() {
         <AppHeader title="My Profile" />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl w-full mx-auto space-y-6">
+          {/* Optional reminder until the number on file is verified (lib/phone-reminder.ts). */}
+          {profile.phone && !isEditing && (!profile.phoneVerifiedAt || phoneJustVerified) && (
+            <VerifyPhonePrompt
+              phone={profile.phone}
+              onVerified={(at) => {
+                // Kept on screen for this visit so the member sees the confirmation.
+                setPhoneJustVerified(true);
+                setProfile((p) => (p ? { ...p, phoneVerifiedAt: at } : p));
+              }}
+            />
+          )}
           {saveError && (
             <div role="alert" className="p-4 bg-rose-50 border border-rose-300 text-rose-900 rounded-2xl text-xs font-bold">
               {saveError}

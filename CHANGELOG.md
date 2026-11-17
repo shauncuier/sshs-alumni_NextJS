@@ -8,6 +8,15 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- Members whose mobile number is not verified see a reminder on their profile and
+  dashboard, and once in their notifications. "Verify now" on the profile sends an SMS
+  code and confirms it in a minute; the reminder goes away for good once verified.
+
+### Changed
+- Verifying the mobile number already on the profile is optional: the profile saves
+  without an SMS code. A new number still needs one.
+
 ## [1.3.0] - 2026-11-17
 
 ### Added

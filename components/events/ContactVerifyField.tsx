@@ -79,7 +79,7 @@ export default function ContactVerifyField({
   /** False where only the phone counts (changing the number on the profile). */
   allowEmail?: boolean;
   currentPhone?: string | null;
-  /** False when the number on file was never verified: it then needs a code like a new one. */
+  /** False when the number on file was never verified: a code is offered (optional, lib/phone-reminder.ts). */
   currentVerified?: boolean;
   id?: string;
   /** False while an admin has switched verification codes off (see useCodeRequired). */
@@ -238,7 +238,7 @@ export default function ContactVerifyField({
         </p>
       ) : sameNumber ? (
         <p id={`${id}-help`} className="text-[11px] font-semibold text-amber-800">
-          Your number is not verified yet. Verify it with an SMS code to save your profile.
+          Your number is not verified yet. You can verify it with an SMS code now, or save without it.
         </p>
       ) : (
         <p id={`${id}-help`} className="text-[11px] text-slate-500">

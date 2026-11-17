@@ -6,6 +6,7 @@ import { requireRateLimit, requireSameOrigin, readJsonBody } from "@/lib/request
 import { AppError } from "@/lib/app-error";
 import { readVerifiedPhone } from "@/lib/phone-otp";
 import { otpRequired } from "@/lib/otp-setting";
+import { PHONE_REMINDER_TYPE } from "@/lib/phone-reminder";
 import { canonicalPhone, isPhoneClash, PHONE_TAKEN_MESSAGE, requirePhoneFree } from "@/lib/phone-registry";
 import { normalizeBloodGroup } from "@/lib/members/blood-groups";
 import { normalizeGender } from "@/lib/members/gender";
@@ -147,13 +148,17 @@ export async function PUT(req: Request) {
             // An expired or wrong code while codes are off: saved, not verified.
           }
           newPhoneVerifiedAt = proved ? new Date() : null;
-        } else if (!current?.phoneVerifiedAt && (await otpRequired())) {
-          // The number on file was never verified (paper entry, joined while codes were off):
-          // saving the profile proves it once with an SMS code; after that edits save as usual.
-          if (!phoneVerificationToken || readVerifiedPhone(phoneVerificationToken) !== wanted) {
-            throw new AppError("PHONE_NOT_VERIFIED", 400, "Please verify your mobile number with the SMS code to save your profile.");
+        } else if (!current?.phoneVerifiedAt && phoneVerificationToken) {
+          // The number on file was never verified (paper entry, joined while codes were off).
+          // Verifying it is optional (lib/phone-reminder.ts): the profile saves without a code,
+          // and a code sent along for this number marks it verified.
+          let proved = false;
+          try {
+            proved = readVerifiedPhone(phoneVerificationToken) === wanted;
+          } catch {
+            // An expired or wrong code: saved, still not verified.
           }
-          newPhoneVerifiedAt = new Date();
+          if (proved) newPhoneVerifiedAt = new Date();
         }
       }
 
@@ -261,6 +266,10 @@ export async function PUT(req: Request) {
       // Newly hidden: the photo moves to a new address, so a copy cached while it was shown stops working.
       const moved = current ? await moveAvatarIfNowHidden(user.id, current) : null;
       if (moved) Object.assign(updated, moved);
+      // Verified while saving: the "verify your number" reminder leaves the bell.
+      if (newPhoneVerifiedAt) {
+        await prisma.notification.updateMany({ where: { userId: user.id, type: PHONE_REMINDER_TYPE, isRead: false }, data: { isRead: true } }).catch(() => {});
+      }
 
       await logActivity({
         category: "ACCOUNT",

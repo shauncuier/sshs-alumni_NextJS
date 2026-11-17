@@ -11,7 +11,7 @@ import PostCard from "@/components/feed/PostCard";
 import CreatePostModal from "@/components/feed/CreatePostModal";
 import MyEvents from "@/components/events/MyEvents";
 import type { AlumniMember, EventItem, PostItem } from "@/lib/data";
-import { Calendar, Users, Heart, BadgeCheck, Plus, ShieldCheck, Radio, MessageSquare } from "lucide-react";
+import { Calendar, Users, Heart, BadgeCheck, Plus, ShieldCheck, Radio, MessageSquare, Smartphone } from "lucide-react";
 import { avatarAt } from "@/lib/avatar";
 import { alumniPath } from "@/lib/members/profile-path";
 
@@ -59,6 +59,18 @@ export default function DashboardPage() {
       .then((data) => setPosts(data.posts ?? []))
       .catch(() => setPostsError(true))
       .finally(() => setPostsLoaded(true));
+  }, []);
+
+  // Optional reminder while the mobile number on file is not verified (lib/phone-reminder.ts).
+  const [phoneUnverified, setPhoneUnverified] = useState(false);
+  useEffect(() => {
+    fetch("/api/profile", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { profile?: { phone?: string | null; phoneVerifiedAt?: string | null } | null } | null) => {
+        const p = body?.profile;
+        setPhoneUnverified(Boolean(p?.phone && !p.phoneVerifiedAt));
+      })
+      .catch(() => {});
   }, []);
 
   const [upcomingEvent, setUpcomingEvent] = useState<EventItem | null>(null);
@@ -185,6 +197,20 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {phoneUnverified && (
+            <Link
+              href="/profile#verify-phone"
+              className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200 hover:border-amber-300 transition-colors"
+            >
+              <Smartphone className="w-5 h-5 shrink-0 text-amber-700" aria-hidden />
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-black text-slate-900">Verify your mobile number</span>
+                <span className="block text-xs text-slate-700">Optional, and takes a minute. A verified number lets you reset your password by SMS.</span>
+              </span>
+              <span className="shrink-0 text-xs font-bold text-emerald-800">Verify &rarr;</span>
+            </Link>
+          )}
 
           {/* Quick Create Post Bar */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">

@@ -15,6 +15,7 @@ import { getSessionUser, isAdminRole } from "@/lib/session-user";
 import { AppError } from "@/lib/app-error";
 import { logActivity } from "@/lib/activity-log";
 import { readJsonBody, requireSameOrigin } from "@/lib/request-security";
+import { ensurePhoneReminder } from "@/lib/phone-reminder";
 
 /**
  * GET: Fetch notifications for a user
@@ -27,6 +28,8 @@ export async function GET() {
   const userId = me.id;
 
   try {
+    // A member whose mobile number is not verified gets one reminder (lib/phone-reminder.ts).
+    await ensurePhoneReminder(userId);
     const notifications = await prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
