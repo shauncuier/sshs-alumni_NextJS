@@ -88,6 +88,8 @@ const nextConfig = {
     return [
       // The gate scanner moved out of the admin console so moderators (gate volunteers) can use it.
       { source: "/admin/gate-verify", destination: "/gate", permanent: false },
+      // RFC 9116: the file lives under /.well-known; the old top-level address points there.
+      { source: "/security.txt", destination: "/.well-known/security.txt", permanent: true },
       ...bareDomainRedirect(),
     ];
   },

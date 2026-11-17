@@ -8,6 +8,10 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- /.well-known/security.txt (RFC 9116) says where to report a security problem: the
+  association's email, renewed daily so it never expires. /security.txt points there.
+
 ## [1.1.0] - 2026-11-16
 
 ### Added
