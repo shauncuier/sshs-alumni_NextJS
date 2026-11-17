@@ -90,9 +90,16 @@ export default function MessagesClient({ currentUserId, initialTo }: { currentUs
     if (initialTo) void openThread(initialTo);
   }, [loadConversations, openThread, initialTo]);
 
+  // Messages from this partner, now seen: marked read so no email/SMS reminder follows
+  // (lib/message-reminders.ts reminds about messages unread after an hour).
+  const markRead = useCallback(async (partnerId: string) => {
+    await fetch("/api/messages", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderId: partnerId }) }).catch(() => {});
+  }, []);
+
   // New messages arrive over the realtime stream.
   useEffect(() => {
     if (!lastMessage) return;
+    const seen = lastMessage.senderId === activeId && document.visibilityState === "visible";
     if (lastMessage.senderId === activeId) {
       setMessages((prev) =>
         prev.some((m) => m.id === lastMessage.messageId)
@@ -100,8 +107,20 @@ export default function MessagesClient({ currentUserId, initialTo }: { currentUs
           : [...prev, { id: lastMessage.messageId || String(Date.now()), senderId: lastMessage.senderId, receiverId: currentUserId, content: lastMessage.content, createdAt: String(lastMessage.createdAt) }]
       );
     }
-    void loadConversations();
-  }, [lastMessage, activeId, currentUserId, loadConversations]);
+    // A message in the open thread on a visible page is read as it arrives.
+    void (seen ? markRead(lastMessage.senderId) : Promise.resolve()).then(() => loadConversations());
+  }, [lastMessage, activeId, currentUserId, loadConversations, markRead]);
+
+  // Coming back to the tab with a thread open: what arrived meanwhile is now read.
+  useEffect(() => {
+    if (!activeId) return;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void markRead(activeId).then(() => setConversations((list) => list.map((c) => (c.partnerId === activeId ? { ...c, unreadCount: 0 } : c))));
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [activeId, markRead]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });

@@ -8,6 +8,16 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- **Unread message reminders:** when a direct message is still unread an hour after it
+  arrived, the member gets an email, and an SMS on a verified number, at most every 6
+  hours. The reminder says how many messages and from whom, never what they say. Members
+  turn either off in Settings → Notifications; admins have site-wide switches in Admin →
+  Settings → SMS & verification.
+
+### Fixed
+- A message that arrives while its conversation is open on screen now counts as read.
+
 ## [1.4.0] - 2026-11-18
 
 ### Added

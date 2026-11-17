@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, Mail, MessageSquar
 import BanglaQrTrxSwitch from "@/components/admin/BanglaQrTrxSwitch";
 import ContactPhonesForm from "@/components/admin/ContactPhonesForm";
 import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
+import MessageReminderSwitches from "@/components/admin/MessageReminderSwitches";
 import PaymentNoticeSwitches from "@/components/admin/PaymentNoticeSwitches";
 import ConfirmationSmsText from "@/components/admin/ConfirmationSmsText";
 import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
@@ -81,6 +82,7 @@ export default async function SettingsPage() {
           <SectionTitle icon={MessageSquare} title="SMS & verification" text="Codes members get on their phone when they join or change their number." />
           <OtpRequiredSwitch />
           <SmsTestModeSwitch />
+          <MessageReminderSwitches />
           <div className="p-4 rounded-2xl border border-slate-200 bg-white text-xs text-slate-600 flex flex-wrap gap-x-6 gap-y-1">
             <span>SMS gateway: <b className="text-slate-900">{sms.isConfigured ? "BulkSMSBD, connected" : "not set up (codes are only simulated)"}</b></span>
             {sms.isConfigured && <span>Sender: <b className="text-slate-900 font-mono">{sms.senderId}</b></span>}

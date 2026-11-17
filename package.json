@@ -26,6 +26,7 @@
     "sms:test": "tsx scripts/sms-test.ts",
     "qa:roles": "tsx scripts/qa-roles.ts",
     "privacy:cleanup": "tsx scripts/privacy-cleanup.ts",
+    "messages:remind": "tsx scripts/message-reminders.ts",
     "db:import-volunteers": "tsx scripts/import-volunteers.ts",
     "db:import-sms-history": "tsx scripts/import-sms-history.ts",
     "test": "vitest run",

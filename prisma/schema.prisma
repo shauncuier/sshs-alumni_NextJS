@@ -102,6 +102,12 @@ model User {
   sessionVersion Int                @default(0)
   /// Set when an admin disables the account: it can no longer sign in, staff included.
   disabledAt     DateTime?
+  /// Reminders about direct messages still unread after an hour (lib/message-reminders.ts);
+  /// the member turns them off in Settings.
+  messageEmailReminders Boolean   @default(true)
+  messageSmsReminders   Boolean   @default(true)
+  /// When the last unread-message reminder went out: at most one every 6 hours.
+  lastMessageReminderAt DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -588,8 +594,12 @@ model Message {
   receiver   User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
   content    String  @db.Text
   isRead     Boolean @default(false)
+  /// Set when an email/SMS reminder about this unread message went out (lib/message-reminders.ts).
+  remindedAt DateTime?
 
   createdAt DateTime @default(now())
+
+  @@index([receiverId, isRead, createdAt])
 }
 
 model Notification {

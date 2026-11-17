@@ -4,8 +4,9 @@ import React, { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
 import MobileNav from "@/components/layout/MobileNav";
-import { Lock, Bell, Eye, CheckCircle2 } from "lucide-react";
+import { Lock, Eye, CheckCircle2 } from "lucide-react";
 import PasswordInput from "@/components/shared/PasswordInput";
+import MessageReminderPrefs from "@/components/settings/MessageReminderPrefs";
 import { photoIsPublic } from "@/lib/members/gender";
 
 type Visibility = "public" | "hidden";
@@ -201,16 +202,8 @@ export default function SettingsPage() {
             </div>
           </form>
 
-          {/* Notification Preferences */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-slate-900 font-bold text-base border-b border-slate-100 pb-3">
-              <Bell className="w-5 h-5 text-emerald-700" />
-              <span>Notification Preferences</span>
-            </div>
-            <p className="text-xs text-slate-500">
-              Email and SMS notification preferences are not available yet.
-            </p>
-          </div>
+          {/* Notification Preferences: reminders about unread messages */}
+          <MessageReminderPrefs />
 
           {/* Security */}
           <form

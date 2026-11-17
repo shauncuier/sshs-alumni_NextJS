@@ -40,4 +40,16 @@ export async function register() {
     purgeRejectedApplicantFiles().catch((err) => console.error("[privacy] Clean-up failed:", err instanceof Error ? err.message : err));
   setTimeout(purge, 60_000).unref();
   setInterval(purge, 24 * 60 * 60_000).unref();
+
+  // Email/SMS about direct messages unread for an hour (lib/message-reminders.ts): two
+  // minutes after start, then every 10 minutes. Only on the live site (or with
+  // MESSAGE_REMINDERS=on), so a development server never writes to real members.
+  if (process.env.NODE_ENV === "production" || process.env.MESSAGE_REMINDERS === "on") {
+    const { runMessageReminders } = await import("./lib/message-reminders");
+    const remind = () => {
+      void runMessageReminders();
+    };
+    setTimeout(remind, 2 * 60_000).unref();
+    setInterval(remind, 10 * 60_000).unref();
+  }
 }
