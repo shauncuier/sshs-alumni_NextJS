@@ -12,6 +12,11 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 - /.well-known/security.txt (RFC 9116) says where to report a security problem: the
   association's email, renewed daily so it never expires. /security.txt points there.
 
+### Fixed
+- Emails about another person (new registrations and contact messages to the committee,
+  job applications, mentorship requests and answers) landed in spam. They no longer set
+  Reply-To to that person's own address; a "Write to …" button in the email does the job.
+
 ## [1.1.0] - 2026-11-16
 
 ### Added

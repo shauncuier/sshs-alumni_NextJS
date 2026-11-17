@@ -145,7 +145,9 @@ describe("routes", () => {
     session.user = null;
     expect((await applyRoute(json(applicant), ctx)).status).toBe(200);
     expect(mail.sent).toHaveLength(1);
-    expect(mail.sent[0]).toMatchObject({ to: "poster@example.test", replyTo: "nabil@example.test" });
+    expect(mail.sent[0]).toMatchObject({ to: "poster@example.test" });
+    expect(mail.sent[0].replyTo).toBeUndefined();
+    expect(mail.sent[0].text).toContain("nabil@example.test");
 
     const actions = (await prisma.activityLog.findMany()).map((e) => e.action);
     expect(actions).toEqual(expect.arrayContaining(["job.submitted", "job.approved", "job.applied"]));

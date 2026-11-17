@@ -187,7 +187,7 @@ export async function listMentorsForAdmin(status?: string | null) {
 
 async function email(
   to: string,
-  replyTo: string,
+  writeTo: { name: string; email: string },
   subject: string,
   heading: string,
   paragraphs: (string | null | undefined)[],
@@ -196,13 +196,13 @@ async function email(
   try {
     const sent = await sendEmail({
       to,
-      replyTo,
       ...noticeEmail({
         subject,
         heading,
         paragraphs: paragraphs.filter((p): p is string => Boolean(p)),
         quote: quote || undefined,
         button: { label: "Open my mentorship requests", url: siteUrl("/mentorship/mine") },
+        writeTo,
       }),
     });
     return sent.success;
@@ -245,13 +245,13 @@ export async function createRequest(actor: Actor, input: RequestInput): Promise<
   });
   const emailed = await email(
     mentor.email,
-    actor.email,
+    { name, email: actor.email },
     `Mentorship request from ${name}`,
     "New mentorship request",
     [
       `${name}${request.menteeBatch ? ` (SSC ${request.menteeBatch})` : ""} asked for your mentorship on: ${topic}`,
       request.preferredTime ? `Preferred time: ${request.preferredTime}` : null,
-      "Accept or decline it on your mentorship page; reply to this email to write to them directly.",
+      `Accept or decline it on your mentorship page, or use "Write to ${name}" to write to them directly.`,
     ],
     request.message
   );
@@ -276,7 +276,7 @@ export async function respondToRequest(actor: Actor, requestId: string, action: 
     const updated = await prisma.mentorshipRequest.update({ where: { id: requestId }, data: { status: "ACCEPTED", meetingDetails: meetingDetails.slice(0, 500), mentorReply: reply, respondedAt: now } });
     await email(
       request.menteeEmail,
-      request.mentor.email,
+      { name: request.mentor.name, email: request.mentor.email },
       `${request.mentor.name} accepted your mentorship request`,
       "Your mentorship request was accepted",
       [`${request.mentor.name} accepted your request about "${request.topic}".`, `How to meet: ${updated.meetingDetails}`],
@@ -288,7 +288,7 @@ export async function respondToRequest(actor: Actor, requestId: string, action: 
     const updated = await prisma.mentorshipRequest.update({ where: { id: requestId }, data: { status: "DECLINED", mentorReply: reply, respondedAt: now } });
     await email(
       request.menteeEmail,
-      request.mentor.email,
+      { name: request.mentor.name, email: request.mentor.email },
       `Your mentorship request to ${request.mentor.name}`,
       "About your mentorship request",
       [`${request.mentor.name} is not able to take your request about "${request.topic}" right now. You can ask another mentor.`],

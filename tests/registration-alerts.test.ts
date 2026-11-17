@@ -51,7 +51,10 @@ describe("new registration alerts", () => {
 
     const [alert] = toCommittee("committee@example.test");
     expect(alert.subject).toBe("New member: New Member (SSC 2001), Golden Jubilee");
-    expect(alert.replyTo).toBe("new@example.test");
+    // No Reply-To at the member's address (a free-mail Reply-To sent alerts to spam);
+    // the email has a "Write to" button instead.
+    expect(alert.replyTo).toBeUndefined();
+    expect(alert.html).toContain("mailto:new@example.test");
     expect(alert.html).toContain("নতুন সদস্য");
     expect(alert.html).toContain("9AB3XK1");
     expect(alert.html).toContain("/admin/verifications");

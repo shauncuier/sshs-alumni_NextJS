@@ -204,7 +204,7 @@ export async function applyToJob(jobId: string, input: ApplicationInput, applica
   }
 }
 
-/** Emails the poster about a new application (Reply-To: the applicant). Never throws. */
+/** Emails the poster about a new application, with a button to write to the applicant. Never throws. */
 export async function notifyPoster(job: Job, a: JobApplication): Promise<boolean> {
   const rows: [string, string][] = [["Applicant", a.name], ["Email", a.email]];
   if (a.phone) rows.push(["Phone", a.phone]);
@@ -213,14 +213,14 @@ export async function notifyPoster(job: Job, a: JobApplication): Promise<boolean
   try {
     const sent = await sendEmail({
       to: job.postedByEmail,
-      replyTo: a.email,
       ...noticeEmail({
         subject: `New application: ${job.title}`,
         heading: "New job application",
-        paragraphs: [`${a.name} applied for ${job.title} at ${job.company}. Reply to this email to answer them directly.`],
+        paragraphs: [`${a.name} applied for ${job.title} at ${job.company}. Use "Write to ${a.name}" to answer them directly.`],
         rows,
         quote: a.coverNote || undefined,
         button: { label: "See all applications", url: siteUrl("/careers/mine") },
+        writeTo: { name: a.name, email: a.email },
       }),
     });
     return sent.success;

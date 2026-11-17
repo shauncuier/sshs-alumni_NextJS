@@ -99,14 +99,18 @@ describe("requests", () => {
     const mentee = await member("mentee@example.test");
 
     const { request } = await createRequest(mentee, { mentorId: mentor.id, topic: "CV review", message: "Final year CSE." });
-    expect(mail.sent[0]).toMatchObject({ to: "mentor@example.test", replyTo: "mentee@example.test" });
+    expect(mail.sent[0]).toMatchObject({ to: "mentor@example.test" });
+    expect(mail.sent[0].replyTo).toBeUndefined();
+    expect(mail.sent[0].text).toContain("mentee@example.test");
     await expect(createRequest(mentee, { mentorId: mentor.id, topic: "CV review" })).rejects.toMatchObject({ status: 409 });
 
     await expect(respondToRequest(mentee, request.id, "ACCEPT", { meetingDetails: "Meet link" })).rejects.toMatchObject({ status: 403 });
     await expect(respondToRequest(mentorActor, request.id, "ACCEPT", { meetingDetails: "" })).rejects.toMatchObject({ status: 400 });
     const accepted = await respondToRequest(mentorActor, request.id, "ACCEPT", { meetingDetails: "Google Meet, Friday 8 pm", reply: "Happy to help" });
     expect(accepted.status).toBe("ACCEPTED");
-    expect(mail.sent[1]).toMatchObject({ to: "mentee@example.test", replyTo: "mentor@example.test" });
+    expect(mail.sent[1]).toMatchObject({ to: "mentee@example.test" });
+    expect(mail.sent[1].replyTo).toBeUndefined();
+    expect(mail.sent[1].text).toContain("mentor@example.test");
     expect(mail.sent[1].text).toContain("Google Meet, Friday 8 pm");
 
     expect((await listApprovedMentors())[0].totalMenteesHelped).toBe(1);

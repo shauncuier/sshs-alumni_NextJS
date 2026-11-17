@@ -32,6 +32,13 @@ export interface EmailContent {
   /** Text shown in a highlighted box (a quoted message, payment note). */
   quote?: string;
   button?: { label: string; url: string };
+  /**
+   * A "Write to <name>" mailto button for emails about another person (a member, an
+   * applicant, a mentee). Used instead of a Reply-To header: a Reply-To at a free-mail
+   * address that differs from the sender is a strong spam signal (SpamAssassin
+   * FREEMAIL_FORGED_REPLYTO), and it sent these emails to spam.
+   */
+  writeTo?: { name: string; email: string };
   /** Small print under the button. */
   note?: string;
 }
@@ -93,6 +100,12 @@ export function renderEmail(c: EmailContent): RenderedEmail {
       `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px auto 18px"><tr><td style="border-radius:10px;background:${C.green}"><a href="${escapeHtml(c.button.url)}" style="display:inline-block;padding:13px 28px;font:700 15px ${FONT};color:#ffffff;text-decoration:none;border-radius:10px">${escapeHtml(c.button.label)}</a></td></tr></table>`
     );
   }
+  if (c.writeTo) {
+    const mailto = `mailto:${c.writeTo.email}?subject=${encodeURIComponent(`Re: ${c.subject}`)}`;
+    parts.push(
+      `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px"><tr><td style="border-radius:10px;border:2px solid ${C.green}"><a href="${escapeHtml(mailto)}" style="display:inline-block;padding:11px 26px;font:700 14px ${FONT};color:${C.green};text-decoration:none;border-radius:10px">${escapeHtml(`Write to ${c.writeTo.name}`)}</a></td></tr></table>`
+    );
+  }
   if (c.note) parts.push(`<p style="margin:0;font:12px/1.6 ${FONT};color:${C.muted};white-space:pre-line">${escapeHtml(c.note)}</p>`);
 
   const html = `<!doctype html>
@@ -144,6 +157,7 @@ export function renderEmail(c: EmailContent): RenderedEmail {
     ...(c.rows?.length ? [""] : []),
     ...(c.quote ? [c.quote, ""] : []),
     ...(c.button ? [`${c.button.label}: ${c.button.url}`, ""] : []),
+    ...(c.writeTo ? [`Write to ${c.writeTo.name}: ${c.writeTo.email}`, ""] : []),
     ...(c.note ? [c.note, ""] : []),
     "—",
     `প্রাক্তন সবুজিয়ান পরিষদ · ${contactEmail()} · ${siteUrl()}`,
@@ -282,7 +296,7 @@ export function donationReceiptEmail(d: {
   });
 }
 
-/** Contact form message, to the committee's inbox (Reply-To: the sender). */
+/** Contact form message, to the committee's inbox, with a button to write back to the sender. */
 export function contactMessageEmail(m: { name: string; email: string; phone?: string | null; subject: string; message: string; ticketId: string }): RenderedEmail {
   return renderEmail({
     subject: `[Contact ${m.ticketId}] ${m.subject}`,
@@ -294,11 +308,12 @@ export function contactMessageEmail(m: { name: string; email: string; phone?: st
       ["Reference", m.ticketId],
     ],
     quote: m.message,
-    note: `Reply to this email to answer ${m.name} directly.`,
+    writeTo: { name: m.name, email: m.email },
+    note: `Use "Write to ${m.name}" to answer them directly.`,
   });
 }
 
-/** To the committee: someone registered on the site (lib/registration-alerts.ts). Reply-To: the member. */
+/** To the committee: someone registered on the site (lib/registration-alerts.ts), with a button to write to the member. */
 export function newRegistrationAlertEmail(r: {
   name: string;
   nameBn: string | null;
@@ -341,11 +356,12 @@ export function newRegistrationAlertEmail(r: {
     ],
     rows,
     button: toCheck ? { label: "Open Verifications", url: siteUrl("/admin/verifications") } : { label: "Open the event", url: siteUrl(`/admin/events/${r.eventId}`) },
-    note: "You get this because your address is on the alert list in Admin → Settings → Email. Reply to this email to write to the member.",
+    writeTo: { name: r.name, email: r.email },
+    note: "You get this because your address is on the alert list in Admin → Settings → Email.",
   });
 }
 
 /** A short notice: job applications, mentorship requests and replies. */
-export function noticeEmail(n: { subject: string; heading: string; paragraphs: string[]; rows?: [string, string][]; quote?: string; button?: { label: string; url: string } }): RenderedEmail {
+export function noticeEmail(n: { subject: string; heading: string; paragraphs: string[]; rows?: [string, string][]; quote?: string; button?: { label: string; url: string }; writeTo?: { name: string; email: string } }): RenderedEmail {
   return renderEmail({ ...n, preheader: n.paragraphs[0] ?? n.heading });
 }

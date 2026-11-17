@@ -26,13 +26,15 @@ const post = (body: unknown) => POST(new Request("http://x/api", { method: "POST
 const valid = { name: "Karim <b>", email: "Karim@Example.test", subject: "Reunion", message: "Hello <script>alert(1)</script>" };
 
 describe("POST /api/contact", () => {
-  it("emails the committee with Reply-To the sender, escaping their text, and logs it", async () => {
+  it("emails the committee with a button to write back (no free-mail Reply-To), escaping their text, and logs it", async () => {
     vi.stubEnv("CONTACT_INBOX_EMAIL", "committee@example.test");
     const res = await post(valid);
     expect(res.status).toBe(200);
     const { ticketId } = await res.json();
     expect(mail.sent).toHaveLength(1);
-    expect(mail.sent[0]).toMatchObject({ to: "committee@example.test", replyTo: "karim@example.test" });
+    expect(mail.sent[0]).toMatchObject({ to: "committee@example.test" });
+    expect(mail.sent[0].replyTo).toBeUndefined();
+    expect(mail.sent[0].html).toContain("mailto:karim@example.test");
     expect(mail.sent[0].subject).toContain(ticketId);
     expect(mail.sent[0].html).not.toContain("<script>");
     expect(mail.sent[0].html).toContain("&lt;script&gt;");

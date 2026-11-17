@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const inbox = process.env.CONTACT_INBOX_EMAIL?.trim();
     let emailed = false;
     if (inbox) {
-      const sent = await sendEmail({ to: inbox, replyTo: email, ...contactMessageEmail({ name, email, subject, message, ticketId }) });
+      const sent = await sendEmail({ to: inbox, ...contactMessageEmail({ name, email, subject, message, ticketId }) });
       emailed = sent.success;
       if (!sent.success) console.error("[contact] Could not email the committee:", sent.error);
     } else {

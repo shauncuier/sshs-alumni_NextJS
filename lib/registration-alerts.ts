@@ -86,7 +86,7 @@ export async function alertNewRegistration(registrationId: string, createdAccoun
     let sent = 0;
     for (const to of emails) {
       try {
-        const res = await sendEmail({ to, replyTo: reg.user.email, ...email });
+        const res = await sendEmail({ to, ...email });
         if (res.success) sent++;
         else console.warn(`[registration-alerts] Could not email the committee (${res.error ?? "unknown error"}).`);
       } catch (err) {
