@@ -51,6 +51,9 @@ const nextConfig = {
   experimental: {
     // Enables forbidden()/unauthorized() with app/forbidden.tsx and app/unauthorized.tsx.
     authInterrupts: true,
+    // `next upgrade --agent` and the upgrade reminders use the security policy: a safe
+    // release when the installed version has a published security advisory.
+    agentUpgrade: "security",
     // Shared hosting reports every CPU of the machine but caps threads per account, so
     // page-data workers stay within the limit: NEXT_BUILD_CPUS, else 2 on Linux (Hostinger's
     // own rebuilds run plain `npm run build` without it).
