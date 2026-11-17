@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-18
+
 ### Added
 - **Unread message reminders:** when a direct message is still unread an hour after it
   arrived, the member gets an email, and an SMS on a verified number, at most every 6
@@ -18,6 +20,9 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ### Fixed
 - A message that arrives while its conversation is open on screen now counts as read.
+
+### Security
+- Next.js updated from 16.4.1 to 16.4.6, which fixes a published security advisory.
 
 ## [1.4.0] - 2026-11-18
 
@@ -104,7 +109,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.1.0...v1.2.0
