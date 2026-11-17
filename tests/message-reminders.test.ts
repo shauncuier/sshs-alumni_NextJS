@@ -92,6 +92,15 @@ describe("unread message reminders", () => {
     expect(mail.sent.map((m) => m.to)).toEqual([b.email]);
   });
 
+  it("leaves out messages older than 2 days (the backlog when reminders start)", async () => {
+    const a = await member("Rahim Uddin", "01711000101", true);
+    const b = await member("Karim Ahmed", "01711000102", true);
+    await message(a.id, b.id, new Date(T0.getTime() - 3 * 24 * HOUR));
+    expect(await runMessageReminders(T0)).toMatchObject({ remindedMembers: 0 });
+    expect(mail.sent).toHaveLength(0);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: b.id } })).lastMessageReminderAt).toBeNull();
+  });
+
   it("reminds at most every 6 hours", async () => {
     const a = await member("Rahim Uddin", "01711000101", true);
     const b = await member("Karim Ahmed", "01711000102", true);

@@ -7,6 +7,7 @@
  * - The member turns each off in Settings (User.messageEmailReminders / messageSmsReminders);
  *   admins switch each off for everyone (lib/message-reminders-setting.ts).
  * - Never the message text: only how many and from whom.
+ * - Only messages from the last 2 days (REMIND_WITHIN_MS).
  *
  * Runs every few minutes inside the server (instrumentation.ts) and by hand with
  * `npm run messages:remind`. The hosting runs several server processes, so a member is
@@ -22,6 +23,12 @@ import { messageRemindersOn } from "@/lib/message-reminders-setting";
 import { smsTestModeOn } from "@/lib/sms-test-mode";
 
 export const REMIND_AFTER_MS = 60 * 60_000;
+/**
+ * Only messages from the last 2 days are reminded about: the backlog of old unread
+ * messages when reminders were switched on (or after a long pause of the server) must
+ * not turn into a burst of emails and texts about something weeks old.
+ */
+export const REMIND_WITHIN_MS = 2 * 24 * 60 * 60_000;
 export const REMINDER_GAP_MS = 6 * 60 * 60_000;
 /** Members handled in one run; the rest wait for the next run. */
 const MAX_MEMBERS_PER_RUN = 200;
@@ -98,6 +105,7 @@ type Claimed = {
 /** Claims one member's due messages, or returns null when another run has them or the 6-hour gap is not over. */
 async function claim(userId: string, now: Date): Promise<Claimed | null> {
   const cutoff = new Date(now.getTime() - REMIND_AFTER_MS);
+  const oldest = new Date(now.getTime() - REMIND_WITHIN_MS);
   const gapStart = new Date(now.getTime() - REMINDER_GAP_MS);
   try {
     return await prisma.$transaction(async (tx) => {
@@ -106,7 +114,7 @@ async function claim(userId: string, now: Date): Promise<Claimed | null> {
         data: { lastMessageReminderAt: now },
       });
       if (won.count === 0) throw new Skip();
-      const due = { receiverId: userId, isRead: false, remindedAt: null, createdAt: { lte: cutoff } };
+      const due = { receiverId: userId, isRead: false, remindedAt: null, createdAt: { lte: cutoff, gte: oldest } };
       const messages = await tx.message.findMany({ where: due, select: { id: true, senderId: true }, orderBy: { createdAt: "desc" } });
       if (messages.length === 0) throw new Skip();
       await tx.message.updateMany({ where: { id: { in: messages.map((m) => m.id) } }, data: { remindedAt: now } });
@@ -155,7 +163,7 @@ export async function runMessageReminders(now = new Date()): Promise<ReminderRun
     if (!switches.email && !switches.sms) return run;
     const due = await prisma.message.groupBy({
       by: ["receiverId"],
-      where: { isRead: false, remindedAt: null, createdAt: { lte: new Date(now.getTime() - REMIND_AFTER_MS) } },
+      where: { isRead: false, remindedAt: null, createdAt: { lte: new Date(now.getTime() - REMIND_AFTER_MS), gte: new Date(now.getTime() - REMIND_WITHIN_MS) } },
       _count: { _all: true },
     });
     const testMode = switches.sms ? await smsTestModeOn() : false;
