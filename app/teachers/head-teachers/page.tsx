@@ -5,6 +5,7 @@ import { Band, HeadTeacherTimeline, SectionTitle, TeachersShell } from "@/compon
 import { EMPTY_DIRECTORY, getTeacherDirectory } from "@/lib/teachers";
 import { schoolInfo } from "@/lib/data";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const metadata: Metadata = pageMetadata({
   image: shareCard("school"),
@@ -16,7 +17,7 @@ export const metadata: Metadata = pageMetadata({
 export const dynamic = "force-dynamic";
 
 export default async function FormerHeadTeachersPage() {
-  const d = await getTeacherDirectory().catch(() => EMPTY_DIRECTORY);
+  const d = await lastGood("teacher-directory", getTeacherDirectory, EMPTY_DIRECTORY);
   return (
     <TeachersShell active="/teachers/head-teachers" directory={d} lead={`Everyone who has led ${schoolInfo.name} since ${schoolInfo.established}, in the order they served.`}>
       <Band tone="grey">

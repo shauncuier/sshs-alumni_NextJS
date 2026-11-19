@@ -6,13 +6,14 @@ import BatchGrid from "@/components/batches/BatchGrid";
 import { listBatches } from "@/lib/batches";
 import { Layers } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 // Every SSC batch with its real member count and the representative admins set.
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = pageMetadata({ image: shareCard("batches"), path: "/batches", title: "SSC batches since 1989", description: "Find your SSC batch at Sabuj Shikshayatan Government High School: classmates, the batch representative and reunion news for every year since 1989." });
 
 export default async function BatchesPage() {
-  const batches = await listBatches();
+  const batches = await lastGood("batches", listBatches, []);
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />

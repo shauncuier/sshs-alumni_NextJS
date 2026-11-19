@@ -7,6 +7,7 @@ import PageHero from "@/components/shared/PageHero";
 import PersonCard from "@/components/shared/PersonCard";
 import { groupHonorEntries, listHonorEntries } from "@/lib/honor-board";
 import { pageMetadata } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function HonorBoardPage() {
-  const groups = groupHonorEntries(await listHonorEntries().catch(() => []));
+  const groups = groupHonorEntries(await lastGood("honor-board", listHonorEntries, []));
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">

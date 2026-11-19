@@ -18,7 +18,7 @@ import { listPublishedNews } from "@/lib/news";
 import { listOpenJobs } from "@/lib/jobs";
 import { listApprovedMentors } from "@/lib/mentorship";
 import { listBatches } from "@/lib/batches";
-import { findPresident, getCurrentCommittee, getPresidentMessage } from "@/lib/committee";
+import { findPresident, getCurrentCommittee, getPresidentMessage, type PresidentMessage } from "@/lib/committee";
 import { listActiveNotices, PRIORITY_BADGE } from "@/lib/notices";
 import { ASSOCIATION_AIMS } from "@/lib/association-aims";
 import { getFeaturedSponsor } from "@/lib/sponsors";
@@ -39,6 +39,8 @@ import { SCHOOL_STORY_TEASER } from "@/lib/school-history";
 import { getHomeTribute } from "@/lib/teachers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { lastGood } from "@/lib/last-good";
+import { isDbUnavailable } from "@/lib/db-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -51,18 +53,27 @@ export const metadata: Metadata = pageMetadata({
     "Alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন), Sitakunda: find batchmates, join the Golden Jubilee 2026 and give back to the school.",
 });
 
-// Every section below shows real records and hides itself when there are none.
-export default async function HomePage() {
-  const today = new Date().toISOString().slice(0, 10);
-  // Anyone signed in has already joined (or applied), so the closing "join" band is for visitors only.
-  const signedIn = Boolean((await getServerSession(authOptions))?.user);
-  const sponsor = await getFeaturedSponsor().catch(() => null);
-  const tribute = await getHomeTribute().catch(() => []);
-  const yearsSinceFounding = new Date().getFullYear() - schoolInfo.established;
+/**
+ * A section that fails for another reason (a bug) shows its empty state, as before; a
+ * database outage is passed on so the whole page falls back to its last good copy
+ * instead of saving an empty one.
+ */
+function section<T>(promise: Promise<T>, empty: T): Promise<T> {
+  return promise.catch((err) => {
+    if (isDbUnavailable(err)) throw err;
+    console.error("[home] A section failed to load:", err);
+    return empty;
+  });
+}
+
+const NO_PRESIDENT_MESSAGE: PresidentMessage = { message: "", updatedAt: null, updatedBy: null };
+
+async function loadHomeData() {
   // Members the public directory lists: verified profiles of accounts that are not disabled.
   const listed = { verificationStatus: "VERIFIED" as const, user: { disabledAt: null } };
-
   const [
+    sponsor,
+    tribute,
     verifiedCount,
     countries,
     professions,
@@ -81,27 +92,28 @@ export default async function HomePage() {
     presidentMessage,
     notices,
   ] = await Promise.all([
-    prisma.alumniProfile.count({ where: listed }).catch(() => 0),
-    prisma.alumniProfile.groupBy({ by: ["locationCountry"], where: { ...listed, locationCountry: { not: "" } } }).catch(() => []),
-    prisma.alumniProfile.groupBy({ by: ["profession"], where: { ...listed, profession: { not: "" } } }).catch(() => []),
-    prisma.alumniProfile
-      .findMany({ where: listed, take: 4, orderBy: { createdAt: "desc" }, include: { user: { select: { email: true } } } })
-      .catch(() => []),
-    listBatches().catch(() => []),
-    listOpenCampaigns().catch(() => []),
-    listPublishedStories(2).catch(() => []),
-    listPublishedAchievements(3).catch(() => []),
-    latestPublishedPhotos(4).catch(() => []),
-    listPublicEvents().catch(() => []),
-    getMembershipEvent().catch(() => null),
-    listPublishedNews(3).catch(() => []),
-    listOpenJobs().catch(() => []),
-    listApprovedMentors().catch(() => []),
-    getCurrentCommittee().catch(() => null),
-    getPresidentMessage().catch(() => ({ message: "" })),
-    listActiveNotices(3).catch(() => []),
+    section(getFeaturedSponsor(), null),
+    section(getHomeTribute(), []),
+    section(prisma.alumniProfile.count({ where: listed }), 0),
+    section(prisma.alumniProfile.groupBy({ by: ["locationCountry"], where: { ...listed, locationCountry: { not: "" } } }), []),
+    section(prisma.alumniProfile.groupBy({ by: ["profession"], where: { ...listed, profession: { not: "" } } }), []),
+    section(prisma.alumniProfile.findMany({ where: listed, take: 4, orderBy: { createdAt: "desc" }, include: { user: { select: { email: true } } } }), []),
+    section(listBatches(), []),
+    section(listOpenCampaigns(), []),
+    section(listPublishedStories(2), []),
+    section(listPublishedAchievements(3), []),
+    section(latestPublishedPhotos(4), []),
+    section(listPublicEvents(), []),
+    section(getMembershipEvent(), null),
+    section(listPublishedNews(3), []),
+    section(listOpenJobs(), []),
+    section(listApprovedMentors(), []),
+    section(getCurrentCommittee(), null),
+    section(getPresidentMessage(), NO_PRESIDENT_MESSAGE),
+    section(listActiveNotices(3), []),
   ]);
 
+  // Only what the page shows is kept (and saved): no hidden phone numbers or addresses.
   const recentMembers: AlumniMember[] = recentProfiles.map((p) => ({
     id: p.id,
     slug: p.slug,
@@ -121,6 +133,82 @@ export default async function HomePage() {
     skills: Array.isArray(p.skills) ? (p.skills as string[]) : [],
     connectionCount: 0,
   }));
+
+  return {
+    sponsor,
+    tribute,
+    verifiedCount,
+    countries,
+    professions,
+    recentMembers,
+    batches,
+    campaigns,
+    stories,
+    achievements,
+    photos,
+    events,
+    membershipEvent,
+    news,
+    jobs,
+    mentors,
+    committee,
+    presidentMessage,
+    notices,
+  };
+}
+
+type HomeData = Awaited<ReturnType<typeof loadHomeData>>;
+
+const EMPTY_HOME: HomeData = {
+  sponsor: null,
+  tribute: [],
+  verifiedCount: 0,
+  countries: [],
+  professions: [],
+  recentMembers: [],
+  batches: [],
+  campaigns: [],
+  stories: [],
+  achievements: [],
+  photos: [],
+  events: [],
+  membershipEvent: null,
+  news: [],
+  jobs: [],
+  mentors: [],
+  committee: null,
+  presidentMessage: NO_PRESIDENT_MESSAGE,
+  notices: [],
+};
+
+// Every section below shows real records and hides itself when there are none.
+export default async function HomePage() {
+  const today = new Date().toISOString().slice(0, 10);
+  // Anyone signed in has already joined (or applied), so the closing "join" band is for visitors only.
+  const signedIn = Boolean((await getServerSession(authOptions))?.user);
+  const yearsSinceFounding = new Date().getFullYear() - schoolInfo.established;
+  // While the database is unavailable the page shows its last good copy (lib/last-good.ts).
+  const {
+    sponsor,
+    tribute,
+    verifiedCount,
+    countries,
+    professions,
+    recentMembers,
+    batches,
+    campaigns,
+    stories,
+    achievements,
+    photos,
+    events,
+    membershipEvent,
+    news,
+    jobs,
+    mentors,
+    committee,
+    presidentMessage,
+    notices,
+  } = await lastGood("home", loadHomeData, EMPTY_HOME);
 
   const batchesWithMembers = batches.filter((b) => b.totalAlumni > 0);
   const topBatches = [...batchesWithMembers].sort((a, b) => b.totalAlumni - a.totalAlumni || b.year - a.year).slice(0, 3);

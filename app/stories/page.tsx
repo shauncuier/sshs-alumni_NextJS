@@ -6,6 +6,7 @@ import StoryCard from "@/components/stories/StoryCard";
 import { listPublishedStories } from "@/lib/stories";
 import { BookOpen } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const metadata: Metadata = pageMetadata({ image: shareCard("stories"), path: "/stories", title: "Alumni stories", description: "Memories and life stories from former students of Sabuj Shikshayatan Government High School, Sitakunda, in their own words." });
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = pageMetadata({ image: shareCard("stories"), pa
 export const dynamic = "force-dynamic";
 
 export default async function StoriesPage() {
-  const stories = await listPublishedStories();
+  const stories = await lastGood("stories", listPublishedStories, []);
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />

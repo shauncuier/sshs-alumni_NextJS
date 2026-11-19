@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { checkDatabase } from "@/lib/db-watchdog";
+import { currentMode, standbyConfigured } from "@/lib/db-mode";
 
 /**
- * GET /api/health: for an outside uptime monitor. 200 when the site can read its
- * database, 503 when it cannot (lib/db-watchdog.ts). Says why in one word, never the
- * error text. One check per 30 seconds per server process, however often it is called.
+ * GET /api/health: for an outside uptime monitor and the site's own outage notice.
+ * 200 when the site can read its main database, 503 when it cannot (lib/db-watchdog.ts).
+ * Says why in one word, never the error text, and which database pages read:
+ * "primary", or "standby" while the read-only copy stands in (lib/db-mode.ts).
+ * One check per 30 seconds per server process, however often it is called.
  */
 export const dynamic = "force-dynamic";
 
@@ -16,8 +19,7 @@ export async function GET() {
     const status = await checkDatabase();
     last = status.ok ? { at: Date.now(), ok: true } : { at: Date.now(), ok: false, reason: status.reason === "permission" ? "database-permission" : "database-down" };
   }
-  return NextResponse.json(
-    last.ok ? { ok: true } : { ok: false, reason: last.reason },
-    { status: last.ok ? 200 : 503, headers: { "Cache-Control": "no-store" } }
-  );
+  const mode = currentMode();
+  const body = { ok: last.ok, ...(last.ok ? {} : { reason: last.reason }), mode, standby: standbyConfigured() };
+  return NextResponse.json(body, { status: last.ok ? 200 : 503, headers: { "Cache-Control": "no-store" } });
 }

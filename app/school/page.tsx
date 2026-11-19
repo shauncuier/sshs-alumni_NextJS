@@ -10,6 +10,7 @@ import Link from "next/link";
 import PersonTile from "@/components/school/PersonTile";
 import { ANWAR_ALI_MOMENTS, SCHOOL_MEMOIRS, SCHOOL_STORY_TEASER } from "@/lib/school-history";
 import { getSchoolPeople } from "@/lib/teachers";
+import { lastGood } from "@/lib/last-good";
 
 export const metadata: Metadata = pageMetadata({ image: shareCard("school"), path: "/school", title: "The school since 1976", description: "Sabuj Shikshayatan Government High School (formerly Sabuj Shikshayatan High School), Hafiz Jute Mills, Sitakunda, Chattogram. Founded 1976," });
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = pageMetadata({ image: shareCard("school"), pat
 export const dynamic = "force-dynamic";
 
 export default async function SchoolPage() {
-  const people = await getSchoolPeople().catch(() => ({ leaders: [], current: [], former: [], staff: [] }));
+  const people = await lastGood("school-people", getSchoolPeople, { leaders: [], current: [], former: [], staff: [] });
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />

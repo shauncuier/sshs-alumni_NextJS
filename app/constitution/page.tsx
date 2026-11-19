@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/shared/PageHero";
 import { listConstitutions } from "@/lib/constitution";
 import { pageMetadata } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function ConstitutionPage() {
-  const docs = await listConstitutions().catch(() => []);
+  const docs = await lastGood("constitutions", listConstitutions, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">

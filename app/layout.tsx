@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import AuthProvider from "@/components/providers/AuthProvider";
 import PwaProvider from "@/components/pwa/PwaProvider";
 import NavigationProgress from "@/components/shared/NavigationProgress";
+import DbOutageNotice from "@/components/shared/DbOutageNotice";
 import { Suspense } from "react";
 import "./globals.css";
 import { ASSOCIATION_NAME, DEFAULT_SHARE_IMAGE, SITE_NAME, organizationJsonLd, siteOrigin, websiteJsonLd } from "@/lib/seo";
@@ -66,6 +67,8 @@ export default function RootLayout({
         <AuthProvider>
           <PwaProvider>{children}</PwaProvider>
         </AuthProvider>
+        {/* Only shows while the database has a problem (GET /api/health). */}
+        <DbOutageNotice />
       </body>
     </html>
   );

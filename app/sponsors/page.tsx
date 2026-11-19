@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/shared/PageHero";
 import { groupSponsors, listSponsors, type SponsorView } from "@/lib/sponsors";
 import { pageMetadata } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ function Details({ sponsor, large = false }: { sponsor: SponsorView; large?: boo
 }
 
 export default async function SponsorsPage() {
-  const groups = groupSponsors(await listSponsors({ publishedOnly: true }).catch(() => []));
+  const groups = groupSponsors(await lastGood("sponsors", () => listSponsors({ publishedOnly: true }), []));
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
