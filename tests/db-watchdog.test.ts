@@ -119,7 +119,7 @@ describe("GET /api/health", () => {
   it("answers 200 while the database works", async () => {
     const res = await health();
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
+    expect(await res.json()).toEqual({ ok: true, mode: "primary", standby: false });
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });

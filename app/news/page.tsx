@@ -6,6 +6,7 @@ import NewsCard from "@/components/news/NewsCard";
 import { listPublishedNews } from "@/lib/news";
 import { Newspaper } from "lucide-react";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const metadata: Metadata = pageMetadata({ image: shareCard("news"), path: "/news", title: "News and notices", description: "News, notices and Golden Jubilee updates from the Sabuj Shikshayatan alumni association and the school in Sitakunda." });
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = pageMetadata({ image: shareCard("news"), path:
 export const dynamic = "force-dynamic";
 
 export default async function NewsPage() {
-  const news = await listPublishedNews();
+  const news = await lastGood("news", listPublishedNews, []);
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Navbar />

@@ -1,6 +1,11 @@
 import { execSync } from "node:child_process";
 import mariadb from "mariadb";
 
+/** sshs_test → sshs_standby_test: the standby copy's test database. */
+export function standbyTestDatabase(database: string): string {
+  return `${database.replace(/_test$/, "")}_standby_test`;
+}
+
 // Recreates the test database from prisma/schema.prisma before every test run.
 // Refuses to touch anything that is not a local test database.
 export default async function globalSetup() {
@@ -39,12 +44,16 @@ export default async function globalSetup() {
     multipleStatements: true,
   });
   try {
-    await conn.query(`DROP DATABASE IF EXISTS \`${database}\``);
-    await conn.query(`CREATE DATABASE \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-    await conn.query(`USE \`${database}\``);
     const sqlStartIndex = sql.indexOf("--");
     const cleanSql = sqlStartIndex >= 0 ? sql.slice(sqlStartIndex) : sql;
-    await conn.query(cleanSql);
+    // The main test database, and a second one standing in for the standby copy
+    // (tests/standby-*.test.ts; its name also ends in _test).
+    for (const name of [database, standbyTestDatabase(database)]) {
+      await conn.query(`DROP DATABASE IF EXISTS \`${name}\``);
+      await conn.query(`CREATE DATABASE \`${name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+      await conn.query(`USE \`${name}\``);
+      await conn.query(cleanSql);
+    }
   } finally {
     await conn.end();
   }

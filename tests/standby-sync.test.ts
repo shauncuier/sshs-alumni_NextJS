@@ -1,0 +1,131 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { PrismaClient } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import prisma, { withSessionCollation } from "@/lib/prisma";
+import { copyDirectionProblem, runStandbySync, STANDBY_PASSWORD_PLACEHOLDER } from "@/lib/standby-sync";
+import { resetDbMode, setMode } from "@/lib/db-mode";
+
+/** Copies the test database (sshs_test) to the standby test database (sshs_standby_test). */
+const standby = new PrismaClient({ adapter: new PrismaMariaDb(withSessionCollation(process.env.TEST_STANDBY_DATABASE_URL!)) });
+const PREFIX = "sync-test-";
+let dir: string;
+
+const sync = (opts: { full?: boolean } = {}) => runStandbySync({ primary: prisma, standby, dir, ...opts });
+
+beforeAll(async () => {
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), "standby-sync-"));
+  await prisma.setting.deleteMany({ where: { key: { startsWith: PREFIX } } });
+  await standby.setting.deleteMany({ where: { key: { startsWith: PREFIX } } });
+});
+
+beforeEach(() => {
+  vi.spyOn(console, "info").mockImplementation(() => {});
+});
+
+afterAll(async () => {
+  await prisma.setting.deleteMany({ where: { key: { startsWith: PREFIX } } });
+  await standby.setting.deleteMany({ where: { key: { startsWith: PREFIX } } });
+  await standby.$disconnect();
+  await fs.rm(dir, { recursive: true, force: true });
+  resetDbMode();
+  process.env.STANDBY_DATABASE_URL = "";
+});
+
+describe("standby copy", () => {
+  it("copies every table on the first run", async () => {
+    await prisma.setting.createMany({ data: [{ key: `${PREFIX}a`, value: "one" }, { key: `${PREFIX}b`, value: "two" }] });
+    const r = await sync();
+    expect(r.ran).toBe(true);
+    expect(r.tables.filter((t) => t.error)).toEqual([]);
+    expect(r.tables.length).toBeGreaterThan(30);
+    const copied = await standby.setting.findMany({ where: { key: { startsWith: PREFIX } }, orderBy: { key: "asc" } });
+    expect(copied.map((s) => s.value)).toEqual(["one", "two"]);
+    // Dates arrive unchanged.
+    const original = await prisma.setting.findUnique({ where: { key: `${PREFIX}a` } });
+    expect(copied[0].updatedAt.toISOString()).toBe(original!.updatedAt.toISOString());
+  });
+
+  it("sends nothing when nothing changed", async () => {
+    const r = await sync();
+    expect(r.written).toBe(0);
+    expect(r.deleted).toBe(0);
+  });
+
+  it("sends only changed rows and removes deleted ones", async () => {
+    await prisma.setting.update({ where: { key: `${PREFIX}a` }, data: { value: "uno" } });
+    await prisma.setting.delete({ where: { key: `${PREFIX}b` } });
+    const r = await sync();
+    expect(r.written).toBe(1);
+    expect(r.deleted).toBe(1);
+    const copied = await standby.setting.findMany({ where: { key: { startsWith: PREFIX } } });
+    expect(copied.map((s) => [s.key, s.value])).toEqual([[`${PREFIX}a`, "uno"]]);
+  });
+
+  it("a full run repairs a standby that drifted", async () => {
+    await standby.setting.create({ data: { key: `${PREFIX}stray`, value: "not on the main database" } });
+    await standby.setting.update({ where: { key: `${PREFIX}a` }, data: { value: "tampered" } });
+    const r = await sync({ full: true });
+    expect(r.full).toBe(true);
+    const copied = await standby.setting.findMany({ where: { key: { startsWith: PREFIX } } });
+    expect(copied.map((s) => [s.key, s.value])).toEqual([[`${PREFIX}a`, "uno"]]);
+  });
+
+  it("does not run while the site reads the standby", async () => {
+    process.env.STANDBY_DATABASE_URL = process.env.TEST_STANDBY_DATABASE_URL;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    setMode("standby");
+    const r = await sync();
+    expect(r.ran).toBe(false);
+    expect(r.reason).toMatch(/on the standby/);
+    resetDbMode();
+    await fs.rm(path.join(process.env.UPLOADS_DIR!, ".db-mode.json"), { force: true });
+    process.env.STANDBY_DATABASE_URL = "";
+  });
+
+  it("keeps password hashes and the activity log off the standby", async () => {
+    const email = `${PREFIX}privacy@example.test`;
+    const user = await prisma.user.create({ data: { email, passwordHash: "$2b$10$realHashThatMustNeverLeave000000000000000000000000000" } });
+    await prisma.activityLog.create({ data: { category: "AUTH", action: "test.privacy", summary: "visitor", ip: "203.0.113.9", userAgent: "TestBrowser" } });
+    // An older copy of the log on the standby goes too.
+    await standby.activityLog.create({ data: { category: "AUTH", action: "test.leftover", summary: "old copy", ip: "198.51.100.1" } });
+    const r = await sync();
+    const copied = await standby.user.findUnique({ where: { id: user.id } });
+    expect(copied?.email).toBe(email);
+    expect(copied?.passwordHash).toBe(STANDBY_PASSWORD_PLACEHOLDER);
+    expect(await standby.activityLog.count()).toBe(0);
+    expect(r.tables.find((t) => t.table.toLowerCase() === "activitylog")?.mode).toBe("excluded");
+    // A placeholder no password matches.
+    const bcrypt = await import("bcryptjs");
+    expect(await bcrypt.compare("", STANDBY_PASSWORD_PLACEHOLDER)).toBe(false);
+    await prisma.user.delete({ where: { id: user.id } });
+    await prisma.activityLog.deleteMany({ where: { action: "test.privacy" } });
+    await sync();
+    expect(await standby.user.findUnique({ where: { id: user.id } })).toBeNull();
+  });
+
+  it("never copies test data from this machine over a remote (live) standby", () => {
+    const tidb = "mysql://u:p@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/sshs_standby";
+    // A development server or script with the dev database: refused.
+    expect(copyDirectionProblem("mysql://Admin:x@127.0.0.1:3306/sshs_dev", tidb, "development")).toMatch(/refusing/);
+    expect(copyDirectionProblem("mysql://Admin:x@127.0.0.1:3306/sshs_dev", tidb, "production")).toMatch(/refusing/);
+    expect(copyDirectionProblem("mysql://Admin:x@127.0.0.1:3306/other", tidb, undefined)).toMatch(/refusing/);
+    // The live server reaches its own database on 127.0.0.1: allowed.
+    expect(copyDirectionProblem("mysql://u:p@127.0.0.1:3306/u996175628_ssghs", tidb, "production")).toBeNull();
+    // The live database reached from outside (remote MySQL access): allowed.
+    expect(copyDirectionProblem("mysql://u:p@srv1234.hstgr.io:3306/u996175628_ssghs", tidb, undefined)).toBeNull();
+    // Local to local (tests): allowed.
+    expect(copyDirectionProblem("mysql://root:x@127.0.0.1:3307/sshs_test", "mysql://root:x@127.0.0.1:3307/sshs_standby_test", "test")).toBeNull();
+  });
+
+  it("only one process takes a scheduled run", async () => {
+    const now = new Date("2026-11-19T10:03:00Z");
+    const [a, b] = await Promise.all([
+      runStandbySync({ primary: prisma, standby, dir, now, claimSlot: true }),
+      runStandbySync({ primary: prisma, standby, dir, now, claimSlot: true }),
+    ]);
+    expect([a.ran, b.ran].filter(Boolean).length).toBe(1);
+  });
+});

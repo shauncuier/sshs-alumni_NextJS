@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { authorizeCredentials } from "@/lib/auth";
+import fs from "node:fs";
+import path from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authorizeCredentials, SIGN_IN_PAUSED_MESSAGE } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { LEGACY_PENDING_MESSAGE, MEMBERSHIP_REJECTED_MESSAGE, PENDING_APPROVAL_MESSAGE } from "@/lib/account-access";
 import { makeEvent, makeMember, resetDatabase } from "./helpers/db";
@@ -37,6 +39,22 @@ describe("authorizeCredentials", () => {
   it("never locks out staff", async () => {
     const m = await makeMember({ status: "PENDING", role: "ADMIN" });
     await expect(authorizeCredentials({ email: m.email, password: PASSWORD })).resolves.toMatchObject({ id: m.id, role: "ADMIN" });
+  });
+  it("pauses signing in while the site reads the standby copy (it holds no password hashes)", async () => {
+    const m = await makeMember({ status: "VERIFIED" });
+    process.env.STANDBY_DATABASE_URL = "mysql://u:p@standby.example:4000/sshs_standby";
+    const mode = await import("@/lib/db-mode");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      mode.setMode("standby");
+      await expect(authorizeCredentials({ email: m.email, password: PASSWORD })).rejects.toThrow(new Error(SIGN_IN_PAUSED_MESSAGE));
+    } finally {
+      mode.resetDbMode();
+      fs.rmSync(path.join(process.env.UPLOADS_DIR!, ".db-mode.json"), { force: true });
+      process.env.STANDBY_DATABASE_URL = "";
+      vi.restoreAllMocks();
+    }
+    await expect(authorizeCredentials({ email: m.email, password: PASSWORD })).resolves.toMatchObject({ id: m.id });
   });
   it("keeps the generic message for a wrong password", async () => {
     const m = await makeMember({ status: "PENDING" });

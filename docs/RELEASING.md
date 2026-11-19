@@ -35,8 +35,11 @@ committee (what they notice), not for developers.
    git tag -a vX.Y.Z -m "vX.Y.Z"
    git push origin main --follow-tags
    ```
-5. Deploy that commit (zip from the tag: `git archive --format=zip -o <zip> vX.Y.Z -- . ':(exclude)video' ':(exclude).env.example'`).
-6. After the live build: smoke-test the site and read the server log, then publish the notes:
+5. If the release changes `prisma/schema.prisma` and a standby database is set up
+   (`STANDBY_DATABASE_URL`), run `npm run standby:push` with the live standby URL first,
+   so the standby copy has the new tables and columns.
+6. Deploy that commit (zip from the tag: `git archive --format=zip -o <zip> vX.Y.Z -- . ':(exclude)video' ':(exclude).env.example'`).
+7. After the live build: smoke-test the site and read the server log, then publish the notes:
    ```bash
    gh release create vX.Y.Z --title "vX.Y.Z" --notes-file <notes>
    ```

@@ -13,6 +13,7 @@ import { schoolInfo } from "@/lib/data";
 import FacebookIcon from "@/components/shared/FacebookIcon";
 import YouTubeIcon from "@/components/shared/YouTubeIcon";
 import YouTubeEmbed from "@/components/shared/YouTubeEmbed";
+import { lastGood } from "@/lib/last-good";
 
 /** The Golden Jubilee promo, why to register online, and the registration walkthrough, on the association's YouTube channel. */
 const PROMO_VIDEO_ID = "pouConmPHcc";
@@ -30,7 +31,7 @@ export const dynamic = "force-dynamic";
  */
 
 export async function generateMetadata(): Promise<Metadata> {
-  const event = await getMembershipEvent().catch(() => null);
+  const event = await lastGood("jubilee-event", getMembershipEvent, null);
   return pageMetadata({
     path: "/jubilee",
     title: "সুবর্ণ জয়ন্তী ২০২৬ রেজিস্ট্রেশন · Golden Jubilee registration",
@@ -60,7 +61,7 @@ export default async function JubileeRegistrationPage({ searchParams }: { search
   const params = await searchParams;
   const tag = [first(params.utm_source) || first(params.src), first(params.utm_campaign)].filter(Boolean).join("/");
   const source = cleanSource(tag) ?? "jubilee-link";
-  const event = await getMembershipEvent();
+  const event = await lastGood("jubilee-event", getMembershipEvent, null);
 
   // A signed-in member sees where they stand instead of the "pay and register" pitch.
   // (Only approved members and staff can hold a session; see getMemberSession.)

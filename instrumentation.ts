@@ -58,6 +58,20 @@ export async function register() {
     setInterval(() => void pruneWatchdogMarkers(), 24 * 60 * 60_000).unref();
   }
 
+  // Standby copy (lib/standby-sync.ts): when STANDBY_DATABASE_URL is set, copies what
+  // changed to the standby database every 10 minutes (one server process per run), so the
+  // site can switch to it read-only if the main database fails (lib/db-mode.ts). Live
+  // site only, or STANDBY_SYNC=on on a development server.
+  if (process.env.STANDBY_DATABASE_URL?.trim() && (process.env.NODE_ENV === "production" || process.env.STANDBY_SYNC === "on")) {
+    const { runStandbySync, pruneStandbySyncMarkers } = await import("./lib/standby-sync");
+    const copy = () => {
+      void runStandbySync({ claimSlot: true });
+    };
+    setTimeout(copy, 90_000).unref();
+    setInterval(copy, 10 * 60_000).unref();
+    setInterval(() => void pruneStandbySyncMarkers(), 24 * 60 * 60_000).unref();
+  }
+
   if (process.env.NODE_ENV === "production" || process.env.MESSAGE_REMINDERS === "on") {
     const { runMessageReminders } = await import("./lib/message-reminders");
     const remind = () => {

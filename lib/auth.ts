@@ -8,6 +8,10 @@ import { consumeRateLimit, resetRateLimit } from "@/lib/request-security";
 import { logActivity } from "@/lib/activity-log";
 import { clientIp } from "@/lib/client-ip";
 import { requireTurnstile } from "@/lib/turnstile";
+import { currentMode } from "@/lib/db-mode";
+
+export const SIGN_IN_PAUSED_MESSAGE =
+  "Signing in is paused for a few minutes while we fix a problem with the database. If you are already signed in, you stay signed in.";
 
 type AuthorizeRequest = { headers?: Record<string, string | string[] | undefined> } | undefined;
 const header = (req: AuthorizeRequest, name: string) => {
@@ -46,6 +50,10 @@ async function checkCredentials(credentials: Record<"email" | "password", string
   if (!credentials?.email || !credentials?.password) {
     throw new Error("Please enter your email and password.");
   }
+
+  // On the standby copy (lib/db-mode.ts) no password hashes exist (lib/standby-sync.ts):
+  // say so plainly instead of "invalid password". Members already signed in stay signed in.
+  if (currentMode() === "standby") throw new Error(SIGN_IN_PAUSED_MESSAGE);
 
   const email = credentials.email.trim().toLowerCase();
   const rateLimitKey = `login:${email}`;

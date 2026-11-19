@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import PageHero from "@/components/shared/PageHero";
 import { listActiveNotices, PRIORITY_BADGE } from "@/lib/notices";
 import { pageMetadata } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function NoticesPage() {
-  const notices = await listActiveNotices().catch(() => []);
+  const notices = await lastGood("notices", listActiveNotices, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">

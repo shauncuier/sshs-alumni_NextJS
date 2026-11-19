@@ -3,6 +3,7 @@ import React from "react";
 import { Band, Group, SectionTitle, TeachersShell } from "@/components/teachers/TeacherParts";
 import { EMPTY_DIRECTORY, getTeacherDirectory } from "@/lib/teachers";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const metadata: Metadata = pageMetadata({
   image: shareCard("school"),
@@ -14,7 +15,7 @@ export const metadata: Metadata = pageMetadata({
 export const dynamic = "force-dynamic";
 
 export default async function FormerTeachersPage() {
-  const d = await getTeacherDirectory().catch(() => EMPTY_DIRECTORY);
+  const d = await lastGood("teacher-directory", getTeacherDirectory, EMPTY_DIRECTORY);
   const any = d.former.teachers.length + d.former.staff.length > 0;
   return (
     <TeachersShell active="/teachers/former" directory={d} lead="The assistant teachers and staff who have retired or moved on, and those who are no longer with us. We remember every one of them.">

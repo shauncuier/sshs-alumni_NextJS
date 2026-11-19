@@ -8,6 +8,7 @@ import PageHero from "@/components/shared/PageHero";
 import CommitteeTree from "@/components/committee/CommitteeTree";
 import { committeeTiers, getCurrentCommittee } from "@/lib/committee";
 import { pageMetadata } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function CommitteePage() {
-  const term = await getCurrentCommittee().catch(() => null);
+  const term = await lastGood("committee", getCurrentCommittee, null);
   const members = term?.members ?? [];
 
   return (

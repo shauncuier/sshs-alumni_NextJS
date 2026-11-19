@@ -17,7 +17,8 @@
  */
 import fs from "node:fs/promises";
 import path from "node:path";
-import prisma from "@/lib/prisma";
+import prisma, { primaryClient } from "@/lib/prisma";
+import { dbErrorDetail, dbReason } from "@/lib/db-errors";
 import { isValidBdMobile, normalizeBdPhoneNumber, sendBulkSms } from "@/lib/bulksmsbd";
 import { sendEmail } from "@/lib/email";
 import { renderEmail, siteUrl } from "@/lib/email-templates";
@@ -25,15 +26,16 @@ import { uploadsRoot } from "@/lib/media/avatars";
 
 export type DbStatus = { ok: true } | { ok: false; reason: "permission" | "down"; detail: string };
 
-/** One real read of a table: `SELECT 1` would pass even without table privileges. */
+/**
+ * One real read of a table on the main database (never the standby copy):
+ * `SELECT 1` would pass even without table privileges.
+ */
 export async function checkDatabase(): Promise<DbStatus> {
   try {
-    await prisma.user.findFirst({ select: { id: true } });
+    await primaryClient().user.findFirst({ select: { id: true } });
     return { ok: true };
   } catch (err) {
-    const text = err instanceof Error ? err.message : String(err);
-    const permission = /\b1142\b|command denied/i.test(text);
-    return { ok: false, reason: permission ? "permission" : "down", detail: text.replace(/\s+/g, " ").slice(0, 300) };
+    return { ok: false, reason: dbReason(err), detail: dbErrorDetail(err) };
   }
 }
 

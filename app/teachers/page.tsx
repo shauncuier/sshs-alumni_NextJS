@@ -5,6 +5,7 @@ import { Band, Group, SectionTitle, TeachersShell } from "@/components/teachers/
 import { EMPTY_DIRECTORY, getTeacherDirectory } from "@/lib/teachers";
 import { schoolInfo } from "@/lib/data";
 import { pageMetadata, shareCard } from "@/lib/seo";
+import { lastGood } from "@/lib/last-good";
 
 export const metadata: Metadata = pageMetadata({
   image: shareCard("school"),
@@ -17,7 +18,7 @@ export const metadata: Metadata = pageMetadata({
 export const dynamic = "force-dynamic";
 
 export default async function TeachersTodayPage() {
-  const d = await getTeacherDirectory().catch(() => EMPTY_DIRECTORY);
+  const d = await lastGood("teacher-directory", getTeacherDirectory, EMPTY_DIRECTORY);
   const head = d.currentHead;
   return (
     <TeachersShell active="/teachers" directory={d} lead={`The head teacher, teachers and staff of ${schoolInfo.name} today. The tabs lead to everyone who taught there before.`}>

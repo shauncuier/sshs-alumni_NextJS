@@ -27,6 +27,10 @@ if (!testDatabaseUrl.searchParams.has("allowPublicKeyRetrieval")) {
   testDatabaseUrl.searchParams.set("allowPublicKeyRetrieval", "true");
 }
 const TEST_DATABASE_URL = testDatabaseUrl.toString();
+// The standby copy's test database on the same server (tests/setup/global-setup.ts).
+const standbyTestUrl = new URL(TEST_DATABASE_URL);
+standbyTestUrl.pathname = `/${standbyTestUrl.pathname.slice(1).replace(/_test$/, "")}_standby_test`;
+const TEST_STANDBY_DATABASE_URL = standbyTestUrl.toString();
 
 export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname) } },
@@ -43,6 +47,11 @@ export default defineConfig({
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       TEST_DATABASE_URL,
+      TEST_STANDBY_DATABASE_URL,
+      // .env.local may name a real standby (TiDB): tests never use it. Standby tests
+      // set their own (tests/standby-*.test.ts).
+      STANDBY_DATABASE_URL: "",
+      STANDBY_SYNC: "",
       UPLOADS_DIR: path.join(os.tmpdir(), `sshs-test-uploads-${process.pid}`),
       NEXTAUTH_SECRET: "test-secret-for-vitest-0123456789abcdef",
       // .env.local holds the real SMS gateway key; tests must never text real phones.
