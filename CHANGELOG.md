@@ -15,7 +15,10 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 - An optional standby copy of the database, updated every 10 minutes: when the main
   database fails, the whole site (members' pages and the admin panel too) switches to the
   copy by itself, browsing works as usual and only saving waits until the main database is
-  back. Switched on by setting `STANDBY_DATABASE_URL`.
+  back. Switched on by setting `STANDBY_DATABASE_URL`. The copy never holds passwords or
+  the sign-in log, and uploaded documents and photos stay on our own server; while the
+  copy is in use, members already signed in stay signed in and new sign-ins wait. The
+  privacy section of the terms page names where the copy is kept.
 
 ### Changed
 - When the database fails, forms and sign-in say "briefly unavailable, try again in a few

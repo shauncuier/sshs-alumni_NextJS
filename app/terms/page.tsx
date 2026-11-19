@@ -4,6 +4,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { pageMetadata, shareCard } from "@/lib/seo";
 import { schoolInfo } from "@/lib/data";
+// Read when the page is built: setting or removing STANDBY_DATABASE_URL needs a new build anyway.
+import { standbyConfigured } from "@/lib/db-mode";
 
 export const metadata: Metadata = pageMetadata({
   image: shareCard("about"),
@@ -98,6 +100,13 @@ export default function TermsPage() {
             <p>
               <strong className="text-slate-900">Keeping it safe.</strong> Passwords are stored only as a one-way hash, the site is served only over HTTPS, and
               the data is kept on our hosting provider&apos;s servers.
+              {standbyConfigured() && (
+                <>
+                  {" "}So the site keeps working if that database fails, an encrypted copy of the member records is kept by TiDB Cloud (PingCAP, on
+                  Amazon Web Services in Singapore). The copy never includes passwords, uploaded documents or photos, or the sign-in log, and it is
+                  only read, never changed, while it is in use.
+                </>
+              )}
             </p>
             <p>
               <strong className="text-slate-900">Your choices.</strong> You can change your profile and what it shows at any time in your settings.

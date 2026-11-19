@@ -41,7 +41,7 @@ export interface TableResult {
   rows: number;
   written: number;
   deleted: number;
-  mode: "scan" | "incremental" | "skipped";
+  mode: "scan" | "incremental" | "skipped" | "excluded";
   error?: string;
 }
 
@@ -209,9 +209,40 @@ async function* scan(primary: PrismaClient, t: TableInfo, columns: string[]): As
   }
 }
 
+/**
+ * Privacy: what never leaves the main database, even to the standby.
+ * - The activity log (visitors' IP addresses and browsers): a read-only site does not need it.
+ * - Password hashes: replaced by a placeholder no password matches, so the copy holds none;
+ *   signing in waits while the site is on the standby (lib/auth.ts), sessions stay valid.
+ */
+export const STANDBY_EXCLUDED_TABLES = ["ActivityLog"];
+export const STANDBY_PASSWORD_PLACEHOLDER = "!standby-copy: no password is stored here";
+const MASKED_COLUMNS: Record<string, Record<string, unknown>> = {
+  user: { passwordHash: STANDBY_PASSWORD_PLACEHOLDER },
+};
+
+function isExcluded(table: string): boolean {
+  return STANDBY_EXCLUDED_TABLES.some((t) => t.toLowerCase() === table.toLowerCase());
+}
+
+/** Replaces protected columns before anything is hashed or sent. */
+function protect(table: string, rows: Row[]): Row[] {
+  const masked = MASKED_COLUMNS[table.toLowerCase()];
+  if (masked) for (const row of rows) for (const [column, value] of Object.entries(masked)) if (column in row) row[column] = value;
+  return rows;
+}
+
 async function syncTable(primary: PrismaClient, standby: PrismaClient, t: TableInfo, standbyCols: string[], dir: string, full: boolean, startedAt: Date): Promise<TableResult & { bytes: number }> {
   const columns = t.columns.filter((c) => standbyCols.includes(c));
   const result = { table: t.name, rows: 0, written: 0, deleted: 0, mode: "scan" as TableResult["mode"], bytes: 0 };
+  if (isExcluded(t.name)) {
+    // Never copied; anything there (an older copy) is removed.
+    if (standbyCols.length > 0) {
+      const leftover = await standby.$queryRawUnsafe<Row[]>(`SELECT 1 AS x FROM ${q(t.name)} LIMIT 1`);
+      if (leftover.length) result.deleted = Number(await standby.$executeRawUnsafe(`DELETE FROM ${q(t.name)}`));
+    }
+    return { ...result, mode: "excluded" };
+  }
   if (t.key.length !== 1 || columns.length === 0) {
     return { ...result, mode: "skipped", error: t.key.length !== 1 ? "no single-column primary key" : "table missing on the standby" };
   }
@@ -224,7 +255,7 @@ async function syncTable(primary: PrismaClient, standby: PrismaClient, t: TableI
     // Big table: only rows stamped since the last run (minus an overlap).
     result.mode = "incremental";
     const since = new Date(new Date(saved.since).getTime() - OVERLAP_MS);
-    const rows = await primary.$queryRawUnsafe<Row[]>(`SELECT ${columns.map(q).join(", ")} FROM ${q(t.name)} WHERE ${q(stamp)} >= ?`, since);
+    const rows = protect(t.name, await primary.$queryRawUnsafe<Row[]>(`SELECT ${columns.map(q).join(", ")} FROM ${q(t.name)} WHERE ${q(stamp)} >= ?`, since));
     if (rows.length) result.bytes = await upsertRows(standby, t.name, columns, rows);
     result.written = rows.length;
     await writeHashes(dir, t.name, { rows: {}, since: startedAt.toISOString() });
@@ -234,7 +265,7 @@ async function syncTable(primary: PrismaClient, standby: PrismaClient, t: TableI
   const seen: Record<string, string> = {};
   for await (const page of scan(primary, t, columns)) {
     const changed: Row[] = [];
-    for (const row of page) {
+    for (const row of protect(t.name, page)) {
       const id = keyOf(row, t.key);
       const hash = rowHash(row, columns);
       seen[id] = hash;

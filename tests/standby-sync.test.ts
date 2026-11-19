@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import prisma, { withSessionCollation } from "@/lib/prisma";
-import { copyDirectionProblem, runStandbySync } from "@/lib/standby-sync";
+import { copyDirectionProblem, runStandbySync, STANDBY_PASSWORD_PLACEHOLDER } from "@/lib/standby-sync";
 import { resetDbMode, setMode } from "@/lib/db-mode";
 
 /** Copies the test database (sshs_test) to the standby test database (sshs_standby_test). */
@@ -83,6 +83,27 @@ describe("standby copy", () => {
     resetDbMode();
     await fs.rm(path.join(process.env.UPLOADS_DIR!, ".db-mode.json"), { force: true });
     process.env.STANDBY_DATABASE_URL = "";
+  });
+
+  it("keeps password hashes and the activity log off the standby", async () => {
+    const email = `${PREFIX}privacy@example.test`;
+    const user = await prisma.user.create({ data: { email, passwordHash: "$2b$10$realHashThatMustNeverLeave000000000000000000000000000" } });
+    await prisma.activityLog.create({ data: { category: "AUTH", action: "test.privacy", summary: "visitor", ip: "203.0.113.9", userAgent: "TestBrowser" } });
+    // An older copy of the log on the standby goes too.
+    await standby.activityLog.create({ data: { category: "AUTH", action: "test.leftover", summary: "old copy", ip: "198.51.100.1" } });
+    const r = await sync();
+    const copied = await standby.user.findUnique({ where: { id: user.id } });
+    expect(copied?.email).toBe(email);
+    expect(copied?.passwordHash).toBe(STANDBY_PASSWORD_PLACEHOLDER);
+    expect(await standby.activityLog.count()).toBe(0);
+    expect(r.tables.find((t) => t.table.toLowerCase() === "activitylog")?.mode).toBe("excluded");
+    // A placeholder no password matches.
+    const bcrypt = await import("bcryptjs");
+    expect(await bcrypt.compare("", STANDBY_PASSWORD_PLACEHOLDER)).toBe(false);
+    await prisma.user.delete({ where: { id: user.id } });
+    await prisma.activityLog.deleteMany({ where: { action: "test.privacy" } });
+    await sync();
+    expect(await standby.user.findUnique({ where: { id: user.id } })).toBeNull();
   });
 
   it("never copies test data from this machine over a remote (live) standby", () => {
