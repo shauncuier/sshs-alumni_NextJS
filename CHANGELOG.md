@@ -12,13 +12,16 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 - **The site keeps working when the database fails.** Public pages (home, teachers,
   committee, notices, news, events, gallery and the rest) show their last saved information
   instead of empty lists or an error page, with a small notice that it may be a little old.
-- An optional standby copy of the database, updated every 10 minutes: when the main
+- An optional standby copy of the database, updated every few minutes: when the main
   database fails, the whole site (members' pages and the admin panel too) switches to the
   copy by itself, browsing works as usual and only saving waits until the main database is
   back. Switched on by setting `STANDBY_DATABASE_URL`. The copy never holds passwords or
   the sign-in log, and uploaded documents and photos stay on our own server; while the
   copy is in use, members already signed in stay signed in and new sign-ins wait. The
   privacy section of the terms page names where the copy is kept.
+
+- Admin → Settings → Database: choose how often the standby copy runs (2 to 30 minutes,
+  5 by default) and see when the last copy ran and whether it worked.
 
 ### Changed
 - When the database fails, forms and sign-in say "briefly unavailable, try again in a few

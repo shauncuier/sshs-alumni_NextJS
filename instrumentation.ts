@@ -59,16 +59,18 @@ export async function register() {
   }
 
   // Standby copy (lib/standby-sync.ts): when STANDBY_DATABASE_URL is set, copies what
-  // changed to the standby database every 10 minutes (one server process per run), so the
-  // site can switch to it read-only if the main database fails (lib/db-mode.ts). Live
-  // site only, or STANDBY_SYNC=on on a development server.
+  // changed to the standby database every few minutes (Admin → Settings → Database, default
+  // 5; one server process per run), so the site can switch to it read-only if the main
+  // database fails (lib/db-mode.ts). Checked every minute, so a new interval applies
+  // within a minute. Live site only, or STANDBY_SYNC=on on a development server.
   if (process.env.STANDBY_DATABASE_URL?.trim() && (process.env.NODE_ENV === "production" || process.env.STANDBY_SYNC === "on")) {
     const { runStandbySync, pruneStandbySyncMarkers } = await import("./lib/standby-sync");
-    const copy = () => {
-      void runStandbySync({ claimSlot: true });
+    const { standbySyncMinutes } = await import("./lib/standby-sync-setting");
+    const copy = async () => {
+      void runStandbySync({ claimSlot: true, everyMinutes: await standbySyncMinutes() });
     };
-    setTimeout(copy, 90_000).unref();
-    setInterval(copy, 10 * 60_000).unref();
+    setTimeout(() => void copy(), 90_000).unref();
+    setInterval(() => void copy(), 60_000).unref();
     setInterval(() => void pruneStandbySyncMarkers(), 24 * 60 * 60_000).unref();
   }
 

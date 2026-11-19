@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { forbidden } from "next/navigation";
-import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, Mail, MessageSquare, Phone, ScrollText, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, DatabaseBackup, Mail, MessageSquare, Phone, ScrollText, Users } from "lucide-react";
+import StandbySyncSettings from "@/components/admin/StandbySyncSettings";
 import BanglaQrTrxSwitch from "@/components/admin/BanglaQrTrxSwitch";
 import ContactPhonesForm from "@/components/admin/ContactPhonesForm";
 import OtpRequiredSwitch from "@/components/admin/OtpRequiredSwitch";
@@ -40,6 +41,7 @@ const SECTIONS = [
   { id: "sms", name: "SMS & verification", icon: MessageSquare, area: "sms" },
   { id: "contact", name: "Contact numbers", icon: Phone, area: "settings" },
   { id: "email", name: "Email", icon: Mail, area: "settings" },
+  { id: "database", name: "Database", icon: DatabaseBackup, area: "settings" },
   { id: "access", name: "Users & log", icon: Users, area: "settings" },
 ] as const;
 
@@ -112,6 +114,13 @@ export default async function SettingsPage() {
             </div>
           </div>
           <RegistrationAlertsForm />
+        </section>
+      )}
+
+      {can(me.role, "settings") && (
+        <section id="database" className="scroll-mt-28 space-y-3">
+          <SectionTitle icon={DatabaseBackup} title="Database" text="A standby copy keeps the site browsable when the host's database fails." />
+          <StandbySyncSettings />
         </section>
       )}
 

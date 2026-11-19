@@ -2,7 +2,7 @@
  * Keeps the standby database (STANDBY_DATABASE_URL) a copy of the main one, so the site
  * can switch to it read-only when the main database fails (lib/db-mode.ts).
  *
- * Every run (instrumentation.ts, every 10 minutes; `npm run standby:sync`):
+ * Every run (instrumentation.ts, every few minutes as set in Admin → Settings → Database; `npm run standby:sync`):
  * - each table's rows are read from the main database in primary-key order and hashed;
  *   only rows that changed since the last run are written to the standby (one
  *   INSERT … ON DUPLICATE KEY UPDATE per batch), and rows gone from the main database
@@ -310,8 +310,44 @@ export interface SyncOptions {
   dir?: string;
   primary?: PrismaClient;
   standby?: PrismaClient | null;
-  /** Scheduled runs claim a 10-minute slot so only one process copies; manual runs do not. */
+  /** Scheduled runs claim their time slot so only one server process copies; manual runs do not. */
   claimSlot?: boolean;
+  /** Length of a scheduled slot in minutes (Admin → Settings → Database; lib/standby-sync-setting.ts). */
+  everyMinutes?: number;
+}
+
+export interface LastRun {
+  at: string;
+  ran: boolean;
+  full: boolean;
+  written: number;
+  deleted: number;
+  ms: number;
+  reason?: string;
+  failed: { table: string; error: string }[];
+}
+
+const LAST_RUN_FILE = "last-run.json";
+
+/** What the last copy did, for Admin → Settings; null before the first one. */
+export async function readLastStandbyRun(dir = standbySyncDir()): Promise<LastRun | null> {
+  try {
+    return JSON.parse(await fs.readFile(path.join(dir, LAST_RUN_FILE), "utf8")) as LastRun;
+  } catch {
+    return null;
+  }
+}
+
+async function saveLastRun(dir: string, run: LastRun): Promise<void> {
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    const file = path.join(dir, LAST_RUN_FILE);
+    const tmp = `${file}.${process.pid}.tmp`;
+    await fs.writeFile(tmp, JSON.stringify(run));
+    await fs.rename(tmp, file);
+  } catch {
+    // Only a status display.
+  }
 }
 
 let running = false;
@@ -362,12 +398,14 @@ export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult
   running = true;
   try {
     await fs.mkdir(dir, { recursive: true });
-    const nightly = now.getUTCHours() === NIGHTLY_HOUR_UTC && now.getUTCMinutes() < 10;
-    const full = Boolean(opts.full) || nightly;
     if (opts.claimSlot) {
-      const slot = `run-${now.toISOString().slice(0, 15)}`; // one per 10 minutes
+      const every = Math.max(1, Math.round(opts.everyMinutes ?? 10));
+      const slot = `run-${every}m-${Math.floor(now.getTime() / (every * 60_000))}`;
       if (!(await claim(dir, slot))) return empty("another process has this run");
     }
+    // Once a night the first scheduled run sends every row again (repairs any drift).
+    const nightly = Boolean(opts.claimSlot) && now.getUTCHours() === NIGHTLY_HOUR_UTC && (await claim(dir, `full-${now.toISOString().slice(0, 10)}`));
+    const full = Boolean(opts.full) || nightly;
     const [tables, standbyTables] = await Promise.all([listTables(primary), listTables(standby)]);
     const result: SyncResult = { ran: true, full, tables: [], written: 0, deleted: 0, bytes: 0, ms: 0 };
     for (const t of tables) {
@@ -387,10 +425,21 @@ export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult
     const line = `[standby-sync] ${full ? "Full" : "Incremental"} copy: ${result.written} row(s) written, ${result.deleted} deleted, ~${Math.round(result.bytes / 1024)} KB, ${result.tables.length} tables, ${result.ms} ms.`;
     if (failed.length) console.error(`${line} Failed: ${failed.map((t) => `${t.table} (${t.error})`).join("; ")}`);
     else if (result.written || result.deleted || full) console.info(line);
+    await saveLastRun(dir, {
+      at: now.toISOString(),
+      ran: true,
+      full,
+      written: result.written,
+      deleted: result.deleted,
+      ms: result.ms,
+      failed: failed.map((t) => ({ table: t.table, error: t.error ?? "" })),
+    });
     return result;
   } catch (err) {
-    console.error("[standby-sync] Run failed:", err instanceof Error ? err.message : err);
-    return { ...empty(err instanceof Error ? err.message : String(err)), ms: Date.now() - started };
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error("[standby-sync] Run failed:", reason);
+    await saveLastRun(dir, { at: now.toISOString(), ran: false, full: false, written: 0, deleted: 0, ms: Date.now() - started, reason: reason.slice(0, 300), failed: [] });
+    return { ...empty(reason), ms: Date.now() - started };
   } finally {
     running = false;
   }
@@ -400,7 +449,7 @@ export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult
 export async function pruneStandbySyncMarkers(dir = standbySyncDir(), now = Date.now()): Promise<void> {
   try {
     for (const name of await fs.readdir(dir)) {
-      if (!name.startsWith("run-")) continue;
+      if (!name.startsWith("run-") && !name.startsWith("full-")) continue;
       const file = path.join(dir, name);
       const { mtimeMs } = await fs.stat(file);
       if (now - mtimeMs > 24 * 60 * 60_000) await fs.unlink(file);
