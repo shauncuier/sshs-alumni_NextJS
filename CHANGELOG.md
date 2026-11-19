@@ -8,6 +8,13 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- **Database watchdog:** the site checks its database every 3 minutes. When the host drops
+  the database permissions (the outages of 17 and 19 November), the super admin and the
+  registration-alert addresses get an email, and the super admin a text, within about 6
+  minutes, with the steps to fix it; another email follows when it works again.
+- `GET /api/health` for an uptime monitor: 200 while the database works, 503 when not.
+
 ## [1.5.0] - 2026-11-18
 
 ### Added

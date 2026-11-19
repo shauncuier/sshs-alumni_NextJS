@@ -44,6 +44,20 @@ export async function register() {
   // Email/SMS about direct messages unread for an hour (lib/message-reminders.ts): two
   // minutes after start, then every 10 minutes. Only on the live site (or with
   // MESSAGE_REMINDERS=on), so a development server never writes to real members.
+  // Database watchdog (lib/db-watchdog.ts): reads one table every 3 minutes and alerts the
+  // super admin by email and SMS when the host drops the database permissions. Live site
+  // only (or DB_WATCHDOG=on).
+  if (process.env.NODE_ENV === "production" || process.env.DB_WATCHDOG === "on") {
+    const { runDbWatchdog, pruneWatchdogMarkers } = await import("./lib/db-watchdog");
+    const state = { failures: 0 };
+    const watch = () => {
+      void runDbWatchdog(state);
+    };
+    setTimeout(watch, 30_000).unref();
+    setInterval(watch, 3 * 60_000).unref();
+    setInterval(() => void pruneWatchdogMarkers(), 24 * 60 * 60_000).unref();
+  }
+
   if (process.env.NODE_ENV === "production" || process.env.MESSAGE_REMINDERS === "on") {
     const { runMessageReminders } = await import("./lib/message-reminders");
     const remind = () => {
