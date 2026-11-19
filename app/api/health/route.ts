@@ -15,7 +15,11 @@ let last: { at: number; ok: boolean; reason?: string } | null = null;
 const CACHE_MS = 30_000;
 
 export async function GET() {
-  if (!last || Date.now() - last.at > CACHE_MS) {
+  // On the standby the main database is known to be down, and lib/db-mode.ts already tries
+  // it every 30 seconds: answer at once rather than wait for another failed connection.
+  if (currentMode() === "standby") {
+    if (!last || last.ok) last = { at: Date.now(), ok: false, reason: "database-unavailable" };
+  } else if (!last || Date.now() - last.at > CACHE_MS) {
     const status = await checkDatabase();
     last = status.ok ? { at: Date.now(), ok: true } : { at: Date.now(), ok: false, reason: status.reason === "permission" ? "database-permission" : "database-down" };
   }

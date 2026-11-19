@@ -40,7 +40,13 @@ export function dbReason(err: unknown): "permission" | "down" {
   return PERMISSION.test(describe(err)) ? "permission" : "down";
 }
 
-/** One line for logs and alerts, without newlines. */
+/**
+ * One line for logs and alerts, without newlines: the database's own message when Prisma
+ * wrapped it (its "Invalid `prisma.x()` invocation" text quotes source code, not the cause).
+ */
 export function dbErrorDetail(err: unknown): string {
-  return describe(err).replace(/\s+/g, " ").slice(0, 300);
+  const meta = (err as { meta?: { driverAdapterError?: { cause?: { code?: unknown; message?: unknown; cause?: unknown } } } } | null)?.meta;
+  const cause = meta?.driverAdapterError?.cause;
+  const text = cause?.message ? [cause.code, cause.message, typeof cause.cause === "string" ? cause.cause : ""].filter(Boolean).join(" ") : describe(err);
+  return String(text).replace(/\s+/g, " ").slice(0, 300);
 }

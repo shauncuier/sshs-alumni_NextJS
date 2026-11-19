@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dbReason, isDbUnavailable } from "@/lib/db-errors";
+import { dbErrorDetail, dbReason, isDbUnavailable } from "@/lib/db-errors";
 import { AppError } from "@/lib/app-error";
 
 // Messages as the live site logged them (2026-11-18/19) and as the MariaDB driver words them.
@@ -53,6 +53,15 @@ describe("isDbUnavailable", () => {
     expect(isDbUnavailable(new AppError("READ_ONLY", 503, "Saving is paused"))).toBe(false);
     expect(isDbUnavailable(new AppError("NOT_FOUND", 404, "Event not found"))).toBe(false);
     expect(isDbUnavailable(null)).toBe(false);
+  });
+
+  it("describes a wrapped error by the database's own message, not Prisma's source excerpt", () => {
+    const e = Object.assign(new Error("Invalid `__TURBOPACK__imported__module__prisma.user.findFirst()` invocation in chunk.js:756\n\n→ 756 await prisma.user.findFirst("), {
+      code: "P2039",
+      meta: { driverAdapterError: { cause: { code: 45028, message: "pool failed to retrieve a connection from pool", cause: "connect ECONNREFUSED 127.0.0.1:3306" } } },
+    });
+    expect(dbErrorDetail(e)).toBe("45028 pool failed to retrieve a connection from pool connect ECONNREFUSED 127.0.0.1:3306");
+    expect(dbErrorDetail(denied)).toMatch(/^\(conn:41, no: 1142/);
   });
 
   it("counts the site's own outage error", () => {
