@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-19
+
 ### Added
 - **Database watchdog:** the site checks its database every 3 minutes. When the host drops
   the database permissions (the outages of 17 and 19 November), the super admin and the
@@ -116,7 +118,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.2.0...v1.3.0
