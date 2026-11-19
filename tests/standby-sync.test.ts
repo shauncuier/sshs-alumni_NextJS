@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import prisma, { withSessionCollation } from "@/lib/prisma";
-import { runStandbySync } from "@/lib/standby-sync";
+import { copyDirectionProblem, runStandbySync } from "@/lib/standby-sync";
 import { resetDbMode, setMode } from "@/lib/db-mode";
 
 /** Copies the test database (sshs_test) to the standby test database (sshs_standby_test). */
@@ -83,6 +83,20 @@ describe("standby copy", () => {
     resetDbMode();
     await fs.rm(path.join(process.env.UPLOADS_DIR!, ".db-mode.json"), { force: true });
     process.env.STANDBY_DATABASE_URL = "";
+  });
+
+  it("never copies test data from this machine over a remote (live) standby", () => {
+    const tidb = "mysql://u:p@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/sshs_standby";
+    // A development server or script with the dev database: refused.
+    expect(copyDirectionProblem("mysql://Admin:x@127.0.0.1:3306/sshs_dev", tidb, "development")).toMatch(/refusing/);
+    expect(copyDirectionProblem("mysql://Admin:x@127.0.0.1:3306/sshs_dev", tidb, "production")).toMatch(/refusing/);
+    expect(copyDirectionProblem("mysql://Admin:x@127.0.0.1:3306/other", tidb, undefined)).toMatch(/refusing/);
+    // The live server reaches its own database on 127.0.0.1: allowed.
+    expect(copyDirectionProblem("mysql://u:p@127.0.0.1:3306/u996175628_ssghs", tidb, "production")).toBeNull();
+    // The live database reached from outside (remote MySQL access): allowed.
+    expect(copyDirectionProblem("mysql://u:p@srv1234.hstgr.io:3306/u996175628_ssghs", tidb, undefined)).toBeNull();
+    // Local to local (tests): allowed.
+    expect(copyDirectionProblem("mysql://root:x@127.0.0.1:3307/sshs_test", "mysql://root:x@127.0.0.1:3307/sshs_standby_test", "test")).toBeNull();
   });
 
   it("only one process takes a scheduled run", async () => {

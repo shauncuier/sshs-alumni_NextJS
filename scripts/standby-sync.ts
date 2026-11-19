@@ -7,6 +7,8 @@
  */
 import dotenv from "dotenv";
 
+// The standby URL lives in .env.standby (never read by the dev server); the rest as usual.
+dotenv.config({ path: ".env.standby", quiet: true });
 dotenv.config({ path: ".env.local", quiet: true });
 dotenv.config({ quiet: true });
 

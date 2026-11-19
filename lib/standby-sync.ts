@@ -285,6 +285,31 @@ export interface SyncOptions {
 
 let running = false;
 
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
+/**
+ * The standby must only ever hold the live database. A development machine (main
+ * database on localhost) copying its test data to a remote standby would overwrite the
+ * live copy and delete live rows it does not have, so that direction is refused.
+ */
+export function copyDirectionProblem(sourceUrl: string | undefined, targetUrl: string | undefined, nodeEnv = process.env.NODE_ENV): string | null {
+  if (!sourceUrl || !targetUrl) return null;
+  try {
+    const source = new URL(sourceUrl);
+    const target = new URL(targetUrl);
+    // The live server also reaches its own database on 127.0.0.1, so "local" alone is not
+    // enough: a local source counts as test data outside production, or when it is one of
+    // this project's development databases (sshs_dev, sshs_test, …).
+    const testSource = LOCAL_HOSTS.has(source.hostname) && (nodeEnv !== "production" || /^\/sshs_/i.test(source.pathname));
+    if (testSource && !LOCAL_HOSTS.has(target.hostname)) {
+      return "the main database is a test database on this machine and the standby is remote (the live copy): refusing to copy test data over the live copy";
+    }
+  } catch {
+    return "DATABASE_URL or STANDBY_DATABASE_URL is not a valid URL";
+  }
+  return null;
+}
+
 /** One copy run. Never throws; says what it did. */
 export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult> {
   const now = opts.now ?? new Date();
@@ -292,6 +317,13 @@ export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult
   const empty = (reason: string): SyncResult => ({ ran: false, reason, full: false, tables: [], written: 0, deleted: 0, bytes: 0, ms: 0 });
   const standby = opts.standby === undefined ? standbyClient() : opts.standby;
   if (!standby) return empty("no standby configured");
+  if (!opts.standby && !opts.primary) {
+    const problem = copyDirectionProblem(process.env.DATABASE_URL, process.env.STANDBY_DATABASE_URL);
+    if (problem) {
+      console.error(`[standby-sync] Not copying: ${problem}.`);
+      return empty(problem);
+    }
+  }
   if (currentMode() === "standby") return empty("the site is on the standby");
   if (running) return empty("already running");
   const dir = opts.dir ?? standbySyncDir();
