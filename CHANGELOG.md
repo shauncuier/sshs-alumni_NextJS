@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-19
+
 ### Added
 - **The site keeps working when the database fails.** Public pages (home, teachers,
   committee, notices, news, events, gallery and the rest) show their last saved information
@@ -19,13 +21,13 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
   the sign-in log, and uploaded documents and photos stay on our own server; while the
   copy is in use, members already signed in stay signed in and new sign-ins wait. The
   privacy section of the terms page names where the copy is kept.
-
 - Admin → Settings → Database: choose how often the standby copy runs (2 to 30 minutes,
   5 by default) and see when the last copy ran and whether it worked.
 
 ### Changed
 - When the database fails, forms and sign-in say "briefly unavailable, try again in a few
-  minutes" instead of "Something went wrong".
+  minutes" instead of "Something went wrong", and a page that cannot load because of the
+  database says "Back in a few minutes" instead of showing an error reference.
 
 ## [1.6.0] - 2026-11-19
 
@@ -137,7 +139,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.3.0...v1.4.0
