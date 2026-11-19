@@ -97,6 +97,22 @@ describe("standby failover", () => {
   });
 });
 
+describe("when the standby is down too", () => {
+  it("answers with the plain 503, and fails fast after the first try", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { lib, mode } = await load(DEAD_PRIMARY, "mysql://root:x@127.0.0.1:1/nowhere_standby_test?connectTimeout=300&acquireTimeout=800");
+    mode.setMode("standby");
+    const first = await lib.prisma.setting.findFirst().catch((e) => e);
+    expect(isAppError(first) && first.code).toBe("DB_UNAVAILABLE");
+    const t = Date.now();
+    const second = await lib.prisma.setting.findFirst().catch((e) => e);
+    expect(isAppError(second) && second.code).toBe("DB_UNAVAILABLE");
+    expect(Date.now() - t).toBeLessThan(300);
+    mode.resetDbMode();
+    fs.rmSync(path.join(process.env.UPLOADS_DIR!, ".db-mode.json"), { force: true });
+  });
+});
+
 describe("without a standby", () => {
   it("turns an outage into a plain 503 and never switches", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});

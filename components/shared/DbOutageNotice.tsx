@@ -9,7 +9,7 @@ import { X } from "lucide-react";
  * - with no database at all: pages show their last saved copy (lib/last-good.ts).
  * Asks at most once a minute per tab; shows nothing when all is well or the check fails.
  */
-type Health = { ok: boolean; mode?: "primary" | "standby" };
+type Health = { ok: boolean; mode?: "primary" | "standby"; standbyOk?: boolean };
 
 const KEY = "db-health";
 const EVERY_MS = 60_000;
@@ -63,7 +63,8 @@ export default function DbOutageNotice() {
   }, []);
 
   if (!health || health.ok || closed) return null;
-  const standby = health.mode === "standby";
+  // "Browse as usual" only while the standby copy actually answers.
+  const standby = health.mode === "standby" && health.standbyOk !== false;
 
   return (
     <div role="status" className="print:hidden fixed inset-x-0 bottom-3 z-[70] flex justify-center px-4 pointer-events-none">

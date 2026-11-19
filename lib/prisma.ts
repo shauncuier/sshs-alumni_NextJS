@@ -167,12 +167,26 @@ export function readOnlyError(): AppError {
   return new AppError("READ_ONLY", 503, READ_ONLY_MESSAGE);
 }
 
+/** After the standby fails too, calls fail at once for this long instead of each waiting for a connection. */
+const STANDBY_BREAKER_MS = 30_000;
+let standbyDownUntil = 0;
+
 /** Runs one Prisma operation on the standby, refusing writes. */
 async function onStandby(standby: PrismaClient, model: string | undefined, operation: string, args: unknown): Promise<unknown> {
   if (!model || isWriteOperation(operation)) throw readOnlyError();
+  if (Date.now() < standbyDownUntil) throw new AppError("DB_UNAVAILABLE", 503, DB_UNAVAILABLE_MESSAGE);
   const delegate = (standby as unknown as Record<string, Record<string, (a: unknown) => Promise<unknown>>>)[model.charAt(0).toLowerCase() + model.slice(1)];
   if (!delegate?.[operation]) throw readOnlyError();
-  return delegate[operation](args);
+  try {
+    return await delegate[operation](args);
+  } catch (err) {
+    // The standby is unreachable too: the same plain 503 as without a standby.
+    if (isDbUnavailable(err) && !(err instanceof AppError)) {
+      standbyDownUntil = Date.now() + STANDBY_BREAKER_MS;
+      throw unavailable(err);
+    }
+    throw err;
+  }
 }
 
 let lastOutageLog = 0;
