@@ -8,6 +8,11 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Security
+- A library used by the database build tool (`effect`, through Prisma) is pinned to its
+  patched version, which fixes a published advisory (GHSA-7589-6fvf-x4pw). It ran only
+  while building the site, never on visitor input; `npm audit` now reports nothing.
+
 ## [1.7.1] - 2026-11-20
 
 ### Fixed
