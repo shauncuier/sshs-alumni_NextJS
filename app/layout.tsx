@@ -23,9 +23,14 @@ export const metadata: Metadata = {
     "প্রাক্তন সবুজিয়ান পরিষদ, the alumni association of Sabuj Shikshayatan Government High School (সবুজ শিক্ষায়তন সরকারি উচ্চ বিদ্যালয়), Sitakunda, Chattogram: batchmates, events and the Golden Jubilee 2026.",
   applicationName: SITE_NAME,
   authors: [{ name: ASSOCIATION_NAME }],
-  // A 1-2 KB tab icon instead of the 32 KB logo.
+  // A 1-2 KB tab icon instead of the 32 KB logo. Search engines take the biggest listed
+  // icon: Google wants a square multiple of 48 px, so the 192 px logo is listed too.
   icons: {
-    icon: [{ url: "/favicon.ico", sizes: "any" }, { url: "/icon-32.png", type: "image/png", sizes: "32x32" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
     apple: "/icon-192.png",
   },
   manifest: "/manifest.webmanifest",

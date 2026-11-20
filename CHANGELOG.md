@@ -8,6 +8,10 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Fixed
+- Search engines get the 192 px logo as the site icon too (Google wants a size that is a
+  multiple of 48 px), so the logo can show next to the site in search results.
+
 ## [1.7.0] - 2026-11-19
 
 ### Added
