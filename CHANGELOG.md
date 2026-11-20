@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-11-20
+
 ### Security
 - A library used by the database build tool (`effect`, through Prisma) is pinned to its
   patched version, which fixes a published advisory (GHSA-7589-6fvf-x4pw). It ran only
@@ -150,7 +152,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.2...HEAD
+[1.7.2]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.5.0...v1.6.0
