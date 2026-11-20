@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-11-20
+
 ### Fixed
 - Search engines get the 192 px logo as the site icon too (Google wants a size that is a
   multiple of 48 px), so the logo can show next to the site in search results.
@@ -143,7 +145,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.1...HEAD
+[1.7.1]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.4.0...v1.5.0
