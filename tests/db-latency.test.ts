@@ -11,10 +11,10 @@ import { runStandbySync } from "@/lib/standby-sync";
 describe("main database pool limits", () => {
   it("adds small pool limits the URL does not set, leaving the rest of the URL alone", () => {
     const url = withPoolDefaults("mysql://u:p%40ss%23word@127.0.0.1:3306/db", PRIMARY_POOL_DEFAULTS);
-    expect(url).toBe("mysql://u:p%40ss%23word@127.0.0.1:3306/db?connectionLimit=5&minimumIdle=1&idleTimeout=300");
+    expect(url).toBe("mysql://u:p%40ss%23word@127.0.0.1:3306/db?connectionLimit=5&minimumIdle=0&idleTimeout=15");
     const own = new URL(withPoolDefaults("mysql://u:p@127.0.0.1:3306/db?connectionLimit=8", PRIMARY_POOL_DEFAULTS));
     expect(own.searchParams.get("connectionLimit")).toBe("8");
-    expect(own.searchParams.get("minimumIdle")).toBe("1");
+    expect(own.searchParams.get("minimumIdle")).toBe("0");
     const standby = new URL(standbyUrl("mysql://a.root:x@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/sshs_standby"));
     expect([standby.searchParams.get("connectionLimit"), standby.searchParams.get("minimumIdle"), standby.searchParams.get("idleTimeout")]).toEqual(["3", "1", "300"]);
   });
@@ -31,8 +31,8 @@ describe("main database pool limits", () => {
     }
   });
 
-  it("closes idle connections down to one", async () => {
-    // Same rules with a 2-second idle time instead of 300, so the test is quick.
+  it("closes every idle connection and does not reopen them", async () => {
+    // Same rules with a 2-second idle time instead of 15, so the test is quick.
     const url = withPoolDefaults(process.env.DATABASE_URL! + (process.env.DATABASE_URL!.includes("?") ? "&" : "?") + "idleTimeout=2", PRIMARY_POOL_DEFAULTS);
     const db = new PrismaClient({ adapter: new PrismaMariaDb(withSessionCollation(url)) });
     try {
@@ -41,7 +41,10 @@ describe("main database pool limits", () => {
       expect(ids.length).toBeGreaterThan(1);
       await new Promise((r) => setTimeout(r, 6_000));
       const alive = await prisma.$queryRawUnsafe<{ n: bigint }[]>(`SELECT COUNT(*) AS n FROM information_schema.PROCESSLIST WHERE ID IN (${ids.join(",")})`);
-      expect(Number(alive[0].n)).toBeLessThanOrEqual(1);
+      expect(Number(alive[0].n)).toBe(0);
+      // Still usable afterwards: the next query opens a fresh connection.
+      const again = await db.$queryRawUnsafe<{ id: bigint }[]>("SELECT CONNECTION_ID() AS id");
+      expect(ids).not.toContain(String(again[0].id));
     } finally {
       await db.$disconnect();
     }

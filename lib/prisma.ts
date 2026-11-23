@@ -58,14 +58,19 @@ export function withSessionCollation(databaseUrl: string): string {
  * (MySQL 1142) when it holds too many connections at once. The MariaDB driver's defaults
  * are 10 connections per pool, all kept open for good (minimumIdle = connectionLimit),
  * and the live server runs several pools (more than one process, and Next.js can load
- * this module more than once), so it sat at dozens of idle connections. Now each pool
- * opens at most 5, keeps 1 open while idle, and closes the rest after 5 minutes idle.
- * Not sooner: Hostinger also caps new connections per hour (max_connections_per_hour,
- * 500 in their docs), and closing quickly would mean reopening often.
+ * this module more than once), so it sat at dozens of idle connections. Worse, Hostinger's
+ * MySQL closes a connection after 20 s idle (wait_timeout, measured 2026-11-23) and the
+ * pool at once reopened it to keep its minimum: thousands of new connections an hour.
+ * Now each pool opens at most 5, keeps none while idle, and closes its own idle ones
+ * after 15 s, before the server does, so a quiet site holds no connections and makes
+ * no new ones. The first query after a quiet spell opens one (about 1 ms locally).
  * A value already in DATABASE_URL wins.
  */
-export const PRIMARY_POOL_DEFAULTS: Record<string, string> = { connectionLimit: "5", minimumIdle: "1", idleTimeout: "300" };
-/** The standby (TiDB) gets the same idle rules with a smaller pool (see standbyUrl). */
+export const PRIMARY_POOL_DEFAULTS: Record<string, string> = { connectionLimit: "5", minimumIdle: "0", idleTimeout: "15" };
+/**
+ * The standby (TiDB, see standbyUrl): a smaller pool that keeps one connection open, since
+ * each new one there costs a TLS handshake to Singapore (a query takes ~130 ms from Hostinger).
+ */
 export const STANDBY_POOL_DEFAULTS: Record<string, string> = { connectionLimit: "3", minimumIdle: "1", idleTimeout: "300" };
 
 /** Adds pool options the URL does not set. Appended as text so the rest of the URL (the password) is untouched. */
