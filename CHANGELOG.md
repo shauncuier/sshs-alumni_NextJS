@@ -8,6 +8,15 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.7.4] - 2026-11-23
+
+### Fixed
+- **Database outages, second part.** The hourly check added in 1.7.3 showed that the
+  hosting closes a database connection after 20 seconds without use, and the site then
+  opened a new one straight away to keep a spare: thousands of new connections an hour,
+  which can set off the hosting's protection. The site now keeps no spare connections
+  and closes unused ones itself after 15 seconds, so a quiet site opens none at all.
+
 ## [1.7.3] - 2026-11-23
 
 ### Fixed
@@ -166,7 +175,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.3...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.4...HEAD
+[1.7.4]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.2...v1.7.3
 [1.7.2]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.0...v1.7.1
