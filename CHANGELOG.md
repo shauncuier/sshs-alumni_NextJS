@@ -8,6 +8,14 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.7.5] - 2026-11-23
+
+### Fixed
+- **Short database hiccups no longer show as errors.** When the hosting's database was
+  slow for a moment to accept a new connection (more than 1 second), the site gave up and
+  the page failed. It now waits up to 5 seconds, so a brief slowdown only makes that page
+  load a little slower.
+
 ## [1.7.4] - 2026-11-23
 
 ### Fixed
@@ -175,7 +183,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.4...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.5...HEAD
+[1.7.5]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.2...v1.7.3
 [1.7.2]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.1...v1.7.2

@@ -64,9 +64,17 @@ export function withSessionCollation(databaseUrl: string): string {
  * Now each pool opens at most 5, keeps none while idle, and closes its own idle ones
  * after 15 s, before the server does, so a quiet site holds no connections and makes
  * no new ones. The first query after a quiet spell opens one (about 1 ms locally).
+ * Opening one may wait up to 5 s: the driver gives up after 1 s by default, and on
+ * 2026-11-23 08:41 UTC the live server was briefly slower than that to accept
+ * connections, so requests failed that would have worked a moment later.
  * A value already in DATABASE_URL wins.
  */
-export const PRIMARY_POOL_DEFAULTS: Record<string, string> = { connectionLimit: "5", minimumIdle: "0", idleTimeout: "15" };
+export const PRIMARY_POOL_DEFAULTS: Record<string, string> = {
+  connectionLimit: "5",
+  minimumIdle: "0",
+  idleTimeout: "15",
+  connectTimeout: "5000",
+};
 /**
  * The standby (TiDB, see standbyUrl): a smaller pool that keeps one connection open, since
  * each new one there costs a TLS handshake to Singapore (a query takes ~130 ms from Hostinger).

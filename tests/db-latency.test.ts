@@ -11,7 +11,7 @@ import { runStandbySync } from "@/lib/standby-sync";
 describe("main database pool limits", () => {
   it("adds small pool limits the URL does not set, leaving the rest of the URL alone", () => {
     const url = withPoolDefaults("mysql://u:p%40ss%23word@127.0.0.1:3306/db", PRIMARY_POOL_DEFAULTS);
-    expect(url).toBe("mysql://u:p%40ss%23word@127.0.0.1:3306/db?connectionLimit=5&minimumIdle=0&idleTimeout=15");
+    expect(url).toBe("mysql://u:p%40ss%23word@127.0.0.1:3306/db?connectionLimit=5&minimumIdle=0&idleTimeout=15&connectTimeout=5000");
     const own = new URL(withPoolDefaults("mysql://u:p@127.0.0.1:3306/db?connectionLimit=8", PRIMARY_POOL_DEFAULTS));
     expect(own.searchParams.get("connectionLimit")).toBe("8");
     expect(own.searchParams.get("minimumIdle")).toBe("0");
