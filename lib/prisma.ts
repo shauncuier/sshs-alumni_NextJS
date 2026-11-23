@@ -53,6 +53,31 @@ export function withSessionCollation(databaseUrl: string): string {
   return databaseUrl + (databaseUrl.includes("?") ? "&" : "?") + extra.join("&");
 }
 
+/**
+ * Pool limits for the main database. Hostinger revokes the database user's permissions
+ * (MySQL 1142) when it holds too many connections at once. The MariaDB driver's defaults
+ * are 10 connections per pool, all kept open for good (minimumIdle = connectionLimit),
+ * and the live server runs several pools (more than one process, and Next.js can load
+ * this module more than once), so it sat at dozens of idle connections. Now each pool
+ * opens at most 5, keeps 1 open while idle, and closes the rest after 5 minutes idle.
+ * Not sooner: Hostinger also caps new connections per hour (max_connections_per_hour,
+ * 500 in their docs), and closing quickly would mean reopening often.
+ * A value already in DATABASE_URL wins.
+ */
+export const PRIMARY_POOL_DEFAULTS: Record<string, string> = { connectionLimit: "5", minimumIdle: "1", idleTimeout: "300" };
+/** The standby (TiDB) gets the same idle rules with a smaller pool (see standbyUrl). */
+export const STANDBY_POOL_DEFAULTS: Record<string, string> = { connectionLimit: "3", minimumIdle: "1", idleTimeout: "300" };
+
+/** Adds pool options the URL does not set. Appended as text so the rest of the URL (the password) is untouched. */
+export function withPoolDefaults(databaseUrl: string, defaults: Record<string, string>): string {
+  const params = new URL(databaseUrl).searchParams;
+  const extra = Object.entries(defaults)
+    .filter(([key]) => !params.has(key))
+    .map(([key, value]) => `${key}=${value}`);
+  if (extra.length === 0) return databaseUrl;
+  return databaseUrl + (databaseUrl.includes("?") ? "&" : "?") + extra.join("&");
+}
+
 function createClient(databaseUrl: string | undefined, name = "DATABASE_URL"): { client: PrismaClient; ready: boolean } {
   if (!databaseUrl) return notReady(`${name} is not set.`);
 
@@ -92,19 +117,25 @@ export function standbyUrl(raw: string): string {
     if (/^(ssl[-_]?mode|sslaccept|sslcert|sslidentity|sslpassword|ssl[-_]?ca|tls)$/i.test(key)) url.searchParams.delete(key);
   }
   if (!LOCAL_HOSTS.has(url.hostname) && !url.searchParams.has("ssl")) url.searchParams.set("ssl", "true");
-  if (!url.searchParams.has("connectionLimit")) url.searchParams.set("connectionLimit", "3");
+  for (const [key, value] of Object.entries(STANDBY_POOL_DEFAULTS)) if (!url.searchParams.has(key)) url.searchParams.set(key, value);
   if (!url.searchParams.has("connectTimeout")) url.searchParams.set("connectTimeout", "10000");
   return url.toString();
 }
 
 function getClient(): PrismaClient {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
-  const { client, ready } = createClient(process.env.DATABASE_URL);
-  // Only reuse a working client across dev hot reloads. Caching the not-ready
-  // proxy would keep failing after DATABASE_URL is fixed, until a restart.
-  if (ready && process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
+  const raw = process.env.DATABASE_URL;
+  let url = raw;
+  try {
+    if (raw) url = withPoolDefaults(raw, PRIMARY_POOL_DEFAULTS);
+  } catch {
+    // createClient reports the bad URL.
   }
+  const { client, ready } = createClient(url);
+  // One client (one pool) per process, also in production: Next.js can evaluate this
+  // module more than once, and every copy would open its own pool. Caching the not-ready
+  // proxy would keep failing after DATABASE_URL is fixed, until a restart.
+  if (ready) globalForPrisma.prisma = client;
   return client;
 }
 
@@ -123,7 +154,7 @@ function getStandbyClient(): PrismaClient | null {
   }
   const { client, ready } = createClient(url, "STANDBY_DATABASE_URL");
   if (!ready) return null;
-  if (process.env.NODE_ENV !== "production") globalForStandby.standbyPrisma = client;
+  globalForStandby.standbyPrisma = client;
   return client;
 }
 

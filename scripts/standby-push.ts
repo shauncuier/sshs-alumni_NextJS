@@ -30,7 +30,7 @@ if (main && main.host === url.host && main.pathname === url.pathname) {
 
 // Prisma's schema engine takes TLS as sslaccept=strict; drop the driver-style options.
 for (const key of [...url.searchParams.keys()]) {
-  if (/^(ssl|ssl[-_]?mode|sslaccept|connectionLimit|connectTimeout)$/i.test(key)) url.searchParams.delete(key);
+  if (/^(ssl|ssl[-_]?mode|sslaccept|connectionLimit|connectTimeout|minimumIdle|idleTimeout)$/i.test(key)) url.searchParams.delete(key);
 }
 if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname)) url.searchParams.set("sslaccept", "strict");
 

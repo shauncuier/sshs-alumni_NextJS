@@ -15,7 +15,8 @@
  *   standby that was reset.
  *
  * Only one server process runs it at a time (a marker file), never while the site is on
- * the standby (the copy is read-only then), and it never throws.
+ * the standby (the copy is read-only then), and it never throws. Once an hour a
+ * scheduled run also logs how long a query takes on each database (lib/db-latency.ts).
  */
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
@@ -23,6 +24,7 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { primaryClient, standbyClient } from "@/lib/prisma";
 import { currentMode } from "@/lib/db-mode";
+import { logDbLatency } from "@/lib/db-latency";
 import { uploadsRoot } from "@/lib/media/avatars";
 
 export const FULL_SCAN_MAX_ROWS = 20_000;
@@ -434,6 +436,8 @@ export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult
       ms: result.ms,
       failed: failed.map((t) => ({ table: t.table, error: t.error ?? "" })),
     });
+    // Once an hour: how long a query takes on each database (lib/db-latency.ts).
+    if (opts.claimSlot && (await claim(dir, `latency-${now.toISOString().slice(0, 13)}`))) await logDbLatency(primary, standby);
     return result;
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
@@ -449,7 +453,7 @@ export async function runStandbySync(opts: SyncOptions = {}): Promise<SyncResult
 export async function pruneStandbySyncMarkers(dir = standbySyncDir(), now = Date.now()): Promise<void> {
   try {
     for (const name of await fs.readdir(dir)) {
-      if (!name.startsWith("run-") && !name.startsWith("full-")) continue;
+      if (!name.startsWith("run-") && !name.startsWith("full-") && !name.startsWith("latency-")) continue;
       const file = path.join(dir, name);
       const { mtimeMs } = await fs.stat(file);
       if (now - mtimeMs > 24 * 60 * 60_000) await fs.unlink(file);
