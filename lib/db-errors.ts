@@ -35,6 +35,20 @@ export function isDbUnavailable(err: unknown): boolean {
   return PERMISSION.test(text) || DOWN.test(text);
 }
 
+/**
+ * The server itself refused us: it took away the user's permissions, or no connection
+ * could be opened at all (refused, unreachable, or the TCP connect timed out — the live
+ * host's "failed to create socket after 5000ms"). One such error is enough to know the
+ * database is out. A pool that is merely busy (all its connections in use) is not.
+ */
+const CANNOT_CONNECT =
+  /\b(ECONNREFUSED|EHOSTUNREACH|ENOTFOUND|P1001|2002|2003|45012)\b|failed to create socket|can't reach database|cannot reach database/i;
+
+export function isHardDbOutage(err: unknown): boolean {
+  const text = describe(err);
+  return PERMISSION.test(text) || CANNOT_CONNECT.test(text);
+}
+
 /** Which kind of outage: lost permissions (fix in hPanel) or no connection at all. */
 export function dbReason(err: unknown): "permission" | "down" {
   return PERMISSION.test(describe(err)) ? "permission" : "down";

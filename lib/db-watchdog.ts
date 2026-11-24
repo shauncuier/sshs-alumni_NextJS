@@ -18,7 +18,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import prisma, { primaryClient } from "@/lib/prisma";
-import { dbErrorDetail, dbReason } from "@/lib/db-errors";
+import { dbErrorDetail, dbReason, isDbUnavailable, isHardDbOutage } from "@/lib/db-errors";
+import { noteDbFailure } from "@/lib/db-mode";
 import { isValidBdMobile, normalizeBdPhoneNumber, sendBulkSms } from "@/lib/bulksmsbd";
 import { sendEmail } from "@/lib/email";
 import { renderEmail, siteUrl } from "@/lib/email-templates";
@@ -35,6 +36,9 @@ export async function checkDatabase(): Promise<DbStatus> {
     await primaryClient().user.findFirst({ select: { id: true } });
     return { ok: true };
   } catch (err) {
+    // The check reads the main database directly, past the switch in lib/prisma.ts, so
+    // it reports the failure itself (no-op without a standby or when already on it).
+    if (isDbUnavailable(err)) noteDbFailure(Date.now(), isHardDbOutage(err));
     return { ok: false, reason: dbReason(err), detail: dbErrorDetail(err) };
   }
 }

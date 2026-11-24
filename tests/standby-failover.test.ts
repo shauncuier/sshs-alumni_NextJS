@@ -57,16 +57,11 @@ describe("standby failover", () => {
     mode.resetDbMode();
   });
 
-  it("switches to the standby on the second outage error and reads from it", async () => {
+  it("switches to the standby on the first refused connection and answers that read from it", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    const first = await lib.prisma.setting.findUnique({ where: { key: KEY } }).catch((e) => e);
-    expect(isAppError(first)).toBe(true);
-    expect((first as AppError).code).toBe("DB_UNAVAILABLE");
-    expect((first as AppError).status).toBe(503);
     expect(mode.currentMode()).toBe("primary");
-
-    const second = await lib.prisma.setting.findUnique({ where: { key: KEY } });
-    expect(second?.value).toBe("from the standby");
+    const first = await lib.prisma.setting.findUnique({ where: { key: KEY } });
+    expect(first?.value).toBe("from the standby");
     expect(mode.currentMode()).toBe("standby");
 
     // From now on reads go straight to the standby.

@@ -43,7 +43,14 @@ describe("db mode", () => {
     expect(currentMode(t + 61_000)).toBe("primary");
   });
 
-  it("goes back after two good checks of the main database in a row", async () => {
+  it("switches at once when the server refused us (hard outage)", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const t = Date.now();
+    expect(noteDbFailure(t, true)).toBe(true);
+    expect(currentMode(t)).toBe("standby");
+  });
+
+  it("goes back only after six good checks of the main database in a row", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "info").mockImplementation(() => {});
     let up = false;
@@ -53,11 +60,11 @@ describe("db mode", () => {
     setMode("standby");
     expect(await probePrimary()).toBe("standby");
     up = true;
-    expect(await probePrimary()).toBe("standby");
+    for (let i = 0; i < 5; i++) expect(await probePrimary()).toBe("standby");
     up = false;
     expect(await probePrimary()).toBe("standby"); // a failure resets the count
     up = true;
-    await probePrimary();
+    for (let i = 0; i < 5; i++) expect(await probePrimary()).toBe("standby");
     expect(await probePrimary()).toBe("primary");
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dbErrorDetail, dbReason, isDbUnavailable } from "@/lib/db-errors";
+import { dbErrorDetail, dbReason, isDbUnavailable, isHardDbOutage } from "@/lib/db-errors";
 import { AppError } from "@/lib/app-error";
 
 // Messages as the live site logged them (2026-11-18/19) and as the MariaDB driver words them.
@@ -45,6 +45,32 @@ describe("isDbUnavailable", () => {
       expect(dbReason(new Error(msg)), msg).toBe("down");
     }
     expect(isDbUnavailable(Object.assign(new Error("x"), { code: "P1001" }))).toBe(true);
+  });
+
+  it("tells a server that refused us apart from a busy pool", () => {
+    // As the live site logged it on 2026-11-24 10:50 UTC.
+    const socket = Object.assign(new Error("Invalid `prisma.user.findFirst()` invocation:\n\nDatabase error. Code: `45028`."), {
+      code: "P2039",
+      meta: {
+        driverAdapterError: {
+          cause: {
+            code: 45028,
+            message: "pool failed to retrieve a connection from pool (pool connections: active=0 idle=0 limit=5)",
+            cause: "(conn:55217756, no: 45012, SQLState: 08S01) Connection timeout: failed to create socket after 5000ms",
+          },
+        },
+      },
+    });
+    expect(isDbUnavailable(socket)).toBe(true);
+    expect(isHardDbOutage(socket)).toBe(true);
+    expect(isHardDbOutage(denied)).toBe(true);
+    expect(isHardDbOutage(new Error("connect ECONNREFUSED 127.0.0.1:3306"))).toBe(true);
+    expect(isHardDbOutage(Object.assign(new Error("x"), { code: "P1001" }))).toBe(true);
+    // Every connection busy: the server works, the site is just loaded.
+    const busy = new Error("pool timeout: failed to retrieve a connection from pool after 10001ms (pool connections: active=5 idle=0 limit=5)");
+    expect(isDbUnavailable(busy)).toBe(true);
+    expect(isHardDbOutage(busy)).toBe(false);
+    expect(isHardDbOutage(new TypeError("Cannot read properties of undefined"))).toBe(false);
   });
 
   it("leaves bugs and bad input alone", () => {

@@ -3,10 +3,15 @@
  * ("standby", read-only). See lib/prisma.ts for the switch itself and
  * lib/standby-sync.ts for how the copy is kept up to date.
  *
- * - Two "database unavailable" errors (lib/db-errors.ts) within a minute switch this
- *   process to the standby, when one is configured (STANDBY_DATABASE_URL).
- * - While on the standby, the main database is tried every 30 seconds; two good answers
- *   in a row switch back.
+ * - One error showing the server refused us (no connection could be opened, or lost
+ *   permissions: isHardDbOutage in lib/db-errors.ts) switches this process to the
+ *   standby, when one is configured (STANDBY_DATABASE_URL). Other "database unavailable"
+ *   errors (a busy pool) need two within a minute. Each process makes only about one
+ *   query a minute on a quiet site, so on 2026-11-24 10:50 UTC "two within a minute"
+ *   took 86 s to happen while signed-in members saw errors.
+ * - While on the standby, the main database is tried every 30 seconds; it must answer
+ *   six times in a row (about 3 minutes) before the site switches back. On 2026-11-24 it
+ *   switched back after two good answers and failed again 30 s later.
  * - The mode is also written to UPLOADS_DIR/.db-mode.json, so the other server processes
  *   follow within a few seconds instead of each waiting for its own failures.
  *
@@ -27,7 +32,7 @@ export type DbMode = "primary" | "standby";
 export const SWITCH_AFTER_FAILURES = 2;
 export const FAILURE_WINDOW_MS = 60_000;
 export const PROBE_EVERY_MS = 30_000;
-export const BACK_AFTER_PASSES = 2;
+export const BACK_AFTER_PASSES = 6;
 const FILE_CHECK_MS = 5_000;
 
 interface ModeFile {
@@ -110,15 +115,16 @@ export function setMode(mode: DbMode, now = new Date()): void {
 }
 
 /**
- * Records a database-unavailable error from the main database. Returns true when the
- * site now reads the standby (it switched, or already had).
+ * Records a database-unavailable error from the main database; `hard` (isHardDbOutage)
+ * switches at once. Returns true when the site now reads the standby (it switched, or
+ * already had).
  */
-export function noteDbFailure(now = Date.now()): boolean {
+export function noteDbFailure(now = Date.now(), hard = false): boolean {
   if (!standbyConfigured()) return false;
   if (currentMode(now) === "standby") return true;
   state.failures = state.failures.filter((t) => now - t < FAILURE_WINDOW_MS);
   state.failures.push(now);
-  if (state.failures.length >= SWITCH_AFTER_FAILURES) {
+  if (hard || state.failures.length >= SWITCH_AFTER_FAILURES) {
     setMode("standby", new Date(now));
     return true;
   }

@@ -8,6 +8,14 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Fixed
+- **Faster switch to the backup copy when the database stops answering.** When the
+  hosting's database refuses connections, the site now moves to the read-only backup copy
+  on the first failed connection instead of waiting for a second one, which on a quiet
+  site could take over a minute while signed-in members saw errors. It also waits until the
+  main database has worked for about 3 minutes before switching back, so it no longer
+  flips back and forth during an outage.
+
 ## [1.7.5] - 2026-11-23
 
 ### Fixed

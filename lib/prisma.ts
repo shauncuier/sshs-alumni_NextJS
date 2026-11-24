@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { AppError } from "@/lib/app-error";
-import { DB_UNAVAILABLE_MESSAGE, dbErrorDetail, isDbUnavailable } from "@/lib/db-errors";
+import { DB_UNAVAILABLE_MESSAGE, dbErrorDetail, isDbUnavailable, isHardDbOutage } from "@/lib/db-errors";
 import { currentMode, noteDbFailure, registerPrimaryCheck } from "@/lib/db-mode";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -269,7 +269,7 @@ function withFailover(primary: PrismaClient, standby: PrismaClient | null): Pris
           return await query(args);
         } catch (err) {
           if (!isDbUnavailable(err) || err instanceof AppError) throw err;
-          const switched = standby ? noteDbFailure() : false;
+          const switched = standby ? noteDbFailure(Date.now(), isHardDbOutage(err)) : false;
           if (standby && switched) {
             if (model && !isWriteOperation(operation)) return onStandby(standby, model, operation, args);
             throw readOnlyError();
