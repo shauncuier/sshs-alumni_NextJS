@@ -11,6 +11,8 @@ export interface RegistrationListRow {
   phone: string;
   /** null when the member gave no email (paper form). */
   email: string | null;
+  /** The member's profile photo, so the door can compare faces; null when none (the site logo is not a photo). */
+  photoUrl: string | null;
   formNo: string | null;
   receiptNo: string | null;
   headCount: number;
@@ -57,7 +59,7 @@ export async function registrationListForPrint(
       notes: true,
       confirmedBy: true,
       createdAt: true,
-      user: { select: { email: true, profile: { select: { fullName: true, sscBatch: true, phone: true } } } },
+      user: { select: { email: true, profile: { select: { fullName: true, sscBatch: true, phone: true, avatarUrl: true } } } },
     },
   });
   return regs.map((r) => {
@@ -69,6 +71,7 @@ export async function registrationListForPrint(
       batch: r.user.profile?.sscBatch ?? null,
       phone: r.user.profile?.phone ?? "",
       email: isPlaceholderEmail(r.user.email) ? null : r.user.email,
+      photoUrl: r.user.profile?.avatarUrl && r.user.profile.avatarUrl !== "/logo.png" ? r.user.profile.avatarUrl : null,
       formNo: note.formNo,
       receiptNo: note.receiptNo,
       headCount: r.headCount,

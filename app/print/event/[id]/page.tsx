@@ -230,6 +230,7 @@ function RegistrationList({ rows, title, offline, batch }: { rows: RegistrationL
             {offline && <th className={th}>Form no.</th>}
             {offline && <th className={th}>Receipt</th>}
             <th className={th}>Slip</th>
+            <th className={th} style={{ width: "15mm" }}>Photo</th>
             <th className={th}>Name</th>
             <th className={th}>Batch</th>
             <th className={th}>Mobile</th>
@@ -248,6 +249,17 @@ function RegistrationList({ rows, title, offline, batch }: { rows: RegistrationL
               {offline && <td className={td}>{r.formNo ?? "—"}</td>}
               {offline && <td className={td}>{r.receiptNo ?? "—"}</td>}
               <td className={`${td} font-mono`}>{r.slipNo}</td>
+              <td className={`${td} p-0.5`}>
+                {/* Passport-size, so whoever checks the door can compare the face. Eager: the
+                    printer only gets images that have loaded. */}
+                {r.photoUrl ? (
+                  <img src={r.photoUrl} alt={`Photo of ${r.name}`} loading="eager" decoding="sync" className="block object-cover border border-slate-300" style={{ width: "13mm", height: "16mm" }} />
+                ) : (
+                  <span className="flex items-center justify-center text-center text-[7px] text-slate-400 border border-dashed border-slate-300" style={{ width: "13mm", height: "16mm" }}>
+                    No photo
+                  </span>
+                )}
+              </td>
               <td className={td}>
                 <span className="font-bold">{r.name}</span>
                 {r.email && <span className="block text-slate-500">{r.email}</span>}
@@ -268,7 +280,7 @@ function RegistrationList({ rows, title, offline, batch }: { rows: RegistrationL
         </tbody>
         <tfoot>
           <tr className="font-bold bg-amber-50">
-            <td className={td} colSpan={offline ? 7 : 5}>
+            <td className={td} colSpan={offline ? 8 : 6}>
               Total: {plural(rows.length, "registration")}
             </td>
             <td className={`${td} text-right`}>{people}</td>

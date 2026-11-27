@@ -180,6 +180,7 @@ describe("paper forms entered by the committee", () => {
       batch: 1995,
       phone: "01711000222",
       email: null,
+      photoUrl: null, // no photo saved with this paper form
       formNo: "17",
       receiptNo: "R-9",
       enteredBy: staff.email,
@@ -187,6 +188,17 @@ describe("paper forms entered by the committee", () => {
       paymentMethod: "Cash",
     });
     expect(readOfflineNote("[Offline form, entered by a@b.test]")).toEqual({ formNo: null, receiptNo: null, enteredBy: "a@b.test" });
+
+    // The member's photo goes on the list for the door; the site logo stand-in does not.
+    const withPhoto = await makeMember();
+    await prisma.alumniProfile.update({ where: { userId: withPhoto.id }, data: { avatarUrl: "/api/media/avatars/abc/avatar.webp" } });
+    const withLogo = await makeMember();
+    await prisma.alumniProfile.update({ where: { userId: withLogo.id }, data: { avatarUrl: "/logo.png" } });
+    for (const m of [withPhoto, withLogo]) {
+      await prisma.eventRegistration.create({ data: { eventId: event.id, userId: m.id, status: "CONFIRMED", headCount: 1, totalFee: 1500 } });
+    }
+    const all = await registrationListForPrint(event.id); // in the order entered
+    expect(all.map((r) => r.photoUrl)).toEqual([null, "/api/media/avatars/abc/avatar.webp", null]);
     expect(readOfflineNote("paid online")).toEqual({ formNo: null, receiptNo: null, enteredBy: null });
   });
 });

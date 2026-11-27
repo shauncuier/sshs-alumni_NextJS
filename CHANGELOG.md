@@ -8,6 +8,11 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- **Photos on the printed entries list.** The event's printed registration list now shows
+  each member's profile photo next to their name, so whoever checks the door can compare
+  faces. Members without a photo get an empty "No photo" box.
+
 ## [1.8.0] - 2026-11-27
 
 ### Added
