@@ -5,7 +5,8 @@
  *
  * Admins and the super admin use everything. Moderators run public content and
  * the event gate: news, notices, gallery, stories, jobs, mentors, the school's teachers, feed moderation and the gate scanner,
- * but never members, money, messages to members, settings or the activity log.
+ * and they type in paper registration forms ("paper-forms": data entry only, no printing
+ * and no attendee list), but never members, money, messages to members, settings or the activity log.
  */
 
 export const ADMIN_AREAS = [
@@ -32,10 +33,14 @@ export const ADMIN_AREAS = [
   "notices",
   "accounts",
   "settings",
+  "paper-forms",
 ] as const;
 export type AdminArea = (typeof ADMIN_AREAS)[number];
 
-const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate", "notices", "teachers"];
+const MODERATOR_AREAS: readonly AdminArea[] = ["news", "gallery", "stories", "jobs", "mentors", "feed", "gate", "notices", "teachers", "paper-forms"];
+
+// Paper-form entry: the shortcut /admin/events/offline and /admin/events/<id>/offline.
+const PAPER_FORM_PATH = /^\/admin\/events\/(?:offline|[^/]+\/offline)\/?$/;
 
 // The treasurer keeps the accounts and sees nothing else of the admin panel.
 const TREASURER_AREAS: readonly AdminArea[] = ["accounts"];
@@ -63,6 +68,7 @@ export function canUseAdminPanel(role: string | null | undefined): boolean {
 /** The admin area a /admin path belongs to, or null for unknown paths. */
 export function areaForPath(pathname: string): AdminArea | null {
   if (pathname === "/admin" || pathname === "/admin/") return "dashboard";
+  if (PAPER_FORM_PATH.test(pathname)) return "paper-forms";
   const segment = pathname.replace(/^\/admin\/?/, "").split("/")[0];
   if (segment === "achievements") return "stories";
   if (segment === "id-cards") return "alumni";

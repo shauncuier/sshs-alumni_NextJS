@@ -33,8 +33,9 @@ const EMPTY = {
 /**
  * The paper registration form, typed in by the committee. Same fields as the
  * printed form (design/offline-form); saved by POST /api/admin/events/[id]/offline-entry.
+ * `canPrint` is false for moderators: they enter forms but do not print slips or tokens.
  */
-export default function OfflineEntryForm({ event }: { event: PublicEvent }) {
+export default function OfflineEntryForm({ event, canPrint }: { event: PublicEvent; canPrint: boolean }) {
   const [member, setMember] = useState(EMPTY);
   const [formNo, setFormNo] = useState("");
   const [receiptNo, setReceiptNo] = useState("");
@@ -120,12 +121,16 @@ export default function OfflineEntryForm({ event }: { event: PublicEvent }) {
           {done.email.endsWith(".invalid") ? " (no email on the form)." : " and an email to " + done.email + "."}
         </p>
         <div className="flex flex-wrap justify-center gap-2 pt-2">
-          <a href={`/print/event/${event.id}?what=slips&reg=${done.registrationId}`} target="_blank" rel="noreferrer" className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm font-bold flex items-center gap-1.5">
-            <Printer className="w-4 h-4" /> Print payment slip
-          </a>
-          <a href={`/print/event/${event.id}?what=tokens&reg=${done.registrationId}`} target="_blank" rel="noreferrer" className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm font-bold flex items-center gap-1.5">
-            <UtensilsCrossed className="w-4 h-4" /> Print food tokens
-          </a>
+          {canPrint && (
+            <>
+              <a href={`/print/event/${event.id}?what=slips&reg=${done.registrationId}`} target="_blank" rel="noreferrer" className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm font-bold flex items-center gap-1.5">
+                <Printer className="w-4 h-4" /> Print payment slip
+              </a>
+              <a href={`/print/event/${event.id}?what=tokens&reg=${done.registrationId}`} target="_blank" rel="noreferrer" className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm font-bold flex items-center gap-1.5">
+                <UtensilsCrossed className="w-4 h-4" /> Print food tokens
+              </a>
+            </>
+          )}
           <button type="button" onClick={reset} className="px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-bold cursor-pointer">
             Enter the next form
           </button>

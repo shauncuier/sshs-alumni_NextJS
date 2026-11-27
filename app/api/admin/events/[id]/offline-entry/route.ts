@@ -21,7 +21,7 @@ const invalidRequest = () => new AppError("INVALID_REQUEST", 400, "Invalid reque
 export async function POST(req: Request, { params }: Params) {
   let me: Awaited<ReturnType<typeof requireArea>> | null = null;
   try {
-    me = await requireArea("events", "Only the committee can enter paper forms.");
+    me = await requireArea("paper-forms", "Only the committee can enter paper forms.");
     requireSameOrigin(req);
     const form = await readLimitedFormData(req, MAX_BODY_BYTES);
     let payload: Payload;

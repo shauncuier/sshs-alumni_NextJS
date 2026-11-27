@@ -33,7 +33,7 @@ describe("permission map", () => {
       expect(can("ALUMNI", area)).toBe(false);
     }
     const moderatorAreas = ADMIN_AREAS.filter((a) => can("MODERATOR", a));
-    expect(moderatorAreas.sort()).toEqual(["feed", "gallery", "gate", "jobs", "mentors", "news", "notices", "stories", "teachers"]);
+    expect(moderatorAreas.sort()).toEqual(["feed", "gallery", "gate", "jobs", "mentors", "news", "notices", "paper-forms", "stories", "teachers"]);
     expect(canUseAdminPanel("MODERATOR")).toBe(true);
     // The treasurer keeps the accounts and nothing else.
     expect(ADMIN_AREAS.filter((a) => can("TREASURER", a))).toEqual(["accounts"]);
@@ -65,6 +65,24 @@ describe("permission map", () => {
     expect(can("MODERATOR", "settings")).toBe(false);
     expect(can("TREASURER", "settings")).toBe(false);
     expect(homeForRole("TREASURER")).toBe("/admin/accounts");
+  });
+
+  it("lets moderators type in paper forms without opening the rest of Events", () => {
+    expect(areaForPath("/admin/events/offline")).toBe("paper-forms");
+    expect(areaForPath("/admin/events/abc123/offline")).toBe("paper-forms");
+    expect(areaForPath("/admin/events/abc123/offline/")).toBe("paper-forms");
+    expect(areaForPath("/admin/events")).toBe("events");
+    expect(areaForPath("/admin/events/abc123")).toBe("events");
+    expect(areaForPath("/admin/events/discounts")).toBe("events");
+    expect(areaForPath("/admin/events/abc123/offline/extra")).toBe("events");
+    expect(can("MODERATOR", "paper-forms")).toBe(true);
+    expect(can("MODERATOR", "events")).toBe(false);
+    expect(can("ADMIN", "paper-forms")).toBe(true);
+    expect(can("SUPER_ADMIN", "paper-forms")).toBe(true);
+    expect(can("TREASURER", "paper-forms")).toBe(false);
+    expect(can("GATE", "paper-forms")).toBe(false);
+    expect(can("ALUMNI", "paper-forms")).toBe(false);
+    expect(homeForRole("MODERATOR")).toBe("/admin/news");
   });
 });
 

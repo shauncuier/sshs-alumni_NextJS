@@ -36,7 +36,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Events",
     items: [
       { name: "Events", short: "Events", href: "/admin/events", icon: Calendar, area: "events" },
-      { name: "Paper forms", short: "Paper form", href: "/admin/events/offline", icon: FilePlus2, area: "events" },
+      { name: "Paper forms", short: "Paper form", href: "/admin/events/offline", icon: FilePlus2, area: "paper-forms" },
       { name: "Discounts", short: "Discounts", href: "/admin/events/discounts", icon: TicketPercent, area: "events" },
       { name: "Gate scanner", short: "Gate", href: "/gate", icon: QrCode, area: "gate" },
     ],

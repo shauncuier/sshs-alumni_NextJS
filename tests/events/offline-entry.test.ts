@@ -37,6 +37,8 @@ vi.mock("@/lib/session-user", async (importOriginal) => {
 
 import { enterOfflineRegistration, NO_EMAIL_DOMAIN } from "@/lib/events/offline-entry";
 import { POST } from "@/app/api/admin/events/[id]/offline-entry/route";
+import OfflineEntryPage from "@/app/admin/events/[id]/offline/page";
+import { renderToStaticMarkup } from "react-dom/server";
 import { sendEmail } from "@/lib/email";
 import { slipsForEvent } from "@/lib/events/slips";
 import { slipNumber, tokensForPrint } from "@/lib/events/tokens";
@@ -134,28 +136,80 @@ describe("paper forms entered by the committee", () => {
     expect(sendEmail).toBeDefined();
   });
 
-  it("only the committee may use the route", async () => {
+  it("only admins and moderators may use the route; members, the treasurer and gate volunteers may not", async () => {
     const event = await jubilee();
-    const post = () => {
+    const post = (m: typeof member) => {
       const fd = new FormData();
-      fd.append("payload", JSON.stringify({ member, proofType: "SSC_CERTIFICATE", paymentMethod: "Cash" }));
+      fd.append("payload", JSON.stringify({ member: m, proofType: "SSC_CERTIFICATE", paymentMethod: "Cash", formNo: "41", receiptNo: "R-41" }));
       return POST(new Request(`http://localhost:3000/api/admin/events/${event.id}/offline-entry`, { method: "POST", body: fd, headers: { origin: "http://localhost:3000" } }), {
         params: Promise.resolve({ id: event.id }),
       });
     };
-    const alumnus = await makeMember();
-    session.user = { id: alumnus.id, email: alumnus.email, role: "ALUMNI" };
-    expect((await post()).status).toBe(403);
+    for (const role of ["ALUMNI", "TREASURER", "GATE"] as const) {
+      const u = await makeMember({ role });
+      session.user = { id: u.id, email: u.email, role };
+      const res = await post(member);
+      expect(res.status, role).toBe(403);
+      expect((await res.json()).error).toBe("Only the committee can enter paper forms.");
+    }
+    // Refused attempts leave nothing behind: no member, no registration, no SMS.
+    expect(await prisma.eventRegistration.count()).toBe(0);
+    expect(await prisma.alumniProfile.count({ where: { phone: member.phone } })).toBe(0);
+    expect(sms.sent).toHaveLength(0);
+
+    // A moderator types in a whole form: the member is approved, the registration confirmed and the SMS sent.
     const mod = await makeMember({ role: "MODERATOR" });
     session.user = { id: mod.id, email: mod.email, role: "MODERATOR" };
-    expect((await post()).status).toBe(403);
+    const res = await post(member);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.totalFee).toBe(1500);
+    const reg = await prisma.eventRegistration.findUniqueOrThrow({ where: { id: body.registrationId }, include: { user: { include: { profile: true } } } });
+    expect(reg).toMatchObject({ status: "CONFIRMED", confirmedBy: mod.email, paymentMethod: "Cash", source: "offline-form" });
+    expect(reg.notes).toContain("form no. 41, receipt no. R-41");
+    expect(reg.user.status).toBe("VERIFIED");
+    expect(reg.user.role).toBe("ALUMNI");
+    expect(reg.user.profile).toMatchObject({ verificationStatus: "VERIFIED", phone: member.phone });
+    expect(sms.sent).toHaveLength(1);
+    expect(sms.sent[0].numbers[0]).toContain("1711000222");
+    const log = await prisma.activityLog.findFirst({ where: { action: "registration.offline_entered" } });
+    expect(log?.actorEmail).toBe(mod.email);
+    expect(log?.summary).toContain("Paper Member");
+
+    // Admins still can.
     const admin = await makeMember({ role: "ADMIN" });
     session.user = { id: admin.id, email: admin.email, role: "ADMIN" };
-    const res = await post();
-    expect(res.status).toBe(201);
-    const log = await prisma.activityLog.findFirst({ where: { action: "registration.offline_entered" } });
-    expect(log?.actorEmail).toBe(admin.email);
+    expect((await post({ ...member, fullName: "Second Paper", phone: "01711000444" })).status).toBe(201);
+    expect(await prisma.eventRegistration.count()).toBe(2);
   });
+  it("the paper-form page shows moderators the form without print links or the attendee list", async () => {
+    const event = await jubilee();
+    const render = async () =>
+      renderToStaticMarkup(await OfflineEntryPage({ params: Promise.resolve({ id: event.id }) }));
+
+    const mod = await makeMember({ role: "MODERATOR" });
+    session.user = { id: mod.id, email: mod.email, role: "MODERATOR" };
+    const forMod = await render();
+    expect(forMod).toContain("Enter a paper form");
+    expect(forMod).toContain("Register and approve");
+    expect(forMod).not.toContain("/print/event/");
+    expect(forMod).not.toContain("Back to attendees");
+    expect(forMod).not.toContain("tab=attendees");
+
+    const admin = await makeMember({ role: "ADMIN" });
+    session.user = { id: admin.id, email: admin.email, role: "ADMIN" };
+    const forAdmin = await render();
+    expect(forAdmin).toContain(`/print/event/${event.id}?what=list&amp;source=offline`);
+    expect(forAdmin).toContain("Back to attendees");
+
+    // The treasurer and gate volunteers cannot open it at all.
+    for (const role of ["TREASURER", "GATE"] as const) {
+      const u = await makeMember({ role });
+      session.user = { id: u.id, email: u.email, role };
+      await expect(render()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    }
+  });
+
   it("bulk printing can take only the paper forms", async () => {
     const event = await jubilee();
     const paper = await enterOfflineRegistration({ eventId: event.id, staff, member, proofType: "SSC_CERTIFICATE", paymentMethod: "Cash", guests: {} });

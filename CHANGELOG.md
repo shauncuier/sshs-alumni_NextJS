@@ -8,6 +8,11 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Changed
+- **Moderators can type in paper registration forms** (Admin → Paper forms). They only
+  enter forms: printing slips, food tokens and the entries list, and the event's attendee
+  list, stay with admins.
+
 ## [1.9.0] - 2026-11-27
 
 ### Added

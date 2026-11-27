@@ -3,14 +3,20 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Printer } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { requireArea } from "@/lib/admin/require-admin";
+import { can } from "@/lib/permissions";
 import { getPublicEventBySlug } from "@/lib/events/service";
 import OfflineEntryForm from "@/components/admin/OfflineEntryForm";
 
 export const dynamic = "force-dynamic";
 
-/** Committee: type in a paper registration form (approved and confirmed at once). */
+/**
+ * Committee: type in a paper registration form (approved and confirmed at once).
+ * Moderators may enter forms too, but printing and the attendee list stay with
+ * those who have the full events area.
+ */
 export default async function OfflineEntryPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireArea("events");
+  const me = await requireArea("paper-forms");
+  const canPrint = can(me.role, "events");
   const { id } = await params;
   const row = await prisma.event.findUnique({ where: { id }, select: { slug: true, isMembershipEvent: true } });
   if (!row || !row.isMembershipEvent) notFound();
@@ -19,6 +25,7 @@ export default async function OfflineEntryPage({ params }: { params: Promise<{ i
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
+      {canPrint && (
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Link href={`/admin/events/${id}?tab=attendees`} className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800 hover:underline">
           <ArrowLeft className="w-4 h-4" /> Back to attendees
@@ -36,6 +43,7 @@ export default async function OfflineEntryPage({ params }: { params: Promise<{ i
           </a>
         </span>
       </div>
+      )}
       <div>
         <h1 className="text-2xl font-black text-slate-900">Enter a paper form</h1>
         <p className="text-sm text-slate-600 mt-1">
@@ -43,7 +51,7 @@ export default async function OfflineEntryPage({ params }: { params: Promise<{ i
           No SMS code and no document upload: you have the paper copy.
         </p>
       </div>
-      <OfflineEntryForm event={event} />
+      <OfflineEntryForm event={event} canPrint={canPrint} />
     </div>
   );
 }
