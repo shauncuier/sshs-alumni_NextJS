@@ -8,6 +8,11 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+- **Sign in with your mobile number.** The sign-in page now takes your email or the
+  mobile number on your profile (01XXXXXXXXX, +8801…), with your usual password. No SMS
+  is sent.
+
 ### Fixed
 - **Faster switch to the backup copy when the database stops answering.** When the
   hosting's database refuses connections, the site now moves to the read-only backup copy

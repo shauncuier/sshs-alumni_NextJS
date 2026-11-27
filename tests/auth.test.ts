@@ -1,10 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { authorizeCredentials, SIGN_IN_PAUSED_MESSAGE } from "@/lib/auth";
+import { authorizeCredentials, INVALID_LOGIN_MESSAGE, loginIdentifier, SIGN_IN_PAUSED_MESSAGE } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { LEGACY_PENDING_MESSAGE, MEMBERSHIP_REJECTED_MESSAGE, PENDING_APPROVAL_MESSAGE } from "@/lib/account-access";
 import { makeEvent, makeMember, resetDatabase } from "./helpers/db";
+
+// The real module, except rate limits (always allowed under test anyway) are watchable.
+vi.mock("@/lib/request-security", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/request-security")>()),
+  consumeRateLimit: vi.fn(() => true),
+}));
 
 const PASSWORD = "Member-Pw-1234";
 
@@ -58,6 +64,76 @@ describe("authorizeCredentials", () => {
   });
   it("keeps the generic message for a wrong password", async () => {
     const m = await makeMember({ status: "PENDING" });
-    await expect(authorizeCredentials({ email: m.email, password: "wrong-password" })).rejects.toThrow(/Invalid email or password/);
+    await expect(authorizeCredentials({ email: m.email, password: "wrong-password" })).rejects.toThrow(new Error(INVALID_LOGIN_MESSAGE));
+  });
+});
+
+describe("signing in with a mobile number", () => {
+  beforeEach(resetDatabase);
+
+  async function memberWithPhone(phone: string) {
+    const m = await makeMember({ status: "VERIFIED" });
+    await prisma.alumniProfile.update({ where: { userId: m.id }, data: { phone } });
+    return m;
+  }
+
+  it("takes the number in any common form", async () => {
+    const m = await memberWithPhone("01711234567");
+    for (const typed of ["01711234567", "+8801711234567", "8801711234567", " 01711 234 567 ", "+880 1711-234567"]) {
+      await expect(authorizeCredentials({ email: typed, password: PASSWORD }), typed).resolves.toMatchObject({ id: m.id, email: m.email });
+    }
+  });
+
+  it("finds a number saved in an older form", async () => {
+    const m = await memberWithPhone("+8801811234567");
+    await expect(authorizeCredentials({ email: "01811234567", password: PASSWORD })).resolves.toMatchObject({ id: m.id });
+  });
+
+  it("gives the same message for a wrong password, an unknown number and text that is no number", async () => {
+    await memberWithPhone("01911234567");
+    for (const [typed, password] of [
+      ["01911234567", "wrong-password"],
+      ["01511111111", PASSWORD],
+      ["not-a-phone", PASSWORD],
+      ["12345", PASSWORD],
+    ]) {
+      await expect(authorizeCredentials({ email: typed, password }), typed).rejects.toThrow(new Error(INVALID_LOGIN_MESSAGE));
+    }
+  });
+
+  it("still signs in by email", async () => {
+    const m = await memberWithPhone("01611234567");
+    await expect(authorizeCredentials({ email: m.email.toUpperCase(), password: PASSWORD })).resolves.toMatchObject({ id: m.id });
+  });
+
+  it("applies the account rules (a rejected member) the same way", async () => {
+    const m = await makeMember({ status: "REJECTED" });
+    await prisma.alumniProfile.update({ where: { userId: m.id }, data: { phone: "01311234567" } });
+    await expect(authorizeCredentials({ email: "01311234567", password: PASSWORD })).rejects.toThrow(new Error(MEMBERSHIP_REJECTED_MESSAGE));
+  });
+
+  it("counts a guess by phone against the account's email limit too", async () => {
+    // Rate limits are off under test; watch which keys a sign-in consumes instead.
+    const security = await import("@/lib/request-security");
+    const m = await memberWithPhone("01411234567");
+    vi.mocked(security.consumeRateLimit).mockClear();
+    await authorizeCredentials({ email: "01411234567", password: "wrong" }).catch(() => undefined);
+    const keys = vi.mocked(security.consumeRateLimit).mock.calls.map(([key]) => key);
+    expect(keys).toEqual(["login:phone:01411234567", `login:${m.email}`]);
+    // A refused account key stops the attempt before the password is checked.
+    vi.mocked(security.consumeRateLimit).mockImplementation((key) => key !== `login:${m.email}`);
+    try {
+      await expect(authorizeCredentials({ email: "+8801411234567", password: PASSWORD })).rejects.toThrow(/Too many sign-in attempts/);
+    } finally {
+      vi.mocked(security.consumeRateLimit).mockImplementation(() => true);
+    }
+  });
+});
+
+describe("loginIdentifier", () => {
+  it("reads an email, a mobile number, or neither", () => {
+    expect(loginIdentifier(" A@Example.TEST ")).toMatchObject({ kind: "email", value: "a@example.test" });
+    expect(loginIdentifier("+880 1711 234567")).toMatchObject({ kind: "phone", value: "01711234567", rateLimitKey: "login:phone:01711234567" });
+    expect(loginIdentifier("hello").kind).toBe("invalid");
   });
 });

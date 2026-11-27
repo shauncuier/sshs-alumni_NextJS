@@ -9,6 +9,7 @@ import { logActivity } from "@/lib/activity-log";
 import { clientIp } from "@/lib/client-ip";
 import { requireTurnstile } from "@/lib/turnstile";
 import { currentMode } from "@/lib/db-mode";
+import { canonicalPhone } from "@/lib/phone-registry";
 
 export const SIGN_IN_PAUSED_MESSAGE =
   "Signing in is paused for a few minutes while we fix a problem with the database. If you are already signed in, you stay signed in.";
@@ -19,9 +20,47 @@ const header = (req: AuthorizeRequest, name: string) => {
   return (Array.isArray(v) ? v[0] : v) ?? null;
 };
 
+export const INVALID_LOGIN_MESSAGE = "Invalid email/mobile number or password. Please check and try again.";
+const TOO_MANY_ATTEMPTS_MESSAGE = "Too many sign-in attempts. Please try again later.";
+const LOGIN_LIMIT = { limit: 10, windowMs: 15 * 60_000 };
+
+type LoginIdentifier =
+  | { kind: "email"; value: string; rateLimitKey: string }
+  | { kind: "phone"; value: string; rateLimitKey: string }
+  | { kind: "invalid"; value: string; rateLimitKey: string };
+
+/**
+ * What a member typed in the sign-in box: an email (it has an @) or a Bangladeshi mobile
+ * number in any common form (01…, +8801…, 8801…, with spaces), read as 01XXXXXXXXX.
+ */
+export function loginIdentifier(raw: string): LoginIdentifier {
+  const text = raw.trim().toLowerCase();
+  if (text.includes("@")) return { kind: "email", value: text, rateLimitKey: `login:${text}` };
+  try {
+    const phone = canonicalPhone(text);
+    return { kind: "phone", value: phone, rateLimitKey: `login:phone:${phone}` };
+  } catch {
+    return { kind: "invalid", value: text, rateLimitKey: `login:${text}` };
+  }
+}
+
+/**
+ * The account whose profile holds this number. Older rows may store it as +8801… or with
+ * spaces, so the last ten digits decide (as in lib/phone-registry.ts); anything other than
+ * exactly one account counts as no match.
+ */
+async function findUserByPhone(phone: string) {
+  const last10 = phone.slice(1);
+  const rows = await prisma.alumniProfile.findMany({ where: { phone: { endsWith: last10 } }, select: { phone: true, userId: true }, take: 5 });
+  const ids = [...new Set(rows.filter((r) => (r.phone ?? "").replace(/\D/g, "").endsWith(last10)).map((r) => r.userId))];
+  if (ids.length !== 1) return null;
+  return prisma.user.findUnique({ where: { id: ids[0] }, include: { profile: true } });
+}
+
 /** Signs a member in and records the attempt, successful or not, in the activity log. */
 export async function authorizeCredentials(credentials: (Record<"email" | "password", string> & { turnstileToken?: string }) | undefined, req?: AuthorizeRequest) {
-  const email = credentials?.email?.trim().toLowerCase() || null;
+  // For the log: the email, or the mobile number as 01XXXXXXXXX.
+  const email = credentials?.email?.trim() ? loginIdentifier(credentials.email).value : null;
   const context = {
     ip: clientIp((name) => header(req, name)),
     userAgent: header(req, "user-agent"),
@@ -55,31 +94,32 @@ async function checkCredentials(credentials: Record<"email" | "password", string
   // say so plainly instead of "invalid password". Members already signed in stay signed in.
   if (currentMode() === "standby") throw new Error(SIGN_IN_PAUSED_MESSAGE);
 
-  const email = credentials.email.trim().toLowerCase();
-  const rateLimitKey = `login:${email}`;
-  if (!consumeRateLimit(rateLimitKey, { limit: 10, windowMs: 15 * 60_000 })) {
-    throw new Error("Too many sign-in attempts. Please try again later.");
-  }
+  const id = loginIdentifier(credentials.email);
+  if (!consumeRateLimit(id.rateLimitKey, LOGIN_LIMIT)) throw new Error(TOO_MANY_ATTEMPTS_MESSAGE);
+  if (id.kind === "invalid") throw new Error(INVALID_LOGIN_MESSAGE);
 
   // Accounts live only in the database; there are no built-in fallback logins.
   let user;
   try {
-    user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        profile: true,
-      },
-    });
+    user = id.kind === "email" ? await prisma.user.findUnique({ where: { email: id.value }, include: { profile: true } }) : await findUserByPhone(id.value);
   } catch (dbError) {
     console.error("Sign-in database lookup failed:", dbError);
     throw new Error("Sign-in is temporarily unavailable. Please try again shortly.");
   }
 
-  if (!user || !(await bcrypt.compare(credentials.password, user.passwordHash))) {
-    throw new Error("Invalid email or password. Please verify your credentials.");
+  // By phone, the attempt also counts against the account's email key, so switching
+  // between the two never gives more guesses.
+  const accountKey = user ? `login:${user.email.toLowerCase()}` : null;
+  if (accountKey && accountKey !== id.rateLimitKey && !consumeRateLimit(accountKey, LOGIN_LIMIT)) {
+    throw new Error(TOO_MANY_ATTEMPTS_MESSAGE);
   }
 
-  resetRateLimit(rateLimitKey);
+  if (!user || !(await bcrypt.compare(credentials.password, user.passwordHash))) {
+    throw new Error(INVALID_LOGIN_MESSAGE);
+  }
+
+  resetRateLimit(id.rateLimitKey);
+  if (accountKey) resetRateLimit(accountKey);
 
   const block = accountAccessBlock(user);
   if (block?.code === "PENDING_APPROVAL") {

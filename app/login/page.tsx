@@ -51,7 +51,7 @@ function LoginForm() {
         // "CredentialsSignin" is NextAuth's generic code when there is no message.
         setErrorMessage(
           res.error === "CredentialsSignin"
-            ? "Invalid email or password. Please verify your credentials."
+            ? "Invalid email/mobile number or password. Please check and try again."
             : res.error
         );
         setLoading(false);
@@ -113,18 +113,20 @@ function LoginForm() {
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             <div>
               <label htmlFor="login-email" className="block font-semibold text-slate-700 mb-1">
-                Email Address
+                Email or mobile number
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   id="login-email"
-                  autoComplete="email"
-                  type="email"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="alumnus@example.com"
+                  placeholder="alumnus@example.com or 01XXXXXXXXX"
                   className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 text-slate-800 text-base sm:text-xs"
                 />
               </div>
