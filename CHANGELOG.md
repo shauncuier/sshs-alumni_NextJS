@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-28
+
 ### Changed
 - **Moderators can type in paper registration forms** (Admin → Paper forms). They only
   enter forms: printing slips, food tokens and the entries list, and the event's attendee
@@ -210,7 +212,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.5...v1.8.0
 [1.7.5]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.4...v1.7.5
