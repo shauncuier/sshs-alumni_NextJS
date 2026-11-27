@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-27
+
 ### Added
 - **Sign in with your mobile number.** The sign-in page now takes your email or the
   mobile number on your profile (01XXXXXXXXX, +8801…), with your usual password. No SMS
@@ -196,7 +198,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.5...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.5...v1.8.0
 [1.7.5]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.2...v1.7.3
