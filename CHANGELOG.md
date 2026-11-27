@@ -8,6 +8,8 @@ How to cut a release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-27
+
 ### Added
 - **Photos on the printed entries list.** The event's printed registration list now shows
   each member's profile photo next to their name, so whoever checks the door can compare
@@ -203,7 +205,8 @@ This is the first numbered version; earlier work is in the git history.
   were not shipped. The email logo was missing for the same reason.
 - A donation made while registering now shows on the verification page.
 
-[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.5...v1.8.0
 [1.7.5]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/shauncuier/sshs-alumni_NextJS/compare/v1.7.3...v1.7.4
